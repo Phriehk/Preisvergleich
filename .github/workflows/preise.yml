@@ -1,4 +1,3 @@
-yaml
 # Holt täglich die aktuellen Preise von Marktguru und speichert sie im Repository.
 name: Preise aktualisieren
 
