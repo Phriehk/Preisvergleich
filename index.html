@@ -47,6 +47,25 @@ label{display:flex;flex-direction:column;font-size:.85rem;color:var(--mute);gap:
 h2{font:700 1.4rem "Barlow Condensed",sans-serif;margin:28px 0 0}
 .empty{padding:20px;color:var(--mute)}
 [hidden]{display:none!important}
+@media (max-width:640px){
+  main{padding:14px 10px 40px}
+  h1{font-size:1.6rem}
+  button,select,input:not([type=checkbox]){min-height:44px}
+  .filters select,.filters input:not([type=checkbox]){flex:1 1 140px}
+  .tabs button{flex:1;padding:8px 6px}
+  .tablewrap{border:0;background:transparent;overflow:visible}
+  table,tbody{display:block;min-width:0}
+  thead{display:none}
+  tr{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+  td,tr:last-child td{display:block;padding:0;border:0;white-space:normal;text-align:left;background:none!important;opacity:1!important}
+  td:first-child{grid-column:1;grid-row:1;font-weight:600;font-size:1.05rem}
+  td.gp{grid-column:2;grid-row:1;text-align:right;font-size:1.7rem;line-height:1}
+  td:last-child{grid-column:1/-1}
+  td[data-l]::before{content:attr(data-l);display:block;font:400 .72rem Barlow,system-ui,sans-serif;color:var(--mute)}
+  tr.top{background:var(--bestbg);border-color:var(--best)}
+  tr.soon{background:color-mix(in srgb,var(--tag) 25%,var(--card))}
+  tr.old{opacity:.55}
+}
 </style>
 </head>
 <body>
@@ -136,7 +155,7 @@ function render(){
   if(!list.length){best.innerHTML="";rows.innerHTML='<tr><td class="empty" colspan="7">Keine Angebote in dieser Ansicht.</td></tr>';return}
   const b=list.find(o=>!abgelaufen(o)&&!kommt(o))||list[0];
   best.innerHTML=`<div class="best">${tab==="jetzt"?"Günstigste Option jetzt":"Günstigste Option nächste Woche"}<br><b>${eur(gp(b))} pro Liter</b><br>${esc(b.markt)}: ${b.stueck} × ${b.ml} ml ${esc(b.form)} für ${eur(pr(b))} · ${gueltig(b)}</div>`;
-  rows.innerHTML=list.map((o,i)=>`<tr class="${o===b&&!abgelaufen(o)&&!kommt(o)?"top":abgelaufen(o)?"old":kommt(o)?"soon":""}"><td title="${esc(o.info||"")}">${o.link&&/^https?:\/\//.test(o.link)?`<a href="${esc(o.link)}" target="_blank" rel="noopener noreferrer">${esc(o.markt)}</a>`:esc(o.markt)}${o.produkt?`<br><small style="color:var(--mute)">${esc(o.produkt)}</small>`:""}${o.app?`<br><small>🏷 App-Preis ${eur(o.app)}</small>`:""}${o.limit?`<br><small>max. ${esc(o.limit)}</small>`:""}</td><td>${esc(o.form)}</td><td class="num">${o.stueck} × ${o.ml} ml</td><td class="num">${eur(pr(o))}</td><td class="num">${eur(pr(o)/o.stueck)}</td><td class="num gp">${eur(gp(o))}</td><td>${gueltig(o)}</td></tr>`).join("");
+  rows.innerHTML=list.map((o,i)=>`<tr class="${o===b&&!abgelaufen(o)&&!kommt(o)?"top":abgelaufen(o)?"old":kommt(o)?"soon":""}"><td title="${esc(o.info||"")}">${o.link&&/^https?:\/\//.test(o.link)?`<a href="${esc(o.link)}" target="_blank" rel="noopener noreferrer">${esc(o.markt)}</a>`:esc(o.markt)}${o.produkt?`<br><small style="color:var(--mute)">${esc(o.produkt)}</small>`:""}${o.app?`<br><small>🏷 App-Preis ${eur(o.app)}</small>`:""}${o.limit?`<br><small>max. ${esc(o.limit)}</small>`:""}</td><td data-l="Verpackung">${esc(o.form)}</td><td class="num" data-l="Menge">${o.stueck} × ${o.ml} ml</td><td class="num" data-l="Preis">${eur(pr(o))}</td><td class="num" data-l="Preis pro Stück">${eur(pr(o)/o.stueck)}</td><td class="num gp" data-l="pro Liter">${eur(gp(o))}</td><td data-l="Gültigkeit">${gueltig(o)}</td></tr>`).join("");
 }
 fMarkt.onchange=fForm.onchange=fMl.onchange=fSorte.onchange=app.onchange=render;
 let hinweis="";
