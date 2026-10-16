@@ -47,6 +47,7 @@ label{display:flex;flex-direction:column;font-size:.85rem;color:var(--mute);gap:
 h2{font:700 1.4rem "Barlow Condensed",sans-serif;margin:28px 0 0}
 .empty{padding:20px;color:var(--mute)}
 [hidden]{display:none!important}
+summary{cursor:pointer;font-weight:600}
 @media (max-width:640px){
   main{padding:14px 10px 40px}
   h1{font-size:1.6rem}
@@ -71,6 +72,23 @@ h2{font:700 1.4rem "Barlow Condensed",sans-serif;margin:28px 0 0}
 <body>
 <main>
 <h1 id="titel">Coca-Cola: günstigster Preis pro Liter</h1>
+<details id="ghSetup" class="hinweis" hidden>
+  <summary>⚙ Suche, Stern und Aktualisieren am Handy aktivieren</summary>
+  <p id="ghStatus" style="margin:8px 0"></p>
+  <div id="ghAnleitung">
+    <ol style="margin:8px 0 8px 18px;padding:0;line-height:1.5">
+      <li><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">GitHub-Token erstellen</a> (Link öffnet GitHub).</li>
+      <li>Name: preisvergleich. Ablauf: z.B. 1 Jahr.</li>
+      <li>Bei "Repository access" wählst du "Only select repositories" und dein Repository preisvergleich.</li>
+      <li>Bei "Permissions", "Repository permissions" stellst du <b>Actions</b> und <b>Contents</b> jeweils auf "Read and write".</li>
+      <li>"Generate token" klicken, den Token kopieren (wird nur einmal angezeigt) und hier einfügen:</li>
+    </ol>
+    <input id="ghTokenIn" type="password" placeholder="Token hier einfügen" autocomplete="off" size="30">
+    <button id="ghSave" type="button" class="primary">Speichern</button>
+    <p style="margin:8px 0 0;font-size:.85rem;color:var(--mute)">Der Token bleibt nur in diesem Browser gespeichert.</p>
+  </div>
+  <button id="ghClear" type="button" hidden>Token entfernen</button>
+</details>
 <div id="suchBox" class="filters" hidden><input id="suchtext" placeholder="Getränk suchen, z.B. Fanta oder Mineralwasser" size="32"><input id="suchAus" placeholder="Ausschließen, z.B. zero, light" size="22"><button id="suchBtn" type="button" class="primary">Suchen</button></div>
 <div style="margin-bottom:12px"><select id="fProdukt" aria-label="Produkt wählen"><option>Coca-Cola</option><option>Red Bull</option><option>Monster Energy</option></select> <button id="favBtn" type="button" hidden>☆ Als Favorit speichern</button></div>
 <p class="sub">Vergleicht Flaschen, Dosen und Kästen über den Preis pro Liter.</p>
@@ -281,59 +299,139 @@ async function abwarten(){
   }
 }
 let merge=false;
+const HDR={"X-Requested-With":"preisvergleich"};
+/* ---- GitHub-Zugriff (nur Handy-Version auf github.io, mit Token) ---- */
+var ghInfo=location.hostname.endsWith(".github.io")?{owner:location.hostname.split(".")[0],repo:location.pathname.split("/")[1]||""}:null,ghToken="";
+try{ghToken=localStorage.getItem("pv-token")||""}catch(e){}
+function ghAktiv(){return !!(ghInfo&&ghInfo.repo&&ghToken)}
+function gh(pfad,opt){opt=opt||{};return fetch("https://api.github.com/repos/"+ghInfo.owner+"/"+ghInfo.repo+pfad,{...opt,headers:{"Authorization":"Bearer "+ghToken,"Accept":"application/vnd.github+json",...(opt.headers||{})}})}
+async function ghRaw(name){const r=await gh("/contents/"+name,{headers:{"Accept":"application/vnd.github.raw+json"},cache:"no-store"});if(!r.ok)throw new Error(name+" nicht lesbar ("+r.status+")");return await r.text()}
+async function ghFavSpeichern(liste){
+  const r0=await gh("/contents/favoriten.json",{cache:"no-store"});
+  const sha=r0.ok?(await r0.json()).sha:undefined;
+  const inhalt=btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(liste,null,2))));
+  const r=await gh("/contents/favoriten.json",{method:"PUT",body:JSON.stringify({message:"Favoriten geändert",content:inhalt,sha})});
+  if(!r.ok)throw new Error("Favoriten konnten nicht gespeichert werden ("+r.status+")");
+}
+async function ghLetzter(wf){
+  const r=await gh("/actions/workflows/"+wf+"/runs?event=workflow_dispatch&per_page=1",{cache:"no-store"});
+  if(!r.ok)throw new Error("GitHub antwortet mit "+r.status+" (Token und Rechte prüfen)");
+  return ((await r.json()).workflow_runs||[])[0]||null;
+}
+async function ghLauf(wf,inputs){
+  const vor=((await ghLetzter(wf))||{}).id||0;
+  const r=await gh("/actions/workflows/"+wf+"/dispatches",{method:"POST",body:JSON.stringify({ref:"main",inputs:inputs||{}})});
+  if(r.status!==204)throw new Error("Start bei GitHub fehlgeschlagen ("+r.status+")");
+  for(let i=0;i<72;i++){
+    await new Promise(x=>setTimeout(x,5000));
+    const run=await ghLetzter(wf);
+    if(run&&run.id>vor&&run.status==="completed")return run.conclusion==="success";
+  }
+  throw new Error("Zeitüberschreitung: GitHub braucht ungewöhnlich lange");
+}
+async function ghSuche(q,aus){
+  if(!await ghLauf("suche.yml",{suchbegriff:q,ausschliessen:aus}))throw new Error("Die Suche ist bei GitHub fehlgeschlagen (siehe Tab Actions im Repository)");
+  return await ghRaw("suche.json");
+}
+function dateiLaden(input,text,name){const dt=new DataTransfer();dt.items.add(new File([text],name));input.files=dt.files;input.onchange()}
+async function ghDatenLaden(){
+  dateiLaden(file,await ghRaw("angebote.json"),"angebote.json");
+  try{dateiLaden(vfile,await ghRaw("verlauf.csv"),"verlauf.csv")}catch(e){}
+  await new Promise(x=>setTimeout(x,600));
+}
+function netzFehler(e){return lokal&&/Failed to fetch|NetworkError|Load failed/i.test(e.message)?"Server nicht erreichbar. Läuft start.bat noch?":"Fehler: "+e.message}
+/* ---- Suche ---- */
+async function lokalSuche(q,aus){
+  await fetch("suche?q="+encodeURIComponent(q)+"&aus="+encodeURIComponent(aus),{method:"POST",headers:HDR});
+  for(;;){
+    await new Promise(r=>setTimeout(r,3000));
+    const s=await (await fetch("status?job=suche",{cache:"no-store"})).json();
+    if(s.laeuft)continue;
+    if(s.rc!==0)throw new Error("Suche fehlgeschlagen: "+(s.ausgabe||"").slice(-300));
+    return await (await fetch("suche.json",{cache:"no-store"})).text();
+  }
+}
 async function suchen(){
   const q=suchtext.value.trim();if(!q)return;
-  suchAusMap[q.replace(/,/g," ").trim()]=suchAus.value.trim();
-  suchBtn.disabled=true;hinweis='Suche nach "'+q+'" läuft (etwa 1 Minute) ...';render();
+  const aus=suchAus.value.trim();
+  suchAusMap[q.replace(/,/g," ").trim()]=aus;
+  suchBtn.disabled=true;hinweis='Suche nach "'+q+'" läuft (etwa '+(lokal?"1":"2")+' Minuten) ...';render();
   try{
-    await fetch("suche?q="+encodeURIComponent(q)+"&aus="+encodeURIComponent(suchAus.value.trim()),{method:"POST",headers:{"X-Requested-With":"preisvergleich"}});
-    for(;;){
-      await new Promise(r=>setTimeout(r,3000));
-      const s=await (await fetch("status?job=suche",{cache:"no-store"})).json();
-      if(s.laeuft)continue;
-      if(s.rc!==0){hinweis="Suche fehlgeschlagen: "+(s.ausgabe||"").slice(-300);break}
-      const dt=new DataTransfer();dt.items.add(new File([await (await fetch("suche.json",{cache:"no-store"})).text()],"suche.json"));
-      merge=true;file.files=dt.files;file.onchange();
-      await new Promise(r=>setTimeout(r,600));merge=false;
-      if(!hinweis)hinweis='Suchergebnisse für "'+q+'" geladen.';
-      break;
-    }
-  }catch(e){merge=false;hinweis="Server nicht erreichbar. Läuft start.bat noch?"}
+    const text=lokal?await lokalSuche(q,aus):await ghSuche(q,aus);
+    merge=true;dateiLaden(file,text,"suche.json");
+    await new Promise(r=>setTimeout(r,600));merge=false;
+    if(!hinweis)hinweis='Suchergebnisse für "'+q+'" geladen.';
+  }catch(e){merge=false;hinweis=netzFehler(e)}
   suchBtn.disabled=false;render();
 }
-const HDR={"X-Requested-With":"preisvergleich"};
+/* ---- Favoriten ---- */
 function produktFuellen(sel){
   const g=[...new Set([...(favs||[]).map(f=>f.name),...offers.map(o=>o.gruppe||"Coca-Cola")])];
   if(!g.length)g.push("Coca-Cola");
   fProdukt.innerHTML=g.map(x=>`<option>${esc(x)}</option>`).join("");fProdukt.value=g.includes(sel)?sel:g[0];
 }
-async function favLaden(){try{const r=await fetch("favoriten.json",{cache:"no-store"});if(r.ok)favs=await r.json()}catch(e){}favKnopf()}
+async function favLaden(){
+  try{
+    if(!lokal&&ghAktiv())favs=JSON.parse(await ghRaw("favoriten.json"));
+    else{const r=await fetch("favoriten.json",{cache:"no-store"});if(r.ok)favs=await r.json()}
+  }catch(e){}
+  favKnopf();
+}
 function favKnopf(){
   const g=fProdukt.value;
-  favBtn.hidden=!lokal;
+  favBtn.hidden=!(lokal||ghAktiv());
   favBtn.textContent=(favs||[]).some(f=>f.name===g)?"★ Favorit entfernen":"☆ Als Favorit speichern";
+}
+async function favAendern(hinzu,name,aus){
+  if(lokal){
+    const p=hinzu?"favorit?name="+encodeURIComponent(name)+"&aus="+encodeURIComponent(aus):"favorit-loeschen?name="+encodeURIComponent(name);
+    return await (await fetch(p,{method:"POST",headers:HDR})).json();
+  }
+  const liste=(favs||[]).filter(f=>f.name.toLowerCase()!==name.toLowerCase());
+  if(hinzu)liste.push({name,aus});
+  await ghFavSpeichern(liste);
+  return liste;
 }
 favBtn.onclick=async()=>{
   const g=fProdukt.value,ist=(favs||[]).some(f=>f.name===g);
   favBtn.disabled=true;
   try{
     if(ist){
-      favs=await (await fetch("favorit-loeschen?name="+encodeURIComponent(g),{method:"POST",headers:HDR})).json();
+      favs=await favAendern(false,g,"");
       offers=offers.filter(o=>(o.gruppe||"Coca-Cola")!==g);
       produktFuellen("");save();fillFilters();
-      hinweis='Favorit "'+g+'" entfernt. Der bisherige Preisverlauf bleibt in verlauf.csv erhalten.';favKnopf();render();
+      hinweis='Favorit "'+g+'" entfernt. Der bisherige Preisverlauf bleibt erhalten.';favKnopf();render();
     }else{
-      favs=await (await fetch("favorit?name="+encodeURIComponent(g)+"&aus="+encodeURIComponent(suchAusMap[g]||""),{method:"POST",headers:HDR})).json();
+      favs=await favAendern(true,g,suchAusMap[g]||"");
       favKnopf();await aktualisieren();
     }
-  }catch(e){hinweis="Server nicht erreichbar. Läuft start.bat noch?";render()}
+  }catch(e){hinweis=netzFehler(e);render()}
   favBtn.disabled=false;
 };
+/* ---- Aktualisieren ---- */
 async function aktualisieren(){
-  upd.disabled=true;hinweis="Preise werden aktualisiert (etwa 1 Minute) ...";render();
-  try{await fetch("update",{method:"POST",headers:{"X-Requested-With":"preisvergleich"}});await abwarten()}catch(e){hinweis="Server nicht erreichbar. Läuft start.bat noch?"}
+  upd.disabled=true;hinweis="Preise werden aktualisiert (etwa "+(lokal?"1":"2")+" Minuten) ...";render();
+  try{
+    if(lokal){await fetch("update",{method:"POST",headers:HDR});await abwarten()}
+    else if(await ghLauf("preise.yml")){await ghDatenLaden();hinweis="Preise aktualisiert."}
+    else hinweis="Die Aktualisierung ist bei GitHub fehlgeschlagen (siehe Tab Actions im Repository).";
+  }catch(e){hinweis=netzFehler(e)}
   upd.disabled=false;render();
 }
+/* ---- Einrichtung der Handy-Version ---- */
+function ghEinrichtung(){
+  if(!ghInfo)return;
+  ghSetup.hidden=false;
+  const an=ghAktiv();
+  ghAnleitung.hidden=an;ghClear.hidden=!an;
+  ghStatus.textContent=an?"Aktiv: Suche, Stern und Aktualisieren sind freigeschaltet.":"";
+  if(an){
+    suchBox.hidden=false;suchBtn.onclick=suchen;suchtext.onkeydown=e=>{if(e.key==="Enter")suchen()};
+    upd.hidden=false;upd.onclick=aktualisieren;favLaden();
+  }
+}
+ghSave.onclick=()=>{const t=ghTokenIn.value.trim();if(!t)return;ghToken=t;try{localStorage.setItem("pv-token",t)}catch(e){}ghTokenIn.value="";ghEinrichtung()};
+ghClear.onclick=()=>{ghToken="";try{localStorage.removeItem("pv-token")}catch(e){}location.reload()};
 if(lokal){
   upd.hidden=false;upd.onclick=aktualisieren;
   suchBox.hidden=false;suchBtn.onclick=suchen;suchtext.onkeydown=e=>{if(e.key==="Enter")suchen()};
@@ -344,7 +442,7 @@ if(lokal){
       if(s.laeuft){upd.disabled=true;hinweis="Preise werden aktualisiert (etwa 1 Minute) ...";render();await abwarten();upd.disabled=false;render()}
     }catch(e){}
   })();
-}else if(/^https?:$/.test(location.protocol))autoLaden();
+}else if(/^https?:$/.test(location.protocol)){autoLaden();ghEinrichtung()}
 </script>
 </body>
 </html>
