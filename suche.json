@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "abgefragt": "2026-10-16T15:43",
+    "gruppe": "Schloss quelle",
+    "marke": "Schloss Quelle",
+    "coke": true,
+    "link": "https://www.marktguru.de/offers/25314707",
+    "markt": "trinkgut",
+    "produkt": "Mineralwasser",
+    "beschreibung": "versch. Sorten Kasten = 12 x 1 l PET zzgl. € 4.50 Pfand",
+    "preis": 5.99,
+    "liter": 12.0,
+    "preis_pro_liter": 0.5,
+    "gueltig_von": "2026-10-12",
+    "gueltig_bis": "2026-10-17"
+  }
+]
