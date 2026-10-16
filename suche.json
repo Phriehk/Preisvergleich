@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "abgefragt": "2026-10-16T23:26",
+    "gruppe": "Sprite",
+    "marke": "Bio Smiley",
+    "coke": false,
+    "link": "https://www.marktguru.de/offers/25185723",
+    "markt": "ALDI SÜD",
+    "produkt": "Bio-Dinkel Spritzgebäck",
+    "beschreibung": "-Zimtsterne oder -Dominosteine Je 115-, 125- bzw. 175-g Packung",
+    "preis": 2.99,
+    "liter": null,
+    "preis_pro_liter": null,
+    "gueltig_von": "2026-10-12",
+    "gueltig_bis": "2026-10-17"
+  }
+]
