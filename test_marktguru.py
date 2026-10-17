@@ -111,8 +111,12 @@ AUSSCHLUSS = ("munch", "mash")  # z.B. Monster Munch (Snack) ist kein Energydrin
 def ist_produkt(gruppe, text, extra=()):
     """Bekannte Marken über KW, freie Suchen über das erste Suchwort; extra = zusätzlich auszuschließende Wörter."""
     t = text.lower()
-    schluessel = KW.get(gruppe) or (gruppe.lower().split() or [""])[:1]
-    return any(k in t for k in schluessel) and not any(x in t for x in AUSSCHLUSS + tuple(extra))
+    if gruppe in KW:
+        gefunden = any(k in t for k in KW[gruppe])
+    else:  # freie Suche: erstes Suchwort, aber nicht mitten in einem längeren Wort (z.B. "Spezi" in "Spezialitäten")
+        wort = (gruppe.lower().split() or [""])[0]
+        gefunden = bool(re.search(re.escape(wort) + r"(?:s|e|n)?(?![a-zäöüß])", t))
+    return gefunden and not any(x in t for x in AUSSCHLUSS + tuple(extra))
 
 
 def hole_treffer(plz, suchen, api, client):
