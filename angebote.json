@@ -1,7 +1,8 @@
 [
   {
-    "abgefragt": "2026-10-16T07:18",
+    "abgefragt": "2026-10-17T07:15",
     "gruppe": "Coca-Cola",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25291062/images/default/0/small.webp",
     "marke": "Coca-Cola",
     "coke": true,
     "link": "https://www.marktguru.de/offers/25291062",
@@ -15,8 +16,9 @@
     "gueltig_bis": "2026-10-17"
   },
   {
-    "abgefragt": "2026-10-16T07:18",
+    "abgefragt": "2026-10-17T07:15",
     "gruppe": "Coca-Cola",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25326397/images/default/0/small.webp",
     "marke": "Coca-Cola",
     "coke": true,
     "link": "https://www.marktguru.de/offers/25326397",
@@ -30,8 +32,9 @@
     "gueltig_bis": "2026-10-17"
   },
   {
-    "abgefragt": "2026-10-16T07:18",
+    "abgefragt": "2026-10-17T07:15",
     "gruppe": "Coca-Cola",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25313882/images/default/0/small.webp",
     "marke": "Coca-Cola",
     "coke": true,
     "link": "https://www.marktguru.de/offers/25313882",
@@ -45,8 +48,9 @@
     "gueltig_bis": "2026-10-17"
   },
   {
-    "abgefragt": "2026-10-16T07:18",
+    "abgefragt": "2026-10-17T07:15",
     "gruppe": "Coca-Cola",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25178608/images/default/0/small.webp",
     "marke": "Coca-Cola",
     "coke": true,
     "link": "https://www.marktguru.de/offers/25178608",
@@ -60,8 +64,9 @@
     "gueltig_bis": "2026-10-17"
   },
   {
-    "abgefragt": "2026-10-16T07:18",
+    "abgefragt": "2026-10-17T07:15",
     "gruppe": "Coca-Cola",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25302077/images/default/0/small.webp",
     "marke": "Coca-Cola",
     "coke": true,
     "link": "https://www.marktguru.de/offers/25302077",
@@ -75,8 +80,9 @@
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-16T07:18",
+    "abgefragt": "2026-10-17T07:15",
     "gruppe": "Coca-Cola",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25255293/images/default/0/small.webp",
     "marke": "Coca-Cola",
     "coke": true,
     "link": "https://www.marktguru.de/offers/25255293",
@@ -90,8 +96,25 @@
     "gueltig_bis": "2026-10-17"
   },
   {
-    "abgefragt": "2026-10-16T07:18",
+    "abgefragt": "2026-10-17T07:15",
     "gruppe": "Coca-Cola",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25384092/images/default/0/small.webp",
+    "marke": "Coca-Cola",
+    "coke": true,
+    "link": "https://www.marktguru.de/offers/25384092",
+    "markt": "ALDI SÜD",
+    "produkt": "Cola",
+    "beschreibung": "Sprite oder Fanta Versch. Sorten; teilweise koffeinhaltig; je 330-ml-Flasche zzgl. Pfand 0.25 Auch als 6er-Pack erhältlich",
+    "preis": 0.62,
+    "liter": 0.33,
+    "preis_pro_liter": 1.88,
+    "gueltig_von": "2026-10-26",
+    "gueltig_bis": "2026-10-31"
+  },
+  {
+    "abgefragt": "2026-10-17T07:15",
+    "gruppe": "Coca-Cola",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25301467/images/default/0/small.webp",
     "marke": "Coca-Cola",
     "coke": true,
     "link": "https://www.marktguru.de/offers/25301467",
@@ -105,8 +128,9 @@
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-16T07:18",
+    "abgefragt": "2026-10-17T07:15",
     "gruppe": "Coca-Cola",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25329532/images/default/0/small.webp",
     "marke": "Coca-Cola",
     "coke": true,
     "link": "https://www.marktguru.de/offers/25329532",
@@ -120,8 +144,9 @@
     "gueltig_bis": "2026-10-17"
   },
   {
-    "abgefragt": "2026-10-16T07:18",
+    "abgefragt": "2026-10-17T07:15",
     "gruppe": "Monster Energy",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25189233/images/default/0/small.webp",
     "marke": "Monster Energy",
     "coke": true,
     "link": "https://www.marktguru.de/offers/25189233",
@@ -135,8 +160,9 @@
     "gueltig_bis": "2026-10-17"
   },
   {
-    "abgefragt": "2026-10-16T07:18",
+    "abgefragt": "2026-10-17T07:15",
     "gruppe": "Monster Energy",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25295737/images/default/0/small.webp",
     "marke": "Spin Master",
     "coke": true,
     "link": "https://www.marktguru.de/offers/25295737",
@@ -150,8 +176,9 @@
     "gueltig_bis": "2026-10-31"
   },
   {
-    "abgefragt": "2026-10-16T07:18",
+    "abgefragt": "2026-10-17T07:15",
     "gruppe": "Red Bull",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25301402/images/default/0/small.webp",
     "marke": "Red Bull",
     "coke": true,
     "link": "https://www.marktguru.de/offers/25301402",
@@ -165,8 +192,25 @@
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-16T07:18",
+    "abgefragt": "2026-10-17T07:15",
     "gruppe": "Red Bull",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25384172/images/default/0/small.webp",
+    "marke": "Red Bull",
+    "coke": true,
+    "link": "https://www.marktguru.de/offers/25384172",
+    "markt": "ALDI SÜD",
+    "produkt": "Energy Drink",
+    "beschreibung": "Versch. Sorten; taurin- und koffeinhaltig; je 250-ml-Dose zzgl. Pfand 0.25",
+    "preis": 0.89,
+    "liter": 0.25,
+    "preis_pro_liter": 3.56,
+    "gueltig_von": "2026-10-26",
+    "gueltig_bis": "2026-10-31"
+  },
+  {
+    "abgefragt": "2026-10-17T07:15",
+    "gruppe": "Red Bull",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25321262/images/default/0/small.webp",
     "marke": "Red Bull",
     "coke": true,
     "link": "https://www.marktguru.de/offers/25321262",
@@ -180,8 +224,9 @@
     "gueltig_bis": "2026-10-17"
   },
   {
-    "abgefragt": "2026-10-16T07:18",
+    "abgefragt": "2026-10-17T07:15",
     "gruppe": "Red Bull",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25313697/images/default/0/small.webp",
     "marke": "Red Bull",
     "coke": true,
     "link": "https://www.marktguru.de/offers/25313697",
@@ -195,8 +240,9 @@
     "gueltig_bis": "2026-10-17"
   },
   {
-    "abgefragt": "2026-10-16T07:18",
+    "abgefragt": "2026-10-17T07:15",
     "gruppe": "Red Bull",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25261232/images/default/0/small.webp",
     "marke": "Red Bull",
     "coke": true,
     "link": "https://www.marktguru.de/offers/25261232",
@@ -210,8 +256,9 @@
     "gueltig_bis": "2026-10-17"
   },
   {
-    "abgefragt": "2026-10-16T07:18",
+    "abgefragt": "2026-10-17T07:15",
     "gruppe": "Red Bull",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25176863/images/default/0/small.webp",
     "marke": "Red Bull",
     "coke": true,
     "link": "https://www.marktguru.de/offers/25176863",
