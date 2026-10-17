@@ -383,7 +383,7 @@ function trefferZeichnen(){
   });
   if(map.size<2){treffer.hidden=true;return}
   treffer.hidden=false;
-  const a=auswahl[g];
+  const a=(auswahl||{})[g];
   treffer.innerHTML=[...map].sort((x,y)=>x[1].min-y[1].min).map(([k,e])=>{
     const an=!a||a.has(k);
     return `<label class="kand${an?" on":""}"><input type="checkbox" data-k="${esc(k)}"${an?" checked":""}>${e.bild?`<img src="${esc(e.bild)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}<span><b>${esc(e.label)}</b><br><small>${e.n} Angebot${e.n>1?"e":""} · ab ${eur(e.min)}/l</small></span></label>`;
