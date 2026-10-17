@@ -48,6 +48,11 @@ h2{font:700 1.4rem "Barlow Condensed",sans-serif;margin:28px 0 0}
 .empty{padding:20px;color:var(--mute)}
 [hidden]{display:none!important}
 summary{cursor:pointer;font-weight:600}
+#treffer{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px}
+.kand{flex:0 0 auto;flex-direction:row;align-items:center;gap:8px;max-width:250px;border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--card);color:var(--ink);font-size:.9rem;cursor:pointer}
+.kand.on{border-color:var(--best);background:var(--bestbg)}
+.kand img{width:44px;height:44px;object-fit:contain;border-radius:6px;background:#fff}
+.kand input{margin:0}
 @media (max-width:640px){
   main{padding:14px 10px 40px}
   h1{font-size:1.6rem}
@@ -114,6 +119,7 @@ summary{cursor:pointer;font-weight:600}
   <div class="tablewrap" style="padding:8px"><div id="chart"></div></div>
 </div>
 <div id="liste">
+<div id="treffer" hidden></div>
 <div id="maerkte"></div>
 <div id="best"></div>
 <div class="tablewrap"><table>
@@ -162,9 +168,9 @@ function fillFilters(){
   m.value=markte.includes(mv)?mv:"";f.value=formen.includes(fv)?fv:"";
 }
 function render(){
-  updateNote();chips();titel.textContent=fProdukt.value+": günstigster Preis pro Liter";favKnopf();
+  updateNote();chips();titel.textContent=fProdukt.value+": günstigster Preis pro Liter";favKnopf();trefferZeichnen();
   const m=fMarkt.value,f=fForm.value,g=fMl.value,s=fSorte.value;
-  let list=offers.filter(o=>(o.gruppe||"Coca-Cola")===fProdukt.value&&(!m||o.markt===m)&&(!f||o.form===f)&&(!g||o.ml==g)&&(!s||(o.sorte||"Classic")===s)&&!aus.has(o.markt)).sort((a,b)=>gp(a)-gp(b));
+  let list=offers.filter(o=>(o.gruppe||"Coca-Cola")===fProdukt.value&&gewaehlt(o)&&(!m||o.markt===m)&&(!f||o.form===f)&&(!g||o.ml==g)&&(!s||(o.sorte||"Classic")===s)&&!aus.has(o.markt)).sort((a,b)=>gp(a)-gp(b));
   const jetztL=list.filter(o=>!abgelaufen(o)&&!kommt(o)),spaeterL=list.filter(kommt);
   tabInfo(jetztL,spaeterL);
   const vm=tab==="verlauf";liste.hidden=vm;filters.hidden=vm;verlaufBox.hidden=!vm;
@@ -265,11 +271,12 @@ file.onchange=()=>{
       arr.forEach((x,i)=>{
         const mg=menge(x.beschreibung)||menge(x.produkt);
         if(!mg||!x.preis){skip++;return}
-        neu.push({id:Date.now()+i,markt:x.markt||"?",produkt:x.produkt||"",info:x.beschreibung||"",form:formVon((x.beschreibung||"")+" "+(x.produkt||""),mg.ml,x.gruppe),gruppe:x.gruppe||"Coca-Cola",stueck:mg.stueck,ml:mg.ml,preis:+x.preis,sorte:sorteVon((x.beschreibung||"")+" "+(x.produkt||"")),app:appPreis(x.beschreibung),limit:limitVon(x.beschreibung),bis:x.gueltig_bis||"",von:x.gueltig_von||"",link:x.link||"",quelle:"import",geladen:x.abgefragt||jetzt});
+        neu.push({id:Date.now()+i,markt:x.markt||"?",produkt:x.produkt||"",info:x.beschreibung||"",form:formVon((x.beschreibung||"")+" "+(x.produkt||""),mg.ml,x.gruppe),gruppe:x.gruppe||"Coca-Cola",marke:x.marke||"",bild:x.bild||"",stueck:mg.stueck,ml:mg.ml,preis:+x.preis,sorte:sorteVon((x.beschreibung||"")+" "+(x.produkt||"")),app:appPreis(x.beschreibung),limit:limitVon(x.beschreibung),bis:x.gueltig_bis||"",von:x.gueltig_von||"",link:x.link||"",quelle:"import",geladen:x.abgefragt||jetzt});
       });
       if(!neu.length){hinweis="Keine verwertbaren Angebote in der Datei.";render();return}
       hinweis=skip?skip+" Angebot(e) ohne erkennbare Menge übersprungen.":"";
       const sel=merge?neu[0].gruppe:fProdukt.value;
+      if(merge)auswahl[neu[0].gruppe]=null;
       offers=merge?offers.filter(o=>!neu.some(n=>n.gruppe===o.gruppe)).concat(neu):neu;
       produktFuellen(sel);
       save();fillFilters();render();
@@ -279,7 +286,7 @@ file.onchange=()=>{
   r.readAsText(datei);
 };
 fillFilters();render();
-var favs=[],suchAusMap={};
+var favs=[],suchAusMap={},auswahl={};
 var lokal=/^https?:$/.test(location.protocol)&&/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 async function autoLaden(){
   try{
@@ -365,6 +372,29 @@ async function suchen(){
   }catch(e){merge=false;hinweis=netzFehler(e)}
   suchBtn.disabled=false;render();
 }
+/* ---- Trefferliste mit Auswahl ---- */
+function kKey(o){return (o.marke||o.produkt||"").trim().toLowerCase()}
+function gewaehlt(o){const a=auswahl?auswahl[o.gruppe||"Coca-Cola"]:null;return !a||a.has(kKey(o))}
+function trefferZeichnen(){
+  const g=fProdukt.value,map=new Map();
+  offers.filter(o=>(o.gruppe||"Coca-Cola")===g&&!abgelaufen(o)).forEach(o=>{
+    const k=kKey(o),e=map.get(k)||{label:o.marke||o.produkt||"?",bild:"",n:0,min:Infinity};
+    e.n++;e.min=Math.min(e.min,gp(o));if(!e.bild&&o.bild)e.bild=o.bild;map.set(k,e);
+  });
+  if(map.size<2){treffer.hidden=true;return}
+  treffer.hidden=false;
+  const a=auswahl[g];
+  treffer.innerHTML=[...map].sort((x,y)=>x[1].min-y[1].min).map(([k,e])=>{
+    const an=!a||a.has(k);
+    return `<label class="kand${an?" on":""}"><input type="checkbox" data-k="${esc(k)}"${an?" checked":""}>${e.bild?`<img src="${esc(e.bild)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}<span><b>${esc(e.label)}</b><br><small>${e.n} Angebot${e.n>1?"e":""} · ab ${eur(e.min)}/l</small></span></label>`;
+  }).join("");
+}
+treffer.onchange=e=>{
+  const k=e.target.dataset.k;if(k===undefined)return;
+  const g=fProdukt.value,alle=[...new Set(offers.filter(o=>(o.gruppe||"Coca-Cola")===g).map(kKey))];
+  const a=new Set(auswahl[g]||alle);e.target.checked?a.add(k):a.delete(k);
+  auswahl[g]=a.size===alle.length?null:a;render();
+};
 /* ---- Favoriten ---- */
 function produktFuellen(sel){
   const g=[...new Set([...(favs||[]).map(f=>f.name),...offers.map(o=>o.gruppe||"Coca-Cola")])];
@@ -376,6 +406,7 @@ async function favLaden(){
     if(!lokal&&ghAktiv())favs=JSON.parse(await ghRaw("favoriten.json"));
     else{const r=await fetch("favoriten.json",{cache:"no-store"});if(r.ok)favs=await r.json()}
   }catch(e){}
+  (favs||[]).forEach(f=>{if(f.nur&&f.nur.length)auswahl[f.name]=new Set(f.nur)});
   favKnopf();
 }
 function favKnopf(){
@@ -383,13 +414,13 @@ function favKnopf(){
   favBtn.hidden=!(lokal||ghAktiv());
   favBtn.textContent=(favs||[]).some(f=>f.name===g)?"★ Favorit entfernen":"☆ Als Favorit speichern";
 }
-async function favAendern(hinzu,name,aus){
+async function favAendern(hinzu,name,aus,nur){
   if(lokal){
-    const p=hinzu?"favorit?name="+encodeURIComponent(name)+"&aus="+encodeURIComponent(aus):"favorit-loeschen?name="+encodeURIComponent(name);
+    const p=hinzu?"favorit?name="+encodeURIComponent(name)+"&aus="+encodeURIComponent(aus)+"&nur="+encodeURIComponent(JSON.stringify(nur||[])):"favorit-loeschen?name="+encodeURIComponent(name);
     return await (await fetch(p,{method:"POST",headers:HDR})).json();
   }
   const liste=(favs||[]).filter(f=>f.name.toLowerCase()!==name.toLowerCase());
-  if(hinzu)liste.push({name,aus});
+  if(hinzu)liste.push({name,aus,nur:nur||[]});
   await ghFavSpeichern(liste);
   return liste;
 }
@@ -403,7 +434,7 @@ favBtn.onclick=async()=>{
       produktFuellen("");save();fillFilters();
       hinweis='Favorit "'+g+'" entfernt. Der bisherige Preisverlauf bleibt erhalten.';favKnopf();render();
     }else{
-      favs=await favAendern(true,g,suchAusMap[g]||"");
+      favs=await favAendern(true,g,suchAusMap[g]||"",auswahl[g]?[...auswahl[g]]:[]);
       favKnopf();await aktualisieren();
     }
   }catch(e){hinweis=netzFehler(e);render()}

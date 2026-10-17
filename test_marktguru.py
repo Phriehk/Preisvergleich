@@ -108,6 +108,25 @@ KW = {"Coca-Cola": ("coca",), "Red Bull": ("red bull", "redbull"), "Monster Ener
 AUSSCHLUSS = ("munch", "mash")  # z.B. Monster Munch (Snack) ist kein Energydrink
 
 
+def bild_url(o):
+    """Kleines Produktbild, falls Marktguru eines liefert (Format nicht offiziell dokumentiert, daher mehrere Wege)."""
+    def suche(x):
+        if isinstance(x, str):
+            return x if x.startswith("http") and re.search(r"\.(png|jpe?g|webp|gif)(\?|$)", x, re.I) else ""
+        for v in (x.values() if isinstance(x, dict) else x if isinstance(x, list) else []):
+            r = suche(v)
+            if r:
+                return r
+        return ""
+    for k in ("images", "image", "imageUrl", "imageURL"):
+        r = suche(o.get(k))
+        if r:
+            return r
+    if o.get("id") and o.get("images"):
+        return f"https://mg2de.b-cdn.net/api/v1/offers/{o['id']}/images/default/0/small.webp"
+    return ""
+
+
 def ist_produkt(gruppe, text, extra=()):
     """Bekannte Marken über KW, freie Suchen über das erste Suchwort; extra = zusätzlich auszuschließende Wörter."""
     t = text.lower()
@@ -199,7 +218,7 @@ def main():
     a = ap.parse_args()
     extra_aus = tuple(w.strip().lower() for w in a.ausschliessen.split(",") if w.strip())
     os.chdir(os.path.dirname(os.path.abspath(__file__)))  # Dateien immer neben dem Skript speichern
-    favs, fav_aus = [], {}
+    favs, fav_aus, fav_nur = [], {}, {}
     if not a.ohne_favoriten and not os.path.exists("favoriten.json"):
         with open("favoriten.json", "w", encoding="utf-8") as f:  # Startfavoriten beim ersten Lauf
             json.dump([{"name": n, "aus": ""} for n in ("Coca-Cola", "Red Bull", "Monster Energy")], f, ensure_ascii=False, indent=2)
@@ -208,6 +227,7 @@ def main():
             with open("favoriten.json", encoding="utf-8") as f:
                 for fv in json.load(f):
                     favs.append(fv["name"])
+                    fav_nur[fv["name"]] = {str(k).strip().lower() for k in fv.get("nur", [])}
                     fav_aus[fv["name"]] = tuple(w.strip().lower() for w in fv.get("aus", "").split(",") if w.strip())
         except (OSError, ValueError, KeyError, AttributeError):
             print("Hinweis: favoriten.json konnte nicht gelesen werden und wird ignoriert.")
@@ -247,8 +267,11 @@ def main():
         pro_l = round(preis / l, 2) if preis and l else None
         marke = (o.get("brand") or {}).get("name", "")
         gruppe = o.get("_gruppe", "Coca-Cola")
+        kandidat = (marke or name).strip().lower()  # Auswahl in der App: Marke, sonst Produktname
         coke = ist_produkt(gruppe, f"{marke} {name} {beschr}", fav_aus.get(gruppe, extra_aus))
-        ausgabe.append({"abgefragt": datetime.now().isoformat(timespec="minutes"), "gruppe": gruppe, "marke": marke, "coke": coke, "link": angebots_link(o), "markt": markt, "produkt": name, "beschreibung": beschr, "preis": preis,
+        if fav_nur.get(gruppe) and kandidat not in fav_nur[gruppe]:
+            coke = False  # vom Nutzer für diesen Favoriten nicht ausgewählt
+        ausgabe.append({"abgefragt": datetime.now().isoformat(timespec="minutes"), "gruppe": gruppe, "bild": bild_url(o), "marke": marke, "coke": coke, "link": angebots_link(o), "markt": markt, "produkt": name, "beschreibung": beschr, "preis": preis,
                         "liter": l, "preis_pro_liter": pro_l, "gueltig_von": von, "gueltig_bis": bis})
 
     roh_maerkte = {x["markt"].lower() for x in ausgabe}
