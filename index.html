@@ -3,7 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Preisvergleich Coca-Cola</title>
+<title>Getränke-Preisvergleich</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#c8102e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Preise">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#faf9f4;--card:#fff;--ink:#1b1f23;--mute:#5d646b;--line:#dcd9cc;--tag:#ffd23f;--best:#1e7f4f;--bestbg:#e3f3ea;--red:#c8102e;
@@ -180,15 +187,15 @@ function render(){
   const best=document.getElementById("best");
   if(!list.length){best.innerHTML="";rows.innerHTML='<tr><td class="empty" colspan="7">Keine Angebote in dieser Ansicht.</td></tr>';return}
   const b=list.find(o=>!abgelaufen(o)&&!kommt(o))||list[0];
-  best.innerHTML=`<div class="best">${tab==="jetzt"?"Günstigste Option jetzt":"Günstigste Option nächste Woche"}<br><b>${eur(gp(b))} pro Liter</b><br>${esc(b.markt)}: ${b.stueck} × ${b.ml} ml ${esc(b.form)} für ${eur(pr(b))} · ${gueltig(b)}</div>`;
+  best.innerHTML=`<div class="best">${tab==="jetzt"?"Günstigste Option jetzt":"Günstigste Option nächste Woche"}<br><b>${eur(gp(b))} pro Liter</b><br>${esc(b.markt)}: ${b.stueck} × ${b.ml} ml ${esc(b.form)} für ${eur(pr(b))} · ${gueltig(b)}${ampel(b)}</div>`;
   rows.innerHTML=list.map((o,i)=>`<tr class="${o===b&&!abgelaufen(o)&&!kommt(o)?"top":abgelaufen(o)?"old":kommt(o)?"soon":""}"><td title="${esc(o.info||"")}">${o.link&&/^https?:\/\//.test(o.link)?`<a href="${esc(o.link)}" target="_blank" rel="noopener noreferrer">${esc(o.markt)}</a>`:esc(o.markt)}${o.produkt?`<br><small style="color:var(--mute)">${esc(o.produkt)}</small>`:""}${o.app?`<br><small>🏷 App-Preis ${eur(o.app)}</small>`:""}${o.limit?`<br><small>max. ${esc(o.limit)}</small>`:""}</td><td data-l="Verpackung">${esc(o.form)}</td><td class="num" data-l="Menge">${o.stueck} × ${o.ml} ml</td><td class="num" data-l="Preis">${eur(pr(o))}</td><td class="num" data-l="Preis pro Stück">${eur(pr(o)/o.stueck)}</td><td class="num gp" data-l="pro Liter">${eur(gp(o))}</td><td data-l="Gültigkeit">${gueltig(o)}</td></tr>`).join("");
 }
 fMarkt.onchange=fForm.onchange=fMl.onchange=fSorte.onchange=app.onchange=render;
 let hinweis="";
 function updateNote(){
-  const e=offers.find(o=>o.quelle==="import");
-  note.style.background=e?"var(--bestbg)":"";note.style.color=e?"var(--ink)":"";
-  note.textContent=(e?"Echte Angebote von Marktguru (Stand "+new Date(e.geladen).toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"})+" Uhr). Die Verpackung ist geschätzt. Gelbe Zeilen sind noch nicht gültig.":"Prototyp mit erfundenen Beispieldaten, keine echten Preise. Lade oben deine angebote.json.")+(hinweis?" "+hinweis:"");
+  const e=offers.find(o=>o.quelle==="import"),alter=e?(Date.now()-new Date(e.geladen).getTime())/36e5:0,veraltet=alter>48;
+  note.style.background=veraltet?"#b3001b":e?"var(--bestbg)":"";note.style.color=veraltet?"#fff":e?"var(--ink)":"";
+  note.textContent=(veraltet?"ACHTUNG: Die Preise sind "+Math.floor(alter/24)+" Tage alt! Bitte aktualisieren. In der Handy-Version prüfe im Tab Actions bei GitHub, ob der tägliche Lauf noch läuft. ":"")+(e?"Echte Angebote von Marktguru (Stand "+new Date(e.geladen).toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"})+" Uhr). Die Verpackung ist geschätzt. Gelbe Zeilen sind noch nicht gültig.":"Prototyp mit erfundenen Beispieldaten, keine echten Preise. Lade oben deine angebote.json.")+(hinweis?" "+hinweis:"");
 }
 const RE1=/(\d+)\s*[x×]\s*(\d+(?:\.\d+)?)\s*-?\s*(ml|l)\b/,RE2=/(\d+(?:\.\d+)?)\s*-?\s*(ml|l)\b/;
 function menge(t){
@@ -373,6 +380,20 @@ async function suchen(){
   }catch(e){merge=false;hinweis=netzFehler(e)}
   suchBtn.disabled=false;render();
 }
+/* ---- Ampel: Preis im Vergleich zum eigenen Durchschnitt ---- */
+function ampel(b){
+  if(tab!=="jetzt"||abgelaufen(b)||kommt(b)||!vd||!vd.length)return"";
+  const g=b.gruppe||"Coca-Cola",heute=new Date().toISOString().slice(0,10),t={};
+  vd.forEach(([d,m,p,bis,von,gr])=>{
+    if((gr||"Coca-Cola")!==g||d>=heute||(bis&&bis<d)||(von&&von>d)||aus.has(m))return;
+    if(!(t[d]<=p))t[d]=p;
+  });
+  const tage=Object.keys(t).sort().slice(-56);
+  if(tage.length<3)return `<br><small>Vergleich mit dem Durchschnitt: bisher erst ${tage.length} Messtag${tage.length===1?"":"e"}, es braucht mindestens 3.</small>`;
+  const avg=tage.reduce((s,d)=>s+t[d],0)/tage.length,r=(b.preis/liter(b)/avg-1)*100;
+  const [sym,txt]=r<=-8?["🟢","Guter Preis"]:r<=8?["🟡","Normaler Preis"]:["🔴","Eher teuer"];
+  return `<br>${sym} <b>${txt}:</b> ${Math.abs(r).toFixed(0)} % ${r<0?"unter":"über"} deinem Durchschnitt (Ø ${eur(avg)}/l, ${tage.length} Messtage)`;
+}
 /* ---- Trefferliste mit Auswahl ---- */
 function kKey(o){return (o.marke||o.produkt||"").trim().toLowerCase()}
 function gewaehlt(o){const a=auswahl?auswahl[o.gruppe||"Coca-Cola"]:null;return !a||a.has(kKey(o))}
@@ -475,7 +496,7 @@ if(lokal){
       if(s.laeuft){upd.disabled=true;hinweis="Preise werden aktualisiert (etwa 1 Minute) ...";render();await abwarten();upd.disabled=false;render()}
     }catch(e){}
   })();
-}else if(/^https?:$/.test(location.protocol)){autoLaden();ghEinrichtung()}
+}else if(/^https?:$/.test(location.protocol)){autoLaden();ghEinrichtung();if("serviceWorker" in navigator&&ghInfo)navigator.serviceWorker.register("sw.js").catch(()=>{})}
 </script>
 </body>
 </html>
