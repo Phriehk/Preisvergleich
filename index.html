@@ -89,6 +89,8 @@ td a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line
 .kt b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kt small{color:var(--mute);font-size:.78rem}
 summary{cursor:pointer;font-weight:600}
+code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:2px 6px;word-break:break-all}
+.lbl{color:var(--mute);font-size:.9rem}
 @media (max-width:900px){
   .wrap.breit{max-width:880px}
   .breit .layout{grid-template-columns:minmax(0,1fr)}
@@ -152,6 +154,15 @@ summary{cursor:pointer;font-weight:600}
     <p style="margin:8px 0 0;font-size:.85rem;color:var(--mute)">Der Token bleibt nur in diesem Browser gespeichert.</p>
   </div>
   <button id="ghClear" type="button" hidden>Token entfernen</button>
+  <h2 style="margin-top:18px">Benachrichtigungen aufs Handy</h2>
+  <ol>
+    <li>Installiere die kostenlose App <b>ntfy</b> (Android: Play Store, iPhone: App Store).</li>
+    <li>Tippe in ntfy auf "+", gib dieses Thema ein und tippe auf "Abonnieren": <code id="ntfyCode"></code></li>
+    <li>Öffne dein Repository bei GitHub: Settings → Secrets and variables → Actions → "New repository secret". Name: <b>NTFY_TOPIC</b>, Secret: das Thema von oben, dann "Add secret".</li>
+    <li>Wähle oben einen Favoriten und lege dort deinen Wunschpreis fest.</li>
+  </ol>
+  <div class="row"><button id="ntfyKopieren" type="button">Thema kopieren</button><button id="ntfyNeu" type="button">Neues Thema</button></div>
+  <p style="font-size:.85rem;color:var(--mute);margin:8px 0 0">Wer das Thema kennt, könnte deine Nachrichten mitlesen. Gib es deshalb nicht weiter.</p>
 </div>
 
 <section class="card tools">
@@ -165,6 +176,13 @@ summary{cursor:pointer;font-weight:600}
     <input id="suchtext" type="search" class="grow" placeholder="Getränk suchen, z.B. Fanta oder Mineralwasser">
     <input id="suchAus" placeholder="Ausschließen, z.B. zero, light" style="width:200px;max-width:100%">
     <button id="suchBtn" type="button" class="primary">Suchen</button>
+  </div>
+  <div id="alarmRow" class="row" hidden>
+    <span class="lbl">🔔 Benachrichtigen, wenn unter</span>
+    <input id="alarmWert" inputmode="decimal" placeholder="0,80" style="width:84px">
+    <select id="alarmEinheit" aria-label="Einheit des Wunschpreises"><option value="l">€ pro Liter</option><option value="stueck">€ pro Stück</option></select>
+    <button id="alarmSave" type="button">Speichern</button>
+    <button id="alarmAus" type="button" hidden>Aus</button>
   </div>
   <input id="file" type="file" accept=".json,application/json" hidden>
 </section>
@@ -497,6 +515,7 @@ function favKnopf(){
   const g=fProdukt.value;
   favBtn.hidden=!(lokal||ghAktiv());
   favBtn.textContent=(favs||[]).some(f=>f.name===g)?"★ Favorit entfernen":"☆ Als Favorit speichern";
+  alarmZeigen();
 }
 async function favAendern(hinzu,name,aus,nur){
   if(lokal){
@@ -504,7 +523,7 @@ async function favAendern(hinzu,name,aus,nur){
     return await (await fetch(p,{method:"POST",headers:HDR})).json();
   }
   const liste=(favs||[]).filter(f=>f.name.toLowerCase()!==name.toLowerCase());
-  if(hinzu)liste.push({name,aus,nur:nur||[]});
+  if(hinzu){const alt=(favs||[]).find(f=>f.name.toLowerCase()===name.toLowerCase());liste.push({name,aus,nur:nur||[],...(alt&&alt.alarm?{alarm:alt.alarm}:{})})}
   await ghFavSpeichern(liste);
   return liste;
 }
@@ -524,6 +543,37 @@ favBtn.onclick=async()=>{
   }catch(e){hinweis=netzFehler(e);render()}
   favBtn.disabled=false;
 };
+/* ---- Preisalarm (Benachrichtigung aufs Handy) ---- */
+function alarmZeigen(){
+  const g=fProdukt.value,f=(favs||[]).find(x=>x.name===g),kann=lokal||ghAktiv();
+  alarmRow.hidden=!(f&&kann);
+  if(!f||!kann)return;
+  const al=f.alarm;
+  alarmWert.value=al?al.wert.toFixed(2).replace(".",","):"";
+  alarmEinheit.value=al?al.einheit:"l";
+  alarmAus.hidden=!al;
+}
+async function alarmSetzen(g,alarm){
+  try{
+    if(lokal)favs=await (await fetch("favorit-alarm?name="+encodeURIComponent(g)+(alarm?"&wert="+alarm.wert+"&einheit="+alarm.einheit:""),{method:"POST",headers:HDR})).json();
+    else{const liste=(favs||[]).map(f=>f.name===g?{...f,alarm:alarm||undefined}:f);await ghFavSpeichern(liste);favs=liste}
+    hinweis=alarm?"Preisalarm gespeichert: unter "+alarm.wert.toFixed(2).replace(".",",")+(alarm.einheit==="l"?" €/l":" €/Stück")+". Du bekommst eine Nachricht, sobald ein Lauf ein passendes Angebot findet.":"Preisalarm ausgeschaltet.";
+  }catch(e){hinweis=netzFehler(e)}
+  favKnopf();render();
+}
+alarmSave.onclick=()=>{
+  const w=parseFloat(alarmWert.value.replace(",","."));
+  if(!(w>0)){hinweis="Bitte einen Wunschpreis über 0 eingeben, z.B. 0,80.";render();return}
+  alarmSetzen(fProdukt.value,{wert:Math.round(w*100)/100,einheit:alarmEinheit.value});
+};
+alarmAus.onclick=()=>alarmSetzen(fProdukt.value,null);
+function ntfyThema(neu){
+  let t="";try{t=localStorage.getItem("pv-ntfy")||""}catch(e){}
+  if(!t||neu){t="preise-"+Array.from(crypto.getRandomValues(new Uint8Array(20)),b=>"abcdefghijkmnpqrstuvwxyz23456789"[b%32]).join("");try{localStorage.setItem("pv-ntfy",t)}catch(e){}}
+  return t;
+}
+ntfyKopieren.onclick=async()=>{const t=ntfyThema();try{await navigator.clipboard.writeText(t);hinweis="Thema kopiert."}catch(e){hinweis="Kopieren nicht möglich, bitte das Thema von Hand abschreiben."}render()};
+ntfyNeu.onclick=()=>{ntfyCode.textContent=ntfyThema(true)};
 /* ---- Aktualisieren ---- */
 async function aktualisieren(){
   upd.disabled=true;hinweis="Preise werden aktualisiert (etwa "+(lokal?"1":"2")+" Minuten) ...";render();
@@ -537,7 +587,7 @@ async function aktualisieren(){
 /* ---- Einrichtung der Handy-Version ---- */
 function ghEinrichtung(){
   if(!ghInfo)return;
-  gear.hidden=false;
+  gear.hidden=false;ntfyCode.textContent=ntfyThema();
   const an=ghAktiv();
   ghAnleitung.hidden=an;ghClear.hidden=!an;
   ghStatus.textContent=an?"Aktiv: Suche, Stern und Aktualisieren sind freigeschaltet.":"";

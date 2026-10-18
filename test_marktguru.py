@@ -18,7 +18,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 UA = {"User-Agent": "Mozilla/5.0 (privates Testprojekt)"}
 HOME = "https://www.marktguru.de"
@@ -50,8 +50,8 @@ def hole_schluessel():
     return api.group(1), client.group(1)
 
 
-def liter(text):
-    """Liest Mengen wie '6 x 1,5 l', '1,5-l-Fl.' oder '24 x 330 ml' aus einem Text."""
+def menge(text):
+    """Liest Stückzahl und Gesamtmenge in Litern aus Texten wie '6 x 1,5 l', '1,5-l-Fl.' oder '24 x 330 ml'."""
     t = (text or "").lower().replace(",", ".")
     t = re.sub(r"(\d)\s*i\b", r"\1 l", t)  # Tippfehler: "1,25 I" statt "1,25 l"
     m = re.search(r"(\d+)\s*[x×]\s*(\d+(?:\.\d+)?)\s*-?\s*(ml|l)\b", t)
@@ -62,7 +62,12 @@ def liter(text):
         if not m:
             return None
         n, v, u = 1, float(m[1]), m[2]
-    return n * v / (1000 if u == "ml" else 1)
+    return n, n * v / (1000 if u == "ml" else 1)
+
+
+def liter(text):
+    r = menge(text)
+    return r[1] if r else None
 
 
 def lokal(s):
@@ -201,6 +206,72 @@ def verlauf(ausgabe, alarm):
                         x["preis_pro_liter"], x["gueltig_bis"], x["gueltig_von"], x["gruppe"]])
 
 
+def de(x):
+    return f"{x:.2f}".replace(".", ",")
+
+
+def kurz(iso):
+    return f"{iso[8:10]}.{iso[5:7]}." if iso else ""
+
+
+def benachrichtige(ausgabe, fav_alarm):
+    """Schickt per ntfy eine Handy-Nachricht, wenn ein Favorit unter dem Wunschpreis (in €/l oder €/Stück) liegt."""
+    if not fav_alarm:
+        return
+    thema = os.environ.get("NTFY_TOPIC", "").strip()
+    if not thema and os.path.exists("ntfy.txt"):
+        with open("ntfy.txt", encoding="utf-8") as f:
+            thema = f.read().strip()
+    if not thema:
+        print("Hinweis: Preisalarme sind gesetzt, aber es ist kein ntfy-Thema hinterlegt (GitHub-Secret NTFY_TOPIC oder Datei ntfy.txt).")
+        return
+    gemeldet = {}
+    if os.path.exists("benachrichtigt.json"):
+        try:
+            with open("benachrichtigt.json", encoding="utf-8") as f:
+                gemeldet = json.load(f)
+        except (OSError, ValueError):
+            gemeldet = {}
+    grenze = (date.today() - timedelta(days=60)).isoformat()
+    gemeldet = {k: d for k, d in gemeldet.items() if d >= grenze}
+    for gruppe, al in fav_alarm.items():
+        treffer = []
+        for x in ausgabe:
+            if x["gruppe"] != gruppe or not x["preis"]:
+                continue
+            s = status(x["gueltig_von"], x["gueltig_bis"])
+            if s == "abgelaufen":
+                continue
+            wert = x["preis_pro_liter"] if al["einheit"] == "l" else (x["preis"] / x["stueck"] if x.get("stueck") else None)
+            if wert is not None and wert <= al["wert"]:
+                treffer.append((wert, x, s))
+        if not treffer:
+            continue
+        wert, x, s = min(treffer, key=lambda t: t[0])
+        schluessel = "|".join(str(v) for v in (gruppe, x["markt"], x["preis"], x["liter"], x["gueltig_bis"]))
+        if schluessel in gemeldet:
+            continue  # für dieses Angebot wurde schon Bescheid gesagt
+        einheit = "€/l" if al["einheit"] == "l" else "€/Stück"
+        wann = f"Ab {kurz(x['gueltig_von'])}" if s.startswith("NOCH NICHT") else (f"Bis {kurz(x['gueltig_bis'])}" if x["gueltig_bis"] else "")
+        packung = f"{x['stueck']} × " if x.get("stueck", 1) > 1 else ""
+        text = f"{x['markt']}: {de(wert)} {einheit} ({packung}{x['produkt']} für {de(x['preis'])} €). {wann}".strip()
+        nachricht = {"topic": thema, "title": f"Preisalarm {gruppe}: {de(wert)} {einheit}", "message": text,
+                     "tags": ["moneybag"], "priority": 3}
+        if os.environ.get("APP_URL"):
+            nachricht["click"] = os.environ["APP_URL"]
+        try:
+            req = urllib.request.Request("https://ntfy.sh", data=json.dumps(nachricht).encode("utf-8"),
+                                         headers={"Content-Type": "application/json"}, method="POST")
+            with urllib.request.urlopen(req, timeout=30):
+                pass
+            gemeldet[schluessel] = date.today().isoformat()
+            print(f"Benachrichtigung gesendet: {text}")
+        except Exception as e:
+            print(f"Benachrichtigung fehlgeschlagen: {e}")
+    with open("benachrichtigt.json", "w", encoding="utf-8") as f:
+        json.dump(gemeldet, f, ensure_ascii=False, indent=1)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--plz", default="47178")
@@ -218,7 +289,7 @@ def main():
     a = ap.parse_args()
     extra_aus = tuple(w.strip().lower() for w in a.ausschliessen.split(",") if w.strip())
     os.chdir(os.path.dirname(os.path.abspath(__file__)))  # Dateien immer neben dem Skript speichern
-    favs, fav_aus, fav_nur = [], {}, {}
+    favs, fav_aus, fav_nur, fav_alarm = [], {}, {}, {}
     if not a.ohne_favoriten and not os.path.exists("favoriten.json"):
         with open("favoriten.json", "w", encoding="utf-8") as f:  # Startfavoriten beim ersten Lauf
             json.dump([{"name": n, "aus": ""} for n in ("Coca-Cola", "Red Bull", "Monster Energy")], f, ensure_ascii=False, indent=2)
@@ -229,7 +300,10 @@ def main():
                     favs.append(fv["name"])
                     fav_nur[fv["name"]] = {str(k).strip().lower() for k in fv.get("nur", [])}
                     fav_aus[fv["name"]] = tuple(w.strip().lower() for w in fv.get("aus", "").split(",") if w.strip())
-        except (OSError, ValueError, KeyError, AttributeError):
+                    al = fv.get("alarm")
+                    if isinstance(al, dict) and al.get("einheit") in ("l", "stueck") and float(al.get("wert", 0)) > 0:
+                        fav_alarm[fv["name"]] = {"wert": float(al["wert"]), "einheit": al["einheit"]}
+        except (OSError, ValueError, KeyError, AttributeError, TypeError):
             print("Hinweis: favoriten.json konnte nicht gelesen werden und wird ignoriert.")
 
     api, client = hole_schluessel()
@@ -263,6 +337,7 @@ def main():
         beschr = o.get("description", "")
         preis = o.get("price")
         l = liter(beschr) or liter(name)
+        st = (menge(beschr) or menge(name) or (1, None))[0]  # Stückzahl der Packung
         von, bis, rest = gueltigkeit(o)
         pro_l = round(preis / l, 2) if preis and l else None
         marke = (o.get("brand") or {}).get("name", "")
@@ -272,7 +347,7 @@ def main():
         if fav_nur.get(gruppe) and kandidat not in fav_nur[gruppe]:
             coke = False  # vom Nutzer für diesen Favoriten nicht ausgewählt
         ausgabe.append({"abgefragt": datetime.now().isoformat(timespec="minutes"), "gruppe": gruppe, "bild": bild_url(o), "marke": marke, "coke": coke, "link": angebots_link(o), "markt": markt, "produkt": name, "beschreibung": beschr, "preis": preis,
-                        "liter": l, "preis_pro_liter": pro_l, "gueltig_von": von, "gueltig_bis": bis})
+                        "liter": l, "stueck": st, "preis_pro_liter": pro_l, "gueltig_von": von, "gueltig_bis": bis})
 
     roh_maerkte = {x["markt"].lower() for x in ausgabe}
     # Nur Coca-Cola (Marke steht im Feld "brand" oder im Text)
@@ -322,6 +397,7 @@ def main():
     print(f"\nGespeichert in {a.out}")
     if not a.kein_verlauf:
         verlauf(ausgabe, a.alarm)
+    benachrichtige(ausgabe, fav_alarm)
     if a.debug and treffer:
         print("\nRohdaten des ersten Treffers:\n", json.dumps(treffer[0], indent=2, ensure_ascii=False))
 
