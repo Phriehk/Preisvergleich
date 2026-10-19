@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 24.41 KiB / gzip: 8.41 KiB
+Total Upload: 24.85 KiB / gzip: 8.52 KiB
 Worker Startup Time: 3 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (4.37 sec)
-Deployed preise triggers (0.58 sec)
+Uploaded preise (5.52 sec)
+Deployed preise triggers (0.66 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: 92f7f8f0-720e-46e3-8ec0-ea30d30d9f49
+Current Version ID: 42b6f242-7276-458f-9338-8921e40b29e0
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -22,7 +22,7 @@ Seite: <title>Getränke-Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
 Suche Fanta: 1 s, {"anzahl":1}
-Aktualisieren: 1 s, {"fehler":"Zugangscode fehlt oder ist falsch"}
+Aktualisieren: 5 s, {"zeit":"2026-10-19T15:31","anzahl":20,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":20,"gruppen":["Monster Energy","Red Bull","coca cola"]}
 Verlauf: 184 Zeilen
-Entfernungen: 57 s, {"Lidl":3.7,"ALDI SÜD":1.3,"Kaufland":3.2,"REWE":6.8,"PENNY":3.1,"Netto Marken-Discount":2,"trinkgut":0.7,"Thomas Philipps":3.9,"Handelshof":null,"ROSSMANN":1.2}
+Entfernungen: 0 s, {"Lidl":3.7,"ALDI SÜD":1.3,"Kaufland":3.2,"REWE":6.8,"PENNY":3.1,"Netto Marken-Discount":2,"trinkgut":0.7,"Thomas Philipps":3.9,"Handelshof":null,"ROSSMANN":1.2}
