@@ -36,14 +36,20 @@ async function http(url, headers, versuche = 3) {
 }
 
 /* ---------- Marktguru-Schlüssel (von der Webseite, einen Tag zwischengespeichert) ---------- */
+let schluesselHolen = null;   // mehrere gleichzeitige Abfragen teilen sich eine Erneuerung des Schlüssels
 async function schluessel(env, neu) {
   if (!neu) { const k = await env.PV.get("keys", "json"); if (k && Date.now() - k.t < 864e5) return k; }
-  const html = await (await http("https://www.marktguru.de")).text();
-  const api = html.match(/"apiKey"\s*:\s*"([^"]+)"/), client = html.match(/"clientKey"\s*:\s*"([^"]+)"/);
-  if (!api || !client) throw new Error("Schlüssel auf marktguru.de nicht gefunden - die Seite hat sich vermutlich geändert.");
-  const k = { api: api[1], client: client[1], t: Date.now() };
-  await env.PV.put("keys", JSON.stringify(k));
-  return k;
+  if (!schluesselHolen) schluesselHolen = (async () => {
+    try {
+      const html = await (await http("https://www.marktguru.de")).text();
+      const api = html.match(/"apiKey"\s*:\s*"([^"]+)"/), client = html.match(/"clientKey"\s*:\s*"([^"]+)"/);
+      if (!api || !client) throw new Error("Schlüssel auf marktguru.de nicht gefunden - die Seite hat sich vermutlich geändert.");
+      const k = { api: api[1], client: client[1], t: Date.now() };
+      await env.PV.put("keys", JSON.stringify(k));
+      return k;
+    } finally { schluesselHolen = null; }
+  })();
+  return schluesselHolen;
 }
 
 /* ---------- Mengen ---------- */
@@ -56,9 +62,39 @@ function menge(text) {
   if (m) { n = +m[1]; v = +m[2]; u = m[3]; } else { m = t.match(RE2); if (!m) return null; n = 1; v = +m[1]; u = m[2]; }
   return [n, n * v / (TEILER[u] || 1)];
 }
+/* Lebensmittel: Gewicht (g, kg) und Stück. Grundpreise wie "(1 kg = 7,96)" und "je 100 g" gehören nicht zur Packung und werden vorher entfernt. */
+const GEW = "(kilogramm|kg|gramm|gr|g)";
+const GRE1 = new RegExp("(\\d+)\\s*[x×]\\s*(\\d+(?:\\.\\d+)?)\\s*-?\\s*" + GEW + "(?![a-zäöüß])"), GRE2 = new RegExp("(\\d+(?:\\.\\d+)?)\\s*-?\\s*" + GEW + "(?![a-zäöüß])");
+function ohneGrundpreis(text) {
+  return (text || "").toLowerCase().replace(/,/g, ".")
+    .replace(/\(?\s*\d*\s*(?:kg|g|l|ml|100\s*g|100\s*ml)\s*=\s*[\d.]+[^)\n;]*\)?/g, " ")
+    .replace(/\b(?:pro|je|per)\s+\d*\s*(?:kg|g|l|ml|stück|stk)\b/g, " ");
+}
+function gewicht(text) {
+  const t = ohneGrundpreis(text);
+  let m = t.match(GRE1), n, v, u;
+  if (m) { n = +m[1]; v = +m[2]; u = m[3]; } else { m = t.match(GRE2); if (!m) return null; n = 1; v = +m[1]; u = m[2]; }
+  return [n, n * (u[0] === "k" ? v : v / 1000)];
+}
+function stueckZahl(text) {
+  const t = ohneGrundpreis(text);
+  const m = t.match(/(\d+)\s*(?:stück|stk\.?|st\.)(?![a-zäöüß])/) || t.match(/\b(\d+)\s*er(?:[- ]?pack(?:ung)?)?(?![a-zäöüß])/);
+  return m && +m[1] >= 1 && +m[1] <= 200 ? +m[1] : null;
+}
+/* Ergebnis: [Anzahl, Menge in Basiseinheit, Art]; Art "l" = Liter, "kg" = Kilogramm, "st" = Stück */
 function mengenangabe(o) {
-  if (o.einheit === "l" && o.volume > 0) { const n = o.quantity >= 1 ? Math.floor(o.quantity) : 1; return [n, Math.round(n * o.volume * 1e4) / 1e4]; }
-  return menge(o.desc) || menge(o.name);
+  const e = o.einheit;
+  if (e === "l" && o.volume > 0) { const n = o.quantity >= 1 ? Math.floor(o.quantity) : 1; return [n, Math.round(n * o.volume * 1e4) / 1e4, "l"]; }
+  if (e === "kg") { const n = o.quantity >= 1 ? Math.floor(o.quantity) : 1, v = o.volume > 0 ? o.volume : 1; return [n, Math.round(n * v * 1e4) / 1e4, "kg"]; }
+  if (e === "g" && o.volume > 0) { const n = o.quantity >= 1 ? Math.floor(o.quantity) : 1; return [n, Math.round(n * o.volume) / 1000, "kg"]; }
+  const fl = menge(o.desc) || menge(o.name);
+  if (fl) return [fl[0], fl[1], "l"];
+  const ge = gewicht(o.desc) || gewicht(o.name);
+  if (ge) return [ge[0], Math.round(ge[1] * 1e4) / 1e4, "kg"];
+  const sz = stueckZahl(o.desc) || stueckZahl(o.name);
+  if (sz) return [sz, sz, "st"];
+  if (/^(st|stk|stück)/.test(e || "")) { const n = o.quantity >= 1 ? Math.floor(o.quantity) : 1; return [n, n, "st"]; }
+  return null;
 }
 
 /* ---------- Eine Teilabfrage: ein Suchbegriff in einer Postleitzahl, bis zu 2 Seiten ---------- */
@@ -96,9 +132,18 @@ async function teilAbfrage(env, plz, suche) {
   return aus;
 }
 
-// Eigener Einstiegspunkt, damit jede Teilabfrage als eigener Aufruf mit eigenen Grenzen läuft
+// Eigener Einstiegspunkt, damit jede Teilabfrage als eigener Aufruf mit eigenen Grenzen läuft.
+// Ein Aufruf holt mehrere Artikel in einer Postleitzahl und sortiert unpassende Treffer gleich aus (spart Aufrufe und Rechenzeit im Hauptaufruf).
 export class Teil extends WorkerEntrypoint {
   async hole(plz, suche) { return teilAbfrage(this.env, plz, suche); }
+  async holeStapel(plz, auftraege, ohneFilterFallback) {
+    return Promise.all(auftraege.map(async a => {
+      const ids = new Set(), alle = [];
+      for (const seite of await Promise.all(a.suchen.map(s => teilAbfrage(this.env, plz, s)))) for (const o of seite) if (!ids.has(o.id)) { ids.add(o.id); alle.push(o); }
+      const t = alle.filter(o => istProdukt(a.p, `${o.brand} ${o.name} ${o.desc}`, a.aus));
+      return !t.length && ohneFilterFallback ? alle : t;
+    }));
+  }
 }
 
 /* ---------- Abfrage mehrerer Produkte, Aufbereitung wie im Python-Skript ---------- */
@@ -108,7 +153,7 @@ function istProdukt(gruppe, text, extra) {
   if (KW[gruppe]) gefunden = KW[gruppe].some(k => t.includes(k));
   else {
     const wort = (gruppe.toLowerCase().split(/\s+/).filter(Boolean)[0] || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    gefunden = new RegExp(wort + "(?:s|e|n)?(?![a-zäöüß])").test(t);
+    gefunden = new RegExp("(?<![a-zäöüß])" + wort + "(?:s|e|n)?(?![a-zäöüß])").test(t);   // am Wortanfang: "Reis" soll nicht in "Preis" gefunden werden
   }
   return gefunden && ![...AUSSCHLUSS, ...extra].some(x => t.includes(x));
 }
@@ -119,42 +164,59 @@ async function parallel(aufgaben, n) {
   return erg;
 }
 
-async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2, PLZ3]) {   // erste Postleitzahl = Hauptgebiet, die weiteren liefern nur ausgewählte Märkte dazu
+async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2, PLZ3], streng = false) {   // erste Postleitzahl = Hauptgebiet, die weiteren liefern nur ausgewählte Märkte dazu
   const HAUPT = plzListe[0];
   // produkte: Liste von Gruppennamen; favInfo: {name: {aus:[...], nur:Set}}
-  const jobs = [];
-  for (const p of produkte) for (const s of (SUCHEN[p] || [p])) for (const plz of plzListe) jobs.push({ p, s, plz });
+  // Je Postleitzahl werden die Artikel in Stapeln von höchstens 4 Suchbegriffen abgefragt (ein Aufruf je Stapel, wegen der Grenzen bei Cloudflare)
+  const auftraege = [];
+  for (const p of produkte) {
+    const info = favInfo[p] || { aus: extraAus }, aus = info.aus && info.aus.length ? info.aus : extraAus;
+    for (const plz of plzListe) auftraege.push({ p, plz, suchen: SUCHEN[p] || [p], aus, roh: null });
+  }
+  const stapel = [];
+  for (const plz of plzListe) {
+    let akt = null, n = 0;
+    for (const a of auftraege.filter(x => x.plz === plz)) {
+      if (!akt || n + a.suchen.length > 4) { akt = { plz, liste: [] }; n = 0; stapel.push(akt); }
+      akt.liste.push(a); n += a.suchen.length;
+    }
+  }
   const teile = ctx.exports.Teil;
   const fehlerListe = [];
-  const roh = await parallel(jobs.map(j => async () => {
-    try { return await teile.hole(j.plz, j.s); } catch (e) { fehlerListe.push(`${j.s}/${j.plz}: ${e.message}`); return null; }
+  const einzeln = produkte.length === 1 && !streng;   // bei einer einzelnen Suche notfalls auch ungefilterte Treffer zeigen (außer "streng")
+  const ergebnis = await parallel(stapel.map(st => async () => {
+    try {
+      const r = await teile.holeStapel(st.plz, st.liste.map(a => ({ p: a.p, suchen: a.suchen, aus: a.aus })), einzeln);
+      st.liste.forEach((a, i) => { a.roh = r[i]; });
+      return true;
+    } catch (e) { fehlerListe.push(`${st.liste.map(a => a.p).join("+")}/${st.plz}: ${e.message}`); return false; }
   }), GLEICHZEITIG);
-  if (roh.every(x => x === null)) throw new Error("Marktguru nicht erreichbar: " + fehlerListe.slice(0, 2).join("; "));
+  if (ergebnis.every(x => !x)) throw new Error("Marktguru nicht erreichbar: " + fehlerListe.slice(0, 2).join("; "));
   const jetzt = berlin(new Date(), true), ausgabe = [];
   for (const p of produkte) {
     const ids = new Set(), treffer = [];
-    jobs.forEach((j, i) => {
-      if (j.p !== p || j.plz !== HAUPT || !roh[i]) return;
-      for (const o of roh[i]) if (!ids.has(o.id)) { ids.add(o.id); treffer.push(o); }
-    });
+    for (const a of auftraege) {
+      if (a.p !== p || a.plz !== HAUPT || !a.roh) continue;
+      for (const o of a.roh) if (!ids.has(o.id)) { ids.add(o.id); treffer.push(o); }
+    }
     const bekannt = new Set(treffer.map(o => o.id)), zweit = new Set();
-    jobs.forEach((j, i) => {
-      if (j.p !== p || j.plz === HAUPT || !roh[i]) return;
-      for (const o of roh[i]) {
+    for (const a of auftraege) {
+      if (a.p !== p || a.plz === HAUPT || !a.roh) continue;
+      for (const o of a.roh) {
         const name = o.adv.trim().toLowerCase();
-        const passt = j.plz === PLZ2 ? PLZ2_MAERKTE.some(z => name.includes(z)) : PLZ3_MAERKTE.includes(name) && !bekannt.has(o.id);
-        const key = j.plz + "|" + o.id;
-        if (passt && !zweit.has(key)) { zweit.add(key); treffer.push({ ...o, plz: j.plz }); }
+        const passt = a.plz === PLZ2 ? PLZ2_MAERKTE.some(z => name.includes(z)) : PLZ3_MAERKTE.includes(name) && !bekannt.has(o.id);
+        const key = a.plz + "|" + o.id;
+        if (passt && !zweit.has(key)) { zweit.add(key); treffer.push({ ...o, plz: a.plz }); }
       }
-    });
+    }
     const info = favInfo[p] || { aus: extraAus, nur: new Set() };
     for (const o of treffer) {
-      const mg = mengenangabe(o), l = mg ? mg[1] : null, st = mg ? mg[0] : 1;
+      const mg = mengenangabe(o), l = mg ? mg[1] : null, st = mg ? mg[0] : 1, art = mg ? mg[2] : "l";
       const kandidat = (o.brand || o.name).trim().toLowerCase();
-      let coke = istProdukt(p, `${o.brand} ${o.name} ${o.desc}`, info.aus.length ? info.aus : extraAus);
-      if (info.nur.size && !info.nur.has(kandidat)) coke = false;
+      let coke = true;   // passende Treffer sind schon im Teilaufruf ausgewählt
+      if (info.nur && info.nur.size && !info.nur.has(kandidat)) coke = false;
       ausgabe.push({ abgefragt: jetzt, gruppe: p, bild: o.bild, marke: o.brand, coke, link: o.link, markt: o.adv + (o.plz ? ` (${o.plz})` : ""), produkt: o.name,
-        beschreibung: o.desc, preis: o.price, liter: l, stueck: st, ml: l && st ? Math.round(l * 1000 / st) : null,
+        beschreibung: o.desc, preis: o.price, art, liter: l, stueck: st, ml: l && st ? Math.round(l * 1000 / st) : null,
         preis_pro_liter: o.price && l ? Math.round(o.price / l * 100) / 100 : null, gueltig_von: o.von, gueltig_bis: o.bis });
     }
   }
@@ -385,12 +447,12 @@ async function regionAngebote(env, ctx, sp, ip) {
   if (!begriffe.length) throw Object.assign(new Error("Bitte einen Suchbegriff angeben"), { status: 400 });
   const roh = new TextEncoder().encode(begriffe.map(x => x.toLowerCase()).sort().join("|"));
   const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", roh))].slice(0, 8).map(b => b.toString(16).padStart(2, "0")).join("");
-  const key = "reg:" + plz + ":" + hash, frisch = sp.get("neu") === "1";
+  const streng = sp.get("streng") === "1", key = "reg:" + plz + ":" + hash + (streng ? ":s" : ""), frisch = sp.get("neu") === "1";
   const alt = await env.PV.get(key, "json");
   if (alt && Date.now() - alt.t < (frisch ? 15 * 60e3 : 3 * 3600e3)) return alt.liste;
   if (!besucherOk(ip) || !(await tagesOk(env, "region", 300))) throw zuViel();
   const { info } = favAuswerten(await lade(env, "favoriten", "json"));
-  const { liste } = await abfragen(ctx, begriffe, info, [], [plz]);
+  const { liste } = await abfragen(ctx, begriffe, info, [], [plz], streng);
   await env.PV.put(key, JSON.stringify({ t: Date.now(), liste }), { expirationTtl: 86400 });
   return liste;
 }
@@ -432,7 +494,15 @@ function datenPruefen(d) {   // nur erwartete Felder und Größen werden gespeic
   if (d && Array.isArray(d.eink)) o.eink = d.eink.filter(x => typeof x === "string" && x.length < 300).slice(0, 100);
   if (d && d.zettel && typeof d.zettel === "object" && !Array.isArray(d.zettel)) {   // Einkaufszettel: Favorit -> Liter
     o.zettel = {};
-    for (const [k, v] of Object.entries(d.zettel).slice(0, 60)) if (k.length <= 60 && Number.isFinite(+v) && +v > 0 && +v <= 500) o.zettel[k] = +v;
+    for (const [k, v] of Object.entries(d.zettel).slice(0, 120)) if (k.length <= 60 && Number.isFinite(+v) && +v > 0 && +v <= 500) o.zettel[k] = +v;
+  }
+  if (d && d.richt && typeof d.richt === "object" && !Array.isArray(d.richt)) {   // eigene Richtwerte: Artikel -> Euro je Liter / kg / Stück
+    o.richt = {};
+    for (const [k, v] of Object.entries(d.richt).slice(0, 120)) if (k.length <= 60 && Number.isFinite(+v) && +v > 0 && +v <= 1000) o.richt[k] = Math.round(+v * 100) / 100;
+  }
+  if (d && d.frei && typeof d.frei === "object" && !Array.isArray(d.frei)) {   // eigene Artikel ohne Angebot: Name -> Einheit
+    o.frei = {};
+    for (const [k, v] of Object.entries(d.frei).slice(0, 120)) if (k.length <= 40 && ["l", "kg", "st"].includes(v)) o.frei[k] = v;
   }
   return o;
 }
@@ -607,7 +677,7 @@ export default {
         const q = (url.searchParams.get("q") || "").replace(/,/g, " ").trim();
         if (!q || q.length > 60) return fehler("Bitte einen Suchbegriff angeben", 400);
         const aus = (url.searchParams.get("aus") || "").split(",").map(w => w.trim().toLowerCase()).filter(Boolean);
-        const { liste } = await abfragen(ctx, [q], {}, aus);
+        const { liste } = await abfragen(ctx, [q], {}, aus, undefined, url.searchParams.get("streng") === "1");
         return antwort(liste);
       }
       if (p === "/entfernungen" && req.method === "POST") {
