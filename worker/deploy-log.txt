@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 37.65 KiB / gzip: 11.66 KiB
-Worker Startup Time: 3 ms
+Total Upload: 41.52 KiB / gzip: 12.61 KiB
+Worker Startup Time: 2 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (4.67 sec)
-Deployed preise triggers (0.66 sec)
+Uploaded preise (3.92 sec)
+Deployed preise triggers (0.82 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: 6d4926af-7f6f-4afe-ad67-76d1488e153a
+Current Version ID: 523e234b-f93c-4a15-be11-1240bf78421d
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,31 +18,72 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-19T22:35","anzahl":20,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-19T22:50","anzahl":20,"fehler":0}}
 Seite: <title>Getränke-Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
 Suche Fanta: 1 s, {"anzahl":1}
-Aktualisieren: 5 s, {"zeit":"2026-10-19T22:50","anzahl":20,"fehler":0,"alarm":[]}
+Aktualisieren: 6 s, {"zeit":"2026-10-19T23:25","anzahl":20,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":20,"gruppen":["Monster Energy","Red Bull","coca cola"]}
 Verlauf: 184 Zeilen
 Korrekturen lesen: {}
 Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
-Korrektur gespeichert und gelesen: true
+Korrektur gespeichert und gelesen: false
 Test-Korrektur gelöscht: false
 Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
-Region 40210 ohne Code: 0 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
+Region 40210 ohne Code: 1 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
+Lebensmittel-Probe: 3 s, {"Butter":18,"Eier":1,"Milch":10,"Reis":8,"Äpfel":7}
+  Probe: Äpfel | Netto Marken-Discount | Äpfel XXL | art=kg liter=2 stueck=1 ml=2000 preis=2.29 | 2 kg Beutel Deutschland, Kl. II
+  Probe: Äpfel | PENNY | Äpfel | art=kg liter=2 stueck=1 ml=2000 preis=2.49 | Kl. I, je 2-kg-Beutel
+  Probe: Äpfel | ALDI SÜD | Äpfel | art=kg liter=1 stueck=1 ml=1000 preis=1.99 | lose Ursprung: Deutschland; Klasse: I; kg-Preis
+  Probe: Äpfel | Lidl | Äpfel | art=kg liter=1 stueck=1 ml=1000 preis=1.99 | Rote  Ursprung: Deutschland/Österreich Klasse I Je 1 kg
+  Probe: Äpfel | Kaufland | Äpfel Ambrosia | art=kg liter=1 stueck=1 ml=1000 preis=1.99 | Ital., rot » Kl. I je 1-kg-Packg.
+  Probe: Äpfel | PENNY | Äpfel | art=kg liter=1 stueck=1 ml=1000 preis=2.29 | 1 kg
+  Probe: Äpfel | PENNY | Grüne Äpfel | art=kg liter=1 stueck=1 ml=1000 preis=2.49 | Kl. I je 1-kg-Schale
+  Probe: Butter | Netto Marken-Discount | Butter | art=kg liter=0.45 stueck=1 ml=450 preis=0.99 | 450 g versch. Sorten
+  Probe: Butter | Lidl | Peanut-Butter | art=kg liter=0.454 stueck=1 ml=454 preis=1.79 | HINWEIS: MIT LIDL PLUS APP , 454g Normalpreis 1.99
+  Probe: Butter | Netto Marken-Discount | Butter | art=kg liter=0.25 stueck=1 ml=250 preis=0.99 | oder Streichzart gekühlt, versch. Sorten 250 g
+  Probe: Butter | Lidl | mit Butter XXL | art=kg liter=0.4 stueck=1 ml=400 preis=1.99 | Versch. Sorten. Gekühlt. Je 400 g
+  Probe: Butter | Netto Marken-Discount | mit Butter XXL | art=kg liter=0.4 stueck=1 ml=400 preis=1.99 | gekühlt, gesalzen oder ungesalzen 400 g
+  Probe: Butter | Kaufland | Butter | art=kg liter=0.25 stueck=1 ml=250 preis=1.29 | oder Die Streichzarte rahmig-frisch, ungesalzen, gekühlt je 250-g-Pack
+  Probe: Butter | ALDI SÜD | Butter-Mandel-Stollen | art=kg liter=0.75 stueck=1 ml=750 preis=4.19 | 750-g-Packung
+  Probe: Butter | Lidl | Beste Butter | art=kg liter=0.25 stueck=1 ml=250 preis=1.49 | Gekuhit. Je 250 g
+  Probe: Butter | Lidl | Butter-Mandel-Stollen | art=kg liter=0.75 stueck=1 ml=750 preis=4.99 | Je 750 g
+  Probe: Butter | Lidl | Butter-Mandel-Stollen | art=kg liter=0.75 stueck=1 ml=750 preis=4.99 | 750 g
+  Probe: Butter | PENNY | Extra | art=kg liter=0.25 stueck=1 ml=250 preis=1.69 | Versch. Sorten oder Butter je 250 g
+  Probe: Butter | ALDI SÜD | Original Irische Butter | art=kg liter=0.25 stueck=1 ml=250 preis=1.79 | 250-g-Packung
+  Probe: Butter | Lidl | Original Irische Butter | art=kg liter=0.2 stueck=1 ml=200 preis=1.69 | Versch. Sorten. Gekühlt. Je 200/250 g
+  Probe: Butter | Thomas Philipps | Butter-Spekulatius | art=kg liter=0.2 stueck=1 ml=200 preis=1.99 | Mandel- oder Schokoladen-Spekulatius 200 g
+  Probe: Butter | Lidl | Meersalz Butter | art=kg liter=0.25 stueck=1 ml=250 preis=2.49 | 250 g
+  Probe: Butter | Netto Marken-Discount | Butter Spekulatius | art=kg liter=0.25 stueck=1 ml=250 preis=2.49 | 250 g
+  Probe: Butter | PENNY | Peanut Butter Bar | art=kg liter=0.09 stueck=1 ml=90 preis=1.49 | oder Cups Minis je 90 g
+  Probe: Butter | Netto Marken-Discount | Kräuter-Butter | art=kg liter=0.1 stueck=5 ml=20 preis=1.69 | 5 x 20 g gekühlt
+  Probe: Eier | Lidl | Eier aus Bodenhaltung | art=st liter=18 stueck=18 ml=1000 preis=3.59 | HINWEIS: MIT LIDL PLUS APP  Güteklasse A. Ursprung/Größe: siehe Verpac
+  Probe: Milch | Lidl | Haltbare Fettarme Milch | art=l liter=12 stueck=12 ml=1000 preis=8.5 | 12x1 l
+  Probe: Milch | ALDI SÜD | H-Milch | art=l liter=1 stueck=1 ml=1000 preis=0.99 | 3,5 % bzw. 1,5 % Fett; 1-l-Packung
+  Probe: Milch | PENNY | Haltbare Milch | art=l liter=1 stueck=1 ml=1000 preis=0.99 | 1,5% oder 3,5% Fett, je 1l
+  Probe: Milch | Lidl | Haltbare Milch | art=l liter=1 stueck=1 ml=1000 preis=1.11 | 3,5/1,5% Fett. Je 1l
+  Probe: Milch | PENNY | Milch Reis | art=kg liter=0.2 stueck=1 ml=200 preis=0.39 | HINWEIS: MIT PENNY APP Versch. Sorten, je 200 g ohne Penny App 0.99
+  Probe: Milch | PENNY | Kaffee-Milch | art=kg liter=0.34 stueck=1 ml=340 preis=1.39 | 4% Fett oder 8% Fett, je 340 g
+  Probe: Milch | ALDI SÜD | Milch-Mäuse | art=kg liter=0.21 stueck=1 ml=210 preis=2.49 | Versch. Sorten; je 210-g-Packung
+  Probe: Milch | Lidl | Milch Snack | art=kg liter=0.108 stueck=1 ml=108 preis=1.59 | oder Milka Snack Gekühlt. Je 108 g
+  Probe: Milch | Kaufland | Premium Heujuwel | art=kg liter=0.1 stueck=1 ml=100 preis=1.49 | österr. Schnittkäse aus Heumilch, 5 Monate gereift, kräftig-würzig, 50
+  Probe: Milch | ALDI SÜD | Milch-Mäuse-Adventskalender | art=kg liter=0.14 stueck=1 ml=140 preis=3.49 | 140-g-Packung;
+  Probe: Reis | ALDI SÜD | Basmati Reis | art=kg liter=1 stueck=1 ml=1000 preis=1.79 | 1-kg-Packung
+  Probe: Reis | PENNY | Milch Reis | art=kg liter=0.2 stueck=1 ml=200 preis=0.39 | HINWEIS: MIT PENNY APP Versch. Sorten, je 200 g ohne Penny App 0.99
+  Probe: Reis | Lidl | Basmati Reis XXL | art=kg liter=4.5 stueck=1 ml=4500 preis=9.99 | Je 4,5 kg, Standardpackung: 1 kg
+  Probe: Reis | ALDI SÜD | Risotto-Reis | art=kg liter=0.5 stueck=1 ml=500 preis=1.49 | 500-g-Packung
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792443086","token":true}
+Konto anlegen: {"name":"test1792445162","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792443086","daten":{}}
+Konto Daten: {"name":"test1792445162","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792443086"]
+Konto Anfragen mit Code: ["test1792445162"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792443086","token":true}
-Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 200
-Code ein zweites Mal (erwartet Fehler): HTTP 200
-Konto löschen: HTTP 401
+Neues Passwort mit Code: {"name":"test1792445162","token":true}
+Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
+Code ein zweites Mal (erwartet Fehler): HTTP 401
+Konto löschen: HTTP 200
