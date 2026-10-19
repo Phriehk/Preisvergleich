@@ -1,6 +1,6 @@
 [
   {
-    "abgefragt": "2026-10-19T13:18",
+    "abgefragt": "2026-10-19T13:38",
     "gruppe": "Monster Energy",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25333907/images/default/0/small.webp",
     "marke": "Monster Energy",
@@ -18,7 +18,7 @@
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T13:18",
+    "abgefragt": "2026-10-19T13:38",
     "gruppe": "Monster Energy",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25333907/images/default/0/small.webp",
     "marke": "Monster Energy",
@@ -36,7 +36,7 @@
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T13:18",
+    "abgefragt": "2026-10-19T13:38",
     "gruppe": "Monster Energy",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25295737/images/default/0/small.webp",
     "marke": "Spin Master",
@@ -54,7 +54,7 @@
     "gueltig_bis": "2026-10-31"
   },
   {
-    "abgefragt": "2026-10-19T13:18",
+    "abgefragt": "2026-10-19T13:38",
     "gruppe": "Red Bull",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25301402/images/default/0/small.webp",
     "marke": "Red Bull",
@@ -72,7 +72,7 @@
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T13:18",
+    "abgefragt": "2026-10-19T13:38",
     "gruppe": "Red Bull",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25384172/images/default/0/small.webp",
     "marke": "Red Bull",
@@ -90,7 +90,7 @@
     "gueltig_bis": "2026-10-31"
   },
   {
-    "abgefragt": "2026-10-19T13:18",
+    "abgefragt": "2026-10-19T13:38",
     "gruppe": "Red Bull",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25337472/images/default/0/small.webp",
     "marke": "Red Bull",
@@ -108,7 +108,7 @@
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T13:18",
+    "abgefragt": "2026-10-19T13:38",
     "gruppe": "Red Bull",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25337472/images/default/0/small.webp",
     "marke": "Red Bull",
@@ -126,7 +126,25 @@
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T13:18",
+    "abgefragt": "2026-10-19T13:38",
+    "gruppe": "Red Bull",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25399562/images/default/0/small.webp",
+    "marke": "Red Bull",
+    "coke": true,
+    "link": "https://www.marktguru.de/offers/25399562",
+    "markt": "REWE (47053)",
+    "produkt": "Energy Drink",
+    "beschreibung": "versch. Sorten, koffeinhaltig, je 0,25-l-Dose zzgl. 0.25 Pfand auch als 4er-Pack für 3.96 € zzgl. Pfand",
+    "preis": 0.99,
+    "liter": 0.25,
+    "stueck": 1,
+    "ml": 250,
+    "preis_pro_liter": 3.96,
+    "gueltig_von": "2026-10-19",
+    "gueltig_bis": "2026-10-24"
+  },
+  {
+    "abgefragt": "2026-10-19T13:38",
     "gruppe": "Red Bull",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25176863/images/default/0/small.webp",
     "marke": "Red Bull",
@@ -144,7 +162,25 @@
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T13:18",
+    "abgefragt": "2026-10-19T13:38",
+    "gruppe": "coca cola",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25358162/images/default/0/small.webp",
+    "marke": "Coca-Cola",
+    "coke": true,
+    "link": "https://www.marktguru.de/offers/25358162",
+    "markt": "Netto Marken-Discount",
+    "produkt": "Cola",
+    "beschreibung": "Fanta, Sprite oder Mezzo Mix teilw. koffeinhaltig, versch. Sorten 2 Liter zzgl. Pfand 0.25",
+    "preis": 1.49,
+    "liter": 2.0,
+    "stueck": 1,
+    "ml": 2000,
+    "preis_pro_liter": 0.74,
+    "gueltig_von": "2026-10-19",
+    "gueltig_bis": "2026-10-24"
+  },
+  {
+    "abgefragt": "2026-10-19T13:38",
     "gruppe": "coca cola",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25396112/images/default/0/small.webp",
     "marke": "Coca-Cola",
@@ -162,7 +198,25 @@
     "gueltig_bis": "2026-10-31"
   },
   {
-    "abgefragt": "2026-10-19T13:18",
+    "abgefragt": "2026-10-19T13:38",
+    "gruppe": "coca cola",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25358927/images/default/0/small.webp",
+    "marke": "Coca-Cola",
+    "coke": true,
+    "link": "https://www.marktguru.de/offers/25358927",
+    "markt": "REWE (47053)",
+    "produkt": "Cola",
+    "beschreibung": "versch. Sorten, teilw. koffeinhaltig, je 1,25-l-Fl. zzgl. 0.25 Pfand",
+    "preis": 1.11,
+    "liter": 1.25,
+    "stueck": 1,
+    "ml": 1250,
+    "preis_pro_liter": 0.89,
+    "gueltig_von": "2026-10-19",
+    "gueltig_bis": "2026-10-24"
+  },
+  {
+    "abgefragt": "2026-10-19T13:38",
     "gruppe": "coca cola",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25302077/images/default/0/small.webp",
     "marke": "Coca-Cola",
@@ -180,7 +234,25 @@
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T13:18",
+    "abgefragt": "2026-10-19T13:38",
+    "gruppe": "coca cola",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25362007/images/default/0/small.webp",
+    "marke": "Coca-Cola",
+    "coke": true,
+    "link": "https://www.marktguru.de/offers/25362007",
+    "markt": "REWE (47053)",
+    "produkt": "Original Taste",
+    "beschreibung": "oder Coca-Cola Zero Friendspack koffeinhaltig, je 10 x 0,33-l-Dosen-Pckg. zzgl. 2.50 Pfand",
+    "preis": 5.99,
+    "liter": 3.3000000000000003,
+    "stueck": 10,
+    "ml": 330,
+    "preis_pro_liter": 1.82,
+    "gueltig_von": "2026-10-19",
+    "gueltig_bis": "2026-10-24"
+  },
+  {
+    "abgefragt": "2026-10-19T13:38",
     "gruppe": "coca cola",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25384092/images/default/0/small.webp",
     "marke": "Coca-Cola",
@@ -198,7 +270,7 @@
     "gueltig_bis": "2026-10-31"
   },
   {
-    "abgefragt": "2026-10-19T13:18",
+    "abgefragt": "2026-10-19T13:38",
     "gruppe": "coca cola",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25301467/images/default/0/small.webp",
     "marke": "Coca-Cola",
@@ -216,7 +288,25 @@
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T13:18",
+    "abgefragt": "2026-10-19T13:38",
+    "gruppe": "coca cola",
+    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25362087/images/default/0/small.webp",
+    "marke": "Coca-Cola",
+    "coke": true,
+    "link": "https://www.marktguru.de/offers/25362087",
+    "markt": "REWE (47053)",
+    "produkt": "Cola",
+    "beschreibung": "versch. Sorten, teilw. koffeinhaltig, je 24 x 0,33-l-Fl.-Kasten zzgl. 5.10 Pfand",
+    "preis": 16.99,
+    "liter": 7.92,
+    "stueck": 24,
+    "ml": 330,
+    "preis_pro_liter": 2.15,
+    "gueltig_von": "2026-10-19",
+    "gueltig_bis": "2026-10-24"
+  },
+  {
+    "abgefragt": "2026-10-19T13:38",
     "gruppe": "coca cola",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25339052/images/default/0/small.webp",
     "marke": "Coca-Cola",
@@ -234,7 +324,7 @@
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T13:18",
+    "abgefragt": "2026-10-19T13:38",
     "gruppe": "coca cola",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25339052/images/default/0/small.webp",
     "marke": "Coca-Cola",
@@ -252,7 +342,7 @@
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T13:18",
+    "abgefragt": "2026-10-19T13:38",
     "gruppe": "coca cola",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25406002/images/default/0/small.webp",
     "marke": "Coca-Cola",
@@ -266,24 +356,6 @@
     "stueck": 1,
     "ml": 330,
     "preis_pro_liter": 11.82,
-    "gueltig_von": "2026-10-19",
-    "gueltig_bis": "2026-10-24"
-  },
-  {
-    "abgefragt": "2026-10-19T13:18",
-    "gruppe": "coca cola",
-    "bild": "https://mg2de.b-cdn.net/api/v1/offers/25358162/images/default/0/small.webp",
-    "marke": "Coca-Cola",
-    "coke": true,
-    "link": "https://www.marktguru.de/offers/25358162",
-    "markt": "Netto Marken-Discount",
-    "produkt": "Cola",
-    "beschreibung": "Fanta, Sprite oder Mezzo Mix teilw. koffeinhaltig, versch. Sorten 2 Liter zzgl. Pfand 0.25",
-    "preis": 1.49,
-    "liter": null,
-    "stueck": 1,
-    "ml": null,
-    "preis_pro_liter": null,
     "gueltig_von": "2026-10-19",
     "gueltig_bis": "2026-10-24"
   }
