@@ -367,7 +367,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
 <div id="ortDlg" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="ortTitel">
   <div class="card editbox">
     <h2 id="ortTitel">Mein Standort</h2>
-    <p class="lbl" style="margin:0">Damit rechnet die Seite die Entfernung zur nächsten Filiale ab deiner Adresse. Sie wird nur in diesem Browser gespeichert und nicht an den Server dieser Seite geschickt. Für das Nachschlagen geht sie an OpenStreetMap.</p>
+    <p class="lbl" style="margin:0">Damit rechnet die Seite die Entfernung zur nächsten Filiale ab deiner Adresse. Sie wird nur in diesem Browser gespeichert und nicht an den Server dieser Seite geschickt. Für das Nachschlagen geht sie an OpenStreetMap, für die Fahrstrecke gehen die Koordinaten deiner Adresse und der nächsten Filialen an den öffentlichen Routing-Dienst OSRM.</p>
     <label>Adresse oder Postleitzahl<input id="ortText" autocomplete="street-address" placeholder="z.B. Musterstraße 5, 47178 Duisburg"></label>
     <label>Fahrtkosten pro Kilometer in €<input id="ortKm" inputmode="decimal" autocomplete="off" placeholder="0,30"></label>
     <label class="chip"><input type="checkbox" id="ortAng" checked> Auch die Angebote für meine Postleitzahl laden</label>
@@ -430,15 +430,44 @@ function dinfo(m){
   if(ort&&d.filialen&&d.filialen.length){
     let best=null;
     for(const f of d.filialen){const k=luftKm(ort.lat,ort.lon,f[0],f[1]);if(!best||k<best.km)best={km:k,adresse:f[2]}}
+    const w=strasseKey.startsWith(ortKey()+"|")?strasse[mbase(m)]:null;   // echte Fahrstrecke, falls berechnet
+    if(best&&w){best.weg=w.km;best.min=w.min;best.wegAdresse=w.adresse}
     return best;
   }
   return !ort&&d.km!=null?{km:d.km,adresse:d.adresse}:null;
 }
-const dkm=m=>{const d=dinfo(m);return d?d.km:null};
+const dkm=m=>{const d=dinfo(m);return d?(d.weg!=null?d.weg:d.km):null};   // echte Fahrstrecke, sonst Luftlinie
+const fakt=m=>{const d=dinfo(m);return d&&d.weg!=null?1:STRASSE};   // Faktor Luftlinie -> Straße (1, wenn die Strecke echt berechnet ist)
 const STRASSE=1.3;   // Straße ist im Schnitt etwa 1,3-mal so lang wie die Luftlinie
 var kmSatz=.30;try{const x=parseFloat(localStorage.getItem("pv-km"));if(x>=0&&x<5)kmSatz=x}catch(e){}
+/* ---- Echte Fahrstrecke (öffentlicher OSRM-Dienst von OpenStreetMap), nur mit eigener Adresse ---- */
+var strasse={},strasseKey="";try{const s=JSON.parse(localStorage.getItem("pv-strasse")||"null");if(s&&s.k&&s.w){strasse=s.w;strasseKey=s.k}}catch(e){}
+function ortKey(){return ort?ort.lat.toFixed(4)+","+ort.lon.toFixed(4):""}
+async function strasseLaden(){
+  if(!ort||!Object.keys(dist).length)return;
+  const maerkte=new Set(offers.map(o=>mbase(o.markt))),z=[];
+  Object.entries(dist).forEach(([m,d])=>{
+    if(!maerkte.has(m)||!d||!d.filialen)return;
+    d.filialen.map(f=>({m,lat:f[0],lon:f[1],adr:f[2],k:luftKm(ort.lat,ort.lon,f[0],f[1])})).sort((a,b)=>a.k-b.k).slice(0,3).forEach(x=>z.push(x));
+  });
+  if(!z.length||z.length>60)return;
+  const k=ortKey()+"|"+z.map(x=>x.lat.toFixed(4)+x.lon.toFixed(4)).join(",");
+  if(k===strasseKey)return;
+  try{
+    const c=[[ort.lon,ort.lat],...z.map(x=>[x.lon,x.lat])].map(q=>q[0].toFixed(5)+","+q[1].toFixed(5)).join(";");
+    const ac=new AbortController(),to=setTimeout(()=>ac.abort(),9000);
+    const r=await fetch("https://router.project-osrm.org/table/v1/driving/"+c+"?sources=0&annotations=distance,duration",{signal:ac.signal});clearTimeout(to);
+    if(!r.ok)return;
+    const j=await r.json();if(j.code!=="Ok"||!j.distances||!j.distances[0])return;
+    const w={};
+    z.forEach((x,i)=>{const dm=j.distances[0][i+1],du=j.durations&&j.durations[0][i+1];if(dm==null)return;const km=dm/1000;if(!w[x.m]||km<w[x.m].km)w[x.m]={km,min:du!=null?Math.round(du/60):null,adresse:x.adr}});
+    if(!Object.keys(w).length)return;
+    strasse=w;strasseKey=k;try{localStorage.setItem("pv-strasse",JSON.stringify({k,w}))}catch(e){}
+    render();
+  }catch(e){}
+}
 function luftKm(a,b,c,d){const r=x=>x*Math.PI/180,q=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;return 12742*Math.asin(Math.sqrt(q))}
-function distText(o){const d=dinfo(o.markt);return d?`<span class="km" title="Luftlinie ${ort?"von deiner Adresse":"von der Postleitzahl"} zur nächsten Filiale${d.adresse?": "+esc(d.adresse):""}">${f1(d.km)} km</span>`:""}
+function distText(o){const d=dinfo(o.markt);return d?(d.weg!=null?`<span class="km" title="Fahrstrecke mit dem Auto${d.min!=null?", etwa "+d.min+" Minuten":""}, zur Filiale: ${esc(d.wegAdresse||"")}">${f1(d.weg)} km${d.min!=null?" · "+d.min+" min":""}</span>`:`<span class="km" title="Luftlinie ${ort?"von deiner Adresse":"von der Postleitzahl"} zur nächsten Filiale${d.adresse?": "+esc(d.adresse):""}">${f1(d.km)} km</span>`):""}
 async function distLaden(){
   if(!wUrl)return;
   ortBtn.hidden=false;
@@ -450,7 +479,7 @@ async function distLaden(){
       for(let i=0;i<5&&marken.length;i++){   // der Server rechnet im Hintergrund, bis zu etwa 20 Sekunden
         dist=await (await wf("/entfernungen?plz="+rp+"&m="+encodeURIComponent(marken.join("|")))).json();
         render();
-        if(marken.every(m=>dist[m]))break;
+        if(marken.every(m=>dist[m])){strasseLaden();break}
         await new Promise(r=>setTimeout(r,12000));
         if(regionPlz()!==rp)return;
       }
@@ -459,7 +488,7 @@ async function distLaden(){
     dist=await (await wf("/entfernungen")).json();
     const fehlt=[...new Set(offers.map(o=>mbase(o.markt)))].filter(x=>!(dist[x]&&("filialen" in dist[x]||dist[x].km!=null)));
     if(fehlt.length&&zugang)dist=await (await wf("/entfernungen?m="+encodeURIComponent(fehlt.join("|")),{method:"POST"},true)).json();
-    render();
+    render();strasseLaden();
   }catch(e){}
 }
 /* ---- Eigener Standort ---- */
@@ -505,11 +534,11 @@ ortGps.onclick=()=>{
 function zeileRech(t,w,fett){return `<div class="fr${fett?" fb":""}"><span>${t}</span><span>${w}</span></div>`}
 function fahrtZeile(b,liste){
   const db=dkm(b.markt);if(db==null)return"";
-  const kk=kmSatz*STRASSE,fa=2*db*kk,nah=liste.filter(o=>!abgelaufen(o)&&!kommt(o)&&dkm(o.markt)!=null).sort((x,y)=>dkm(x.markt)-dkm(y.markt)||gp(x)-gp(y))[0];
-  const regel=`Fahrt = hin und zurück (2 × ${f1(db)} km) × ${eur(kmSatz)} je km × ${String(STRASSE).replace(".",",")} für den Straßenweg.`;
+  const kk=kmSatz*fakt(b.markt),fa=2*db*kk,nah=liste.filter(o=>!abgelaufen(o)&&!kommt(o)&&dkm(o.markt)!=null).sort((x,y)=>dkm(x.markt)-dkm(y.markt)||gp(x)-gp(y))[0];
+  const regel=fakt(b.markt)===1?`Fahrt = hin und zurück (2 × ${f1(db)} km Fahrstrecke mit dem Auto${dinfo(b.markt).min!=null?", etwa "+dinfo(b.markt).min+" min je Weg":""}) × ${eur(kmSatz)} je km.`:`Fahrt = hin und zurück (2 × ${f1(db)} km Luftlinie) × ${eur(kmSatz)} je km × ${String(STRASSE).replace(".",",")} für den Straßenweg (geschätzt).`;
   let kurz=`🚗 ${f1(db)} km · Fahrt ${eur(fa)}`,det="";
   if(nah&&mbase(nah.markt)!==mbase(b.markt)){
-    const dn=dkm(nah.markt),fn=2*dn*kk,wb=gp(b)*liter(b),wn=gp(nah)*liter(b),spar=wn-wb,extra=fa-fn,saldo=spar-extra,ok=saldo>0;
+    const dn=dkm(nah.markt),fn=2*dn*kmSatz*fakt(nah.markt),wb=gp(b)*liter(b),wn=gp(nah)*liter(b),spar=wn-wb,extra=fa-fn,saldo=spar-extra,ok=saldo>0;
     kurz+=` · gegenüber ${esc(mbase(nah.markt))}: <span class="${ok?"fl":"fn"}">${ok?eur(saldo)+" gespart":eur(-saldo)+" Mehrkosten"}</span>`;
     det=`<div class="fv-tab"><div class="fr fh"><span></span><span>${esc(mbase(b.markt))}</span><span>${esc(mbase(nah.markt))}</span></div>`
       +`<div class="fr3"><span>Entfernung</span><span>${f1(db)} km</span><span>${f1(dn)} km</span></div>`
@@ -533,7 +562,7 @@ function zeichneEinkauf(){
   const ms=Object.keys(g).sort((a,b)=>(dkm(a)??99)-(dkm(b)??99));
   let ges=0,fahrt=0,alle=true;
   const html=ms.map(m=>{
-    const sum=g[m].reduce((s,o)=>s+pr(o),0),d=dkm(m);ges+=sum;if(d==null)alle=false;else fahrt+=2*d*kmSatz*STRASSE;
+    const sum=g[m].reduce((s,o)=>s+pr(o),0),d=dkm(m);ges+=sum;if(d==null)alle=false;else fahrt+=2*d*kmSatz*fakt(m);
     return `<section class="ek"><div class="ek-h">${mlogo(m)}<b>${esc(m)}</b>${d!=null?`<span class="km">${f1(d)} km</span>`:""}<span class="ek-s">${eur(sum)}</span></div>`
       +g[m].map(o=>`<div class="ek-z"><span>${o.stueck} × ${o.ml} ml ${esc(o.produkt||o.gruppe)}<br><small>${esc(o.form)} · ${gueltig(o)}</small></span><span>${eur(pr(o))}<br><small>${eur(gp(o))}/l</small></span><button type="button" class="lb an" data-k="${esc(kOf(o))}" aria-label="Von der Liste entfernen">✕</button></div>`).join("")+"</section>";
   }).join("");
@@ -549,7 +578,7 @@ function zk(k){const m=String(k).match(/^(.*)\|(\d+)$/);return m?{g:m[1],ml:+m[2
 function zLabel(k){const x=zk(k);return x.ml?x.g+" "+groesseText(x.ml):x.g}
 function fvGroessen(g,extra){return [...new Set([...offers.filter(o=>(o.gruppe||"Coca-Cola")===g&&!o.ausb&&!abgelaufen(o)&&!aus.has(o.markt)).map(o=>o.ml),...extra])].sort((a,b)=>a-b)}
 function fvAngebote(k){const {g,ml}=zk(k);return offers.filter(o=>(o.gruppe||"Coca-Cola")===g&&(!ml||o.ml===ml)&&!o.ausb&&!abgelaufen(o)&&!aus.has(o.markt)&&(fvZeit==="jetzt"?!kommt(o):kommt(o)))}
-function fvFahrt(m){const d=dkm(m);return d==null?null:2*d*kmSatz*STRASSE}
+function fvFahrt(m){const d=dkm(m);return d==null?null:2*d*kmSatz*fakt(m)}
 /* Menge immer in Litern; im Vergleich wird je Markt die Packungsgröße gewählt, die am besten passt (ganze Packungen) */
 function zBedarf(k){return zettel[k]}
 function zEingabe(k){return `<input type="number" min="0.5" max="500" step="0.5" value="${zettel[k]}" data-l="${esc(k)}" aria-label="Liter ${esc(zLabel(k))}"> Liter`}
@@ -638,7 +667,7 @@ function fvVergleich(namen){
     const ware=dabei.reduce((s,g)=>s+t[m][g].kosten,0),f=fvFahrt(m);
     return {m,dabei,fehlt,ware,f,gesamt:ware+(f||0)};
   }).sort((a,b)=>(a.fehlt.length>0)-(b.fehlt.length>0)||a.gesamt-b.gesamt);
-  html+=`<p class="lbl" style="margin:10px 0 2px"><b>Alle Märkte einzeln</b> (Ware plus Hin- und Rückfahrt, Straße etwa ${STRASSE.toString().replace(".",",")}× Luftlinie)</p>`;
+  html+=`<p class="lbl" style="margin:10px 0 2px"><b>Alle Märkte einzeln</b> (Ware plus Hin- und Rückfahrt${Object.keys(strasse).length&&ort?", Fahrstrecke mit dem Auto, wo berechnet, sonst Luftlinie × "+STRASSE.toString().replace(".",","):", Straße etwa "+STRASSE.toString().replace(".",",")+"× Luftlinie"})</p>`;
   html+=reihe.map((r,i)=>`<div class="fv-rang"><span class="rg">${i+1}</span>${mlogo(r.m)}<span class="tx"><b>${esc(r.m)}</b>${r.f!=null?` <span class="km">${f1(dkm(r.m))} km</span>`:""}<small>${r.fehlt.length?`${r.dabei.length} von ${mit.length} Artikeln · fehlt: ${r.fehlt.map(x=>esc(zLabel(x))).join(", ")}`:`alle ${mit.length} Artikel`} · Ware ${eur(r.ware)}${r.f!=null?` + Fahrt ${eur(r.f)}`:""}</small></span><b class="s">${eur(r.gesamt)}${beste&&!r.fehlt.length&&r.gesamt-beste.gesamt>0.004?`<small style="display:block;font:400 .75rem Inter,sans-serif;color:var(--mute);text-align:right">+${eur(r.gesamt-beste.gesamt)}</small>`:""}</b></div>`).join("");
   html+="</section>";
   return html;
