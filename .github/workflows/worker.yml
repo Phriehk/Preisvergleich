@@ -53,7 +53,8 @@ jobs:
           echo "$KEY" | npx --yes wrangler@4 secret put WARTUNG 2>&1 | tail -n 3 | tee -a $LOG
           URL="https://preisvergleich.$SUB.workers.dev"
           echo "{\"url\": \"$URL\"}" > ../worker.json
-          sleep 15
+          set +e   # ab hier nur Tests: Fehler protokollieren statt abbrechen
+          for i in $(seq 1 24); do curl -sf -m 20 "$URL/status" >/dev/null && break; sleep 10; done
           log "Status: $(curl -s -m 30 $URL/status)"
           T0=$(date +%s); R=$(curl -s -m 120 -X POST -H "X-Wartung: $KEY" "$URL/suche?q=Fanta")
           log "Suche Fanta: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if type=="array" then {anzahl: length, erste: (.[0] // {} | {markt, produkt, preis_pro_liter})} else . end' 2>/dev/null || echo "$R" | head -c 400)"
