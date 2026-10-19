@@ -85,6 +85,25 @@ jobs:
           sleep 40
           R=$(curl -s -m 60 -G --data-urlencode "plz=40210" --data-urlencode "m=Lidl|REWE|ALDI SÜD" "$URL/entfernungen")
           log "Entfernungen 40210, nach 40 s: $(echo "$R" | jq -c 'with_entries(.value |= {km: .km, fil: ((.filialen // []) | length)})' 2>/dev/null || echo "$R" | head -c 300)"
+          DK=$(openssl rand -hex 32); KN="test$(date +%s)"
+          J() { curl -s -m 30 -X POST -H 'Content-Type: application/json' "$@"; }
+          R=$(J -d "{\"name\":\"$KN\",\"dk\":\"$DK\"}" $URL/konto/neu); TOK=$(echo "$R" | jq -r '.token // empty')
+          log "Konto anlegen: $(echo "$R" | jq -c '{name: .name, token: (.token != null)}' 2>/dev/null || echo "$R" | head -c 200)"
+          log "Konto doppelt (erwartet 409): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 -X POST -H 'Content-Type: application/json' -d "{\"name\":\"$KN\",\"dk\":\"$DK\"}" $URL/konto/neu)"
+          log "Konto falsches Passwort (erwartet 401): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 -X POST -H 'Content-Type: application/json' -d "{\"name\":\"$KN\",\"dk\":\"$(openssl rand -hex 32)\"}" $URL/konto/login)"
+          curl -s -m 30 -X PUT -H "Authorization: Bearer $TOK" -H 'Content-Type: application/json' -d '{"km":0.4,"eink":["a|b"]}' $URL/konto/daten >/dev/null
+          log "Konto Daten: $(curl -s -m 30 -H "Authorization: Bearer $TOK" $URL/konto/daten | head -c 200)"
+          log "Konto Anfragen ohne Code (erwartet 401): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 $URL/konto/anfragen)"
+          J -d "{\"name\":\"$KN\"}" $URL/konto/vergessen >/dev/null
+          log "Konto Anfragen mit Code: $(curl -s -m 30 -H "Authorization: Bearer $ZUG" $URL/konto/anfragen | jq -c '[.[].name | select(. == "'$KN'")]' 2>/dev/null)"
+          R=$(J -H "Authorization: Bearer $ZUG" -d "{\"name\":\"$KN\"}" $URL/konto/code); CODE=$(echo "$R" | jq -r '.code // empty')
+          log "Wiederherstellcode erzeugt: ${#CODE} Zeichen"
+          DK2=$(openssl rand -hex 32)
+          R=$(J -d "{\"name\":\"$KN\",\"code\":\"$CODE\",\"dk\":\"$DK2\"}" $URL/konto/neues-passwort); TOK2=$(echo "$R" | jq -r '.token // empty')
+          log "Neues Passwort mit Code: $(echo "$R" | jq -c '{name: .name, token: (.token != null)}' 2>/dev/null)"
+          log "Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 -H "Authorization: Bearer $TOK" $URL/konto/daten)"
+          log "Code ein zweites Mal (erwartet Fehler): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 -X POST -H 'Content-Type: application/json' -d "{\"name\":\"$KN\",\"code\":\"$CODE\",\"dk\":\"$DK\"}" $URL/konto/neues-passwort)"
+          log "Konto löschen: HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 -X POST -H "Authorization: Bearer $TOK2" -H 'Content-Type: application/json' -d "{\"dk\":\"$DK2\"}" $URL/konto/loeschen)"
           openssl rand -hex 24 | npx --yes wrangler@4 secret put WARTUNG >/dev/null 2>&1   # Testschlüssel wieder unbrauchbar machen
           rm -rf public
       - name: Ergebnis speichern

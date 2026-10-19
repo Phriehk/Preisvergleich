@@ -395,6 +395,128 @@ async function regionAngebote(env, ctx, sp, ip) {
   return liste;
 }
 
+/* ---------- Benutzerkonten (ohne E-Mail) ----------
+   Der Browser rechnet aus Passwort und Benutzername mit PBKDF2 einen Schlüssel aus (dk); der Server speichert nur eine Prüfsumme davon.
+   Vergisst jemand das Passwort, bekommt der Betreiber eine Nachricht (ntfy) und erzeugt in der Seite einen Einmal-Code. */
+const sha256hex = async t => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)))].map(b => b.toString(16).padStart(2, "0")).join("");
+const zufallHex = n => [...crypto.getRandomValues(new Uint8Array(n))].map(b => b.toString(16).padStart(2, "0")).join("");
+const gleich = (a, b) => { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; };
+const grenzen = new Map();
+function begrenzt(schluessel, max, fenster = 600e3) {   // true = zu viele Versuche (gilt je Rechenzentrum, grober Schutz gegen Raten)
+  const jetzt = Date.now(), l = (grenzen.get(schluessel) || []).filter(t => jetzt - t < fenster);
+  if (l.length >= max) return true;
+  l.push(jetzt); grenzen.set(schluessel, l);
+  if (grenzen.size > 2000) grenzen.clear();
+  return false;
+}
+const NAME_RE = /^[a-z0-9_.-]{3,24}$/, DK_RE = /^[0-9a-f]{64}$/, CODE_ZEICHEN = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const nameVon = x => String(x || "").trim().toLowerCase();
+const konto = (status, text) => Object.assign(new Error(text), { status });
+async function sitzungNeu(env, name, gen) {
+  const token = zufallHex(32);
+  await env.PV.put("s:" + await sha256hex(token), JSON.stringify({ name, gen, t: Date.now() }), { expirationTtl: 90 * 864e5 });
+  return token;
+}
+async function sitzungPruefen(env, req) {
+  const token = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
+  if (!/^[0-9a-f]{64}$/.test(token)) throw konto(401, "Bitte neu anmelden");
+  const s = await env.PV.get("s:" + await sha256hex(token), "json");
+  const u = s && await env.PV.get("u:" + s.name, "json");
+  if (!u || u.gen !== s.gen) throw konto(401, "Bitte neu anmelden");
+  return { name: s.name, u, token };
+}
+function datenPruefen(d) {   // nur erwartete Felder und Größen werden gespeichert
+  const o = {};
+  if (d && d.ort && Number.isFinite(+d.ort.lat) && Number.isFinite(+d.ort.lon)) o.ort = { lat: +d.ort.lat, lon: +d.ort.lon, name: String(d.ort.name || "").slice(0, 120), plz: /^\d{5}$/.test(d.ort.plz) ? d.ort.plz : "", angebote: d.ort.angebote !== false };
+  if (d && Number.isFinite(+d.km) && +d.km >= 0 && +d.km < 5) o.km = +d.km;
+  if (d && Array.isArray(d.eink)) o.eink = d.eink.filter(x => typeof x === "string" && x.length < 300).slice(0, 100);
+  return o;
+}
+async function kontoRoute(req, env, p) {
+  const ip = req.headers.get("CF-Connecting-IP") || "?";
+  const koerper = async () => { try { const b = await req.json(); return b && typeof b === "object" ? b : {}; } catch (e) { return {}; } };
+  if (p === "/konto/neu" && req.method === "POST") {
+    const b = await koerper(), name = nameVon(b.name);
+    if (!NAME_RE.test(name)) throw konto(400, "Der Benutzername darf 3 bis 24 Zeichen haben: Buchstaben a bis z, Ziffern, Punkt, Strich, Unterstrich.");
+    if (!DK_RE.test(b.dk || "")) throw konto(400, "Ungültige Anfrage");
+    if (begrenzt("neu:" + ip, 5) || !(await tagesOk(env, "konto", 100))) throw zuViel();
+    if (await env.PV.get("u:" + name)) throw konto(409, "Diesen Benutzernamen gibt es schon.");
+    const salz = zufallHex(16);
+    await env.PV.put("u:" + name, JSON.stringify({ salz, hash: await sha256hex(b.dk + salz), gen: 1, t: Date.now(), daten: {} }));
+    return { token: await sitzungNeu(env, name, 1), name };
+  }
+  if (p === "/konto/login" && req.method === "POST") {
+    const b = await koerper(), name = nameVon(b.name);
+    if (begrenzt("login:" + ip, 10) || begrenzt("loginname:" + name, 10)) throw zuViel();
+    const u = NAME_RE.test(name) && DK_RE.test(b.dk || "") ? await env.PV.get("u:" + name, "json") : null;
+    if (!u || !gleich(u.hash, await sha256hex(b.dk + u.salz))) throw konto(401, "Benutzername oder Passwort stimmt nicht.");
+    return { token: await sitzungNeu(env, name, u.gen), name };
+  }
+  if (p === "/konto/daten" && req.method === "GET") { const { name, u } = await sitzungPruefen(env, req); return { name, daten: u.daten || {} }; }
+  if (p === "/konto/daten" && req.method === "PUT") {
+    const { name, u } = await sitzungPruefen(env, req), b = await koerper();
+    if (begrenzt("daten:" + name, 60)) throw zuViel();
+    u.daten = datenPruefen(b.daten);
+    await env.PV.put("u:" + name, JSON.stringify(u));
+    return { name, daten: u.daten };
+  }
+  if (p === "/konto/logout" && req.method === "POST") {
+    const { token } = await sitzungPruefen(env, req);
+    await env.PV.delete("s:" + await sha256hex(token));
+    return { ok: true };
+  }
+  if (p === "/konto/loeschen" && req.method === "POST") {
+    const { name, u } = await sitzungPruefen(env, req), b = await koerper();
+    if (!DK_RE.test(b.dk || "") || !gleich(u.hash, await sha256hex(b.dk + u.salz))) throw konto(401, "Das Passwort stimmt nicht.");
+    await env.PV.delete("u:" + name);   // Sitzungen werden damit ungültig (Konto existiert nicht mehr)
+    return { ok: true };
+  }
+  if (p === "/konto/vergessen" && req.method === "POST") {
+    const b = await koerper(), name = nameVon(b.name), antwortText = { ok: true, hinweis: "Wenn es dieses Konto gibt, wurde der Betreiber benachrichtigt. Er meldet sich bei dir mit einem Code." };
+    if (begrenzt("vergessen:" + ip, 5)) throw zuViel();
+    if (!NAME_RE.test(name) || !(await env.PV.get("u:" + name))) return antwortText;
+    const liste = (await env.PV.get("anfragen", "json")) || {}, jetzt = Date.now();
+    if (liste[name] && jetzt - liste[name] < 12 * 3600e3) return antwortText;   // höchstens eine Nachricht je 12 Stunden
+    if (!(await tagesOk(env, "vergessen", 50))) throw zuViel();
+    liste[name] = jetzt;
+    for (const k of Object.keys(liste)) if (jetzt - liste[k] > 7 * 864e5) delete liste[k];
+    await env.PV.put("anfragen", JSON.stringify(liste));
+    await ntfy(env, "Passwort vergessen", `Benutzer „${name}“ möchte ein neues Passwort. Prüfe, ob die Person wirklich du kennst, und erzeuge in der Seite unter Konto einen Code.`, "key");
+    return antwortText;
+  }
+  if (p === "/konto/anfragen" && req.method === "GET") {
+    if (!(await berechtigt(req, env))) throw konto(401, "Zugangscode fehlt oder ist falsch");
+    const liste = (await env.PV.get("anfragen", "json")) || {}, jetzt = Date.now();
+    return Object.entries(liste).filter(([, t]) => jetzt - t < 7 * 864e5).sort((a, b) => b[1] - a[1]).map(([name, t]) => ({ name, t }));
+  }
+  if (p === "/konto/code" && req.method === "POST") {
+    if (!(await berechtigt(req, env))) throw konto(401, "Zugangscode fehlt oder ist falsch");
+    const name = nameVon((await koerper()).name);
+    if (!NAME_RE.test(name) || !(await env.PV.get("u:" + name))) throw konto(404, "Dieses Konto gibt es nicht.");
+    const code = Array.from(crypto.getRandomValues(new Uint8Array(8)), b => CODE_ZEICHEN[b % CODE_ZEICHEN.length]).join("");
+    await env.PV.put("code:" + name, JSON.stringify({ hash: await sha256hex(code + name), versuche: 0 }), { expirationTtl: 24 * 3600 });
+    return { code, gueltig: "24 Stunden, einmal benutzbar" };
+  }
+  if (p === "/konto/neues-passwort" && req.method === "POST") {
+    const b = await koerper(), name = nameVon(b.name), code = String(b.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (begrenzt("reset:" + ip, 10)) throw zuViel();
+    const c = NAME_RE.test(name) && DK_RE.test(b.dk || "") ? await env.PV.get("code:" + name, "json") : null, u = c && await env.PV.get("u:" + name, "json");
+    if (!c || !u || c.versuche >= 5) throw konto(401, "Der Code ist ungültig oder abgelaufen.");
+    if (!gleich(c.hash, await sha256hex(code + name))) {
+      c.versuche++;
+      await env.PV.put("code:" + name, JSON.stringify(c), { expirationTtl: 24 * 3600 });
+      throw konto(401, "Der Code ist ungültig oder abgelaufen.");
+    }
+    u.salz = zufallHex(16); u.hash = await sha256hex(b.dk + u.salz); u.gen = (u.gen || 1) + 1;   // alle alten Anmeldungen werden ungültig
+    await env.PV.put("u:" + name, JSON.stringify(u));
+    await env.PV.delete("code:" + name);
+    const liste = (await env.PV.get("anfragen", "json")) || {};
+    if (liste[name]) { delete liste[name]; await env.PV.put("anfragen", JSON.stringify(liste)); }
+    return { token: await sitzungNeu(env, name, u.gen), name };
+  }
+  throw konto(404, "Unbekannte Adresse");
+}
+
 /* ---------- Schreibrechte: Zugangscode (Secret ZUGANG), die App merkt ihn sich nach der ersten Eingabe ---------- */
 async function berechtigt(req, env) {
   const w = req.headers.get("X-Wartung");  // nur für den automatischen Test nach dem Hochladen
@@ -407,6 +529,14 @@ async function berechtigt(req, env) {
   return d === 0;
 }
 
+async function ntfy(env, titel, text, tag) {
+  const thema = (env.NTFY_TOPIC || "").trim();
+  if (!thema) return;
+  try {
+    await fetch("https://ntfy.sh", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic: thema, title: titel, message: text.slice(0, 300), tags: [tag || "bell"], priority: 3, click: APP_URL }) });
+  } catch (e) { /* die Anfrage bleibt trotzdem in der Liste */ }
+}
 async function meldeFehler(env, text) {
   const thema = (env.NTFY_TOPIC || "").trim();
   if (!thema) return;
@@ -421,6 +551,7 @@ export default {
     if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
     const url = new URL(req.url), p = url.pathname.replace(/\/+$/, "") || "/";
     try {
+      if (p.startsWith("/konto/")) return antwort(await kontoRoute(req, env, p));
       if (req.method === "GET") {
         if (p === "/angebote.json") return antwort(JSON.stringify(await lade(env, "angebote", "json")));
         if (p === "/favoriten.json") return antwort(JSON.stringify(await lade(env, "favoriten", "json")));
@@ -482,7 +613,7 @@ export default {
       if (p === "/aktualisieren" && req.method === "POST") return antwort(await aktualisieren(env, ctx));
       return fehler("Unbekannte Adresse", 404);
     } catch (e) {
-      return fehler(e.message || String(e), [400, 429].includes(e.status) ? e.status : 500);
+      return fehler(e.message || String(e), [400, 401, 404, 409, 429].includes(e.status) ? e.status : 500);
     }
   },
   async scheduled(event, env, ctx) {

@@ -39,6 +39,7 @@ button:hover{border-color:var(--mute)}
 button:disabled{opacity:.5;cursor:default}
 button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:600}
 .icon-btn{margin-left:auto;width:40px;padding:0;border-color:transparent;background:transparent;color:var(--mute);font-size:1.2rem}
+.icon-btn.an{color:var(--best)}
 .icon-btn:hover{background:var(--card);border-color:var(--line)}
 :focus-visible{outline:3px solid var(--red);outline-offset:2px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
@@ -238,7 +239,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
 <header class="kopf">
   <div class="logo" aria-hidden="true">€/l</div>
   <div><h1 id="titel">Coca-Cola: günstigster Preis pro Liter</h1><p class="sub">Angebote von Marktguru, verglichen pro Liter</p></div>
-  <div class="hk"><button id="ortBtn" class="icon-btn" type="button" aria-label="Meinen Standort eintragen" title="Meinen Standort eintragen" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.800 12 21 12 21z"/><circle cx="12" cy="9.500" r="2.500"/></svg></button><button id="themeBtn" class="icon-btn" type="button" aria-label="Darstellung wechseln"></button></div>
+  <div class="hk"><button id="kontoBtn" class="icon-btn" type="button" aria-label="Konto" title="Konto" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.200 3.600-7 8-7s8 2.800 8 7"/></svg></button><button id="ortBtn" class="icon-btn" type="button" aria-label="Meinen Standort eintragen" title="Meinen Standort eintragen" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.800 12 21 12 21z"/><circle cx="12" cy="9.500" r="2.500"/></svg></button><button id="themeBtn" class="icon-btn" type="button" aria-label="Darstellung wechseln"></button></div>
 </header>
 
 
@@ -305,6 +306,31 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
 </div>
 </div>
 
+<div id="kontoDlg" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="kontoTitel">
+  <div class="card editbox">
+    <h2 id="kontoTitel">Konto</h2>
+    <div id="kontoAus">
+      <div class="tabs" id="kModen"><button type="button" data-m="login" class="on">Anmelden</button><button type="button" data-m="neu">Konto anlegen</button><button type="button" data-m="vergessen">Passwort vergessen</button></div>
+      <p id="kText" class="lbl" style="margin:0"></p>
+      <label>Benutzername<input id="kName" autocomplete="username" autocapitalize="none" spellcheck="false"></label>
+      <label id="kCodeL">Code vom Betreiber<input id="kCode" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+      <label id="kPwL">Passwort<input id="kPw" type="password" autocomplete="current-password"></label>
+      <label id="kPw2L">Passwort wiederholen<input id="kPw2" type="password" autocomplete="new-password"></label>
+      <div class="row"><button id="kGo" type="button" class="primary">Anmelden</button><button id="kCodeLink" type="button" hidden>Ich habe schon einen Code</button></div>
+    </div>
+    <div id="kontoEin" hidden>
+      <p style="margin:0">Angemeldet als <b id="kWer"></b>.</p>
+      <p class="lbl" style="margin:6px 0 0">Mit deinem Konto werden Standort, Einkaufsliste und Fahrtkosten-Satz auf allen Geräten abgeglichen. Gespeichert werden nur diese Angaben und dein Benutzername.</p>
+      <div class="row" style="margin-top:10px"><button id="kAus" type="button">Abmelden</button><button id="kLoesch" type="button">Konto löschen</button></div>
+    </div>
+    <div id="kBetreiber" hidden>
+      <h2 style="font-size:1.05rem;margin:14px 0 4px">Betreiber: Passwort vergessen</h2>
+      <div id="kAnfragen" class="lbl"></div>
+    </div>
+    <div id="kInfo" class="lbl" style="margin:0"></div>
+    <div class="row"><button id="kZu" type="button">Schließen</button></div>
+  </div>
+</div>
 <div id="ortDlg" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="ortTitel">
   <div class="card editbox">
     <h2 id="ortTitel">Mein Standort</h2>
@@ -406,7 +432,7 @@ async function distLaden(){
 /* ---- Eigener Standort ---- */
 const HEIM=["47178","46535","47053"];   // Postleitzahlen, für die der Server die Angebote ohnehin täglich holt
 function regionPlz(){return cf&&ort&&ort.angebote&&ort.plz&&!HEIM.includes(ort.plz)?ort.plz:""}
-async function ortSetzen(o){
+async function ortSetzen(o,ohneSync){
   const vorher=regionPlz();
   ort=o;try{o?localStorage.setItem("pv-ort",JSON.stringify(o)):localStorage.removeItem("pv-ort")}catch(e){}
   const rp=regionPlz();
@@ -415,6 +441,7 @@ async function ortSetzen(o){
   if(vorher!==rp)await autoLaden();
   distLaden();
   if(rp&&o)ortInfo.textContent="Gespeichert: "+o.name+" (PLZ "+o.plz+"). Angebote für diese Postleitzahl sind geladen.";
+  if(!ohneSync)kontoSync();
 }
 ortBtn.onclick=()=>{ortKm.value=String(kmSatz).replace(".",",");ortText.value=ort?ort.name:"";ortAng.checked=!ort||ort.angebote!==false;ortInfo.textContent=ort?"Aktuell gespeichert: "+ort.name+(ort.plz?" (PLZ "+ort.plz+")":""):"";ortDlg.hidden=false;ortText.focus()};
 ortZu.onclick=()=>{ortDlg.hidden=true};
@@ -422,7 +449,7 @@ ortDlg.onclick=e=>{if(e.target===ortDlg)ortDlg.hidden=true};
 ortDel.onclick=()=>{ortText.value="";ortSetzen(null).then(()=>{ortInfo.textContent="Standort entfernt, es gelten wieder die Angebote und die Postleitzahl der Seite."})};
 const plzAus=j=>{const m=String((j&&j.address&&j.address.postcode)||"").match(/\b\d{5}\b/);return m?m[0]:""};
 ortSave.onclick=async()=>{
-  {const x=parseFloat(ortKm.value.replace(",","."));if(x>=0&&x<5){kmSatz=x;try{localStorage.setItem("pv-km",String(x))}catch(e){}render()}}
+  {const x=parseFloat(ortKm.value.replace(",","."));if(x>=0&&x<5){kmSatz=x;try{localStorage.setItem("pv-km",String(x))}catch(e){}render();kontoSync()}}
   const q=ortText.value.trim();if(q.length<3){ortInfo.textContent="Bitte eine Adresse oder Postleitzahl eingeben.";return}
   ortInfo.textContent="Suche …";
   try{
@@ -454,7 +481,7 @@ function fahrtZeile(b,liste){
 }
 /* ---- Einkaufsliste ---- */
 var eink=[];try{eink=JSON.parse(localStorage.getItem("pv-eink")||"[]")||[]}catch(e){}
-function einkSpeichern(){try{localStorage.setItem("pv-eink",JSON.stringify(eink))}catch(e){}}
+function einkSpeichern(){try{localStorage.setItem("pv-eink",JSON.stringify(eink))}catch(e){}kontoSync()}
 function listeKnopf(o){const k=kOf(o),an=eink.includes(k);return `<button type="button" class="lb${an?" an":""}" data-k="${esc(k)}" title="${an?"Von der Einkaufsliste entfernen":"Auf die Einkaufsliste setzen"}">${an?"✓ auf der Liste":"＋ Liste"}</button>`}
 function listeUm(k){eink=eink.includes(k)?eink.filter(x=>x!==k):[...eink,k];einkSpeichern();render()}
 function zeichneEinkauf(){
@@ -1002,10 +1029,111 @@ async function aktualisieren(){
   }catch(e){hinweis=netzFehler(e)}
   upd.disabled=false;render();
 }
+/* ---- Benutzerkonto (ohne E-Mail): Der Browser rechnet aus Passwort und Namen einen Schlüssel aus, der Server sieht das Passwort nie ---- */
+var konto=null,kMode="login",kPush=null;
+try{konto=JSON.parse(localStorage.getItem("pv-konto")||"null")}catch(e){}
+function kontoMerken(k){konto=k;try{k?localStorage.setItem("pv-konto",JSON.stringify(k)):localStorage.removeItem("pv-konto")}catch(e){}kontoAnzeige()}
+async function dkVon(name,pw){
+  const enc=new TextEncoder(),k=await crypto.subtle.importKey("raw",enc.encode(pw),"PBKDF2",false,["deriveBits"]);
+  const b=await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:enc.encode(name.trim().toLowerCase()+"|preisvergleich"),iterations:200000},k,256);
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
+}
+async function kFetch(pfad,methode,body,token){
+  const r=await fetch(wUrl+pfad,{method:methode,cache:"no-store",headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{})},body:body?JSON.stringify(body):undefined});
+  let j={};try{j=await r.json()}catch(e){}
+  if(!r.ok)throw Object.assign(new Error(j.fehler||"Server antwortet mit "+r.status),{status:r.status});
+  return j;
+}
+function kontoAnzeige(){
+  kontoBtn.classList.toggle("an",!!konto);kontoBtn.title=konto?"Konto: "+konto.name:"Konto";
+  kontoAus.hidden=!!konto;kontoEin.hidden=!konto;if(konto)kWer.textContent=konto.name;
+  kBetreiber.hidden=!zugang;
+}
+function kModeSetzen(m){
+  kMode=m;
+  kModen.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.m===(m==="code"?"vergessen":m)));
+  const neu=m==="neu",cd=m==="code",vg=m==="vergessen";
+  kCodeL.hidden=!cd;kPwL.hidden=vg;kPw2L.hidden=!(neu||cd);kCodeLink.hidden=!vg;
+  kPw.autocomplete=neu||cd?"new-password":"current-password";
+  kGo.textContent=m==="login"?"Anmelden":neu?"Konto anlegen":vg?"Anfrage senden":"Neues Passwort setzen";
+  kText.textContent=m==="login"?"Melde dich mit deinem Benutzernamen und Passwort an.":neu?"Wähle einen Benutzernamen (3 bis 24 Zeichen: a bis z, Ziffern, Punkt, Strich, Unterstrich) und ein Passwort mit mindestens 8 Zeichen. Es gibt keine E-Mail: Wenn du dein Passwort vergisst, hilft der Betreiber dieser Seite mit einem Code.":vg?"Gib deinen Benutzernamen ein. Der Betreiber bekommt eine Nachricht und gibt dir einen Code, mit dem du ein neues Passwort setzt.":"Gib den Code vom Betreiber und dein neues Passwort ein.";
+  kInfo.textContent="";
+}
+kModen.onclick=e=>{const b=e.target.closest("button[data-m]");if(b)kModeSetzen(b.dataset.m)};
+kCodeLink.onclick=()=>kModeSetzen("code");
+kontoBtn.onclick=()=>{kontoAnzeige();if(!konto)kModeSetzen(kMode==="code"?"code":"login");kontoDlg.hidden=false;kInfo.textContent="";if(zugang)anfragenLaden();(konto?kLoesch:kName).focus()};
+kZu.onclick=()=>{kontoDlg.hidden=true};
+kontoDlg.onclick=e=>{if(e.target===kontoDlg)kontoDlg.hidden=true};
+kontoDlg.onkeydown=e=>{if(e.key==="Escape")kontoDlg.hidden=true;if(e.key==="Enter"&&e.target.tagName==="INPUT")kGo.click()};
+kGo.onclick=async()=>{
+  const name=kName.value.trim().toLowerCase(),pw=kPw.value;
+  if(!/^[a-z0-9_.-]{3,24}$/.test(name)){kInfo.textContent="Der Benutzername darf 3 bis 24 Zeichen haben: Buchstaben a bis z (klein), Ziffern, Punkt, Strich, Unterstrich.";return}
+  if(kMode!=="vergessen"&&pw.length<8){kInfo.textContent="Das Passwort braucht mindestens 8 Zeichen.";return}
+  if((kMode==="neu"||kMode==="code")&&pw!==kPw2.value){kInfo.textContent="Die beiden Passwörter sind nicht gleich.";return}
+  kGo.disabled=true;kInfo.textContent="Einen Moment …";
+  try{
+    if(kMode==="vergessen"){const j=await kFetch("/konto/vergessen","POST",{name});kInfo.textContent=j.hinweis||"Anfrage gesendet.";kGo.disabled=false;return}
+    const dk=await dkVon(name,pw);
+    const j=kMode==="login"?await kFetch("/konto/login","POST",{name,dk}):kMode==="neu"?await kFetch("/konto/neu","POST",{name,dk}):await kFetch("/konto/neues-passwort","POST",{name,code:kCode.value,dk});
+    kPw.value=kPw2.value=kCode.value="";
+    kontoMerken({name:j.name,token:j.token});
+    await kontoLaden(false,kMode==="neu");
+    kInfo.textContent=kMode==="neu"?"Konto angelegt. Standort und Einkaufsliste dieses Geräts werden ab jetzt abgeglichen.":kMode==="code"?"Neues Passwort gesetzt, du bist angemeldet.":"Angemeldet.";
+  }catch(e){kInfo.textContent=e.message}
+  kGo.disabled=false;
+};
+kAus.onclick=async()=>{try{await kFetch("/konto/logout","POST",{},konto.token)}catch(e){}kontoMerken(null);kModeSetzen("login");kInfo.textContent="Abgemeldet."};
+kLoesch.onclick=async()=>{
+  const pw=prompt("Konto endgültig löschen? Zur Bestätigung dein Passwort eingeben:");if(!pw)return;
+  try{await kFetch("/konto/loeschen","POST",{dk:await dkVon(konto.name,pw)},konto.token);kontoMerken(null);kModeSetzen("login");kInfo.textContent="Das Konto und seine Daten sind gelöscht."}
+  catch(e){kInfo.textContent=e.message}
+};
+function kontoAbgelaufen(){kontoMerken(null);hinweis="Bitte melde dich neu an (Konto-Symbol oben rechts).";render()}
+function kontoSync(){
+  if(!konto||!wUrl)return;
+  clearTimeout(kPush);
+  kPush=setTimeout(async()=>{
+    try{await kFetch("/konto/daten","PUT",{daten:{ort,km:kmSatz,eink}},konto.token)}
+    catch(e){if(e.status===401)kontoAbgelaufen()}
+  },1500);
+}
+async function kontoLaden(start,erstmals){
+  if(!konto||!wUrl)return;
+  try{
+    const d=(await kFetch("/konto/daten","GET",null,konto.token)).daten||{};
+    let neuOrt=false;
+    if(d.ort&&JSON.stringify(d.ort)!==JSON.stringify(ort)){
+      if(start){ort=d.ort;try{localStorage.setItem("pv-ort",JSON.stringify(ort))}catch(e){}}else neuOrt=true;
+    }
+    if(typeof d.km==="number"){kmSatz=d.km;try{localStorage.setItem("pv-km",String(d.km))}catch(e){}}
+    if(Array.isArray(d.eink))eink=(start&&!erstmals)?d.eink:[...new Set([...d.eink,...eink])];
+    einkSpeichernOhneSync();
+    if(neuOrt)await ortSetzen(d.ort,true);else render();
+    const g=x=>JSON.stringify(x);
+    if(g({ort:ort||undefined,km:kmSatz,eink})!==g({ort:d.ort,km:d.km,eink:d.eink}))kontoSync();   // nur hochladen, wenn dieses Gerät etwas anderes hat als der Server
+  }catch(e){if(e.status===401)kontoAbgelaufen()}
+}
+function einkSpeichernOhneSync(){try{localStorage.setItem("pv-eink",JSON.stringify(eink))}catch(e){}}
+/* Betreiber: Anfragen "Passwort vergessen" und Einmal-Codes (nur mit Zugangscode sichtbar) */
+async function anfragenLaden(){
+  try{
+    const l=await (await wf("/konto/anfragen")).json();
+    kAnfragen.innerHTML=l.length?l.map(x=>`<div class="ek-z"><span><b>${esc(x.name)}</b><br><small>${new Date(x.t).toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"})}</small></span><button type="button" class="lb" data-n="${esc(x.name)}">Code erzeugen</button></div>`).join(""):"Keine offenen Anfragen.";
+  }catch(e){kAnfragen.textContent=e.message}
+}
+kAnfragen.onclick=async e=>{
+  const b=e.target.closest("button[data-n]");if(!b)return;
+  try{
+    const j=await (await wf("/konto/code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:b.dataset.n})})).json();
+    kInfo.innerHTML="Code für <b>"+esc(b.dataset.n)+"</b>: <b style=\"font-size:1.3rem;letter-spacing:.12em\">"+esc(j.code)+"</b><br>Gültig: "+esc(j.gueltig)+". Gib ihn der Person weiter, am besten nicht öffentlich.";
+  }catch(err){kInfo.textContent=err.message}
+};
+kontoAnzeige();kModeSetzen("login");
 if(cf){
   suchBox.hidden=false;suchBtn.onclick=suchen;suchtext.onkeydown=e=>{if(e.key==="Enter")suchen()};
   upd.hidden=false;upd.onclick=aktualisieren;
-  (async()=>{await favLaden();await korrLaden();await autoLaden();distLaden()})();
+  kontoBtn.hidden=false;
+  (async()=>{await favLaden();await korrLaden();await kontoLaden(true);await autoLaden();distLaden()})();
   if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 }else if(/^https?:$/.test(location.protocol))autoLaden();
 </script>
