@@ -63,7 +63,9 @@ jobs:
           log "Mit Code, leere Suche (erwartet 400): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 -X POST -H "Authorization: Bearer $ZUG" "$URL/suche?q=")"
           T0=$(date +%s); R=$(curl -s -m 120 -X POST -H "Authorization: Bearer $ZUG" "$URL/suche?q=Fanta")
           log "Suche Fanta: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if type=="array" then {anzahl: length} else . end' 2>/dev/null || echo "$R" | head -c 300)"
+          sleep 8   # frisch gesetzte Geheimnisse brauchen einen Moment, bis alle Rechenzentren sie kennen
           T0=$(date +%s); R=$(curl -s -m 300 -X POST -H "X-Wartung: $KEY" "$URL/aktualisieren")
+          echo "$R" | grep -q "Zugangscode" && { sleep 20; T0=$(date +%s); R=$(curl -s -m 300 -X POST -H "X-Wartung: $KEY" "$URL/aktualisieren"); }
           log "Aktualisieren: $(( $(date +%s) - T0 )) s, $(echo "$R" | head -c 400)"
           log "Angebote: $(curl -s -m 30 $URL/angebote.json | jq -c '{anzahl: length, gruppen: ([.[].gruppe] | unique)}' 2>/dev/null)"
           log "Verlauf: $(curl -s -m 30 $URL/verlauf.csv | wc -l) Zeilen"
