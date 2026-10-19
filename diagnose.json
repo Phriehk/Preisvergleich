@@ -1,159 +1,18 @@
 {
- "seiten": {
-  "/search/cola": {
-   "laenge": 34760,
-   "api_urls": [],
-   "skripte": [
-    "/search.d4424fffd3fe90bbd9e5.boot.js"
-   ]
-  },
-  "/offers/25362087": {
-   "laenge": 32941,
-   "api_urls": [],
-   "skripte": [
-    "/offer.d4424fffd3fe90bbd9e5.boot.js"
-   ]
-  },
-  "/b/coca-cola": {
-   "laenge": 84744,
-   "api_urls": [],
-   "skripte": [
-    "/brandOffers.d4424fffd3fe90bbd9e5.boot.js"
-   ]
-  },
-  "/rp/rewe-prospekte": {
-   "laenge": 79944,
-   "api_urls": [],
-   "skripte": [
-    "/retailerLeaflets.d4424fffd3fe90bbd9e5.boot.js"
-   ]
-  },
-  "/": {
-   "laenge": 120661,
-   "api_urls": [],
-   "skripte": [
-    "/home.d4424fffd3fe90bbd9e5.boot.js"
-   ]
-  }
- },
- "varianten": {
-  "q=cola": {
-   "anzahl": 14,
-   "rewe": [],
-   "haendler": [
-    "ALDI SÜD",
-    "Handelshof",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "trinkgut"
-   ]
-  },
-  "q=cola, as=mobile": {
-   "anzahl": 14,
-   "rewe": [],
-   "haendler": [
-    "ALDI SÜD",
-    "Handelshof",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "trinkgut"
-   ]
-  },
-  "q=cola, advertisers=rewe": {
-   "anzahl": 14,
-   "rewe": [],
-   "haendler": [
-    "ALDI SÜD",
-    "Handelshof",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "trinkgut"
-   ]
-  },
-  "q=cola, advertisers=retailers/126802": {
-   "anzahl": 14,
-   "rewe": [],
-   "haendler": [
-    "ALDI SÜD",
-    "Handelshof",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "trinkgut"
-   ]
-  },
-  "q=cola, retailers=rewe": {
-   "anzahl": 0,
-   "rewe": [],
-   "haendler": []
-  },
-  "q=cola, advertiser=rewe": {
-   "anzahl": 14,
-   "rewe": [],
-   "haendler": [
-    "ALDI SÜD",
-    "Handelshof",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "trinkgut"
-   ]
-  },
-  "q=cola, advertiserIds=retailers/126802": {
-   "anzahl": 14,
-   "rewe": [],
-   "haendler": [
-    "ALDI SÜD",
-    "Handelshof",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "trinkgut"
-   ]
-  },
-  "q=coca-cola, brands=coca-cola": {
-   "anzahl": 0,
-   "rewe": [],
-   "haendler": []
-  },
-  "q=rewe": {
-   "anzahl": 0,
-   "rewe": [],
-   "haendler": []
-  },
-  "q=rewe cola": {
-   "anzahl": 0,
-   "rewe": [],
-   "haendler": []
-  },
-  "q=getränke rewe": {
-   "anzahl": 0,
-   "rewe": [],
-   "haendler": []
-  },
-  "ohne q, brands=coca-cola": {
-   "fehler": "object of type 'NoneType' has no len()"
-  },
-  "ohne q, brand=coca-cola": {
-   "fehler": "object of type 'NoneType' has no len()"
-  },
-  "ohne q, advertisers=rewe": {
-   "fehler": "object of type 'NoneType' has no len()"
-  }
- },
+ "seiten": {},
+ "varianten": {},
  "plz": {
-  "47051": {
-   "anzahl": 21,
-   "rewe": [
+  "47178": {
+   "anzahl": 14,
+   "rewe_anzahl": 0,
+   "ziel_dabei": false,
+   "rewe_coca": []
+  },
+  "47179": {
+   "anzahl": 22,
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
     {
      "id": 25335487,
      "adv": "REWE Dortmund",
@@ -193,39 +52,14 @@
      "marke": "Pepsi",
      "preis": 3.99,
      "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25347812,
-     "adv": "REWE",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25338652,
-     "adv": "REWE Dortmund",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
-     "bis": "2026-10-24T21:59:00Z"
     }
-   ],
-   "haendler": [
-    "ALDI SÜD",
-    "Handelshof",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "REWE",
-    "REWE Dortmund",
-    "trinkgut"
    ]
   },
-  "47119": {
-   "anzahl": 21,
-   "rewe": [
+  "47167": {
+   "anzahl": 20,
+   "rewe_anzahl": 7,
+   "ziel_dabei": false,
+   "rewe_coca": [
     {
      "id": 25335487,
      "adv": "REWE Dortmund",
@@ -265,184 +99,14 @@
      "marke": "Pepsi",
      "preis": 3.99,
      "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25347812,
-     "adv": "REWE",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25338652,
-     "adv": "REWE Dortmund",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
-     "bis": "2026-10-24T21:59:00Z"
     }
-   ],
-   "haendler": [
-    "ALDI SÜD",
-    "Handelshof",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "REWE",
-    "REWE Dortmund",
-    "trinkgut"
-   ]
-  },
-  "47139": {
-   "anzahl": 21,
-   "rewe": [
-    {
-     "id": 25335487,
-     "adv": "REWE Dortmund",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "preis": 1.11,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25338127,
-     "adv": "REWE Dortmund",
-     "produkt": "Friendspack",
-     "marke": "Coca-Cola",
-     "preis": 5.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25337872,
-     "adv": "REWE Dortmund",
-     "produkt": "Limonade",
-     "marke": "Coca-Cola",
-     "preis": 16.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25337912,
-     "adv": "REWE Dortmund",
-     "produkt": "Cola",
-     "marke": "Afri Cola",
-     "preis": 0.69,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25337897,
-     "adv": "REWE Dortmund",
-     "produkt": "Pepsi Cola",
-     "marke": "Pepsi",
-     "preis": 3.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25347812,
-     "adv": "REWE",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25338652,
-     "adv": "REWE Dortmund",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
-     "bis": "2026-10-24T21:59:00Z"
-    }
-   ],
-   "haendler": [
-    "ALDI SÜD",
-    "Handelshof",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "REWE",
-    "REWE Dortmund",
-    "trinkgut"
-   ]
-  },
-  "47166": {
-   "anzahl": 23,
-   "rewe": [
-    {
-     "id": 25335487,
-     "adv": "REWE Dortmund",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "preis": 1.11,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25338127,
-     "adv": "REWE Dortmund",
-     "produkt": "Friendspack",
-     "marke": "Coca-Cola",
-     "preis": 5.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25337872,
-     "adv": "REWE Dortmund",
-     "produkt": "Limonade",
-     "marke": "Coca-Cola",
-     "preis": 16.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25337912,
-     "adv": "REWE Dortmund",
-     "produkt": "Cola",
-     "marke": "Afri Cola",
-     "preis": 0.69,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25337897,
-     "adv": "REWE Dortmund",
-     "produkt": "Pepsi Cola",
-     "marke": "Pepsi",
-     "preis": 3.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25347812,
-     "adv": "REWE",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25338652,
-     "adv": "REWE Dortmund",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
-     "bis": "2026-10-24T21:59:00Z"
-    }
-   ],
-   "haendler": [
-    "ALDI SÜD",
-    "Getränke Hoffmann",
-    "Handelshof",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "REWE",
-    "REWE Dortmund",
-    "trinkgut"
    ]
   },
   "47169": {
    "anzahl": 22,
-   "rewe": [
+   "rewe_anzahl": 7,
+   "ziel_dabei": false,
+   "rewe_coca": [
     {
      "id": 25335487,
      "adv": "REWE Dortmund",
@@ -482,39 +146,745 @@
      "marke": "Pepsi",
      "preis": 3.99,
      "bis": "2026-10-24T21:59:00Z"
-    },
+    }
+   ]
+  },
+  "47166": {
+   "anzahl": 23,
+   "rewe_anzahl": 7,
+   "ziel_dabei": false,
+   "rewe_coca": [
     {
-     "id": 25347812,
-     "adv": "REWE",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25338652,
+     "id": 25338127,
      "adv": "REWE Dortmund",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
      "bis": "2026-10-24T21:59:00Z"
     }
-   ],
-   "haendler": [
-    "ALDI SÜD",
-    "Getränke Hoffmann",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "REWE",
-    "REWE Dortmund",
-    "trinkgut"
+   ]
+  },
+  "47137": {
+   "anzahl": 21,
+   "rewe_anzahl": 7,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "47138": {
+   "anzahl": 21,
+   "rewe_anzahl": 7,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "47139": {
+   "anzahl": 21,
+   "rewe_anzahl": 7,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "47119": {
+   "anzahl": 21,
+   "rewe_anzahl": 7,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "47051": {
+   "anzahl": 21,
+   "rewe_anzahl": 7,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "47053": {
+   "anzahl": 25,
+   "rewe_anzahl": 11,
+   "ziel_dabei": true,
+   "rewe_coca": [
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "47055": {
+   "anzahl": 25,
+   "rewe_anzahl": 11,
+   "ziel_dabei": true,
+   "rewe_coca": [
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "47057": {
+   "anzahl": 25,
+   "rewe_anzahl": 11,
+   "ziel_dabei": true,
+   "rewe_coca": [
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "47058": {
+   "anzahl": 21,
+   "rewe_anzahl": 7,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "47059": {
+   "anzahl": 21,
+   "rewe_anzahl": 7,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "47198": {
+   "anzahl": 25,
+   "rewe_anzahl": 11,
+   "ziel_dabei": true,
+   "rewe_coca": [
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "47199": {
+   "anzahl": 19,
+   "rewe_anzahl": 5,
+   "ziel_dabei": true,
+   "rewe_coca": [
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
    ]
   },
   "47226": {
    "anzahl": 27,
-   "rewe": [
+   "rewe_anzahl": 11,
+   "ziel_dabei": true,
+   "rewe_coca": [
     {
      "id": 25362087,
      "adv": "REWE",
@@ -586,40 +956,488 @@
      "marke": "Pepsi",
      "preis": 3.99,
      "bis": "2026-10-24T21:59:00Z"
-    },
+    }
+   ]
+  },
+  "47228": {
+   "anzahl": 26,
+   "rewe_anzahl": 11,
+   "ziel_dabei": true,
+   "rewe_coca": [
     {
-     "id": 25347812,
+     "id": 25362087,
      "adv": "REWE",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25338652,
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25335487,
      "adv": "REWE Dortmund",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
      "bis": "2026-10-24T21:59:00Z"
     }
-   ],
-   "haendler": [
-    "ALDI SÜD",
-    "Getränke Hoffmann",
-    "Handelshof",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "REWE",
-    "REWE Dortmund",
-    "trinkgut"
+   ]
+  },
+  "47229": {
+   "anzahl": 28,
+   "rewe_anzahl": 11,
+   "ziel_dabei": true,
+   "rewe_coca": [
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "47249": {
+   "anzahl": 25,
+   "rewe_anzahl": 11,
+   "ziel_dabei": true,
+   "rewe_coca": [
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "47259": {
+   "anzahl": 26,
+   "rewe_anzahl": 11,
+   "ziel_dabei": true,
+   "rewe_coca": [
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "47269": {
+   "anzahl": 25,
+   "rewe_anzahl": 11,
+   "ziel_dabei": true,
+   "rewe_coca": [
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "47279": {
+   "anzahl": 25,
+   "rewe_anzahl": 11,
+   "ziel_dabei": true,
+   "rewe_coca": [
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
    ]
   },
   "47441": {
    "anzahl": 27,
-   "rewe": [
+   "rewe_anzahl": 11,
+   "ziel_dabei": true,
+   "rewe_coca": [
     {
      "id": 25362087,
      "adv": "REWE",
@@ -691,40 +1509,32 @@
      "marke": "Pepsi",
      "preis": 3.99,
      "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25347812,
-     "adv": "REWE",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25338652,
-     "adv": "REWE Dortmund",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
-     "bis": "2026-10-24T21:59:00Z"
     }
-   ],
-   "haendler": [
-    "ALDI SÜD",
-    "Getränke Hoffmann",
-    "Handelshof",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "REWE",
-    "REWE Dortmund",
-    "trinkgut"
    ]
   },
-  "47506": {
-   "anzahl": 22,
-   "rewe": [
+  "46535": {
+   "anzahl": 16,
+   "rewe_anzahl": 0,
+   "ziel_dabei": false,
+   "rewe_coca": []
+  },
+  "46537": {
+   "anzahl": 14,
+   "rewe_anzahl": 0,
+   "ziel_dabei": false,
+   "rewe_coca": []
+  },
+  "46539": {
+   "anzahl": 16,
+   "rewe_anzahl": 0,
+   "ziel_dabei": false,
+   "rewe_coca": []
+  },
+  "46483": {
+   "anzahl": 20,
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
     {
      "id": 25335487,
      "adv": "REWE Dortmund",
@@ -764,31 +1574,155 @@
      "marke": "Pepsi",
      "preis": 3.99,
      "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "46145": {
+   "anzahl": 22,
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25338652,
+     "id": 25338127,
      "adv": "REWE Dortmund",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
      "bis": "2026-10-24T21:59:00Z"
     }
-   ],
-   "haendler": [
-    "ALDI SÜD",
-    "Getränke Hoffmann",
-    "Handelshof",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "REWE Dortmund",
-    "trinkgut"
+   ]
+  },
+  "46147": {
+   "anzahl": 20,
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "46149": {
+   "anzahl": 21,
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
    ]
   },
   "46045": {
    "anzahl": 21,
-   "rewe": [
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
     {
      "id": 25335487,
      "adv": "REWE Dortmund",
@@ -828,60 +1762,20 @@
      "marke": "Pepsi",
      "preis": 3.99,
      "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25338652,
-     "adv": "REWE Dortmund",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
-     "bis": "2026-10-24T21:59:00Z"
     }
-   ],
-   "haendler": [
-    "ALDI SÜD",
-    "Getränke Hoffmann",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "REWE Dortmund",
-    "trinkgut"
    ]
   },
-  "45127": {
-   "anzahl": 24,
-   "rewe": [
-    {
-     "id": 25362087,
-     "adv": "REWE",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "preis": 16.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25358927,
-     "adv": "REWE",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "preis": 1.11,
-     "bis": "2026-10-24T21:59:00Z"
-    },
+  "46047": {
+   "anzahl": 19,
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
     {
      "id": 25335487,
      "adv": "REWE Dortmund",
      "produkt": "Cola",
      "marke": "Coca-Cola",
      "preis": 1.11,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25362007,
-     "adv": "REWE",
-     "produkt": "Original Taste",
-     "marke": "Coca-Cola",
-     "preis": 5.99,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
@@ -909,11 +1803,50 @@
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25362032,
-     "adv": "REWE",
+     "id": 25337897,
+     "adv": "REWE Dortmund",
      "produkt": "Pepsi Cola",
      "marke": "Pepsi",
      "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "46049": {
+   "anzahl": 19,
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
@@ -923,321 +1856,477 @@
      "marke": "Pepsi",
      "preis": 3.99,
      "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25347812,
-     "adv": "REWE",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25338652,
-     "adv": "REWE Dortmund",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
-     "bis": "2026-10-24T21:59:00Z"
     }
-   ],
-   "haendler": [
-    "EDEKA Foodservice",
-    "Handelshof",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "REWE",
-    "REWE Dortmund",
-    "trinkgut"
    ]
   },
-  "40210": {
-   "anzahl": 21,
-   "rewe": [
+  "46117": {
+   "anzahl": 19,
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
     {
-     "id": 25362087,
-     "adv": "REWE",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "preis": 16.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25358927,
-     "adv": "REWE",
+     "id": 25335487,
+     "adv": "REWE Dortmund",
      "produkt": "Cola",
      "marke": "Coca-Cola",
      "preis": 1.11,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25362007,
-     "adv": "REWE",
-     "produkt": "Original Taste",
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
      "marke": "Coca-Cola",
      "preis": 5.99,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25362032,
-     "adv": "REWE",
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
      "produkt": "Pepsi Cola",
      "marke": "Pepsi",
      "preis": 3.99,
      "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25347812,
-     "adv": "REWE",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
-     "bis": "2026-10-24T21:59:00Z"
     }
-   ],
-   "haendler": [
-    "ALDI SÜD",
-    "Handelshof",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "REWE",
-    "nahkauf",
-    "trinkgut"
    ]
   },
-  "50667": {
+  "46119": {
+   "anzahl": 19,
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "45468": {
    "anzahl": 22,
-   "rewe": [
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
     {
-     "id": 25369477,
-     "adv": "REWE",
+     "id": 25335487,
+     "adv": "REWE Dortmund",
      "produkt": "Cola",
      "marke": "Coca-Cola",
      "preis": 1.11,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25362087,
-     "adv": "REWE",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "preis": 16.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25358927,
-     "adv": "REWE",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "preis": 1.11,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25362007,
-     "adv": "REWE",
-     "produkt": "Original Taste",
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
      "marke": "Coca-Cola",
      "preis": 5.99,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25363527,
-     "adv": "REWE",
-     "produkt": "Pepsi Cola",
-     "marke": "Pepsi",
-     "preis": 3.99,
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25362032,
-     "adv": "REWE",
-     "produkt": "Pepsi Cola",
-     "marke": "Pepsi",
-     "preis": 3.99,
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25347812,
-     "adv": "REWE",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
      "bis": "2026-10-24T21:59:00Z"
     }
-   ],
-   "haendler": [
-    "ALDI SÜD",
-    "Handelshof",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "REWE",
-    "trinkgut"
    ]
   },
-  "10115": {
-   "anzahl": 13,
-   "rewe": [
+  "45470": {
+   "anzahl": 20,
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
     {
-     "id": 25362087,
-     "adv": "REWE",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "preis": 16.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25358927,
-     "adv": "REWE",
+     "id": 25335487,
+     "adv": "REWE Dortmund",
      "produkt": "Cola",
      "marke": "Coca-Cola",
      "preis": 1.11,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25362007,
-     "adv": "REWE",
-     "produkt": "Original Taste",
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
      "marke": "Coca-Cola",
      "preis": 5.99,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25362032,
-     "adv": "REWE",
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
      "produkt": "Pepsi Cola",
      "marke": "Pepsi",
      "preis": 3.99,
      "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25347812,
-     "adv": "REWE",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
-     "bis": "2026-10-24T21:59:00Z"
     }
-   ],
-   "haendler": [
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "REWE",
-    "budni",
-    "nahkauf"
    ]
   },
-  "80331": {
-   "anzahl": 25,
-   "rewe": [
+  "45472": {
+   "anzahl": 20,
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
     {
-     "id": 25362087,
-     "adv": "REWE",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "preis": 16.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25358927,
-     "adv": "REWE",
+     "id": 25335487,
+     "adv": "REWE Dortmund",
      "produkt": "Cola",
      "marke": "Coca-Cola",
      "preis": 1.11,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25352332,
-     "adv": "REWE Center",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "preis": 16.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25351952,
-     "adv": "REWE Center",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "preis": 8.49,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25336777,
-     "adv": "REWE Center",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "preis": 1.11,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25362007,
-     "adv": "REWE",
-     "produkt": "Original Taste",
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
      "marke": "Coca-Cola",
      "preis": 5.99,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25362032,
-     "adv": "REWE",
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
      "produkt": "Pepsi Cola",
      "marke": "Pepsi",
      "preis": 3.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25352227,
-     "adv": "REWE Center",
-     "produkt": "Pepsi Cola",
-     "marke": "Pepsi",
-     "preis": 9.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25352052,
-     "adv": "REWE Center",
-     "produkt": "Pepsi Cola",
-     "marke": "Pepsi",
-     "preis": 3.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25347812,
-     "adv": "REWE",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25338397,
-     "adv": "REWE Center",
-     "produkt": "Bourbon Whiskey & Cola",
-     "marke": "Jim Beam",
-     "preis": 1.99,
      "bis": "2026-10-24T21:59:00Z"
     }
-   ],
-   "haendler": [
-    "ALDI SÜD",
-    "E center",
-    "EDEKA",
-    "Kaufland",
-    "Lidl",
-    "Netto Marken-Discount",
-    "PENNY",
-    "REWE",
-    "REWE Center",
-    "nahkauf",
-    "trinkgut"
+   ]
+  },
+  "45473": {
+   "anzahl": 20,
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "45475": {
+   "anzahl": 22,
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "45476": {
+   "anzahl": 20,
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "45478": {
+   "anzahl": 20,
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ]
+  },
+  "45479": {
+   "anzahl": 20,
+   "rewe_anzahl": 6,
+   "ziel_dabei": false,
+   "rewe_coca": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
    ]
   }
  }
