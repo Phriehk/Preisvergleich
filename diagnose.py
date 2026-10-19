@@ -34,41 +34,22 @@ def suche(params, h):
 try:
     api, client = t.hole_schluessel()
     h = {"x-apikey": api, "x-clientkey": client}
-
-    # 1) Welche API-Aufrufe stecken in den Seiten der Webseite?
-    for pfad in ("/search/cola", "/offers/25362087", "/b/coca-cola", "/rp/rewe-prospekte", "/"):
+    basis = {"as": "web", "limit": 100, "offset": 0}
+    plzs = ["47178", "47179", "47167", "47169", "47166", "47137", "47138", "47139", "47119", "47051", "47053", "47055", "47057", "47058", "47059",
+            "47198", "47199", "47226", "47228", "47229", "47249", "47259", "47269", "47279", "47441", "46535", "46537", "46539", "46483",
+            "46145", "46147", "46149", "46045", "46047", "46049", "46117", "46119", "45468", "45470", "45472", "45473", "45475", "45476", "45478", "45479"]
+    for plz in plzs:
         try:
-            html = t.http("https://www.marktguru.de" + pfad)
-            html = html.replace("&q;", '"').replace("&a;", "&").replace("&s;", "'").replace("&l;", "<").replace("&g;", ">")
-            urls = sorted(set(re.findall(r"https?://api\.marktguru\.de/[^\"'\s<>\\]+", html)))
-            skripte = sorted(set(re.findall(r'src="([^"]+\.js)"', html)))
-            out["seiten"][pfad] = {"laenge": len(html), "api_urls": urls[:40], "skripte": skripte[:15]}
+            url = t.SEARCH + "?" + urllib.parse.urlencode({**basis, "q": "Cola", "zipCode": plz})
+            res = json.loads(t.http(url, h, versuche=2)).get("results", [])
+            rewe = [o for o in res if "rewe" in (((o.get("advertisers") or [{}])[0]).get("name") or "").lower()]
+            out["plz"][plz] = {"anzahl": len(res), "rewe_anzahl": len(rewe),
+                               "ziel_dabei": any(o.get("id") == 25362087 for o in res),
+                               "rewe_coca": [dict(kurz(o), adv=((o.get("advertisers") or [{}])[0]).get("name")) for o in rewe
+                                             if "coca" in json.dumps(o, ensure_ascii=False).lower()]}
         except Exception as e:  # noqa: BLE001
-            out["seiten"][pfad] = {"fehler": str(e)[:200]}
-
-    # 2) Mögliche Filter-Parameter für die Suche
-    basis = {"as": "web", "limit": 100, "offset": 0, "zipCode": "47178"}
-    for name, extra in (
-        ("q=cola", {"q": "cola"}),
-        ("q=cola, as=mobile", {"q": "cola", "as": "mobile"}),
-        ("q=cola, advertisers=rewe", {"q": "cola", "advertisers": "rewe"}),
-        ("q=cola, advertisers=retailers/126802", {"q": "cola", "advertisers": "retailers/126802"}),
-        ("q=cola, retailers=rewe", {"q": "cola", "retailers": "rewe"}),
-        ("q=cola, advertiser=rewe", {"q": "cola", "advertiser": "rewe"}),
-        ("q=cola, advertiserIds=retailers/126802", {"q": "cola", "advertiserIds": "retailers/126802"}),
-        ("q=coca-cola, brands=coca-cola", {"q": "coca-cola", "brands": "coca-cola"}),
-        ("q=rewe", {"q": "rewe"}),
-        ("q=rewe cola", {"q": "rewe cola"}),
-        ("q=getränke rewe", {"q": "getränke rewe"}),
-        ("ohne q, brands=coca-cola", {"brands": "coca-cola"}),
-        ("ohne q, brand=coca-cola", {"brand": "coca-cola"}),
-        ("ohne q, advertisers=rewe", {"advertisers": "rewe"}),
-    ):
-        out["varianten"][name] = suche({**basis, **extra}, h)
-
-    # 3) Taucht REWE bei irgendeiner Postleitzahl in der Suche auf?
-    for plz in ("47051", "47119", "47139", "47166", "47169", "47226", "47441", "47506", "46045", "45127", "40210", "50667", "10115", "80331"):
-        out["plz"][plz] = suche({**basis, "q": "cola", "zipCode": plz}, h)
+            out["plz"][plz] = {"fehler": str(e)[:200]}
+        import time; time.sleep(0.7)
 except Exception:  # noqa: BLE001
     out["fehler"] = traceback.format_exc()[-800:]
 
