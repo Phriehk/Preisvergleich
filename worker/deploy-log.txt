@@ -1,48 +1,48 @@
 workers.dev-Subdomain: phriehk
 Total Upload: 37.40 KiB / gzip: 11.59 KiB
-Worker Startup Time: 2 ms
+Worker Startup Time: 4 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (3.07 sec)
-Deployed preise triggers (1.04 sec)
+Uploaded preise (3.75 sec)
+Deployed preise triggers (0.66 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: cb41038b-f981-4b88-8730-1a6dbfaeb215
+Current Version ID: 2cb97f84-b0b5-4fad-ac2d-acc2cc157960
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
-Zugangscode: abgeleitet aus dem Cloudflare-Schlüssel (Secret ZUGANGSCODE fehlt)
+Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-19T19:10","anzahl":20,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-19T21:15","anzahl":20,"fehler":0}}
 Seite: <title>Getränke-Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
 Suche Fanta: 1 s, {"anzahl":1}
-Aktualisieren: 4 s, {"zeit":"2026-10-19T19:34","anzahl":20,"fehler":0,"alarm":[]}
+Aktualisieren: 3 s, {"zeit":"2026-10-19T21:17","anzahl":20,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":20,"gruppen":["Monster Energy","Red Bull","coca cola"]}
 Verlauf: 184 Zeilen
 Korrekturen lesen: {}
 Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
 Korrektur gespeichert und gelesen: true
-Test-Korrektur gelöscht: true
+Test-Korrektur gelöscht: false
 Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34}}
 Region 40210 ohne Code: 0 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792431285","token":true}
+Konto anlegen: {"name":"test1792437521","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792431285","daten":{}}
+Konto Daten: {"name":"test1792437521","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792431285"]
+Konto Anfragen mit Code: ["test1792437521"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792431285","token":true}
-Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
+Neues Passwort mit Code: {"name":"test1792437521","token":true}
+Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 200
 Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
