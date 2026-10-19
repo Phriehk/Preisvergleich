@@ -287,7 +287,7 @@ const rad = x => x * Math.PI / 180;
 const luftlinie = (a, b, c, d) => { const h = Math.sin(rad(c - a) / 2) ** 2 + Math.cos(rad(a)) * Math.cos(rad(c)) * Math.sin(rad(d - b) / 2) ** 2; return 12742 * Math.asin(Math.sqrt(h)); };
 async function overpass(abfrage) {
   let letzter;
-  for (const host of ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]) {
+  for (const host of ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter", "https://overpass.private.coffee/api/interpreter"]) {
     try {
       const r = await fetch(host, { method: "POST", headers: { ...OSM_UA, "Content-Type": "application/x-www-form-urlencoded" }, body: "data=" + encodeURIComponent(abfrage) });
       if (r.ok) {
@@ -300,6 +300,24 @@ async function overpass(abfrage) {
   }
   throw letzter;
 }
+// Ausweichweg, falls Overpass nicht antwortet: Nominatim, ein Markt nach dem anderen (höchstens 1 Anfrage pro Sekunde)
+async function ueberNominatim(namen, mitte) {
+  const erg = {}, d = 0.22;   // etwa 15 bis 25 km um die Mitte
+  for (const n of namen) {
+    erg[n] = { km: null };
+    try {
+      const u = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(markenKern(n))}&format=json&limit=40&bounded=1&viewbox=${mitte.lon - d},${mitte.lat + d * .65},${mitte.lon + d},${mitte.lat - d * .65}`;
+      const r = await fetch(u, { headers: OSM_UA });
+      if (r.ok) for (const e of await r.json()) {
+        if (e.class !== "shop") continue;
+        const km = luftlinie(mitte.lat, mitte.lon, +e.lat, +e.lon);
+        if (erg[n].km == null || km < erg[n].km) erg[n] = { km: Math.round(km * 10) / 10, adresse: (e.display_name || "").split(",").slice(0, 3).join(",").trim() };
+      }
+    } catch (e) { /* nächster Markt */ }
+    await new Promise(r => setTimeout(r, 1100));
+  }
+  return erg;
+}
 async function entfernungenBerechnen(env, maerkte) {
   let mitte = await env.PV.get("mitte", "json");
   if (!mitte) {
@@ -311,8 +329,10 @@ async function entfernungenBerechnen(env, maerkte) {
   }
   const namen = [...new Set(maerkte.map(markenKern))].filter(Boolean);
   // erst nach Ladentyp filtern (schnell), den Markennamen prüfen wir danach selbst
-  const q = `[out:json][timeout:40];nwr["shop"~"^(supermarket|convenience|beverages|variety_store|chemist|department_store|wholesale|discount)$"](around:20000,${mitte.lat},${mitte.lon});out center tags 3000;`;
-  const daten = await overpass(q);
+  const q = `[out:json][timeout:20];nwr["shop"~"^(supermarket|beverages|variety_store|chemist|wholesale)$"](around:15000,${mitte.lat},${mitte.lon});out center tags 1500;`;
+  let daten = null, ueberKarte = true;
+  try { daten = await overpass(q); } catch (e) { ueberKarte = false; }
+  if (!ueberKarte) return await ueberNominatim(namen, mitte);
   const erg = {};
   for (const n of namen) {
     const re = new RegExp(markenRegex(n), "i");
