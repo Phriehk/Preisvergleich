@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 41.52 KiB / gzip: 12.61 KiB
+Total Upload: 41.94 KiB / gzip: 12.75 KiB
 Worker Startup Time: 2 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (3.92 sec)
-Deployed preise triggers (0.82 sec)
+Uploaded preise (5.39 sec)
+Deployed preise triggers (1.21 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: 523e234b-f93c-4a15-be11-1240bf78421d
+Current Version ID: 4b21df8c-293f-4333-9deb-2aad751267eb
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,72 +18,72 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-19T22:50","anzahl":20,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-19T23:25","anzahl":20,"fehler":0}}
 Seite: <title>Getränke-Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
 Suche Fanta: 1 s, {"anzahl":1}
-Aktualisieren: 6 s, {"zeit":"2026-10-19T23:25","anzahl":20,"fehler":0,"alarm":[]}
+Aktualisieren: 1 s, {"zeit":"2026-10-19T23:29","anzahl":20,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":20,"gruppen":["Monster Energy","Red Bull","coca cola"]}
 Verlauf: 184 Zeilen
 Korrekturen lesen: {}
 Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
-Korrektur gespeichert und gelesen: false
-Test-Korrektur gelöscht: false
+Korrektur gespeichert und gelesen: true
+Test-Korrektur gelöscht: true
 Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
-Region 40210 ohne Code: 1 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
+Region 40210 ohne Code: 0 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
-Lebensmittel-Probe: 3 s, {"Butter":18,"Eier":1,"Milch":10,"Reis":8,"Äpfel":7}
-  Probe: Äpfel | Netto Marken-Discount | Äpfel XXL | art=kg liter=2 stueck=1 ml=2000 preis=2.29 | 2 kg Beutel Deutschland, Kl. II
-  Probe: Äpfel | PENNY | Äpfel | art=kg liter=2 stueck=1 ml=2000 preis=2.49 | Kl. I, je 2-kg-Beutel
-  Probe: Äpfel | ALDI SÜD | Äpfel | art=kg liter=1 stueck=1 ml=1000 preis=1.99 | lose Ursprung: Deutschland; Klasse: I; kg-Preis
-  Probe: Äpfel | Lidl | Äpfel | art=kg liter=1 stueck=1 ml=1000 preis=1.99 | Rote  Ursprung: Deutschland/Österreich Klasse I Je 1 kg
-  Probe: Äpfel | Kaufland | Äpfel Ambrosia | art=kg liter=1 stueck=1 ml=1000 preis=1.99 | Ital., rot » Kl. I je 1-kg-Packg.
-  Probe: Äpfel | PENNY | Äpfel | art=kg liter=1 stueck=1 ml=1000 preis=2.29 | 1 kg
-  Probe: Äpfel | PENNY | Grüne Äpfel | art=kg liter=1 stueck=1 ml=1000 preis=2.49 | Kl. I je 1-kg-Schale
+Lebensmittel-Probe: 2 s, {"Butter":11,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl":2,"Nudeln":2}
   Probe: Butter | Netto Marken-Discount | Butter | art=kg liter=0.45 stueck=1 ml=450 preis=0.99 | 450 g versch. Sorten
-  Probe: Butter | Lidl | Peanut-Butter | art=kg liter=0.454 stueck=1 ml=454 preis=1.79 | HINWEIS: MIT LIDL PLUS APP , 454g Normalpreis 1.99
   Probe: Butter | Netto Marken-Discount | Butter | art=kg liter=0.25 stueck=1 ml=250 preis=0.99 | oder Streichzart gekühlt, versch. Sorten 250 g
   Probe: Butter | Lidl | mit Butter XXL | art=kg liter=0.4 stueck=1 ml=400 preis=1.99 | Versch. Sorten. Gekühlt. Je 400 g
   Probe: Butter | Netto Marken-Discount | mit Butter XXL | art=kg liter=0.4 stueck=1 ml=400 preis=1.99 | gekühlt, gesalzen oder ungesalzen 400 g
   Probe: Butter | Kaufland | Butter | art=kg liter=0.25 stueck=1 ml=250 preis=1.29 | oder Die Streichzarte rahmig-frisch, ungesalzen, gekühlt je 250-g-Pack
-  Probe: Butter | ALDI SÜD | Butter-Mandel-Stollen | art=kg liter=0.75 stueck=1 ml=750 preis=4.19 | 750-g-Packung
   Probe: Butter | Lidl | Beste Butter | art=kg liter=0.25 stueck=1 ml=250 preis=1.49 | Gekuhit. Je 250 g
-  Probe: Butter | Lidl | Butter-Mandel-Stollen | art=kg liter=0.75 stueck=1 ml=750 preis=4.99 | Je 750 g
-  Probe: Butter | Lidl | Butter-Mandel-Stollen | art=kg liter=0.75 stueck=1 ml=750 preis=4.99 | 750 g
-  Probe: Butter | PENNY | Extra | art=kg liter=0.25 stueck=1 ml=250 preis=1.69 | Versch. Sorten oder Butter je 250 g
   Probe: Butter | ALDI SÜD | Original Irische Butter | art=kg liter=0.25 stueck=1 ml=250 preis=1.79 | 250-g-Packung
   Probe: Butter | Lidl | Original Irische Butter | art=kg liter=0.2 stueck=1 ml=200 preis=1.69 | Versch. Sorten. Gekühlt. Je 200/250 g
-  Probe: Butter | Thomas Philipps | Butter-Spekulatius | art=kg liter=0.2 stueck=1 ml=200 preis=1.99 | Mandel- oder Schokoladen-Spekulatius 200 g
   Probe: Butter | Lidl | Meersalz Butter | art=kg liter=0.25 stueck=1 ml=250 preis=2.49 | 250 g
-  Probe: Butter | Netto Marken-Discount | Butter Spekulatius | art=kg liter=0.25 stueck=1 ml=250 preis=2.49 | 250 g
-  Probe: Butter | PENNY | Peanut Butter Bar | art=kg liter=0.09 stueck=1 ml=90 preis=1.49 | oder Cups Minis je 90 g
+  Probe: Butter | PENNY | Bio-Alpenbutter | art=kg liter=0.25 stueck=1 ml=250 preis=2.69 | Mild gesäuert, je 250 g
   Probe: Butter | Netto Marken-Discount | Kräuter-Butter | art=kg liter=0.1 stueck=5 ml=20 preis=1.69 | 5 x 20 g gekühlt
   Probe: Eier | Lidl | Eier aus Bodenhaltung | art=st liter=18 stueck=18 ml=1000 preis=3.59 | HINWEIS: MIT LIDL PLUS APP  Güteklasse A. Ursprung/Größe: siehe Verpac
-  Probe: Milch | Lidl | Haltbare Fettarme Milch | art=l liter=12 stueck=12 ml=1000 preis=8.5 | 12x1 l
-  Probe: Milch | ALDI SÜD | H-Milch | art=l liter=1 stueck=1 ml=1000 preis=0.99 | 3,5 % bzw. 1,5 % Fett; 1-l-Packung
-  Probe: Milch | PENNY | Haltbare Milch | art=l liter=1 stueck=1 ml=1000 preis=0.99 | 1,5% oder 3,5% Fett, je 1l
-  Probe: Milch | Lidl | Haltbare Milch | art=l liter=1 stueck=1 ml=1000 preis=1.11 | 3,5/1,5% Fett. Je 1l
-  Probe: Milch | PENNY | Milch Reis | art=kg liter=0.2 stueck=1 ml=200 preis=0.39 | HINWEIS: MIT PENNY APP Versch. Sorten, je 200 g ohne Penny App 0.99
-  Probe: Milch | PENNY | Kaffee-Milch | art=kg liter=0.34 stueck=1 ml=340 preis=1.39 | 4% Fett oder 8% Fett, je 340 g
-  Probe: Milch | ALDI SÜD | Milch-Mäuse | art=kg liter=0.21 stueck=1 ml=210 preis=2.49 | Versch. Sorten; je 210-g-Packung
-  Probe: Milch | Lidl | Milch Snack | art=kg liter=0.108 stueck=1 ml=108 preis=1.59 | oder Milka Snack Gekühlt. Je 108 g
-  Probe: Milch | Kaufland | Premium Heujuwel | art=kg liter=0.1 stueck=1 ml=100 preis=1.49 | österr. Schnittkäse aus Heumilch, 5 Monate gereift, kräftig-würzig, 50
-  Probe: Milch | ALDI SÜD | Milch-Mäuse-Adventskalender | art=kg liter=0.14 stueck=1 ml=140 preis=3.49 | 140-g-Packung;
-  Probe: Reis | ALDI SÜD | Basmati Reis | art=kg liter=1 stueck=1 ml=1000 preis=1.79 | 1-kg-Packung
-  Probe: Reis | PENNY | Milch Reis | art=kg liter=0.2 stueck=1 ml=200 preis=0.39 | HINWEIS: MIT PENNY APP Versch. Sorten, je 200 g ohne Penny App 0.99
-  Probe: Reis | Lidl | Basmati Reis XXL | art=kg liter=4.5 stueck=1 ml=4500 preis=9.99 | Je 4,5 kg, Standardpackung: 1 kg
-  Probe: Reis | ALDI SÜD | Risotto-Reis | art=kg liter=0.5 stueck=1 ml=500 preis=1.49 | 500-g-Packung
+  Probe: Joghurt | Lidl | Joghurt Mild | art=kg liter=0.6 stueck=4 ml=150 preis=0.75 | HINWEIS: MIT LIDL PLUS APP 4x150 g
+  Probe: Joghurt | Lidl | Joghurt Mild XXL | art=kg liter=1 stueck=1 ml=1000 preis=1.49 | Mild. 3,5% Fett. Gekühlt. Je 1 kg Standardpackung: 500 g
+  Probe: Joghurt | ALDI SÜD | Joghurt | art=kg liter=0.5 stueck=1 ml=500 preis=0.79 | 0,1 % bzw. 1,5 % Fett; je 500-g-Becher
+  Probe: Joghurt | ALDI SÜD | Joghurt | art=kg liter=0.5 stueck=1 ml=500 preis=0.89 | 3,5 % Fett; 500-g-Becher
+  Probe: Joghurt | EDEKA | Sahne Joghurt | art=kg liter=0.5 stueck=1 ml=500 preis=0.89 | 3,5% Fett, 500 g Becher
+  Probe: Joghurt | ALDI SÜD | Joghurt | art=kg liter=1 stueck=1 ml=1000 preis=1.79 | 1,5 % bzw. 3,5 % Fett; je 1-kg-Eimer
+  Probe: Joghurt | Lidl | Joghurt nach griechischer Ar | art=kg liter=1.1 stueck=1 ml=1100 preis=2.15 | Versch. Sorten. Gekühlt. Je 1,1 kg, Standardpackung: 1 kg
+  Probe: Joghurt | Lidl | Der Grosse Bauer Joghurt | art=kg liter=0.25 stueck=1 ml=250 preis=0.49 | Versch. Sorten. Gekühlt. Je 225/250 g
+  Probe: Joghurt | PENNY | Fruchtjoghurt | art=kg liter=0.25 stueck=1 ml=250 preis=0.49 | HINWEIS: MIT PENNY APP 0.39 € Versch. Sorten, je 250 g
+  Probe: Joghurt | Lidl | Vegane Soja Joghurt­ alterna | art=kg liter=0.5 stueck=1 ml=500 preis=0.99 | 500 g
+  Probe: Joghurt | ALDI SÜD | Joghurt | art=kg liter=0.5 stueck=1 ml=500 preis=1.11 | Versch. Sorten; je 500-g-Becher
+  Probe: Joghurt | Kaufland | Almighurt Fruchtjoghurt | art=kg liter=0.5 stueck=1 ml=500 preis=1.11 | HINWEIS: MIT KAUFLAND CARD XTRA 0.99€ 3,8 %, versch. Sorten, o. griech
+  Probe: Joghurt | ALDI SÜD | Premium-Joghurt | art=kg liter=0.2 stueck=1 ml=200 preis=0.49 | Versch. Sorten; je 200-g-Becher;
+  Probe: Joghurt | Netto Marken-Discount | Sahnejoghurt | art=kg liter=0.14 stueck=1 ml=140 preis=0.44 | gekühlt, versch. Sorten 140 g
+  Probe: Joghurt | ALDI SÜD | Joghurt auf Frucht | art=kg liter=0.15 stueck=1 ml=150 preis=0.49 | Versch. Sorten; je 150-g-Becher
+  Probe: Joghurt | Lidl | Feinjoghurt | art=kg liter=0.15 stueck=1 ml=150 preis=0.69 | Versch. Sorten. Gekühlt. Je 150 g
+  Probe: Joghurt | Kaufland | Fruchtjoghurt | art=kg liter=0.15 stueck=1 ml=150 preis=0.69 | HINWEIS: MIT KAUFLAND CARD XTRA 0.59 € 13 - 14 % Fett im Milchanteil, 
+  Probe: Joghurt | PENNY | Smarties Joghurt XXL | art=kg liter=0.72 stueck=6 ml=120 preis=3.99 | je 6 x 120 g oder KitKat Joghurt je 6 x 115 g
+  Probe: Kartoffeln | Netto Marken-Discount | Speisekartoffeln XXL | art=kg liter=4 stueck=1 ml=4000 preis=2.99 | Deutschland, versch. Kocheigenschaften 4 kg Netz
+  Probe: Kartoffeln | Netto Marken-Discount | Speisekartoffeln | art=kg liter=2.5 stueck=1 ml=2500 preis=2.49 | 2,5 kg Netz Deutschland, Unsere Besten, versch. Kocheigenschaften
+  Probe: Kartoffeln | Kaufland | Speisefrühkartoffeln | art=kg liter=2.5 stueck=1 ml=2500 preis=2.79 | Dtsch. verschiedene Kocheigenschaften, Sorten laut Auszeichnung, Quali
+  Probe: Kartoffeln | Kaufland | Süßkartoffeln | art=kg liter=1 stueck=1 ml=1000 preis=1.49 | Ägypt. lose je kg
+  Probe: Kartoffeln | Kaufland | GOLD EDITION HerzoginKartoff | art=kg liter=0.6 stueck=1 ml=600 preis=1.29 | aus frisch hergestelltem Kartoffelpüree, tiefgefroren je 600-g-Packg.
+  Probe: Kartoffeln | Thomas Philipps | Bratkartoffeln | art=kg liter=0.4 stueck=1 ml=400 preis=1.11 | mit Zwiebeln oder Schinken und Zwiebeln oder Rösti bratfertig 400 g
+  Probe: Kartoffeln | ALDI SÜD | Herzogin-Kartoffeln | art=kg liter=0.6 stueck=1 ml=600 preis=1.69 | 600-g-Packung
+  Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | Je 125 g
+  Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | 125 g
+  Probe: Mehl | Lidl | Bio-Weizenmehl | art=kg liter=1 stueck=1 ml=1000 preis=0.85 | Bioland, Type 550 Je 1 kg
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792445162","token":true}
+Konto anlegen: {"name":"test1792445423","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792445162","daten":{}}
+Konto Daten: {"name":"test1792445423","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792445162"]
+Konto Anfragen mit Code: ["test1792445423"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792445162","token":true}
+Neues Passwort mit Code: {"name":"test1792445423","token":true}
 Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
 Code ein zweites Mal (erwartet Fehler): HTTP 401
-Konto löschen: HTTP 200
+Konto löschen: HTTP 401
