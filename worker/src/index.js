@@ -414,7 +414,7 @@ const nameVon = x => String(x || "").trim().toLowerCase();
 const konto = (status, text) => Object.assign(new Error(text), { status });
 async function sitzungNeu(env, name, gen) {
   const token = zufallHex(32);
-  await env.PV.put("s:" + await sha256hex(token), JSON.stringify({ name, gen, t: Date.now() }), { expirationTtl: 90 * 864e5 });
+  await env.PV.put("s:" + await sha256hex(token), JSON.stringify({ name, gen, t: Date.now() }), { expirationTtl: 90 * 86400 });
   return token;
 }
 async function sitzungPruefen(env, req) {
