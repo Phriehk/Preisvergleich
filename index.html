@@ -68,6 +68,9 @@ table{border-collapse:collapse;width:100%;table-layout:auto}
 th,td{padding:10px 10px;text-align:left;vertical-align:middle;border-bottom:1px solid var(--line)}
 td.num,td.gp{white-space:nowrap}
 th{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);background:var(--soft)}
+th button.sb{height:auto;padding:0;border:0;border-radius:4px;background:none;font:inherit;text-transform:inherit;letter-spacing:inherit;color:inherit;cursor:pointer;white-space:nowrap}
+th button.sb:hover,th button.sb.on{color:var(--ink)}
+th button.sb .arr{display:inline-block;min-width:1em;margin-left:3px;font-size:.8em}
 td.num,th.num{text-align:right}
 td.gp{font:700 1.35rem "Barlow Condensed",sans-serif}
 tbody tr:hover td{background:var(--soft)}
@@ -126,7 +129,11 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
   .best-l b{font-size:2.4rem}
   .tablewrap{border:0;background:transparent;overflow:visible;box-shadow:none}
   table,tbody{display:block;min-width:0}
-  thead{display:none}
+  thead{display:block}
+  thead tr{display:flex;flex-wrap:wrap;gap:6px;padding:0;margin-bottom:10px;background:none;border:0;box-shadow:none}
+  th{display:block;padding:0;border:0;background:none;text-align:left}
+  th button.sb{height:34px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:var(--card);font-size:.82rem;font-weight:500;text-transform:none;letter-spacing:0;color:var(--mute)}
+  th button.sb.on{border-color:var(--best);background:var(--bestbg);color:var(--ink)}
   tr{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;box-shadow:var(--shadow)}
   td{display:block;padding:0;border:0!important;white-space:normal;text-align:left;background:none!important;opacity:1!important}
   td.num{text-align:left}
@@ -213,7 +220,6 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
       <select id="fForm" aria-label="Verpackung filtern"></select>
       <select id="fMl" aria-label="Größe filtern"></select>
       <select id="fSorte" aria-label="Sorte filtern"></select>
-      <select id="fSort" aria-label="Sortierung"><option value="liter">Sortiert nach €/Liter</option><option value="stueck">Sortiert nach €/Stück</option><option value="ablauf">Läuft zuerst ab</option></select>
       <label class="chip"><input type="checkbox" id="app"> App-Preise einrechnen</label>
     </div>
 
@@ -230,7 +236,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
       <div id="maerkte"></div>
       <div id="best"></div>
       <div class="tablewrap"><table>
-        <thead><tr><th>Supermarkt</th><th>Verpackung</th><th class="num">Menge</th><th class="num">Preis</th><th class="num">Preis/Stück</th><th class="num">Preis/Liter</th><th>Gültigkeit</th></tr></thead>
+        <thead><tr><th><button type="button" class="sb" data-s="markt">Supermarkt<span class="arr"></span></button></th><th><button type="button" class="sb" data-s="form">Verpackung<span class="arr"></span></button></th><th class="num"><button type="button" class="sb" data-s="menge">Menge<span class="arr"></span></button></th><th class="num"><button type="button" class="sb" data-s="preis">Preis<span class="arr"></span></button></th><th class="num"><button type="button" class="sb" data-s="stueck">Preis/Stück<span class="arr"></span></button></th><th class="num"><button type="button" class="sb" data-s="liter">Preis/Liter<span class="arr"></span></button></th><th><button type="button" class="sb" data-s="bis">Gültigkeit<span class="arr"></span></button></th></tr></thead>
         <tbody id="rows"></tbody></table></div>
     </div>
   </div>
@@ -288,16 +294,37 @@ function render(){
   if(vm){vergleich.hidden=true;malVerlauf();return}
   list=tab==="jetzt"?jetztL:spaeterL;
   const gpSorted=list;  // nach Literpreis sortiert, daraus wird das günstigste Angebot bestimmt
-  if(fSort.value==="stueck")list=[...list].sort((a,b)=>pr(a)/a.stueck-pr(b)/b.stueck||gp(a)-gp(b));
-  else if(fSort.value==="ablauf")list=[...list].sort((a,b)=>(a.bis||"9999").localeCompare(b.bis||"9999")||gp(a)-gp(b));
+  const fehlt=o=>sortKey==="bis"&&!o.bis;  // Angebote ohne Datum stehen immer am Ende
+  list=[...list].sort((a,b)=>(fehlt(a)-fehlt(b))||sortDir*SORT[sortKey](a,b)||gp(a)-gp(b));
+  document.querySelectorAll("th button.sb").forEach(x=>{
+    const an=x.dataset.s===sortKey;
+    x.classList.toggle("on",an);x.querySelector(".arr").textContent=an?(sortDir>0?"▲":"▼"):"";
+    x.parentNode.setAttribute("aria-sort",an?(sortDir>0?"ascending":"descending"):"none");
+  });
   const best=document.getElementById("best");
   if(!list.length){best.innerHTML="";rows.innerHTML='<tr><td class="empty" colspan="7">Keine Angebote in dieser Ansicht.</td></tr>';return}
   const b=gpSorted.find(o=>!abgelaufen(o)&&!kommt(o))||gpSorted[0];
   best.innerHTML=`<div class="best"><div class="best-l"><small>${tab==="jetzt"?"Günstigste Option jetzt":"Günstigste Option nächste Woche"}</small><b>${eur(gp(b))}<span>pro Liter</span></b></div><div class="best-r"><strong>${esc(b.markt)}</strong><span>${b.stueck} × ${b.ml} ml ${esc(b.form)} für ${eur(pr(b))}</span><span>${gueltig(b)}</span></div>${ampel(b)}</div>`;
   rows.innerHTML=list.map((o,i)=>`<tr class="${o===b&&!abgelaufen(o)&&!kommt(o)?"top":abgelaufen(o)?"old":kommt(o)?"soon":""}"><td title="${esc(o.info||"")}">${o.link&&/^https?:\/\//.test(o.link)?`<a href="${esc(o.link)}" target="_blank" rel="noopener noreferrer">${esc(o.markt)}</a>`:esc(o.markt)}${o.produkt?`<br><small style="color:var(--mute)">${esc(o.produkt)}</small>`:""}${o.app?`<br><small>🏷 App-Preis ${eur(o.app)}</small>`:""}${o.limit?`<br><small>max. ${esc(o.limit)}</small>`:""}</td><td data-l="Verpackung">${esc(o.form)}</td><td class="num" data-l="Menge">${o.stueck} × ${o.ml} ml</td><td class="num" data-l="Preis">${eur(pr(o))}</td><td class="num" data-l="Preis pro Stück">${eur(pr(o)/o.stueck)}</td><td class="num gp" data-l="pro Liter">${eur(gp(o))}</td><td data-l="Gültigkeit">${gueltig(o)}</td></tr>`).join("");
 }
-fMarkt.onchange=fForm.onchange=fMl.onchange=fSorte.onchange=fSort.onchange=app.onchange=render;
+fMarkt.onchange=fForm.onchange=fMl.onchange=fSorte.onchange=app.onchange=render;
 let hinweis="";
+/* ---- Sortieren per Klick auf die Spaltenüberschrift ---- */
+let sortKey="liter",sortDir=1;
+const SORT={
+  markt:(a,b)=>a.markt.localeCompare(b.markt,"de"),
+  form:(a,b)=>a.form.localeCompare(b.form,"de"),
+  menge:(a,b)=>liter(a)-liter(b),
+  preis:(a,b)=>pr(a)-pr(b),
+  stueck:(a,b)=>pr(a)/a.stueck-pr(b)/b.stueck,
+  liter:(a,b)=>gp(a)-gp(b),
+  bis:(a,b)=>(a.bis||"").localeCompare(b.bis||"")
+};
+document.querySelector("thead").onclick=e=>{
+  const s=e.target.closest("[data-s]");if(!s)return;
+  if(s.dataset.s===sortKey)sortDir=-sortDir;else{sortKey=s.dataset.s;sortDir=1}
+  render();
+};
 function updateNote(){
   const e=offers.find(o=>o.quelle==="import"),alter=e?(Date.now()-new Date(e.geladen).getTime())/36e5:0,veraltet=alter>48;
   note.className="note"+(veraltet?" warn":e?" ok":"");
