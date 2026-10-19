@@ -1,0 +1,26 @@
+# Temporäre Diagnose, wird nach der Auswertung wieder gelöscht.
+name: Diagnose (temporär)
+
+on:
+  push:
+    paths: [diagnose.py, .github/workflows/diagnose.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Europe/Berlin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python diagnose.py
+      - run: |
+          git config user.name "preisvergleich-bot"
+          git config user.email "preisvergleich-bot@users.noreply.github.com"
+          git add diagnose.json
+          git diff --cached --quiet || { git commit -m "Diagnose-Daten" && git pull --rebase && git push; }
