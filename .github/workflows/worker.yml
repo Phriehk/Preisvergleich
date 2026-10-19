@@ -111,5 +111,9 @@ jobs:
         run: |
           git config user.name "preisvergleich-bot"
           git config user.email "preisvergleich-bot@users.noreply.github.com"
+          # Auch bei einem erneuten Lauf eines älteren Stands: Ergebnis auf den neuesten Stand von main legen
+          mkdir -p /tmp/erg; cp worker/deploy-log.txt /tmp/erg/ 2>/dev/null; cp worker.json /tmp/erg/ 2>/dev/null
+          git fetch -q origin main && git reset -q --hard origin/main
+          cp /tmp/erg/deploy-log.txt worker/deploy-log.txt 2>/dev/null; cp /tmp/erg/worker.json worker.json 2>/dev/null
           git add worker/deploy-log.txt worker.json 2>/dev/null || true
-          git diff --cached --quiet || { git commit -m "Worker hochgeladen" && git pull --rebase && git push; }
+          git diff --cached --quiet || { git commit -m "Worker hochgeladen" && git push origin HEAD:main; }
