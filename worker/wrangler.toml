@@ -1,0 +1,16 @@
+# Cloudflare Worker für den Preisvergleich (wird von .github/workflows/worker.yml hochgeladen)
+name = "preisvergleich"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["enable_ctx_exports"]
+workers_dev = true
+
+[[kv_namespaces]]
+binding = "PV"
+id = "612e7d031a774977a2dbf2aea3f07c20"
+
+[triggers]
+crons = ["0 5 * * *"]   # täglich 05:00 UTC (7 Uhr Sommerzeit / 6 Uhr Winterzeit)
+
+[observability]
+enabled = true
