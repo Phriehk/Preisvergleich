@@ -24,7 +24,6 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif}
 .wrap{max-width:880px;margin:0 auto;padding:18px 16px 56px}
-.wrap.breit{max-width:1280px}
 [hidden]{display:none!important}
 .kopf{display:flex;align-items:center;gap:12px;margin-bottom:14px}
 .logo{flex:none;width:42px;height:42px;border-radius:12px;background:var(--red);color:#fff;display:grid;place-items:center;font:700 1rem/1 "Barlow Condensed",Impact,sans-serif;letter-spacing:.02em}
@@ -42,6 +41,10 @@ button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);fon
 :focus-visible{outline:3px solid var(--red);outline-offset:2px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
 .tools{padding:12px;display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+#alarmRow{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:12px;box-shadow:var(--shadow)}
+#alarmWert{width:84px}
+.paar{display:flex;gap:8px;align-items:center;min-width:0}
+#alarmRow>*{min-width:0}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .grow{flex:1 1 220px}
 #ghSetup{padding:14px 16px;margin-bottom:12px}
@@ -50,15 +53,23 @@ button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);fon
 .note{font-size:.85rem;color:var(--mute);background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:14px}
 .note.ok::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--best);margin-right:8px}
 .note.warn{background:#b3001b;border-color:#b3001b;color:#fff;font-weight:500}
-.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:start}
-.breit .layout{grid-template-columns:minmax(0,1fr) 290px}
+/* Schmal: alles untereinander (Handy). Mitte und Seitenleiste lösen sich auf, die Teile werden per order sortiert. */
+.layout{display:grid;grid-template-columns:minmax(0,1fr);gap:0;align-items:start}
+.main,#seite{display:contents}
+#treffer{order:1;margin-bottom:12px}
+.tabs{order:2;justify-self:start}
+#filters{order:3}
+#alarmRow{order:4}
+#vergleich,#korrInfo,#uebersicht,#verlaufBox,#liste{order:5}
+.sk{display:none}
 .tabs{display:inline-flex;gap:2px;padding:3px;margin-bottom:12px;background:var(--soft);border:1px solid var(--line);border-radius:12px;max-width:100%}
 .tabs button{height:36px;padding:0 14px;border:0;background:transparent;color:var(--mute);border-radius:9px;white-space:nowrap}
 .tabs button.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:var(--shadow)}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
 .chip{display:inline-flex;flex-direction:row;align-items:center;gap:6px;height:36px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);font-size:.9rem;cursor:pointer}
 .hinweis{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:.95rem}
-#maerkte{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+#maerkte{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;flex:1 1 100%;padding-bottom:2px}
+#maerkte .chip{flex:none}
 .best{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 22px;align-items:center;background:var(--bestbg);border:1px solid var(--best);border-radius:14px;padding:16px 18px;margin-bottom:14px}
 .best-l small{display:block;color:var(--mute);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
 .best-l b{display:block;font:700 2.7rem/1 "Barlow Condensed",Impact,sans-serif;color:var(--best)}
@@ -68,8 +79,8 @@ button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);fon
 .ampel{grid-column:1/-1;border-top:1px solid color-mix(in srgb,var(--best) 35%,transparent);padding-top:8px;font-size:.92rem}
 .tablewrap{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow-x:auto;box-shadow:var(--shadow)}
 table{border-collapse:collapse;width:100%;table-layout:auto}
-th,td{padding:10px 10px;text-align:left;vertical-align:middle;border-bottom:1px solid var(--line)}
-td.num,td.gp{white-space:nowrap}
+th,td{padding:10px 8px;text-align:left;vertical-align:middle;border-bottom:1px solid var(--line)}
+td.num,td.gp,td[data-l="Verpackung"],td[data-l="Gültigkeit"]{white-space:nowrap}
 th{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);background:var(--soft)}
 th button.sb{height:auto;padding:0;border:0;border-radius:4px;background:none;font:inherit;text-transform:inherit;letter-spacing:inherit;color:inherit;cursor:pointer;white-space:nowrap}
 th button.sb:hover,th button.sb.on{color:var(--ink)}
@@ -92,6 +103,9 @@ td a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line
 .thumb{position:relative;flex:none;width:46px;height:46px;border-radius:9px;background:var(--soft);border:1px solid var(--line);overflow:hidden;display:grid;place-items:center}
 .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
 .ph{font:700 1.2rem "Barlow Condensed",sans-serif;color:var(--mute)}
+.thumb.sm{width:38px;height:38px;border-radius:8px}
+.oz{display:flex;gap:10px;align-items:flex-start}
+.oz>div{min-width:0}
 .kt{display:flex;flex-direction:column;min-width:0}
 .kt b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kt small{color:var(--mute);font-size:.78rem}
@@ -123,10 +137,42 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
 .editbox label{display:flex;flex-direction:column;gap:3px;flex:1 1 100px;font-size:.8rem;color:var(--mute)}
 .editbox input{width:100%;font-size:1rem}
 .ev{font-weight:600}
-@media (max-width:900px){
-  .wrap.breit{max-width:880px}
-  .breit .layout{grid-template-columns:minmax(0,1fr)}
-  #treffer{position:static;order:-1;flex-direction:row;overflow-x:auto;max-height:none}
+/* Mittel (ab 1200 px): links eine Seitenleiste, die Suchergebnisse als Leiste oben */
+@media (min-width:1200px){
+  .wrap{max-width:1480px}
+  .layout{column-gap:20px}
+  .layout.links{grid-template-columns:235px minmax(0,1fr)}
+  #seite{display:flex;flex-direction:column;gap:12px;position:sticky;top:14px;max-height:calc(100vh - 28px);overflow:auto;align-self:start}
+  .main{display:block}
+  #treffer{grid-column:1/-1;order:-1;position:static;flex-direction:row;overflow-x:auto;max-height:none;margin-bottom:12px}
+  .side-head{display:none}
+  .kand{flex:0 0 auto;width:auto;max-width:230px}
+  .sk{display:block;font:700 1.1rem "Barlow Condensed",sans-serif;margin:0 0 6px}
+  #seite>#filters,#seite>#alarmRow{margin:0;padding:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+  #seite>#filters{display:flex;flex-direction:column;align-items:stretch;gap:6px}
+  #seite>#filters select{width:100%}
+  #seite>#filters .chip{width:100%;justify-content:flex-start}
+  #maerkte{flex-direction:column;gap:4px;flex-basis:auto;overflow:visible}
+  #maerkte .chip{width:100%;height:30px;font-size:.85rem}
+  #seite select{height:36px}
+  #seite>#alarmRow{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:8px}
+  #seite>#alarmRow>select{width:100%}
+  .paar>*{flex:1 1 0;min-width:0}
+  #alarmWert{flex:0 0 72px;width:72px}
+  .tools{flex-direction:row;flex-wrap:wrap;align-items:center;gap:12px 16px}
+  .tools>.row:first-child{flex:none}
+  #suchBox{flex:1 1 320px;max-width:760px;flex-wrap:nowrap}
+}
+/* Breit (ab 1480 px): zusätzlich rechts die Suchergebnisse */
+@media (min-width:1480px){
+  .layout.rechts{grid-template-columns:minmax(0,1fr) 270px}
+  .layout.links.rechts{grid-template-columns:235px minmax(0,1fr) 270px}
+  #treffer{grid-column:auto;order:0;position:sticky;top:14px;flex-direction:column;overflow:auto;max-height:calc(100vh - 28px)}
+  .side-head{display:block}
+  .kand{flex:none;width:100%;max-width:none}
+}
+@media (max-width:1199px){
+  #treffer{position:static;flex-direction:row;overflow-x:auto;max-height:none}
   .side-head{display:none}
   .kand{flex:0 0 auto;width:auto;max-width:230px}
 }
@@ -139,7 +185,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
   .grow{flex-basis:100%}
   .filters select{flex:1 1 140px}
   .tabs{display:flex;width:100%}
-  .tabs button{flex:1;padding:0 6px}
+  .tabs button{flex:1 1 0;min-width:0;padding:0 4px;white-space:normal;line-height:1.15;font-size:.9rem;height:44px}
   .best{grid-template-columns:minmax(0,1fr)}
   .best-l b{font-size:2.4rem}
   .tablewrap{border:0;background:transparent;overflow:visible;box-shadow:none}
@@ -212,31 +258,33 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
     <input id="suchtext" type="search" class="grow" placeholder="Getränk suchen, z.B. Fanta oder Mineralwasser">
     <button id="suchBtn" type="button" class="primary">Suchen</button>
   </div>
-  <div id="alarmRow" class="row" hidden>
-    <span class="lbl">🔔 Benachrichtigen, wenn unter</span>
-    <input id="alarmWert" inputmode="decimal" placeholder="0,80" style="width:84px">
-    <select id="alarmEinheit" aria-label="Einheit des Wunschpreises"><option value="l">€ pro Liter</option><option value="stueck">€ pro Stück</option></select>
-    <span class="lbl">bei</span>
-    <select id="alarmMl" aria-label="Packungsgröße für den Alarm"></select>
-    <button id="alarmSave" type="button">Speichern</button>
-    <button id="alarmAus" type="button" hidden>Aus</button>
-  </div>
   <input id="file" type="file" accept=".json,application/json" hidden>
 </section>
 
 <div class="note" id="note"></div>
 
 <div class="layout" id="layout">
-  <div class="main">
-    <div class="tabs" role="tablist"><button id="tabUebersicht" type="button" role="tab">Übersicht</button><button id="tabJetzt" type="button" role="tab" class="on">Diese Woche</button><button id="tabSpaeter" type="button" role="tab">Nächste Woche</button><button id="tabVerlauf" type="button" role="tab">Preisverlauf</button></div>
-
+  <div id="seite" hidden>
     <div class="filters" id="filters">
+      <div class="sk">Filter</div>
       <select id="fMarkt" aria-label="Supermarkt filtern"></select>
       <select id="fForm" aria-label="Verpackung filtern"></select>
       <select id="fMl" aria-label="Größe filtern"></select>
       <select id="fSorte" aria-label="Sorte filtern"></select>
       <label class="chip"><input type="checkbox" id="app"> App-Preise einrechnen</label>
+      <div id="maerkte"></div>
     </div>
+    <div id="alarmRow" class="row" hidden>
+      <div class="sk">Preisalarm</div>
+      <span class="lbl">🔔 Benachrichtigen, wenn unter</span>
+      <div class="paar"><input id="alarmWert" inputmode="decimal" placeholder="0,80" aria-label="Wunschpreis"><select id="alarmEinheit" aria-label="Einheit des Wunschpreises"><option value="l">€ pro Liter</option><option value="stueck">€ pro Stück</option></select></div>
+      <span class="lbl">bei</span>
+      <select id="alarmMl" aria-label="Packungsgröße für den Alarm"></select>
+      <div class="paar"><button id="alarmSave" type="button">Speichern</button><button id="alarmAus" type="button" hidden>Aus</button></div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="tabs" role="tablist"><button id="tabUebersicht" type="button" role="tab">Übersicht</button><button id="tabJetzt" type="button" role="tab" class="on">Diese Woche</button><button id="tabSpaeter" type="button" role="tab">Nächste Woche</button><button id="tabVerlauf" type="button" role="tab">Preisverlauf</button></div>
 
     <div id="vergleich" class="hinweis" hidden></div>
     <div id="korrInfo" class="hinweis" hidden><span id="korrText"></span><button id="korrReset" type="button">Korrekturen zurücksetzen</button></div>
@@ -249,7 +297,6 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
     </div>
 
     <div id="liste">
-      <div id="maerkte"></div>
       <div id="best"></div>
       <div class="tablewrap"><table>
         <thead><tr><th><button type="button" class="sb" data-s="markt">Supermarkt<span class="arr"></span></button></th><th><button type="button" class="sb" data-s="form">Verpackung<span class="arr"></span></button></th><th class="num"><button type="button" class="sb" data-s="menge">Menge<span class="arr"></span></button></th><th class="num"><button type="button" class="sb" data-s="preis">Preis<span class="arr"></span></button></th><th class="num"><button type="button" class="sb" data-s="stueck">Preis/Stück<span class="arr"></span></button></th><th class="num"><button type="button" class="sb" data-s="liter">Preis/Liter<span class="arr"></span></button></th><th><button type="button" class="sb" data-s="bis">Gültigkeit<span class="arr"></span></button></th></tr></thead>
@@ -298,12 +345,14 @@ const ab=o=>{if(!o.von)return null;const t=new Date();t.setHours(0,0,0,0);return
 const kommt=o=>{const d=ab(o);return d!==null&&d>0};
 const abgelaufen=o=>{const d=tage(o);return d!==null&&d<0};
 const gueltig=o=>{const a=ab(o);if(a!==null&&a>0)return a===1?"gültig ab morgen":"gültig in "+a+" Tagen";const d=tage(o);if(d===null)return"unbekannt";if(d<0)return"abgelaufen";if(d===0)return"nur heute";if(d===1)return"noch 1 Tag";return"noch "+d+" Tage"};
+function vorschau(o){const b=o.bild&&/^https?:\/\//.test(o.bild)?o.bild:"";return `<span class="thumb sm"><span class="ph">${esc(((o.marke||o.produkt||o.markt||"?")[0]||"?").toUpperCase())}</span>${b?`<img src="${esc(b)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}</span>`}
+function seiteZeigen(){const an=!(filters.hidden&&alarmRow.hidden);seite.hidden=!an;layout.classList.toggle("links",an)}
 function vonProdukt(){return offers.filter(o=>(o.gruppe||"Coca-Cola")===fProdukt.value&&!o.ausb)}
 function fillFilters(){
   const offers=vonProdukt();
   const m=document.getElementById("fMarkt"),f=document.getElementById("fForm");
   const g=document.getElementById("fMl"),mv=m.value,fv=f.value,gv=g.value;
-  const markte=[...new Set(offers.map(o=>o.markt))],formen=[...new Set(offers.map(o=>o.form))];
+  const markte=[...new Set(offers.map(o=>o.markt))],FORMEN=["Dose","PET-Einweg","PET-Mehrweg","Glas-Einweg","Glas-Mehrweg","Karton"],formen=[...new Set(offers.map(o=>o.form))].sort((a,b)=>(FORMEN.indexOf(a)+1||99)-(FORMEN.indexOf(b)+1||99));
   m.innerHTML='<option value="">Alle Supermärkte</option>'+markte.map(x=>`<option>${esc(x)}</option>`).join("");
   f.innerHTML='<option value="">Alle Verpackungen</option>'+formen.map(x=>`<option>${esc(x)}</option>`).join("");
   const groessen=[...new Set(offers.map(o=>o.ml))].sort((a,b)=>a-b);
@@ -322,7 +371,7 @@ function render(){
   const gv=offers.filter(o=>(o.gruppe||"Coca-Cola")===fProdukt.value),nk=gv.filter(o=>o.korr).length,na=gv.filter(o=>o.ausb).length;
   korrInfo.hidden=tab==="verlauf"||tab==="uebersicht"||!(nk||na);
   korrText.textContent="✎ "+[nk?nk+" Angebot"+(nk>1?"e":"")+" von dir korrigiert":"",na?na+" ausgeblendet":""].filter(Boolean).join(", ")+".";
-  const vm=tab==="verlauf",ue=tab==="uebersicht";liste.hidden=vm||ue;filters.hidden=vm||ue;verlaufBox.hidden=!vm;uebersicht.hidden=!ue;
+  const vm=tab==="verlauf",ue=tab==="uebersicht";liste.hidden=vm||ue;filters.hidden=vm||ue;seiteZeigen();verlaufBox.hidden=!vm;uebersicht.hidden=!ue;
   if(ue){vergleich.hidden=true;zeichneUebersicht();return}
   if(vm){vergleich.hidden=true;malVerlauf();return}
   list=tab==="jetzt"?jetztL:spaeterL;
@@ -339,7 +388,7 @@ function render(){
   if(!list.length){best.innerHTML="";rows.innerHTML='<tr><td class="empty" colspan="7">Keine Angebote in dieser Ansicht.</td></tr>';return}
   const b=gpSorted.find(o=>!abgelaufen(o)&&!kommt(o))||gpSorted[0];
   best.innerHTML=`<div class="best"><div class="best-l"><small>${tab==="jetzt"?"Günstigste Option jetzt":"Günstigste Option nächste Woche"}</small><b>${eur(gp(b))}<span>pro Liter</span></b></div><div class="best-r"><strong>${esc(b.markt)}</strong><span>${b.stueck} × ${b.ml} ml ${esc(b.form)} für ${eur(pr(b))}</span><span>${gueltig(b)}</span>${warnBadge(b,list.indexOf(b),false)}</div>${ampel(b)}</div>`;
-  rows.innerHTML=list.map((o,i)=>`<tr class="${o===b&&!abgelaufen(o)&&!kommt(o)?"top":abgelaufen(o)?"old":kommt(o)?"soon":""}"><td title="${esc(o.info||"")}">${o.link&&/^https?:\/\//.test(o.link)?`<a href="${esc(o.link)}" target="_blank" rel="noopener noreferrer">${esc(o.markt)}</a>`:esc(o.markt)}${o.produkt?`<br><small style="color:var(--mute)">${esc(o.produkt)}</small>`:""}${o.app?`<br><small>🏷 App-Preis ${eur(o.app)}</small>`:""}${o.limit?`<br><small>max. ${esc(o.limit)}</small>`:""}${warnBadge(o,i,true)}</td><td data-l="Verpackung">${esc(o.form)}</td><td class="num" data-l="Menge">${o.stueck} × ${o.ml} ml</td><td class="num" data-l="Preis">${eur(pr(o))}</td><td class="num" data-l="Preis pro Stück">${eur(pr(o)/o.stueck)}</td><td class="num gp" data-l="pro Liter">${eur(gp(o))}</td><td data-l="Gültigkeit">${gueltig(o)}</td></tr>`).join("");
+  rows.innerHTML=list.map((o,i)=>`<tr class="${o===b&&!abgelaufen(o)&&!kommt(o)?"top":abgelaufen(o)?"old":kommt(o)?"soon":""}"><td title="${esc(o.info||"")}"><div class="oz">${vorschau(o)}<div>${o.link&&/^https?:\/\//.test(o.link)?`<a href="${esc(o.link)}" target="_blank" rel="noopener noreferrer">${esc(o.markt)}</a>`:esc(o.markt)}${o.produkt?`<br><small style="color:var(--mute)">${esc(o.produkt)}</small>`:""}${o.app?`<br><small>🏷 App-Preis ${eur(o.app)}</small>`:""}${o.limit?`<br><small>max. ${esc(o.limit)}</small>`:""}${warnBadge(o,i,true)}</div></div></td><td data-l="Verpackung">${esc(o.form)}</td><td class="num" data-l="Menge">${o.stueck} × ${o.ml} ml</td><td class="num" data-l="Preis">${eur(pr(o))}</td><td class="num" data-l="Preis pro Stück">${eur(pr(o)/o.stueck)}</td><td class="num gp" data-l="pro Liter">${eur(gp(o))}</td><td data-l="Gültigkeit">${gueltig(o)}</td></tr>`).join("");
 }
 fMarkt.onchange=fForm.onchange=fMl.onchange=fSorte.onchange=app.onchange=render;
 let hinweis="";
@@ -369,11 +418,11 @@ function korrAnwenden(o){
   const c=korr[kOf(o)];if(!c)return;
   if(c.aus)o.ausb=true;
   else if(c.ok)o.ok=true;
-  else{o.orig={preis:o.preis,stueck:o.stueck,ml:o.ml};o.preis=c.preis;o.stueck=c.stueck;o.ml=c.ml;o.form=formVon((o.info||"")+" "+(o.produkt||""),o.ml,o.gruppe);o.korr=true}
+  else{o.orig={preis:o.preis,stueck:o.stueck,ml:o.ml};o.preis=c.preis;o.stueck=c.stueck;o.ml=c.ml;o.form=formVon((o.info||"")+" "+(o.produkt||""),o.ml,o.gruppe,o.stueck);o.korr=true}
 }
 function korrAufraeumen(neu){const k=new Set(neu.map(o=>o.k));Object.keys(korr).forEach(x=>{if(!k.has(x))delete korr[x]});korrSpeichern()}
 function zuruecksetzen(o){
-  if(o.orig){o.preis=o.orig.preis;o.stueck=o.orig.stueck;o.ml=o.orig.ml;o.form=formVon((o.info||"")+" "+(o.produkt||""),o.ml,o.gruppe)}
+  if(o.orig){o.preis=o.orig.preis;o.stueck=o.orig.stueck;o.ml=o.orig.ml;o.form=formVon((o.info||"")+" "+(o.produkt||""),o.ml,o.gruppe,o.stueck)}
   delete korr[kOf(o)];delete o.orig;delete o.korr;delete o.ok;delete o.ausb;
 }
 /* typisch = Median des Literpreises aller aktuellen Angebote des Produkts (mindestens 3 Angebote nötig) */
@@ -418,7 +467,7 @@ eSave.onclick=()=>{
   if(!(p>0&&s>=1&&m>=1)){eVor.textContent="Bitte gültige Werte eingeben.";return}
   const k=kOf(eO),orig=eO.orig||{preis:eO.preis,stueck:eO.stueck,ml:eO.ml};
   if(p===orig.preis&&s===orig.stueck&&m===orig.ml){zuruecksetzen(eO);korr[k]={ok:true};eO.ok=true}
-  else{eO.orig=orig;Object.assign(eO,{preis:p,stueck:s,ml:m,korr:true});delete eO.ok;eO.form=formVon((eO.info||"")+" "+(eO.produkt||""),m,eO.gruppe);korr[k]={preis:p,stueck:s,ml:m}}
+  else{eO.orig=orig;Object.assign(eO,{preis:p,stueck:s,ml:m,korr:true});delete eO.ok;eO.form=formVon((eO.info||"")+" "+(eO.produkt||""),m,eO.gruppe,s);korr[k]={preis:p,stueck:s,ml:m}}
   eFertig();
 };
 eOk.onclick=()=>{korr[kOf(eO)]={ok:true};eO.ok=true;eFertig()};
@@ -440,7 +489,26 @@ function menge(t){
   if(m){n=+m[1];v=+m[2];u=m[3]}else{m=t.match(RE2);if(!m)return null;v=+m[1];u=m[2]}
   return {stueck:n,ml:Math.round(u==="ml"||u==="milliliter"?v:u==="cl"||u==="centiliter"?v*10:v*1000)};
 }
-function formVon(t,ml,g){t=(t||"").toLowerCase();return /^(Red Bull|Monster)/.test(g||"")?"Dose":/dose/.test(t)?"Dose":/glas/.test(t)?"Glas-Mehrweg":/mehrweg/.test(t)?"PET-Mehrweg":ml<=355?"Dose":"PET-Einweg"}
+// Verpackung aus Pfand und Text: 0,25 € je Stück = Einweg, 0,15 € = Mehrweg-PET, 0,08 € = Mehrweg-Glas; Kastenpfand 1,50 € wird mitgeprüft
+function formVon(t,ml,g,n){
+  t=(t||"").toLowerCase().replace(/,/g,".").replace(/[–-]\s*\.(\d\d)/g,"0.$1");n=n>=1?n:1;   // "–,25 Pfand" = 0,25
+  const dose=/dose/.test(t),glas=/glas/.test(t),pet=/\bpet\b/.test(t),karton=/tetra|karton|brik|beutel|pfandfrei/.test(t),
+        mw=/mehrweg|\bmw\b/.test(t),ew=/einweg|\bew\b/.test(t),kasten=/kasten|kästen/.test(t),marke=/^(red bull|monster)/i.test(g||"");
+  const mx=t.match(/(\d+)\s*[x×]\s*\d+(?:\.\d+)?\s*-?\s*(?:ml|cl|l)\b/),nT=mx?+mx[1]:n;
+  const nah=(x,w)=>Math.abs(x-w)<=0.012,wert=x=>[25,15,8].find(w=>nah(x*100,w));
+  let pc=null;
+  const ex=t.match(/pfand[^0-9]{0,8}\d+\s*x\s*(\d+\.\d\d)/),tot=t.match(/(\d+\.\d\d)\s*(?:€\s*)?pfand/)||t.match(/pfand[^0-9]{0,8}(\d+\.\d\d)/);
+  if(ex)pc=wert(+ex[1])??null;                       // "Pfand 18 x 0.25 = 4.50"
+  if(pc===null&&tot){                                // Gesamtpfand der Packung; bei Kästen steckt 1,50 € Kastenpfand darin
+    const P=+tot[1],k=[P/nT,(P-1.5)/nT];if(kasten)k.reverse();
+    for(const x of k){const w=wert(x);if(w){pc=w;break}}
+    if(pc===null&&P>=2.5&&(kasten||nT>=12))pc=ml>=1000?15:8;   // Kasten mit hohem Pfand = Mehrweg
+  }
+  if(karton&&!dose&&!glas&&!pet&&pc===null)return"Karton";
+  if(pc===25||(pc===null&&ew&&!mw))return dose||marke?"Dose":glas?"Glas-Einweg":pet?"PET-Einweg":ml<=355?"Dose":"PET-Einweg";
+  if(pc===15||pc===8||(pc===null&&mw))return glas?"Glas-Mehrweg":pet?"PET-Mehrweg":dose?"Dose":pc===8?"Glas-Mehrweg":ml>=1000?"PET-Mehrweg":"Glas-Mehrweg";
+  return marke||dose?"Dose":glas?"Glas-Mehrweg":pet?"PET-Einweg":ml<=355?"Dose":"PET-Einweg";
+}
 let aus=new Set();try{aus=new Set(JSON.parse(localStorage.getItem("pv-aus")||"[]"))}catch(e){}
 function chips(){maerkte.innerHTML=[...new Set(vonProdukt().map(o=>o.markt))].map(m=>`<label class="chip"><input type="checkbox" data-m="${esc(m)}" ${aus.has(m)?"":"checked"}> ${esc(m)}</label>`).join("")}
 maerkte.onchange=e=>{const m=e.target.dataset.m;if(!m)return;e.target.checked?aus.delete(m):aus.add(m);try{localStorage.setItem("pv-aus",JSON.stringify([...aus]))}catch(x){}render()};
@@ -514,7 +582,7 @@ file.onchange=()=>{
       arr.forEach((x,i)=>{
         const mg=x.stueck>=1&&x.ml>0?{stueck:x.stueck,ml:x.ml}:(menge(x.beschreibung)||menge(x.produkt));  // bevorzugt die Mengenangaben aus dem Skript
         if(!mg||!x.preis){skip++;return}
-        const ob={id:Date.now()+i,markt:x.markt||"?",produkt:x.produkt||"",info:x.beschreibung||"",form:formVon((x.beschreibung||"")+" "+(x.produkt||""),mg.ml,x.gruppe),gruppe:x.gruppe||"Coca-Cola",marke:x.marke||"",bild:x.bild||"",stueck:mg.stueck,ml:mg.ml,preis:+x.preis,sorte:sorteVon((x.beschreibung||"")+" "+(x.produkt||"")),app:appPreis(x.beschreibung),limit:limitVon(x.beschreibung),bis:x.gueltig_bis||"",von:x.gueltig_von||"",link:x.link||"",quelle:"import",geladen:x.abgefragt||jetzt};
+        const ob={id:Date.now()+i,markt:x.markt||"?",produkt:x.produkt||"",info:x.beschreibung||"",form:formVon((x.beschreibung||"")+" "+(x.produkt||""),mg.ml,x.gruppe,mg.stueck),gruppe:x.gruppe||"Coca-Cola",marke:x.marke||"",bild:x.bild||"",stueck:mg.stueck,ml:mg.ml,preis:+x.preis,sorte:sorteVon((x.beschreibung||"")+" "+(x.produkt||"")),app:appPreis(x.beschreibung),limit:limitVon(x.beschreibung),bis:x.gueltig_bis||"",von:x.gueltig_von||"",link:x.link||"",quelle:"import",geladen:x.abgefragt||jetzt};
         ob.k=korrKey(ob);korrAnwenden(ob);neu.push(ob);
       });
       if(!neu.length){hinweis="Keine verwertbaren Angebote in der Datei.";render();return}
@@ -673,7 +741,7 @@ function trefferZeichnen(){
     e.n++;e.min=Math.min(e.min,gp(o));if(!e.bild&&o.bild)e.bild=o.bild;map.set(k,e);
   });
   const zeigen=tab!=="verlauf"&&tab!=="uebersicht"&&map.size>=2;
-  treffer.hidden=!zeigen;wrap.classList.toggle("breit",zeigen);
+  treffer.hidden=!zeigen;layout.classList.toggle("rechts",zeigen);
   if(!zeigen)return;
   const a=(auswahl||{})[g]||"",werte=[...map.values()],gesamt=werte.reduce((x,e)=>x+e.n,0),bestMin=Math.min(...werte.map(e=>e.min));
   const item=(k,e,label,n,min)=>`<button type="button" class="kand${a===k?" on":""}" role="radio" aria-checked="${a===k}" data-k="${esc(k)}"><span class="thumb"><span class="ph">${esc((label[0]||"?").toUpperCase())}</span>${e&&e.bild?`<img src="${esc(e.bild)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}</span><span class="kt"><b>${esc(label)}</b><small>${n} Angebot${n>1?"e":""} · ab ${eur(min)}/l</small></span></button>`;
