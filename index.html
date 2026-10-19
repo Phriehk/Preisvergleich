@@ -1104,8 +1104,12 @@ file.onchange=()=>{
         const ob={id:Date.now()+i,markt:x.markt||"?",produkt:x.produkt||"",info:x.beschreibung||"",art:art,form:formVon((x.beschreibung||"")+" "+(x.produkt||""),mg.ml,x.gruppe,mg.stueck,art),gruppe:x.gruppe||"Coca-Cola",marke:x.marke||"",bild:x.bild||"",stueck:mg.stueck,ml:mg.ml,preis:+x.preis,sorte:art==="l"?sorteVon((x.beschreibung||"")+" "+(x.produkt||"")):"Classic",app:appPreis(x.beschreibung),limit:limitVon(x.beschreibung),bis:x.gueltig_bis||"",von:x.gueltig_von||"",link:x.link||"",quelle:"import",geladen:x.abgefragt||jetzt};
         ob.k=korrKey(ob);korrAnwenden(ob);neu.push(ob);
       });
+      // Mischt eine Gruppe Liter, Gewicht und Stück, gilt die häufigste Einheit (sonst ließen sich die Preise nicht vergleichen)
+      {const z={};neu.forEach(o=>{const g=o.gruppe,a=artO(o);(z[g]=z[g]||{})[a]=(z[g][a]||0)+1});
+       const dom={};Object.keys(z).forEach(g=>{dom[g]=Object.entries(z[g]).sort((x,y)=>y[1]-x[1])[0][0]});
+       const rest=neu.filter(o=>artO(o)===dom[o.gruppe]);skip+=neu.length-rest.length;neu.length=0;neu.push(...rest)}
       if(!neu.length){hinweis="Keine verwertbaren Angebote in der Datei.";render();return}
-      hinweis=skip?skip+" Angebot(e) ohne erkennbare Menge übersprungen.":"";
+      hinweis=skip?skip+" Angebot(e) ohne erkennbare Menge oder mit anderer Einheit übersprungen.":"";
       const sel=merge?neu[0].gruppe:fProdukt.value;
       if(merge)auswahl[neu[0].gruppe]=null;
       offers=merge?offers.filter(o=>!neu.some(n=>n.gruppe===o.gruppe)).concat(neu):neu;

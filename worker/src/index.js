@@ -140,22 +140,29 @@ export class Teil extends WorkerEntrypoint {
     return Promise.all(auftraege.map(async a => {
       const ids = new Set(), alle = [];
       for (const seite of await Promise.all(a.suchen.map(s => teilAbfrage(this.env, plz, s)))) for (const o of seite) if (!ids.has(o.id)) { ids.add(o.id); alle.push(o); }
-      const t = alle.filter(o => istProdukt(a.p, `${o.brand} ${o.name} ${o.desc}`, a.aus));
+      const t = alle.filter(o => istProdukt(a.p, o, a.aus));
       return !t.length && ohneFilterFallback ? alle : t;
     }));
   }
 }
 
 /* ---------- Abfrage mehrerer Produkte, Aufbereitung wie im Python-Skript ---------- */
-function istProdukt(gruppe, text, extra) {
-  const t = text.toLowerCase();
+// Wörter, die bei Lebensmitteln fast immer ein anderes Produkt anzeigen (Süßes, Saisonware); gelten nicht, wenn sie selbst gesucht werden
+const ESSEN_AUS = ["stollen", "spekulatius", "mäuse", "adventskalender", "lebkuchen", "nikolaus", "likör", "peanut", "erdnuss", "haselnuss", "milch reis", "milchreis"];
+/* Passt ein Angebot zum gesuchten Artikel?
+   Getränke (Liter): wie bisher, das Wort darf auch in der Beschreibung stehen ("oder Fanta ...").
+   Lebensmittel (kg, Stück): nur im Namen oder der Marke, als eigenes Wort oder als Wortende ("Freilandeier", "Weizenmehl"), nicht als Wortanfang ("Buttergebäck") und nicht vor einem Bindestrich ("Butter-Mandel-Stollen"). */
+function istProdukt(gruppe, o, extra) {
+  const name = `${o.brand} ${o.name}`.toLowerCase(), alles = `${name} ${o.desc}`.toLowerCase();
+  const mg = mengenangabe(o), fluessig = !mg || mg[2] === "l";
   let gefunden;
-  if (KW[gruppe]) gefunden = KW[gruppe].some(k => t.includes(k));
+  if (KW[gruppe]) gefunden = KW[gruppe].some(k => alles.includes(k));
   else {
     const wort = (gruppe.toLowerCase().split(/\s+/).filter(Boolean)[0] || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    gefunden = new RegExp("(?<![a-zäöüß])" + wort + "(?:s|e|n)?(?![a-zäöüß])").test(t);   // am Wortanfang: "Reis" soll nicht in "Preis" gefunden werden
+    gefunden = fluessig ? new RegExp(wort + "(?:s|e|n)?(?![a-zäöüß])").test(alles) : new RegExp(wort + "(?:s|e|n)?(?![a-zäöüß-])").test(name);
   }
-  return gefunden && ![...AUSSCHLUSS, ...extra].some(x => t.includes(x));
+  const essen = fluessig ? [] : ESSEN_AUS.filter(x => !gruppe.toLowerCase().includes(x));
+  return gefunden && ![...AUSSCHLUSS, ...extra, ...essen].some(x => alles.includes(x));
 }
 
 async function parallel(aufgaben, n) {

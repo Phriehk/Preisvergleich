@@ -77,3 +77,26 @@ test("Verpackung: Karton", () => {
   assert.equal(app.formVon("Tetra Pak 1 l", 1000, "Saft", 1), "Karton");
   assert.equal(app.formVon("Orangensaft Karton pfandfrei", 1000, "Saft", 1), "Karton");
 });
+
+test("Server: passt das Angebot zum Artikel?", () => {
+  const code = grab(w, "const KW =", "\n") + grab(w, "const AUSSCHLUSS", "\n") + grab(w, "/* ---------- Mengen ---------- */", "/* ---------- Eine Teilabfrage") + grab(w, "// Wörter, die bei Lebensmitteln", "async function parallel") + ";({istProdukt})";
+  const { istProdukt } = vm.runInNewContext(code);
+  const ja = (g, o) => assert.equal(istProdukt(g, { brand: "", desc: "", ...o }, []), true, g + ": " + JSON.stringify(o));
+  const nein = (g, o) => assert.equal(istProdukt(g, { brand: "", desc: "", ...o }, []), false, g + ": " + JSON.stringify(o));
+  ja("Butter", { name: "Butter", desc: "250-g-Packung" });
+  ja("Butter", { name: "Original Irische Butter", desc: "250 g" });
+  ja("Eier", { name: "Freilandeier", desc: "10 Stück" });
+  ja("Mehl", { name: "Weizenmehl", desc: "1-kg-Packung" });
+  ja("Milch", { name: "H-Milch", desc: "1-l-Packung" });
+  nein("Butter", { name: "Butter-Mandel-Stollen", desc: "750-g-Packung" });
+  nein("Butter", { name: "Buttergebäck", desc: "200 g" });
+  nein("Butter", { name: "Peanut-Butter", desc: "454g" });
+  nein("Milch", { name: "Milch-Mäuse", desc: "210-g-Packung" });
+  nein("Milch", { name: "Milch Reis", desc: "200 g" });
+  nein("Reis", { name: "Preiselbeeren", desc: "400 g, App-Preis 1,79 €" });
+  nein("Reis", { name: "Kekse", desc: "Preis 1,29 € 200 g" });
+  ja("Milchreis", { name: "Milchreis", desc: "1 kg" });
+  // Getränke: das Wort darf in der Beschreibung stehen
+  ja("Fanta", { name: "Cola", brand: "Coca-Cola", desc: "oder Fanta Versch. Sorten; 18 x 0,33 l" });
+  ja("Coca-Cola", { name: "Cola", brand: "Coca-Cola", desc: "6 x 0,5 l" });
+});

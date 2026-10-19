@@ -80,7 +80,7 @@ jobs:
           T0=$(date +%s); R=$(curl -s -m 120 "$URL/region?plz=40210&q=Fanta%7CRed%20Bull")
           log "Region 40210 ohne Code: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if type=="array" then {anzahl: length, maerkte: ([.[].markt] | unique | .[0:6])} else . end' 2>/dev/null || echo "$R" | head -c 300)"
           log "Region ungültige PLZ (erwartet 400): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 "$URL/region?plz=abc&q=x")"
-          T0=$(date +%s); R=$(curl -s -m 120 -G --data-urlencode "plz=47178" --data-urlencode "q=Butter|Eier|Milch|Reis|Äpfel|Mehl" --data-urlencode "streng=1" "$URL/region")
+          T0=$(date +%s); R=$(curl -s -m 120 -G --data-urlencode "plz=47178" --data-urlencode "q=Butter|Eier|Mehl|Nudeln|Joghurt|Kartoffeln" --data-urlencode "streng=1" "$URL/region")
           log "Lebensmittel-Probe: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if type=="array" then (group_by(.gruppe) | map({(.[0].gruppe): length}) | add) else . end' 2>/dev/null || echo "$R" | head -c 300)"
           echo "$R" | jq -r 'if type=="array" then .[0:40][] | "  Probe: \(.gruppe) | \(.markt) | \(.produkt[0:28]) | art=\(.art) liter=\(.liter) stueck=\(.stueck) ml=\(.ml) preis=\(.preis) | \(.beschreibung[0:70])" else empty end' 2>/dev/null | while IFS= read -r z; do log "$z"; done
           R=$(curl -s -m 60 -G --data-urlencode "plz=40210" --data-urlencode "m=Lidl|REWE|ALDI SÜD" "$URL/entfernungen")
