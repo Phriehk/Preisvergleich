@@ -1,873 +1,1244 @@
 {
- "offer": {
-  "mit_plz": {
-   "kurz": {
-    "id": 25362087,
-    "adv": "REWE",
-    "produkt": "Cola",
-    "marke": "Coca-Cola",
-    "beschr": "versch. Sorten, teilw. koffeinhaltig, je 24 x 0,33-l-Fl.-Kasten zzgl. 5.10 Pfand",
-    "preis": 16.99,
-    "von": "2026-10-18T22:00:00Z",
-    "bis": "2026-10-24T21:59:00Z"
-   },
-   "roh": {
-    "brand": {
-     "uniqueName": "coca-cola",
-     "indexOffer": true,
-     "indexLeaflet": false,
-     "id": 104494,
-     "name": "Coca-Cola",
-     "industryId": 1009
-    },
-    "advertisers": [
-     {
-      "uniqueName": "rewe",
-      "indexOffer": true,
-      "indexLeaflet": true,
-      "id": "retailers/126802",
-      "name": "REWE",
-      "industryId": 1009
-     }
-    ],
-    "categories": [
-     {
-      "uniqueName": "softdrinks",
-      "indexOffer": true,
-      "indexLeaflet": false,
-      "id": 359,
-      "name": "Softdrinks",
-      "description": "Märkte wie beispielsweise der [toom Getränkemarkt](https://www.marktguru.de/rp/toom-getraenkemarkt-prospekte) halten eine große Auswahl an [alkoholfreien Getränken](https://www.marktguru.de/c/getraenke-alkoholfrei) bereit. Dazu zählen [Coca-Cola](https://www.marktguru.de/b/coca-cola), Säfte von [Granini](https://www.marktguru.de/b/granini) oder Energydrinks von [Red Bull](https://www.marktguru.de/b/red-bull).",
-      "parentId": 69
-     }
-    ],
-    "id": 25362087,
-    "description": "versch. Sorten, teilw. koffeinhaltig, je 24 x 0,33-l-Fl.-Kasten zzgl. 5.10 Pfand",
-    "volume": 0.33,
-    "quantity": 24.0,
-    "isMultiProduct": true,
-    "price": 16.99,
-    "oldPrice": null,
-    "referencePrice": 2.15,
-    "requiresLoyalityMembership": false,
-    "leafletFlightId": 298172,
-    "validityDates": [
-     {
-      "from": "2026-10-18T22:00:00Z",
-      "to": "2026-10-24T21:59:00Z"
-     }
-    ],
-    "externalId": null,
-    "externalTrackingUrls": [
-     "https://servedby.flashtalking.com/imp/2/302017;10367284;201;pixel;SevenOneMediaDE;nnCPSevenOneMediaDEKaufDAMeinProspektA4CLEProspektnnAdgapId01984610141314295001/?gdpr=${GDPR}&gdpr_consent=${GDPR_CONSENT_78}&pbMethods=&cachebuster=[CACHEBUSTER]%22"
-    ],
-    "externalTrackings": [
-     {
-      "type": "click",
-      "url": "https://servedby.flashtalking.com/imp/2/302017;10367284;201;pixel;SevenOneMediaDE;nnCPSevenOneMediaDEKaufDAMeinProspektA4CLEProspektnnAdgapId01984610141314295001/?gdpr=${GDPR}&gdpr_consent=${GDPR_CONSENT_78}&pbMethods=&cachebuster=[CACHEBUSTER]%22",
-      "ugpctfet": 100
-     }
-    ],
-    "externalUrl": null,
-    "trackFlightImpression": null,
-    "type": "standard",
-    "industries": [
-     {
-      "id": 1009,
-      "name": "Supermarkt"
-     }
-    ],
-    "product": {
-     "id": 351468,
-     "name": "Cola",
-     "description": "~twxus~ ~twxnam~"
-    },
-    "unit": {
-     "shortName": "l",
-     "id": 1,
-     "name": "Liter"
-    },
-    "images": {
-     "count": 1,
-     "isCdnSuccessfullyPurged": null,
-     "metadata": [
-      {
-       "aspectRatio": 1.222972972972973,
-       "width": 1.0,
-       "height": 0.8176795580110497
-      }
-     ]
-    },
-    "imageType": "offer"
-   }
+ "seiten": {
+  "/search/cola": {
+   "laenge": 34760,
+   "api_urls": [],
+   "skripte": [
+    "/search.d4424fffd3fe90bbd9e5.boot.js"
+   ]
   },
-  "ohne_plz": {
-   "fehler": "HTTP Error 400: Bad Request"
+  "/offers/25362087": {
+   "laenge": 32941,
+   "api_urls": [],
+   "skripte": [
+    "/offer.d4424fffd3fe90bbd9e5.boot.js"
+   ]
+  },
+  "/b/coca-cola": {
+   "laenge": 84744,
+   "api_urls": [],
+   "skripte": [
+    "/brandOffers.d4424fffd3fe90bbd9e5.boot.js"
+   ]
+  },
+  "/rp/rewe-prospekte": {
+   "laenge": 79944,
+   "api_urls": [],
+   "skripte": [
+    "/retailerLeaflets.d4424fffd3fe90bbd9e5.boot.js"
+   ]
+  },
+  "/": {
+   "laenge": 120661,
+   "api_urls": [],
+   "skripte": [
+    "/home.d4424fffd3fe90bbd9e5.boot.js"
+   ]
   }
  },
- "queries": {
-  "47178 | coca cola": {
-   "anzahl": 8,
-   "haendler": {
-    "ALDI SÜD": 2,
-    "trinkgut": 1,
-    "Lidl": 2,
-    "Netto Marken-Discount": 1,
-    "PENNY": 1,
-    "Handelshof": 1
-   },
-   "gesuchte_id_dabei": false,
-   "rewe": [],
-   "alle": [
-    {
-     "id": 25384092,
-     "adv": "ALDI SÜD",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Sprite oder Fanta Versch. Sorten; teilweise koffeinhaltig; je 330-ml-Flasche zzgl. Pfand 0.25 Auch als 6er-Pack erhältlich",
-     "preis": 0.62,
-     "von": "2026-10-25T23:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    },
-    {
-     "id": 25302077,
-     "adv": "ALDI SÜD",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "oder Fanta Versch. Sorten; teilweise koffeinhaltig; 18 x 0,33 l = 5,94- l-Packung; zzgl. Pfand 18 x 0.25 = 4.50",
-     "preis": 7.99,
-     "von": "2026-10-22T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25406002,
-     "adv": "trinkgut",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Fanta o. Sprite und weitere Sorten teilweise koffeinhaltiq 0,33l/0,5I Dose zzgl. € 0.25 Pfand. Einzelpreis 0.79",
-     "preis": 3.9,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:59Z"
-    },
-    {
-     "id": 25396112,
-     "adv": "Lidl",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "1.25 l zzgl. 0.25 Pfand",
-     "preis": 0.99,
-     "von": "2026-10-25T23:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    },
-    {
-     "id": 25358162,
-     "adv": "Netto Marken-Discount",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Fanta, Sprite oder Mezzo Mix teilw. koffeinhaltig, versch. Sorten 2 Liter zzgl. Pfand 0.25",
-     "preis": 1.49,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25301467,
-     "adv": "Lidl",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "6x0.33l 1.98l +1.50 Pfand, Standardpackung 0.33l",
-     "preis": 3.99,
-     "von": "2026-10-21T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25339052,
-     "adv": "PENNY",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Versch. Sorten, Erfrischungsgetränk, zzgl. 1.50 Pfand, je 6 x 0,33 l",
-     "preis": 4.49,
-     "von": "2026-10-21T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25093418,
-     "adv": "Handelshof",
-     "produkt": "Erfrischungsgetränke",
-     "marke": "Coca-Cola",
-     "beschr": "HINWEIS: NUR FÜR GROSSHÄNDLER versch. Sorten teilweise koffeinhaltig 24 x 0,2 l Flasche je Kasten zzgl. Pfand",
-     "preis": 10.79,
-     "von": "2026-09-30T22:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    }
-   ]
-  },
-  "47178 | Coca-Cola": {
-   "anzahl": 8,
-   "haendler": {
-    "ALDI SÜD": 2,
-    "trinkgut": 1,
-    "Lidl": 2,
-    "Netto Marken-Discount": 1,
-    "PENNY": 1,
-    "Handelshof": 1
-   },
-   "gesuchte_id_dabei": false,
-   "rewe": [],
-   "alle": [
-    {
-     "id": 25302077,
-     "adv": "ALDI SÜD",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "oder Fanta Versch. Sorten; teilweise koffeinhaltig; 18 x 0,33 l = 5,94- l-Packung; zzgl. Pfand 18 x 0.25 = 4.50",
-     "preis": 7.99,
-     "von": "2026-10-22T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25384092,
-     "adv": "ALDI SÜD",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Sprite oder Fanta Versch. Sorten; teilweise koffeinhaltig; je 330-ml-Flasche zzgl. Pfand 0.25 Auch als 6er-Pack erhältlich",
-     "preis": 0.62,
-     "von": "2026-10-25T23:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    },
-    {
-     "id": 25406002,
-     "adv": "trinkgut",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Fanta o. Sprite und weitere Sorten teilweise koffeinhaltiq 0,33l/0,5I Dose zzgl. € 0.25 Pfand. Einzelpreis 0.79",
-     "preis": 3.9,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:59Z"
-    },
-    {
-     "id": 25396112,
-     "adv": "Lidl",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "1.25 l zzgl. 0.25 Pfand",
-     "preis": 0.99,
-     "von": "2026-10-25T23:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    },
-    {
-     "id": 25301467,
-     "adv": "Lidl",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "6x0.33l 1.98l +1.50 Pfand, Standardpackung 0.33l",
-     "preis": 3.99,
-     "von": "2026-10-21T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25358162,
-     "adv": "Netto Marken-Discount",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Fanta, Sprite oder Mezzo Mix teilw. koffeinhaltig, versch. Sorten 2 Liter zzgl. Pfand 0.25",
-     "preis": 1.49,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25339052,
-     "adv": "PENNY",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Versch. Sorten, Erfrischungsgetränk, zzgl. 1.50 Pfand, je 6 x 0,33 l",
-     "preis": 4.49,
-     "von": "2026-10-21T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25093418,
-     "adv": "Handelshof",
-     "produkt": "Erfrischungsgetränke",
-     "marke": "Coca-Cola",
-     "beschr": "HINWEIS: NUR FÜR GROSSHÄNDLER versch. Sorten teilweise koffeinhaltig 24 x 0,2 l Flasche je Kasten zzgl. Pfand",
-     "preis": 10.79,
-     "von": "2026-09-30T22:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    }
-   ]
-  },
-  "47178 | Cola": {
+ "varianten": {
+  "q=cola": {
    "anzahl": 14,
-   "haendler": {
-    "ALDI SÜD": 2,
-    "trinkgut": 4,
-    "Lidl": 2,
-    "Netto Marken-Discount": 1,
-    "PENNY": 2,
-    "Handelshof": 1,
-    "Kaufland": 2
-   },
-   "gesuchte_id_dabei": false,
    "rewe": [],
-   "alle": [
+   "haendler": [
+    "ALDI SÜD",
+    "Handelshof",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "trinkgut"
+   ]
+  },
+  "q=cola, as=mobile": {
+   "anzahl": 14,
+   "rewe": [],
+   "haendler": [
+    "ALDI SÜD",
+    "Handelshof",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "trinkgut"
+   ]
+  },
+  "q=cola, advertisers=rewe": {
+   "anzahl": 14,
+   "rewe": [],
+   "haendler": [
+    "ALDI SÜD",
+    "Handelshof",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "trinkgut"
+   ]
+  },
+  "q=cola, advertisers=retailers/126802": {
+   "anzahl": 14,
+   "rewe": [],
+   "haendler": [
+    "ALDI SÜD",
+    "Handelshof",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "trinkgut"
+   ]
+  },
+  "q=cola, retailers=rewe": {
+   "anzahl": 0,
+   "rewe": [],
+   "haendler": []
+  },
+  "q=cola, advertiser=rewe": {
+   "anzahl": 14,
+   "rewe": [],
+   "haendler": [
+    "ALDI SÜD",
+    "Handelshof",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "trinkgut"
+   ]
+  },
+  "q=cola, advertiserIds=retailers/126802": {
+   "anzahl": 14,
+   "rewe": [],
+   "haendler": [
+    "ALDI SÜD",
+    "Handelshof",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "trinkgut"
+   ]
+  },
+  "q=coca-cola, brands=coca-cola": {
+   "anzahl": 0,
+   "rewe": [],
+   "haendler": []
+  },
+  "q=rewe": {
+   "anzahl": 0,
+   "rewe": [],
+   "haendler": []
+  },
+  "q=rewe cola": {
+   "anzahl": 0,
+   "rewe": [],
+   "haendler": []
+  },
+  "q=getränke rewe": {
+   "anzahl": 0,
+   "rewe": [],
+   "haendler": []
+  },
+  "ohne q, brands=coca-cola": {
+   "fehler": "object of type 'NoneType' has no len()"
+  },
+  "ohne q, brand=coca-cola": {
+   "fehler": "object of type 'NoneType' has no len()"
+  },
+  "ohne q, advertisers=rewe": {
+   "fehler": "object of type 'NoneType' has no len()"
+  }
+ },
+ "plz": {
+  "47051": {
+   "anzahl": 21,
+   "rewe": [
     {
-     "id": 25384092,
-     "adv": "ALDI SÜD",
+     "id": 25335487,
+     "adv": "REWE Dortmund",
      "produkt": "Cola",
      "marke": "Coca-Cola",
-     "beschr": "Sprite oder Fanta Versch. Sorten; teilweise koffeinhaltig; je 330-ml-Flasche zzgl. Pfand 0.25 Auch als 6er-Pack erhältlich",
-     "preis": 0.62,
-     "von": "2026-10-25T23:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    },
-    {
-     "id": 25302077,
-     "adv": "ALDI SÜD",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "oder Fanta Versch. Sorten; teilweise koffeinhaltig; 18 x 0,33 l = 5,94- l-Packung; zzgl. Pfand 18 x 0.25 = 4.50",
-     "preis": 7.99,
-     "von": "2026-10-22T22:00:00Z",
+     "preis": 1.11,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25406002,
-     "adv": "trinkgut",
-     "produkt": "Cola",
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
      "marke": "Coca-Cola",
-     "beschr": "Fanta o. Sprite und weitere Sorten teilweise koffeinhaltiq 0,33l/0,5I Dose zzgl. € 0.25 Pfand. Einzelpreis 0.79",
-     "preis": 3.9,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:59Z"
-    },
-    {
-     "id": 25396112,
-     "adv": "Lidl",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "1.25 l zzgl. 0.25 Pfand",
-     "preis": 0.99,
-     "von": "2026-10-25T23:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    },
-    {
-     "id": 25358162,
-     "adv": "Netto Marken-Discount",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Fanta, Sprite oder Mezzo Mix teilw. koffeinhaltig, versch. Sorten 2 Liter zzgl. Pfand 0.25",
-     "preis": 1.49,
-     "von": "2026-10-18T22:00:00Z",
+     "preis": 5.99,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25339052,
-     "adv": "PENNY",
-     "produkt": "Cola",
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
      "marke": "Coca-Cola",
-     "beschr": "Versch. Sorten, Erfrischungsgetränk, zzgl. 1.50 Pfand, je 6 x 0,33 l",
-     "preis": 4.49,
-     "von": "2026-10-21T22:00:00Z",
+     "preis": 16.99,
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25301467,
-     "adv": "Lidl",
+     "id": 25337912,
+     "adv": "REWE Dortmund",
      "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "6x0.33l 1.98l +1.50 Pfand, Standardpackung 0.33l",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
      "preis": 3.99,
-     "von": "2026-10-21T22:00:00Z",
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25093418,
-     "adv": "Handelshof",
-     "produkt": "Erfrischungsgetränke",
-     "marke": "Coca-Cola",
-     "beschr": "HINWEIS: NUR FÜR GROSSHÄNDLER versch. Sorten teilweise koffeinhaltig 24 x 0,2 l Flasche je Kasten zzgl. Pfand",
-     "preis": 10.79,
-     "von": "2026-09-30T22:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    },
-    {
-     "id": 25387107,
-     "adv": "Kaufland",
-     "produkt": "Cola",
-     "marke": "K-Classic",
-     "beschr": "Cola-Mix oder Limonade versch. Sorten, z. T. koffeinhaltig (+ 0.25 Pfand) je 1,5-l-PET-Fl. Auch als zero zucker",
-     "preis": 0.29,
-     "von": "2026-10-21T22:00:00Z",
-     "bis": "2026-10-24T17:00:00Z"
-    },
-    {
-     "id": 25406527,
-     "adv": "trinkgut",
-     "produkt": "Altbier-Cola-Mix Blue",
-     "marke": "Frankenheim",
-     "beschr": "Pack = 6 x 0,33 l zzgl. € 0.48 Pfand",
-     "preis": 4.29,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:59Z"
-    },
-    {
-     "id": 25406077,
-     "adv": "trinkgut",
-     "produkt": "Remix Cola-Orange Limonade",
-     "marke": "Veltins",
-     "beschr": "koffeinhaltig 0,33l Dose  zzgl. € 0.25 Pfand",
-     "preis": 0.79,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:59Z"
-    },
-    {
-     "id": 25403177,
-     "adv": "trinkgut",
-     "produkt": "Pepsi Cola",
-     "marke": "Pepsi",
-     "beschr": "Schwip Schwap o. Seven Üp versch. Sorten teilweise koffeinhaltig Kasten = 12 x 1l PET  zzgl. € 3.30 Pfand",
-     "preis": 9.99,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:59Z"
-    },
-    {
-     "id": 25384157,
-     "adv": "Kaufland",
-     "produkt": "Pepsi Cola",
-     "marke": "Pepsi",
-     "beschr": "6x0.5 l zzgl. 1.50 Pfand",
-     "preis": 3.96,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T17:00:00Z"
-    },
-    {
-     "id": 25333022,
-     "adv": "PENNY",
-     "produkt": "Piña Colada",
-     "marke": "Malibu",
-     "beschr": "Alkoholhaltiges Mischgetränk, 10% vol, zzgl. 0.25 Pfand, je 0,25 l oder Havana Club Spezi Alkoholhaltiges Mischgetränk, 10% vol, zzgl. 0.25 Pfand, je 0,33 l",
+     "id": 25347812,
+     "adv": "REWE",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
      "preis": 1.99,
-     "von": "2026-10-21T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    }
-   ]
-  },
-  "47178 | REWE Cola": {
-   "anzahl": 0,
-   "haendler": {},
-   "gesuchte_id_dabei": false,
-   "rewe": [],
-   "alle": []
-  },
-  "47178 | Coca-Cola REWE": {
-   "anzahl": 0,
-   "haendler": {},
-   "gesuchte_id_dabei": false,
-   "rewe": [],
-   "alle": []
-  },
-  "46535 | coca cola": {
-   "anzahl": 9,
-   "haendler": {
-    "ALDI SÜD": 2,
-    "trinkgut": 1,
-    "Lidl": 2,
-    "Netto Marken-Discount": 1,
-    "Getränke Hoffmann": 1,
-    "PENNY": 1,
-    "Handelshof": 1
-   },
-   "gesuchte_id_dabei": false,
-   "rewe": [],
-   "alle": [
-    {
-     "id": 25384092,
-     "adv": "ALDI SÜD",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Sprite oder Fanta Versch. Sorten; teilweise koffeinhaltig; je 330-ml-Flasche zzgl. Pfand 0.25 Auch als 6er-Pack erhältlich",
-     "preis": 0.62,
-     "von": "2026-10-25T23:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    },
-    {
-     "id": 25302077,
-     "adv": "ALDI SÜD",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "oder Fanta Versch. Sorten; teilweise koffeinhaltig; 18 x 0,33 l = 5,94- l-Packung; zzgl. Pfand 18 x 0.25 = 4.50",
-     "preis": 7.99,
-     "von": "2026-10-22T22:00:00Z",
      "bis": "2026-10-24T21:59:00Z"
     },
     {
-     "id": 25406002,
-     "adv": "trinkgut",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Fanta o. Sprite und weitere Sorten teilweise koffeinhaltiq 0,33l/0,5I Dose zzgl. € 0.25 Pfand. Einzelpreis 0.79",
-     "preis": 3.9,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:59Z"
-    },
-    {
-     "id": 25396112,
-     "adv": "Lidl",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "1.25 l zzgl. 0.25 Pfand",
-     "preis": 0.99,
-     "von": "2026-10-25T23:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    },
-    {
-     "id": 25358162,
-     "adv": "Netto Marken-Discount",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Fanta, Sprite oder Mezzo Mix teilw. koffeinhaltig, versch. Sorten 2 Liter zzgl. Pfand 0.25",
-     "preis": 1.49,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25327042,
-     "adv": "Getränke Hoffmann",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "verschiedene Sorten 24 x 0,33 l Glas + Pfand 5,10 €",
-     "preis": 19.99,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25301467,
-     "adv": "Lidl",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "6x0.33l 1.98l +1.50 Pfand, Standardpackung 0.33l",
-     "preis": 3.99,
-     "von": "2026-10-21T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25339052,
-     "adv": "PENNY",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Versch. Sorten, Erfrischungsgetränk, zzgl. 1.50 Pfand, je 6 x 0,33 l",
-     "preis": 4.49,
-     "von": "2026-10-21T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25093418,
-     "adv": "Handelshof",
-     "produkt": "Erfrischungsgetränke",
-     "marke": "Coca-Cola",
-     "beschr": "HINWEIS: NUR FÜR GROSSHÄNDLER versch. Sorten teilweise koffeinhaltig 24 x 0,2 l Flasche je Kasten zzgl. Pfand",
-     "preis": 10.79,
-     "von": "2026-09-30T22:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    }
-   ]
-  },
-  "46535 | Coca-Cola": {
-   "anzahl": 9,
-   "haendler": {
-    "ALDI SÜD": 2,
-    "Getränke Hoffmann": 1,
-    "trinkgut": 1,
-    "Lidl": 2,
-    "Netto Marken-Discount": 1,
-    "PENNY": 1,
-    "Handelshof": 1
-   },
-   "gesuchte_id_dabei": false,
-   "rewe": [],
-   "alle": [
-    {
-     "id": 25302077,
-     "adv": "ALDI SÜD",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "oder Fanta Versch. Sorten; teilweise koffeinhaltig; 18 x 0,33 l = 5,94- l-Packung; zzgl. Pfand 18 x 0.25 = 4.50",
-     "preis": 7.99,
-     "von": "2026-10-22T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25384092,
-     "adv": "ALDI SÜD",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Sprite oder Fanta Versch. Sorten; teilweise koffeinhaltig; je 330-ml-Flasche zzgl. Pfand 0.25 Auch als 6er-Pack erhältlich",
-     "preis": 0.62,
-     "von": "2026-10-25T23:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    },
-    {
-     "id": 25327042,
-     "adv": "Getränke Hoffmann",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "verschiedene Sorten 24 x 0,33 l Glas + Pfand 5,10 €",
-     "preis": 19.99,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25406002,
-     "adv": "trinkgut",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Fanta o. Sprite und weitere Sorten teilweise koffeinhaltiq 0,33l/0,5I Dose zzgl. € 0.25 Pfand. Einzelpreis 0.79",
-     "preis": 3.9,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:59Z"
-    },
-    {
-     "id": 25396112,
-     "adv": "Lidl",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "1.25 l zzgl. 0.25 Pfand",
-     "preis": 0.99,
-     "von": "2026-10-25T23:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    },
-    {
-     "id": 25301467,
-     "adv": "Lidl",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "6x0.33l 1.98l +1.50 Pfand, Standardpackung 0.33l",
-     "preis": 3.99,
-     "von": "2026-10-21T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25358162,
-     "adv": "Netto Marken-Discount",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Fanta, Sprite oder Mezzo Mix teilw. koffeinhaltig, versch. Sorten 2 Liter zzgl. Pfand 0.25",
-     "preis": 1.49,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25339052,
-     "adv": "PENNY",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Versch. Sorten, Erfrischungsgetränk, zzgl. 1.50 Pfand, je 6 x 0,33 l",
-     "preis": 4.49,
-     "von": "2026-10-21T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25093418,
-     "adv": "Handelshof",
-     "produkt": "Erfrischungsgetränke",
-     "marke": "Coca-Cola",
-     "beschr": "HINWEIS: NUR FÜR GROSSHÄNDLER versch. Sorten teilweise koffeinhaltig 24 x 0,2 l Flasche je Kasten zzgl. Pfand",
-     "preis": 10.79,
-     "von": "2026-09-30T22:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    }
-   ]
-  },
-  "46535 | Cola": {
-   "anzahl": 16,
-   "haendler": {
-    "ALDI SÜD": 2,
-    "trinkgut": 4,
-    "Lidl": 2,
-    "Netto Marken-Discount": 1,
-    "PENNY": 2,
-    "Getränke Hoffmann": 2,
-    "Handelshof": 1,
-    "Kaufland": 2
-   },
-   "gesuchte_id_dabei": false,
-   "rewe": [],
-   "alle": [
-    {
-     "id": 25384092,
-     "adv": "ALDI SÜD",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Sprite oder Fanta Versch. Sorten; teilweise koffeinhaltig; je 330-ml-Flasche zzgl. Pfand 0.25 Auch als 6er-Pack erhältlich",
-     "preis": 0.62,
-     "von": "2026-10-25T23:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    },
-    {
-     "id": 25302077,
-     "adv": "ALDI SÜD",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "oder Fanta Versch. Sorten; teilweise koffeinhaltig; 18 x 0,33 l = 5,94- l-Packung; zzgl. Pfand 18 x 0.25 = 4.50",
-     "preis": 7.99,
-     "von": "2026-10-22T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25406002,
-     "adv": "trinkgut",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Fanta o. Sprite und weitere Sorten teilweise koffeinhaltiq 0,33l/0,5I Dose zzgl. € 0.25 Pfand. Einzelpreis 0.79",
-     "preis": 3.9,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:59Z"
-    },
-    {
-     "id": 25396112,
-     "adv": "Lidl",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "1.25 l zzgl. 0.25 Pfand",
-     "preis": 0.99,
-     "von": "2026-10-25T23:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    },
-    {
-     "id": 25358162,
-     "adv": "Netto Marken-Discount",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Fanta, Sprite oder Mezzo Mix teilw. koffeinhaltig, versch. Sorten 2 Liter zzgl. Pfand 0.25",
-     "preis": 1.49,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25339052,
-     "adv": "PENNY",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "Versch. Sorten, Erfrischungsgetränk, zzgl. 1.50 Pfand, je 6 x 0,33 l",
-     "preis": 4.49,
-     "von": "2026-10-21T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25327042,
-     "adv": "Getränke Hoffmann",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "verschiedene Sorten 24 x 0,33 l Glas + Pfand 5,10 €",
-     "preis": 19.99,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25301467,
-     "adv": "Lidl",
-     "produkt": "Cola",
-     "marke": "Coca-Cola",
-     "beschr": "6x0.33l 1.98l +1.50 Pfand, Standardpackung 0.33l",
-     "preis": 3.99,
-     "von": "2026-10-21T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25093418,
-     "adv": "Handelshof",
-     "produkt": "Erfrischungsgetränke",
-     "marke": "Coca-Cola",
-     "beschr": "HINWEIS: NUR FÜR GROSSHÄNDLER versch. Sorten teilweise koffeinhaltig 24 x 0,2 l Flasche je Kasten zzgl. Pfand",
-     "preis": 10.79,
-     "von": "2026-09-30T22:00:00Z",
-     "bis": "2026-10-31T22:59:00Z"
-    },
-    {
-     "id": 25387107,
-     "adv": "Kaufland",
-     "produkt": "Cola",
-     "marke": "K-Classic",
-     "beschr": "Cola-Mix oder Limonade versch. Sorten, z. T. koffeinhaltig (+ 0.25 Pfand) je 1,5-l-PET-Fl. Auch als zero zucker",
-     "preis": 0.29,
-     "von": "2026-10-21T22:00:00Z",
-     "bis": "2026-10-24T17:00:00Z"
-    },
-    {
-     "id": 25406527,
-     "adv": "trinkgut",
-     "produkt": "Altbier-Cola-Mix Blue",
-     "marke": "Frankenheim",
-     "beschr": "Pack = 6 x 0,33 l zzgl. € 0.48 Pfand",
-     "preis": 4.29,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:59Z"
-    },
-    {
-     "id": 25406077,
-     "adv": "trinkgut",
-     "produkt": "Remix Cola-Orange Limonade",
-     "marke": "Veltins",
-     "beschr": "koffeinhaltig 0,33l Dose  zzgl. € 0.25 Pfand",
-     "preis": 0.79,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:59Z"
-    },
-    {
-     "id": 25403177,
-     "adv": "trinkgut",
-     "produkt": "Pepsi Cola",
-     "marke": "Pepsi",
-     "beschr": "Schwip Schwap o. Seven Üp versch. Sorten teilweise koffeinhaltig Kasten = 12 x 1l PET  zzgl. € 3.30 Pfand",
-     "preis": 9.99,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:59Z"
-    },
-    {
-     "id": 25384157,
-     "adv": "Kaufland",
-     "produkt": "Pepsi Cola",
-     "marke": "Pepsi",
-     "beschr": "6x0.5 l zzgl. 1.50 Pfand",
-     "preis": 3.96,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T17:00:00Z"
-    },
-    {
-     "id": 25330432,
-     "adv": "Getränke Hoffmann",
-     "produkt": "Pepsi Cola",
-     "marke": "Pepsi",
-     "beschr": "oder Limonade verschiedene Sorten 12 x 1,0 l PET + Pfand 3,30 €",
-     "preis": 11.99,
-     "von": "2026-10-18T22:00:00Z",
-     "bis": "2026-10-24T21:59:00Z"
-    },
-    {
-     "id": 25333022,
-     "adv": "PENNY",
-     "produkt": "Piña Colada",
-     "marke": "Malibu",
-     "beschr": "Alkoholhaltiges Mischgetränk, 10% vol, zzgl. 0.25 Pfand, je 0,25 l oder Havana Club Spezi Alkoholhaltiges Mischgetränk, 10% vol, zzgl. 0.25 Pfand, je 0,33 l",
+     "id": 25338652,
+     "adv": "REWE Dortmund",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
      "preis": 1.99,
-     "von": "2026-10-21T22:00:00Z",
      "bis": "2026-10-24T21:59:00Z"
     }
+   ],
+   "haendler": [
+    "ALDI SÜD",
+    "Handelshof",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "REWE",
+    "REWE Dortmund",
+    "trinkgut"
    ]
   },
-  "46535 | REWE Cola": {
-   "anzahl": 0,
-   "haendler": {},
-   "gesuchte_id_dabei": false,
-   "rewe": [],
-   "alle": []
+  "47119": {
+   "anzahl": 21,
+   "rewe": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25347812,
+     "adv": "REWE",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338652,
+     "adv": "REWE Dortmund",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ],
+   "haendler": [
+    "ALDI SÜD",
+    "Handelshof",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "REWE",
+    "REWE Dortmund",
+    "trinkgut"
+   ]
   },
-  "46535 | Coca-Cola REWE": {
-   "anzahl": 0,
-   "haendler": {},
-   "gesuchte_id_dabei": false,
-   "rewe": [],
-   "alle": []
+  "47139": {
+   "anzahl": 21,
+   "rewe": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25347812,
+     "adv": "REWE",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338652,
+     "adv": "REWE Dortmund",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ],
+   "haendler": [
+    "ALDI SÜD",
+    "Handelshof",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "REWE",
+    "REWE Dortmund",
+    "trinkgut"
+   ]
+  },
+  "47166": {
+   "anzahl": 23,
+   "rewe": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25347812,
+     "adv": "REWE",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338652,
+     "adv": "REWE Dortmund",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ],
+   "haendler": [
+    "ALDI SÜD",
+    "Getränke Hoffmann",
+    "Handelshof",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "REWE",
+    "REWE Dortmund",
+    "trinkgut"
+   ]
+  },
+  "47169": {
+   "anzahl": 22,
+   "rewe": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25347812,
+     "adv": "REWE",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338652,
+     "adv": "REWE Dortmund",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ],
+   "haendler": [
+    "ALDI SÜD",
+    "Getränke Hoffmann",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "REWE",
+    "REWE Dortmund",
+    "trinkgut"
+   ]
+  },
+  "47226": {
+   "anzahl": 27,
+   "rewe": [
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25347812,
+     "adv": "REWE",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338652,
+     "adv": "REWE Dortmund",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ],
+   "haendler": [
+    "ALDI SÜD",
+    "Getränke Hoffmann",
+    "Handelshof",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "REWE",
+    "REWE Dortmund",
+    "trinkgut"
+   ]
+  },
+  "47441": {
+   "anzahl": 27,
+   "rewe": [
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25347812,
+     "adv": "REWE",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338652,
+     "adv": "REWE Dortmund",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ],
+   "haendler": [
+    "ALDI SÜD",
+    "Getränke Hoffmann",
+    "Handelshof",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "REWE",
+    "REWE Dortmund",
+    "trinkgut"
+   ]
+  },
+  "47506": {
+   "anzahl": 22,
+   "rewe": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338652,
+     "adv": "REWE Dortmund",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ],
+   "haendler": [
+    "ALDI SÜD",
+    "Getränke Hoffmann",
+    "Handelshof",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "REWE Dortmund",
+    "trinkgut"
+   ]
+  },
+  "46045": {
+   "anzahl": 21,
+   "rewe": [
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338652,
+     "adv": "REWE Dortmund",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ],
+   "haendler": [
+    "ALDI SÜD",
+    "Getränke Hoffmann",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "REWE Dortmund",
+    "trinkgut"
+   ]
+  },
+  "45127": {
+   "anzahl": 24,
+   "rewe": [
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25335487,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338127,
+     "adv": "REWE Dortmund",
+     "produkt": "Friendspack",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337872,
+     "adv": "REWE Dortmund",
+     "produkt": "Limonade",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337912,
+     "adv": "REWE Dortmund",
+     "produkt": "Cola",
+     "marke": "Afri Cola",
+     "preis": 0.69,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25337897,
+     "adv": "REWE Dortmund",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25347812,
+     "adv": "REWE",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338652,
+     "adv": "REWE Dortmund",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ],
+   "haendler": [
+    "EDEKA Foodservice",
+    "Handelshof",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "REWE",
+    "REWE Dortmund",
+    "trinkgut"
+   ]
+  },
+  "40210": {
+   "anzahl": 21,
+   "rewe": [
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25347812,
+     "adv": "REWE",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ],
+   "haendler": [
+    "ALDI SÜD",
+    "Handelshof",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "REWE",
+    "nahkauf",
+    "trinkgut"
+   ]
+  },
+  "50667": {
+   "anzahl": 22,
+   "rewe": [
+    {
+     "id": 25369477,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25363527,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25347812,
+     "adv": "REWE",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ],
+   "haendler": [
+    "ALDI SÜD",
+    "Handelshof",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "REWE",
+    "trinkgut"
+   ]
+  },
+  "10115": {
+   "anzahl": 13,
+   "rewe": [
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25347812,
+     "adv": "REWE",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ],
+   "haendler": [
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "REWE",
+    "budni",
+    "nahkauf"
+   ]
+  },
+  "80331": {
+   "anzahl": 25,
+   "rewe": [
+    {
+     "id": 25362087,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25358927,
+     "adv": "REWE",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25352332,
+     "adv": "REWE Center",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 16.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25351952,
+     "adv": "REWE Center",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 8.49,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25336777,
+     "adv": "REWE Center",
+     "produkt": "Cola",
+     "marke": "Coca-Cola",
+     "preis": 1.11,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362007,
+     "adv": "REWE",
+     "produkt": "Original Taste",
+     "marke": "Coca-Cola",
+     "preis": 5.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25362032,
+     "adv": "REWE",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25352227,
+     "adv": "REWE Center",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 9.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25352052,
+     "adv": "REWE Center",
+     "produkt": "Pepsi Cola",
+     "marke": "Pepsi",
+     "preis": 3.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25347812,
+     "adv": "REWE",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    },
+    {
+     "id": 25338397,
+     "adv": "REWE Center",
+     "produkt": "Bourbon Whiskey & Cola",
+     "marke": "Jim Beam",
+     "preis": 1.99,
+     "bis": "2026-10-24T21:59:00Z"
+    }
+   ],
+   "haendler": [
+    "ALDI SÜD",
+    "E center",
+    "EDEKA",
+    "Kaufland",
+    "Lidl",
+    "Netto Marken-Discount",
+    "PENNY",
+    "REWE",
+    "REWE Center",
+    "nahkauf",
+    "trinkgut"
+   ]
   }
  }
 }
