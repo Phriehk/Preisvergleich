@@ -20,6 +20,7 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+      ZUGANGSCODE: ${{ secrets.ZUGANGSCODE }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -45,7 +46,8 @@ jobs:
           npx --yes wrangler@4 deploy 2>&1 | tail -n 14 | tee -a $LOG
           # Geheimnisse (nur beim Server hinterlegt, nie im Repository)
           [ -n "$NTFY_TOPIC" ] && { echo "$NTFY_TOPIC" | npx --yes wrangler@4 secret put NTFY_TOPIC 2>&1 | tail -n 1 | tee -a $LOG; }
-          ZUG=$(printf %s "$CLOUDFLARE_API_TOKEN" | sha256sum | cut -c1-10)
+          # Zugangscode: eigenes Passwort aus dem GitHub-Secret ZUGANGSCODE, sonst wie bisher aus dem Cloudflare-Schlüssel abgeleitet
+          if [ -n "$ZUGANGSCODE" ]; then ZUG="$ZUGANGSCODE"; log "Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)"; else ZUG=$(printf %s "$CLOUDFLARE_API_TOKEN" | sha256sum | cut -c1-10); log "Zugangscode: abgeleitet aus dem Cloudflare-Schlüssel (Secret ZUGANGSCODE fehlt)"; fi
           echo "$ZUG" | npx --yes wrangler@4 secret put ZUGANG 2>&1 | tail -n 1 | tee -a $LOG
           KEY=$(openssl rand -hex 24)
           echo "$KEY" | npx --yes wrangler@4 secret put WARTUNG 2>&1 | tail -n 1 | tee -a $LOG
@@ -65,6 +67,12 @@ jobs:
           log "Aktualisieren: $(( $(date +%s) - T0 )) s, $(echo "$R" | head -c 400)"
           log "Angebote: $(curl -s -m 30 $URL/angebote.json | jq -c '{anzahl: length, gruppen: ([.[].gruppe] | unique)}' 2>/dev/null)"
           log "Verlauf: $(curl -s -m 30 $URL/verlauf.csv | wc -l) Zeilen"
+          log "Korrekturen lesen: $(curl -s -m 30 $URL/korrekturen.json | head -c 100)"
+          log "Korrekturen ohne Code schreiben (erwartet 401): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 -X POST -H 'Content-Type: application/json' -d '{"set":{}}' $URL/korrekturen)"
+          curl -s -m 30 -X POST -H "Authorization: Bearer $ZUG" -H 'Content-Type: application/json' -d '{"set":{"test|1":{"preis":1.5,"stueck":2,"ml":500}}}' $URL/korrekturen >/dev/null
+          log "Korrektur gespeichert und gelesen: $(curl -s -m 30 $URL/korrekturen.json | jq -c 'has("test|1")')"
+          curl -s -m 30 -X POST -H "Authorization: Bearer $ZUG" -H 'Content-Type: application/json' -d '{"del":["test|1"]}' $URL/korrekturen >/dev/null
+          log "Test-Korrektur gelöscht: $(curl -s -m 30 $URL/korrekturen.json | jq -c 'has("test|1") | not')"
           T0=$(date +%s); R=$(curl -s -m 120 -X POST -G -H "Authorization: Bearer $ZUG" --data-urlencode "m=Lidl|ALDI SÜD|Kaufland|REWE|PENNY (46535)|Netto Marken-Discount|trinkgut|Thomas Philipps|Handelshof|ROSSMANN" "$URL/entfernungen")
           log "Entfernungen: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'with_entries(.value |= {km: .km, fil: ((.filialen // []) | length)})' 2>/dev/null || echo "$R" | head -c 300)"
           T0=$(date +%s); R=$(curl -s -m 120 "$URL/region?plz=40210&q=Fanta%7CRed%20Bull")

@@ -80,7 +80,7 @@ button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);fon
 .best-r span{color:var(--mute);font-size:.92rem}
 .so{color:var(--mute)}
 .fahrt{grid-column:1/-1;border-top:1px solid color-mix(in srgb,var(--best) 35%,transparent);padding-top:8px;font-size:.92rem}
-.mb{display:inline-grid;place-items:center;min-width:26px;height:20px;padding:0 5px;margin-right:6px;border-radius:5px;font:700 .68rem/1 Barlow,system-ui,sans-serif;letter-spacing:.02em;vertical-align:1px}
+.mb{display:inline-block;width:10px;height:10px;margin-right:7px;border-radius:50%;vertical-align:0}
 .km{color:var(--mute);font-size:.8rem;margin-left:6px;white-space:nowrap}
 .lb{height:28px;padding:0 9px;margin-top:4px;font-size:.8rem;border-radius:8px}
 .lb.an{background:var(--bestbg);border-color:var(--best)}
@@ -341,6 +341,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
     <h2 id="ortTitel">Mein Standort</h2>
     <p class="lbl" style="margin:0">Damit rechnet die Seite die Entfernung zur nächsten Filiale ab deiner Adresse. Sie wird nur in diesem Browser gespeichert und nicht an den Server dieser Seite geschickt. Für das Nachschlagen geht sie an OpenStreetMap.</p>
     <label>Adresse oder Postleitzahl<input id="ortText" autocomplete="street-address" placeholder="z.B. Musterstraße 5, 47178 Duisburg"></label>
+    <label>Fahrtkosten pro Kilometer in €<input id="ortKm" inputmode="decimal" autocomplete="off" placeholder="0,30"></label>
     <label class="chip"><input type="checkbox" id="ortAng" checked> Auch die Angebote für meine Postleitzahl laden</label>
     <div id="ortInfo" class="lbl" style="margin:0"></div>
     <div class="row"><button id="ortSave" type="button" class="primary">Speichern</button><button id="ortGps" type="button">📍 Aktuellen Standort nehmen</button><button id="ortDel" type="button">Entfernen</button><button id="ortZu" type="button">Schließen</button></div>
@@ -391,7 +392,7 @@ function mlogo(m){
   const b=mbase(m),k=b.toLowerCase();let c=null;
   for(const x in MFARBE)if(k.startsWith(x)){c=MFARBE[x];break}
   if(!c){let s=0;for(const ch of k)s=(s*31+ch.charCodeAt(0))%360;c=["hsl("+s+" 45% 38%)","#fff"]}
-  return `<span class="mb" style="background:${c[0]};color:${c[1]}" aria-hidden="true">${esc(b.replace(/[^A-Za-zÄÖÜäöü]/g,"").slice(0,2).toUpperCase()||"?")}</span>`;
+  return `<span class="mb" style="background:${c[0]}" aria-hidden="true"></span>`;
 }
 var dist={},ort=null;try{ort=JSON.parse(localStorage.getItem("pv-ort")||"null")}catch(e){}
 const f1=x=>x.toFixed(1).replace(".",",");
@@ -406,6 +407,8 @@ function dinfo(m){
   return !ort&&d.km!=null?{km:d.km,adresse:d.adresse}:null;
 }
 const dkm=m=>{const d=dinfo(m);return d?d.km:null};
+const STRASSE=1.3;   // Straße ist im Schnitt etwa 1,3-mal so lang wie die Luftlinie
+var kmSatz=.30;try{const x=parseFloat(localStorage.getItem("pv-km"));if(x>=0&&x<5)kmSatz=x}catch(e){}
 function luftKm(a,b,c,d){const r=x=>x*Math.PI/180,q=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;return 12742*Math.asin(Math.sqrt(q))}
 function distText(o){const d=dinfo(o.markt);return d?`<span class="km" title="Luftlinie ${ort?"von deiner Adresse":"von der Postleitzahl"} zur nächsten Filiale${d.adresse?": "+esc(d.adresse):""}">${f1(d.km)} km</span>`:""}
 async function distLaden(){
@@ -444,12 +447,13 @@ async function ortSetzen(o){
   distLaden();
   if(rp&&o)ortInfo.textContent="Gespeichert: "+o.name+" (PLZ "+o.plz+"). Angebote für diese Postleitzahl sind geladen.";
 }
-ortBtn.onclick=()=>{ortText.value=ort?ort.name:"";ortAng.checked=!ort||ort.angebote!==false;ortInfo.textContent=ort?"Aktuell gespeichert: "+ort.name+(ort.plz?" (PLZ "+ort.plz+")":""):"";ortDlg.hidden=false;ortText.focus()};
+ortBtn.onclick=()=>{ortKm.value=String(kmSatz).replace(".",",");ortText.value=ort?ort.name:"";ortAng.checked=!ort||ort.angebote!==false;ortInfo.textContent=ort?"Aktuell gespeichert: "+ort.name+(ort.plz?" (PLZ "+ort.plz+")":""):"";ortDlg.hidden=false;ortText.focus()};
 ortZu.onclick=()=>{ortDlg.hidden=true};
 ortDlg.onclick=e=>{if(e.target===ortDlg)ortDlg.hidden=true};
 ortDel.onclick=()=>{ortText.value="";ortSetzen(null).then(()=>{ortInfo.textContent="Standort entfernt, es gelten wieder die Angebote und die Postleitzahl der Seite."})};
 const plzAus=j=>{const m=String((j&&j.address&&j.address.postcode)||"").match(/\b\d{5}\b/);return m?m[0]:""};
 ortSave.onclick=async()=>{
+  {const x=parseFloat(ortKm.value.replace(",","."));if(x>=0&&x<5){kmSatz=x;try{localStorage.setItem("pv-km",String(x))}catch(e){}render()}}
   const q=ortText.value.trim();if(q.length<3){ortInfo.textContent="Bitte eine Adresse oder Postleitzahl eingeben.";return}
   ortInfo.textContent="Suche …";
   try{
@@ -471,8 +475,8 @@ ortGps.onclick=()=>{
 };
 function fahrtZeile(b,liste){
   const db=dkm(b.markt);if(db==null)return"";
-  const kk=.30,nah=liste.filter(o=>!abgelaufen(o)&&!kommt(o)&&dkm(o.markt)!=null).sort((x,y)=>dkm(x.markt)-dkm(y.markt)||gp(x)-gp(y))[0];
-  let t=`🚗 ${esc(mbase(b.markt))} ist ${f1(db)} km entfernt (hin und zurück etwa ${eur(2*db*kk)} Fahrtkosten bei 0,30 €/km).`;
+  const kk=kmSatz*STRASSE,nah=liste.filter(o=>!abgelaufen(o)&&!kommt(o)&&dkm(o.markt)!=null).sort((x,y)=>dkm(x.markt)-dkm(y.markt)||gp(x)-gp(y))[0];
+  let t=`🚗 ${esc(mbase(b.markt))} ist ${f1(db)} km entfernt (Luftlinie, hin und zurück mit Straßenweg etwa ${eur(2*db*kk)} Fahrtkosten bei ${eur(kmSatz)} je km).`;
   if(nah&&mbase(nah.markt)!==mbase(b.markt)){
     const dn=dkm(nah.markt),spar=(gp(nah)-gp(b))*liter(b),extra=2*(db-dn)*kk;
     t+=` Im nächstgelegenen Markt (${esc(mbase(nah.markt))}, ${f1(dn)} km) kostet dieselbe Menge ${eur(gp(nah)*liter(b))}. Ersparnis ${eur(spar)}, Mehrkosten für die Fahrt ${eur(extra)}: ${spar>extra?"die weitere Fahrt lohnt sich":"die weitere Fahrt lohnt sich nicht"}.`;
@@ -491,7 +495,7 @@ function zeichneEinkauf(){
   const ms=Object.keys(g).sort((a,b)=>(dkm(a)??99)-(dkm(b)??99));
   let ges=0,fahrt=0,alle=true;
   const html=ms.map(m=>{
-    const sum=g[m].reduce((s,o)=>s+pr(o),0),d=dkm(m);ges+=sum;if(d==null)alle=false;else fahrt+=2*d*.30;
+    const sum=g[m].reduce((s,o)=>s+pr(o),0),d=dkm(m);ges+=sum;if(d==null)alle=false;else fahrt+=2*d*kmSatz*STRASSE;
     return `<section class="ek"><div class="ek-h">${mlogo(m)}<b>${esc(m)}</b>${d!=null?`<span class="km">${f1(d)} km</span>`:""}<span class="ek-s">${eur(sum)}</span></div>`
       +g[m].map(o=>`<div class="ek-z"><span>${o.stueck} × ${o.ml} ml ${esc(o.produkt||o.gruppe)}<br><small>${esc(o.form)} · ${gueltig(o)}</small></span><span>${eur(pr(o))}<br><small>${eur(gp(o))}/l</small></span><button type="button" class="lb an" data-k="${esc(kOf(o))}" aria-label="Von der Liste entfernen">✕</button></div>`).join("")+"</section>";
   }).join("");
@@ -587,7 +591,26 @@ document.querySelector("thead").onclick=e=>{
 /* ---- Auffällige Preise: Hinweis und Korrektur (Korrekturen gelten nur in diesem Browser) ---- */
 let medC={},rowList=[],korr={},eO=null;
 try{korr=JSON.parse(localStorage.getItem("pv-korr")||"{}")||{}}catch(e){korr={}}
-function korrSpeichern(){try{localStorage.setItem("pv-korr",JSON.stringify(korr))}catch(e){}}
+var korrSrv={};   // zuletzt bekannter Stand auf dem Server
+function korrSpeichern(sync){try{localStorage.setItem("pv-korr",JSON.stringify(korr))}catch(e){}if(sync!==false)korrPush()}
+function korrPush(){
+  if(!cf||!zugang)return;   // nur mit Zugangscode: Korrekturen anderer Besucher bleiben im eigenen Browser
+  const set={},del=[],g=x=>JSON.stringify(x);
+  Object.keys(korr).forEach(k=>{if(g(korr[k])!==g(korrSrv[k]))set[k]=korr[k]});
+  Object.keys(korrSrv).forEach(k=>{if(!(k in korr))del.push(k)});
+  if(!Object.keys(set).length&&!del.length)return;
+  wf("/korrekturen",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({set,del})}).then(r=>r.json()).then(s=>{korrSrv=korrOhneZeit(s)}).catch(()=>{});
+}
+function korrOhneZeit(s){const o={};Object.keys(s||{}).forEach(k=>{const v={...s[k]};delete v.t;o[k]=v});return o}
+async function korrLaden(){
+  if(!cf)return;
+  try{
+    await wBereit;
+    korrSrv=korrOhneZeit(await (await wf("/korrekturen.json")).json());
+    Object.keys(korrSrv).forEach(k=>{if(!(k in korr))korr[k]=korrSrv[k]});
+    korrSpeichern();   // lokale Korrekturen, die der Server noch nicht kennt, werden hochgeladen
+  }catch(e){}
+}
 function korrKey(o){const p=o.orig||o;return [o.gruppe||"Coca-Cola",o.markt,o.produkt||"",o.von||"",o.bis||"",p.preis,p.stueck,p.ml].join("|")}
 function kOf(o){return o.k||(o.k=korrKey(o))}
 function korrAnwenden(o){
@@ -596,7 +619,7 @@ function korrAnwenden(o){
   else if(c.ok)o.ok=true;
   else{o.orig={preis:o.preis,stueck:o.stueck,ml:o.ml};o.preis=c.preis;o.stueck=c.stueck;o.ml=c.ml;o.form=formVon((o.info||"")+" "+(o.produkt||""),o.ml,o.gruppe,o.stueck);o.korr=true}
 }
-function korrAufraeumen(neu){const k=new Set(neu.map(o=>o.k));Object.keys(korr).forEach(x=>{if(!k.has(x))delete korr[x]});korrSpeichern()}
+function korrAufraeumen(neu){const k=new Set(neu.map(o=>o.k));Object.keys(korr).forEach(x=>{if(!k.has(x)){delete korr[x];delete korrSrv[x]}});korrSpeichern(false)}
 function zuruecksetzen(o){
   if(o.orig){o.preis=o.orig.preis;o.stueck=o.orig.stueck;o.ml=o.orig.ml;o.form=formVon((o.info||"")+" "+(o.produkt||""),o.ml,o.gruppe,o.stueck)}
   delete korr[kOf(o)];delete o.orig;delete o.korr;delete o.ok;delete o.ausb;
@@ -935,26 +958,15 @@ function ampelInfo(b){
   let so="",i=alle.length-1;
   while(i>=0&&Math.abs(t[alle[i]]-v)<=v*.005)i--;   // das laufende Angebot selbst überspringen
   if(i>=0){const k=alle.slice(0,i+1).filter(d=>t[d]<=v*1.005).pop();so=k?"So günstig war es zuletzt am "+kurzD(k)+".":"Seit Beginn der Aufzeichnung ("+kurzD(alle[0])+") war es nie so günstig."}
-  let rh="";
-  if(alle.length>=14){
-    const ms=alle.map(d=>t[d]).sort((a,b)=>a-b),med=ms[Math.floor(ms.length/2)],starts=[];
-    alle.forEach((d,j)=>{if(t[d]<=med*.9&&(j===0||t[alle[j-1]]>med*.9))starts.push(d)});
-    if(starts.length>=3){
-      const iv=[];for(let j=1;j<starts.length;j++)iv.push(Math.round((+new Date(starts[j])-+new Date(starts[j-1]))/864e5));
-      iv.sort((a,b)=>a-b);const m=iv[Math.floor(iv.length/2)];
-      if(m>=2){const nxt=new Date(+new Date(starts[starts.length-1])+m*864e5).toISOString().slice(0,10);
-        rh="Gute Preise (deutlich unter dem Üblichen) gab es zuletzt ab "+kurzD(starts[starts.length-1])+", im Schnitt etwa alle "+m+" Tage. Das nächste Mal vermutlich um den "+kurzD(nxt)+".";}
-    }
-  }
-  if(tage.length<3)return {n:tage.length,so,rh};
+  if(tage.length<3)return {n:tage.length,so};
   const avg=tage.reduce((s,d)=>s+t[d],0)/tage.length,r=(v/avg-1)*100;
   const [sym,txt]=r<=-8?["🟢","Guter Preis"]:r<=8?["🟡","Normaler Preis"]:["🔴","Eher teuer"];
-  return {sym,txt,r,avg,n:tage.length,so,rh};
+  return {sym,txt,r,avg,n:tage.length,so};
 }
 function ampel(b){
   if(tab!=="jetzt"||abgelaufen(b)||kommt(b))return"";
   const a=ampelInfo(b);if(!a)return"";
-  const so=(a.so?`<br><span class="so">${esc(a.so)}</span>`:"")+(a.rh?`<br><span class="so">📅 ${esc(a.rh)}</span>`:"");
+  const so=(a.so?`<br><span class="so">${esc(a.so)}</span>`:"");
   if(!a.sym)return `<div class="ampel"><small>Vergleich mit dem Durchschnitt: bisher erst ${a.n} Messtag${a.n===1?"":"e"}, es braucht mindestens 3.</small>${so}</div>`;
   return `<div class="ampel">${a.sym} <b>${a.txt}:</b> ${Math.abs(a.r).toFixed(0)} % ${a.r<0?"unter":"über"} deinem Durchschnitt (Ø ${eur(a.avg)}/l, ${a.n} Messtage)${so}</div>`;
 }
@@ -1140,7 +1152,7 @@ if(lokal){
 }else if(cf){
   suchBox.hidden=false;suchBtn.onclick=suchen;suchtext.onkeydown=e=>{if(e.key==="Enter")suchen()};
   upd.hidden=false;upd.onclick=aktualisieren;
-  (async()=>{await favLaden();await autoLaden();distLaden()})();
+  (async()=>{await favLaden();await korrLaden();await autoLaden();distLaden()})();
   if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 }else if(/^https?:$/.test(location.protocol)){autoLaden();ghEinrichtung();if("serviceWorker" in navigator&&ghInfo)navigator.serviceWorker.register("sw.js").catch(()=>{})}
 </script>

@@ -376,7 +376,23 @@ async function entfernungenPflegen(env, maerkte, plz = PLZ) {
 
 /* ---------- Angebote für eine beliebige Postleitzahl (öffentlich, 3 Stunden zwischengespeichert) ---------- */
 const plzOk = s => /^\d{5}$/.test(s) && +s >= 1001 && +s <= 99998;
-async function regionAngebote(env, ctx, sp) {
+// Schutz der öffentlichen Abfragen: höchstens 10 neue Abfragen je Besucher und 10 Minuten, insgesamt 300 neue Abfragen am Tag (schont Marktguru und das kostenlose Schreibkontingent)
+const proBesucher = new Map();
+function besucherOk(ip) {
+  const jetzt = Date.now(), l = (proBesucher.get(ip) || []).filter(t => jetzt - t < 600e3);
+  if (l.length >= 10) return false;
+  l.push(jetzt); proBesucher.set(ip, l);
+  if (proBesucher.size > 500) proBesucher.clear();
+  return true;
+}
+async function tagesOk(env, art, max) {
+  const k = "tag:" + art + ":" + heute(), n = +((await env.PV.get(k)) || 0);
+  if (n >= max) return false;
+  await env.PV.put(k, String(n + 1), { expirationTtl: 172800 });
+  return true;
+}
+const zuViel = () => Object.assign(new Error("Im Moment gibt es zu viele neue Abfragen. Bitte in ein paar Minuten noch einmal versuchen."), { status: 429 });
+async function regionAngebote(env, ctx, sp, ip) {
   const plz = sp.get("plz") || "";
   if (!plzOk(plz)) throw Object.assign(new Error("Ungültige Postleitzahl"), { status: 400 });
   const begriffe = [...new Set((sp.get("q") || "").split("|").map(x => x.replace(/,/g, " ").trim()).filter(x => x && x.length <= 40))].slice(0, 6);
@@ -386,6 +402,7 @@ async function regionAngebote(env, ctx, sp) {
   const key = "reg:" + plz + ":" + hash, frisch = sp.get("neu") === "1";
   const alt = await env.PV.get(key, "json");
   if (alt && Date.now() - alt.t < (frisch ? 15 * 60e3 : 3 * 3600e3)) return alt.liste;
+  if (!besucherOk(ip) || !(await tagesOk(env, "region", 300))) throw zuViel();
   const { info } = favAuswerten(await lade(env, "favoriten", "json"));
   const { liste } = await abfragen(ctx, begriffe, info, [], [plz]);
   await env.PV.put(key, JSON.stringify({ t: Date.now(), liste }), { expirationTtl: 86400 });
@@ -430,13 +447,14 @@ export default {
           // Die Berechnung dauert bis zu 20 Sekunden: sie läuft im Hintergrund weiter, die Antwort enthält, was schon bekannt ist (die App fragt nach)
           const stand = (await env.PV.get("entf:" + plz, "json")) || {};
           const fehlt = gewollt.map(markenKern).filter(m => !stand[m]);
-          if (fehlt.length && !(await env.PV.get("sperre:" + plz))) {
+          if (fehlt.length && !(await env.PV.get("sperre:" + plz)) && besucherOk(req.headers.get("CF-Connecting-IP") || "?") && await tagesOk(env, "entf", 100)) {
             await env.PV.put("sperre:" + plz, "1", { expirationTtl: 60 });
             ctx.waitUntil(entfernungenPflegen(env, gewollt, plz).catch(() => {}));
           }
           return antwort(stand);
         }
-        if (p === "/region") return antwort(await regionAngebote(env, ctx, url.searchParams));
+        if (p === "/region") return antwort(await regionAngebote(env, ctx, url.searchParams, req.headers.get("CF-Connecting-IP") || "?"));
+        if (p === "/korrekturen.json") return antwort((await env.PV.get("korrekturen", "json")) || {});
         if (p === "/status") return antwort({ ok: true, dienst: "preisvergleich", stand: await env.PV.get("stand", "json") });
         return env.ASSETS.fetch(req);  // die Seite selbst (index.html, Symbole, ...)
       }
@@ -446,6 +464,23 @@ export default {
         if (!Array.isArray(liste) || liste.some(f => !f || typeof f.name !== "string")) return fehler("Ungültige Favoritenliste", 400);
         await env.PV.put("favoriten", JSON.stringify(liste, null, 2));
         return antwort(liste);
+      }
+      if (p === "/korrekturen" && req.method === "POST") {
+        // Korrekturen auffälliger Preise (Preis, Stückzahl, Größe, "passt so", "ausgeblendet"): geteilt zwischen allen Geräten mit Zugangscode
+        const b = await req.json(), alt = (await env.PV.get("korrekturen", "json")) || {}, jetzt = Date.now();
+        const zahl = x => Number.isFinite(x) && x > 0 && x < 1e6;
+        for (const [k, v] of Object.entries(b.set || {}).slice(0, 80)) {
+          if (typeof k !== "string" || k.length > 300 || !v || typeof v !== "object") continue;
+          if (v.ok === true) alt[k] = { ok: true, t: jetzt };
+          else if (v.aus === true) alt[k] = { aus: true, t: jetzt };
+          else if (zahl(v.preis) && zahl(v.stueck) && zahl(v.ml)) alt[k] = { preis: v.preis, stueck: v.stueck, ml: v.ml, t: jetzt };
+        }
+        for (const k of (Array.isArray(b.del) ? b.del : []).slice(0, 200)) delete alt[k];
+        const grenze = jetzt - 120 * 864e5;
+        for (const [k, v] of Object.entries(alt)) if ((v.t || 0) < grenze) delete alt[k];
+        if (Object.keys(alt).length > 1500) return fehler("Zu viele Korrekturen", 400);
+        await env.PV.put("korrekturen", JSON.stringify(alt));
+        return antwort(alt);
       }
       if (p === "/suche" && req.method === "POST") {
         const q = (url.searchParams.get("q") || "").replace(/,/g, " ").trim();
@@ -461,7 +496,7 @@ export default {
       if (p === "/aktualisieren" && req.method === "POST") return antwort(await aktualisieren(env, ctx));
       return fehler("Unbekannte Adresse", 404);
     } catch (e) {
-      return fehler(e.message || String(e), e.status === 400 ? 400 : 500);
+      return fehler(e.message || String(e), [400, 429].includes(e.status) ? e.status : 500);
     }
   },
   async scheduled(event, env, ctx) {
