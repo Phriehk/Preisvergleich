@@ -290,7 +290,11 @@ async function overpass(abfrage) {
   for (const host of ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]) {
     try {
       const r = await fetch(host, { method: "POST", headers: { ...OSM_UA, "Content-Type": "application/x-www-form-urlencoded" }, body: "data=" + encodeURIComponent(abfrage) });
-      if (r.ok) return await r.json();
+      if (r.ok) {
+        const j = await r.json();
+        if (!(j.elements || []).length && j.remark) { letzter = new Error("Overpass: " + j.remark); continue; }
+        return j;
+      }
       letzter = new Error("Overpass HTTP " + r.status);
     } catch (e) { letzter = e; }
   }
@@ -306,8 +310,8 @@ async function entfernungenBerechnen(env, maerkte) {
     await env.PV.put("mitte", JSON.stringify(mitte));
   }
   const namen = [...new Set(maerkte.map(markenKern))].filter(Boolean);
-  const muster = namen.map(markenRegex).join("|");
-  const q = `[out:json][timeout:25];(nwr["name"~"${muster}",i](around:20000,${mitte.lat},${mitte.lon});nwr["brand"~"${muster}",i](around:20000,${mitte.lat},${mitte.lon}););out center tags 600;`;
+  // erst nach Ladentyp filtern (schnell), den Markennamen prüfen wir danach selbst
+  const q = `[out:json][timeout:40];nwr["shop"~"^(supermarket|convenience|beverages|variety_store|chemist|department_store|wholesale|discount)$"](around:20000,${mitte.lat},${mitte.lon});out center tags 3000;`;
   const daten = await overpass(q);
   const erg = {};
   for (const n of namen) {
@@ -315,7 +319,6 @@ async function entfernungenBerechnen(env, maerkte) {
     let best = null;
     for (const e of daten.elements || []) {
       const t = e.tags || {};
-      if (!t.shop && t.amenity !== "marketplace") continue;
       if (!re.test([t.name, t.brand, t.operator].filter(Boolean).join(" "))) continue;
       const lat = e.lat ?? (e.center || {}).lat, lon = e.lon ?? (e.center || {}).lon;
       if (lat == null) continue;
@@ -378,13 +381,13 @@ export default {
       if (p === "/entfernungen" && req.method === "POST") {
         const gewollt = (url.searchParams.get("m") || "").split("|").map(x => x.trim()).filter(x => x && x.length < 40).slice(0, 30);
         const alt = (await env.PV.get("entfernungen", "json")) || {}, jetzt = Date.now();
-        const fehlt = [...new Set(gewollt.map(markenKern))].filter(m => !alt[m] || jetzt - (alt[m].t || 0) > 30 * 864e5);
+        const fehlt = [...new Set(gewollt.map(markenKern))].filter(m => !alt[m] || alt[m].km == null || jetzt - (alt[m].t || 0) > 30 * 864e5);
         if (fehlt.length) {
           const neu = await entfernungenBerechnen(env, fehlt);
-          for (const [m, v] of Object.entries(neu)) alt[m] = { ...v, t: jetzt };
+          for (const [m, v] of Object.entries(neu)) if (v.km != null) alt[m] = { ...v, t: jetzt };
           await env.PV.put("entfernungen", JSON.stringify(alt));
         }
-        return antwort(alt);
+        return antwort(Object.fromEntries(Object.entries(alt).filter(([k]) => k !== "t")));
       }
       if (p === "/aktualisieren" && req.method === "POST") return antwort(await aktualisieren(env, ctx));
       return fehler("Unbekannte Adresse", 404);

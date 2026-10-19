@@ -40,7 +40,7 @@ jobs:
           log "workers.dev-Subdomain: $SUB"
           # die Seite wird zusammen mit dem Server ausgeliefert
           mkdir -p public
-          cp ../index.html ../sw.js ../manifest.webmanifest ../icon-192.png ../icon-512.png ../apple-touch-icon.png public/
+          cp ../index.html ../sw.js ../manifest.webmanifest ../icon-192.png ../icon-512.png ../icon-maskable-192.png ../icon-maskable-512.png ../apple-touch-icon.png public/
           set -o pipefail
           npx --yes wrangler@4 deploy 2>&1 | tail -n 14 | tee -a $LOG
           # Geheimnisse (nur beim Server hinterlegt, nie im Repository)
