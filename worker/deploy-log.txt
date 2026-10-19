@@ -1,0 +1,27 @@
+Token: {"success":true,"status":"active","errors":[]}
+Konto gefunden: ja
+Subdomain phriehk: {"success":true,"errors":[]}
+workers.dev-Subdomain: phriehk
+
+ ⛅️ wrangler 4.151.2
+────────────────────
+Total Upload: 19.19 KiB / gzip: 6.88 KiB
+Worker Startup Time: 6 ms
+Your Worker has access to the following bindings:
+Binding                                        Resource          
+env.PV (612e7d031a774977a2dbf2aea3f07c20)      KV Namespace      
+
+Uploaded preisvergleich (1.38 sec)
+Deployed preisvergleich triggers (0.73 sec)
+  https://preisvergleich.phriehk.workers.dev
+  schedule: 0 5 * * *
+Current Version ID: eb1478c8-6c7a-4555-b8c3-dd2771ebc218
+
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+────────────────────
+🌀 Creating the secret for the Worker "preisvergleich"
+✨ Success! Uploaded secret NTFY_TOPIC
+────────────────────
+🌀 Creating the secret for the Worker "preisvergleich"
+✨ Success! Uploaded secret WARTUNG
+Status: 
