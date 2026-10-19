@@ -54,11 +54,11 @@ def menge(text):
     """Liest Stückzahl und Gesamtmenge in Litern aus Texten wie '6 x 1,5 l', '1,5-l-Fl.' oder '24 x 330 ml'."""
     t = (text or "").lower().replace(",", ".")
     t = re.sub(r"(\d)\s*i\b", r"\1 l", t)  # Tippfehler: "1,25 I" statt "1,25 l"
-    m = re.search(r"(\d+)\s*[x×]\s*(\d+(?:\.\d+)?)\s*-?\s*(ml|l)\b", t)
+    m = re.search(r"(\d+)\s*[x×]\s*(\d+(?:\.\d+)?)\s*-?\s*(ml|liter|l)\b", t)
     if m:
         n, v, u = int(m[1]), float(m[2]), m[3]
     else:
-        m = re.search(r"(\d+(?:\.\d+)?)\s*-?\s*(ml|l)\b", t)
+        m = re.search(r"(\d+(?:\.\d+)?)\s*-?\s*(ml|liter|l)\b", t)
         if not m:
             return None
         n, v, u = 1, float(m[1]), m[2]

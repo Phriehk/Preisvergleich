@@ -433,12 +433,12 @@ function updateNote(){
   note.className="note"+(veraltet?" warn":e?" ok":"");
   note.textContent=(veraltet?"ACHTUNG: Die Preise sind "+Math.floor(alter/24)+" Tage alt! Bitte aktualisieren. In der Handy-Version prüfe im Tab Actions bei GitHub, ob der tägliche Lauf noch läuft. ":"")+(e?"Echte Angebote von Marktguru (Stand "+new Date(e.geladen).toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"})+" Uhr). Die Verpackung ist geschätzt. Gelbe Zeilen sind noch nicht gültig.":"Prototyp mit erfundenen Beispieldaten, keine echten Preise. Lade oben deine angebote.json.")+(hinweis?" "+hinweis:"");
 }
-const RE1=/(\d+)\s*[x×]\s*(\d+(?:\.\d+)?)\s*-?\s*(ml|l)\b/,RE2=/(\d+(?:\.\d+)?)\s*-?\s*(ml|l)\b/;
+const RE1=/(\d+)\s*[x×]\s*(\d+(?:\.\d+)?)\s*-?\s*(ml|liter|l)\b/,RE2=/(\d+(?:\.\d+)?)\s*-?\s*(ml|liter|l)\b/;
 function menge(t){
   t=(t||"").toLowerCase().replace(/,/g,".").replace(/(\d)\s*i\b/g,"$1 l");
   let n=1,v,u,m=t.match(RE1);
   if(m){n=+m[1];v=+m[2];u=m[3]}else{m=t.match(RE2);if(!m)return null;v=+m[1];u=m[2]}
-  return {stueck:n,ml:Math.round(u==="l"?v*1000:v)};
+  return {stueck:n,ml:Math.round(u==="ml"?v:v*1000)};
 }
 function formVon(t,ml,g){t=(t||"").toLowerCase();return /^(Red Bull|Monster)/.test(g||"")?"Dose":/dose/.test(t)?"Dose":/glas/.test(t)?"Glas-Mehrweg":/mehrweg/.test(t)?"PET-Mehrweg":ml<=355?"Dose":"PET-Einweg"}
 let aus=new Set();try{aus=new Set(JSON.parse(localStorage.getItem("pv-aus")||"[]"))}catch(e){}
