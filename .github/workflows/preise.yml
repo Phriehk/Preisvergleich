@@ -1,9 +1,9 @@
-# Holt täglich die aktuellen Preise von Marktguru und speichert sie im Repository.
+# Holt die aktuellen Preise von Marktguru und speichert sie im Repository.
 name: Preise aktualisieren
 
+# Der tägliche Lauf passiert jetzt beim Cloudflare Worker (worker/). Dieser Ablauf bleibt als Ersatz,
+# den die App nur startet, wenn der Worker nicht erreichbar ist.
 on:
-  schedule:
-    - cron: "0 5 * * *"   # täglich um 05:00 UTC (= 7 Uhr Sommerzeit / 6 Uhr Winterzeit)
   workflow_dispatch:       # erlaubt den manuellen Start (Knopf "Run workflow" oder aus der App)
 
 permissions:

@@ -603,9 +603,21 @@ file.onchange=()=>{
 fillFilters();render();
 var favs=[],suchAusMap={},auswahl={},tabGewaehlt=false;
 var lokal=/^https?:$/.test(location.protocol)&&/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+/* ---- Cloudflare-Worker (schnelle Suche und Aktualisierung; Adresse steht in worker.json) ---- */
+var wUrl="";
+const wBereit=lokal||!/^https?:$/.test(location.protocol)?Promise.resolve():fetch("worker.json",{cache:"no-store"}).then(r=>r.ok?r.json():{}).then(j=>{if(j&&/^https:\/\//.test(j.url||""))wUrl=j.url.replace(/\/+$/,"")}).catch(()=>{});
+async function wf(pfad,opt){
+  opt=opt||{};
+  const r=await fetch(wUrl+pfad,{cache:"no-store",...opt,headers:{...(opt.headers||{}),...(ghToken?{"Authorization":"Bearer "+ghToken}:{})}});
+  if(!r.ok){let m="";try{m=(await r.json()).fehler||""}catch(e){}const e=new Error(m||"Cloudflare antwortet mit "+r.status);e.status=r.status;throw e}
+  return r;
+}
 async function autoLaden(){
   try{
-    const [a,v]=await Promise.all([fetch("angebote.json",{cache:"no-store"}),fetch("verlauf.csv",{cache:"no-store"})]);
+    await wBereit;
+    let a,v;
+    if(wUrl){try{[a,v]=await Promise.all([wf("/angebote.json"),wf("/verlauf.csv")])}catch(e){a=v=null}}
+    if(!a)[a,v]=await Promise.all([fetch("angebote.json",{cache:"no-store"}),fetch("verlauf.csv",{cache:"no-store"})]);
     if(a.ok){const dt=new DataTransfer();dt.items.add(new File([await a.text()],"angebote.json"));file.files=dt.files;file.onchange()}
     if(v.ok){const dt=new DataTransfer();dt.items.add(new File([await v.text()],"verlauf.csv"));vfile.files=dt.files;vfile.onchange()}
   }catch(e){}
@@ -630,6 +642,14 @@ function ghAktiv(){return !!(ghInfo&&ghInfo.repo&&ghToken)}
 function gh(pfad,opt){opt=opt||{};return fetch("https://api.github.com/repos/"+ghInfo.owner+"/"+ghInfo.repo+pfad,{...opt,headers:{"Authorization":"Bearer "+ghToken,"Accept":"application/vnd.github+json",...(opt.headers||{})}})}
 async function ghRaw(name){const r=await gh("/contents/"+name,{headers:{"Accept":"application/vnd.github.raw+json"},cache:"no-store"});if(!r.ok)throw new Error(name+" nicht lesbar ("+r.status+")");return await r.text()}
 async function ghFavSpeichern(liste){
+  if(wUrl){
+    await wf("/favoriten.json",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(liste)});
+    ghFavGithub(liste).catch(()=>{});  // Kopie bei GitHub für den Ersatzbetrieb
+    return;
+  }
+  await ghFavGithub(liste);
+}
+async function ghFavGithub(liste){
   const r0=await gh("/contents/favoriten.json",{cache:"no-store"});
   const sha=r0.ok?(await r0.json()).sha:undefined;
   const inhalt=btoa(String.fromCharCode(...new TextEncoder().encode(JSON.stringify(liste,null,2))));
@@ -653,6 +673,11 @@ async function ghLauf(wf,inputs){
   throw new Error("Zeitüberschreitung: GitHub braucht ungewöhnlich lange");
 }
 async function ghSuche(q,aus){
+  await wBereit;
+  if(wUrl){
+    try{return await (await wf("/suche?q="+encodeURIComponent(q)+"&aus="+encodeURIComponent(aus),{method:"POST"})).text()}
+    catch(e){if(e.status===401)throw e}  // sonst Ersatz über GitHub
+  }
   if(!await ghLauf("suche.yml",{suchbegriff:q,ausschliessen:aus}))throw new Error("Die Suche ist bei GitHub fehlgeschlagen (siehe Tab Actions im Repository)");
   return await ghRaw("suche.json");
 }
@@ -678,7 +703,7 @@ async function suchen(){
   const q=suchtext.value.trim();if(!q)return;
   const aus="";
   suchAusMap[q.replace(/,/g," ").trim()]=aus;
-  suchBtn.disabled=true;hinweis='Suche nach "'+q+'" läuft (etwa '+(lokal?"1":"2")+' Minuten) ...';render();
+  suchBtn.disabled=true;hinweis='Suche nach "'+q+'" läuft ('+(wUrl?"einige Sekunden":"etwa "+(lokal?"1":"2")+" Minuten")+') ...';render();
   try{
     const text=lokal?await lokalSuche(q,aus):await ghSuche(q,aus);
     merge=true;dateiLaden(file,text,"suche.json");
@@ -759,7 +784,9 @@ function produktFuellen(sel){
 }
 async function favLaden(){
   try{
-    if(!lokal&&ghAktiv())favs=JSON.parse(await ghRaw("favoriten.json"));
+    await wBereit;
+    if(!lokal&&wUrl)favs=await (await wf("/favoriten.json")).json();
+    else if(!lokal&&ghAktiv())favs=JSON.parse(await ghRaw("favoriten.json"));
     else{const r=await fetch("favoriten.json",{cache:"no-store"});if(r.ok)favs=await r.json()}
   }catch(e){}
   (favs||[]).forEach(f=>{if(f.nur&&f.nur.length===1)auswahl[f.name]=f.nur[0]});
@@ -836,9 +863,19 @@ ntfyKopieren.onclick=async()=>{const t=ntfyThema();try{await navigator.clipboard
 ntfyNeu.onclick=()=>{ntfyCode.textContent=ntfyThema(true)};
 /* ---- Aktualisieren ---- */
 async function aktualisieren(){
-  upd.disabled=true;hinweis="Preise werden aktualisiert (etwa "+(lokal?"1":"2")+" Minuten) ...";render();
+  await wBereit;
+  upd.disabled=true;hinweis="Preise werden aktualisiert ("+(!lokal&&wUrl?"etwa 10 Sekunden":"etwa "+(lokal?"1":"2")+" Minuten")+") ...";render();
   try{
-    if(lokal){await fetch("update",{method:"POST",headers:HDR});await abwarten()}
+    let erledigt=false;
+    if(!lokal&&wUrl){
+      try{
+        const s=await (await wf("/aktualisieren",{method:"POST"})).json();
+        await autoLaden();await new Promise(x=>setTimeout(x,600));
+        hinweis="Preise aktualisiert ("+s.anzahl+" Angebote)."+(s.alarm&&s.alarm.length?" 🔔 "+s.alarm.join(" "):"");erledigt=true;
+      }catch(e){if(e.status===401)throw e}  // sonst Ersatz über GitHub
+    }
+    if(erledigt){}
+    else if(lokal){await fetch("update",{method:"POST",headers:HDR});await abwarten()}
     else if(await ghLauf("preise.yml")){await ghDatenLaden();hinweis="Preise aktualisiert."}
     else hinweis="Die Aktualisierung ist bei GitHub fehlgeschlagen (siehe Tab Actions im Repository).";
   }catch(e){hinweis=netzFehler(e)}
