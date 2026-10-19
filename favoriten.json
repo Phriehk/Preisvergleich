@@ -1,11 +1,7 @@
 [
   {
     "name": "Coca-Cola",
-    "aus": "",
-    "alarm": {
-      "wert": 6,
-      "einheit": "l"
-    }
+    "aus": ""
   },
   {
     "name": "Red Bull",
