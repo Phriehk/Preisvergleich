@@ -126,6 +126,8 @@ button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);fon
 .rw{display:inline-flex;align-items:center;gap:4px;font-size:.8rem;color:var(--mute);margin-top:3px}
 .rw input{width:4.6rem;padding:4px 6px;font:inherit;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
 .rwz{display:block}
+.fv-sg{border:1px solid var(--line);border-radius:12px;padding:6px 10px 2px;margin:8px 0;background:var(--soft)}
+.fv-sk{display:flex;flex-direction:column;gap:2px;margin:4px 0}.fv-sk small{color:var(--mute)}
 .fv-rang{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line)}
 .fv-rang:last-child{border-bottom:0}
 .fv-rang .rg{font:700 1.3rem "Barlow Condensed",sans-serif;width:1.4rem;color:var(--mute)}
@@ -597,13 +599,24 @@ function zettelSpeichern(ohneSync){try{localStorage.setItem("pv-zettel",JSON.str
 function fvGruppen(){return [...new Set([...(favs||[]).map(f=>f.name),...Object.keys(frei),...offers.map(o=>o.gruppe||"Coca-Cola")])]}
 function artG(g){const o=offers.find(q=>(q.gruppe||"Coca-Cola")===g);return o?artO(o):(ARTEN[frei[g]]?frei[g]:"l")}
 function bekannteNamen(){return [...new Set([...(favs||[]).map(f=>f.name),...Object.keys(frei),...Object.keys(zettel).map(k=>zk(k).g)])].filter(Boolean)}
-const rwPreis=g=>richt[g]>0?richt[g]:null;
-const rwKosten=k=>{const r=rwPreis(zk(k).g);return r==null?null:Math.round(zBedarf(k)*r*100)/100};
+const rwPreis=k=>{const n=zMitglieder(k).map(x=>zk(x).g).find(n=>richt[n]>0);return n?richt[n]:null};   // k = Zettel-Schlüssel; bei Gruppen gilt der Richtwert eines Mitglieds
+const rwKosten=k=>{const r=rwPreis(k);return r==null?null:Math.round(zBedarf(k)*r*100)/100};
 /* Zettel-Schlüssel: "Coca-Cola" (alle Größen) oder "Coca-Cola|330" (nur 330 ml) */
 function zk(k){const m=String(k).match(/^(.*)\|(\d+)$/);return m?{g:m[1],ml:+m[2]}:{g:String(k),ml:0}}
-function zLabel(k){const x=zk(k);return x.ml?x.g+" "+groesseText(x.ml,artG(x.g)):x.g}
+function zLabel0(k){const x=zk(k);return x.ml?x.g+" "+groesseText(x.ml,artG(x.g)):x.g}
+/* Favoriten, die aus derselben Suche stammen (z. B. mehrere Milch-Marken) und dieselbe Einheit haben, bilden eine Gruppe: im Vergleich zählt nur das günstigste Produkt der Gruppe */
+function favSuche(g){const f=(favs||[]).find(x=>x.name===g);return f&&f.suche?String(f.suche).trim().toLowerCase():""}
+function gidVon(k){const g=zk(k).g,su=favSuche(g);return su?su+"|"+artG(g):"k:"+k}
+function zGruppen(){   // Liste von Gruppen, je Gruppe die Zettel-Schlüssel
+  const gr=fvGruppen(),akt=Object.keys(zettel).filter(k=>zettel[k]>0&&gr.includes(zk(k).g)).sort((a,b)=>zLabel0(a).localeCompare(zLabel0(b),"de")),m=new Map();
+  akt.forEach(k=>{const id=gidVon(k);if(!m.has(id))m.set(id,[]);m.get(id).push(k)});
+  return [...m.values()];
+}
+const zMitglieder=k=>zGruppen().find(l=>l[0]===k)||[k];
+function zLabel(k){const l=zMitglieder(k);if(l.length>1){const su=(((favs||[]).find(x=>x.name===zk(k).g)||{}).suche||"").trim();if(su)return su[0].toUpperCase()+su.slice(1)}return zLabel0(k)}
 function fvGroessen(g,extra){if(artG(g)==="st")return [];return [...new Set([...offers.filter(o=>(o.gruppe||"Coca-Cola")===g&&!o.ausb&&!abgelaufen(o)&&!aus.has(o.markt)).map(o=>o.ml),...extra])].sort((a,b)=>a-b)}
-function fvAngebote(k){const {g,ml}=zk(k);return offers.filter(o=>(o.gruppe||"Coca-Cola")===g&&(!ml||o.ml===ml)&&!o.ausb&&!abgelaufen(o)&&!aus.has(o.markt)&&(fvZeit==="jetzt"?!kommt(o):kommt(o)))}
+function fvAngebote(k){const l=zMitglieder(k);return l.length>1?l.flatMap(fvAngebote1):fvAngebote1(k)}
+function fvAngebote1(k){const {g,ml}=zk(k);return offers.filter(o=>(o.gruppe||"Coca-Cola")===g&&(!ml||o.ml===ml)&&!o.ausb&&!abgelaufen(o)&&!aus.has(o.markt)&&(fvZeit==="jetzt"?!kommt(o):kommt(o)))}
 /* Tour: Zuhause -> Markt A -> Markt B -> Zuhause (bessere Reihenfolge); nur mit eigener Adresse */
 var fvTour="getrennt";try{fvTour=localStorage.getItem("pv-tour")==="tour"?"tour":"getrennt"}catch(e){}
 function mKoord(m){
@@ -627,7 +640,7 @@ function fvFahrt(m){const d=dkm(m);return d==null?null:2*d*kmSatz*fakt(m)}
 /* Menge immer in Litern; im Vergleich wird je Markt die Packungsgröße gewählt, die am besten passt (ganze Packungen) */
 function zBedarf(k){return zettel[k]}
 function zEingabe(k){const a=ARTEN[artG(zk(k).g)];return `<input type="number" min="${a.min}" max="500" step="${a.step}" value="${zettel[k]}" data-l="${esc(k)}" aria-label="${a.wort} ${esc(zLabel(k))}"> ${a.wort}`}
-function rwEingabe(k){const g=zk(k).g,a=ARTEN[artG(g)];return `<label class="rw">Richtwert <input inputmode="decimal" size="5" placeholder="1,99" value="${rwPreis(g)!=null?String(rwPreis(g)).replace(".",","):""}" data-r="${esc(g)}" aria-label="Richtwert in Euro je ${a.u} für ${esc(g)}"> € je ${a.u}</label>`}
+function rwEingabe(k){const g=zk(k).g,a=ARTEN[artG(g)];return `<label class="rw">Richtwert <input inputmode="decimal" size="5" placeholder="1,99" value="${rwPreis(k)!=null?String(rwPreis(k)).replace(".",","):""}" data-r="${esc(k)}" aria-label="Richtwert in Euro je ${a.u} für ${esc(g)}"> € je ${a.u}</label>`}
 /* Kauflimit eines Angebots ("max. 2 Packungen", "max. 6 Flaschen") in ganze Packungen umgerechnet */
 function maxPack(o){
   if(!o.limit)return Infinity;
@@ -688,16 +701,25 @@ function fvPlan(ms,namen,t,ohneAngebot){
 function zeichneFavoriten(){
   const gr=fvGruppen();
   Object.keys(zettel).forEach(k=>{if(!gr.includes(k)&&gr.length){/* Artikel, den es nicht mehr gibt: beim Vergleich ignorieren, nicht löschen */}});
-  const namen=Object.keys(zettel).filter(k=>zettel[k]>0&&gr.includes(zk(k).g)).sort((a,b)=>zLabel(a).localeCompare(zLabel(b),"de"));
+  const namen=zettelNamen();
   const kachel=(k,text)=>{
-    const os=fvAngebote(k).sort((a,b)=>gp(a)-gp(b)),o=os[0],an=zettel[k]>0;
+    const os=fvAngebote1(k).sort((a,b)=>gp(a)-gp(b)),o=os[0],an=zettel[k]>0;
     const x=zk(k),alle=offers.filter(q=>(q.gruppe||"Coca-Cola")===x.g&&(!x.ml||q.ml===x.ml)&&!q.ausb&&q.bild&&/^https?:\/\//.test(q.bild));
     const bild=(os.find(q=>q.bild&&/^https?:\/\//.test(q.bild))||alle[0]||{}).bild||"";
     return `<div class="kachel${an?" an":""}"><div class="kb"><span class="ph">${esc((x.g[0]||"?").toUpperCase())}</span>${bild?`<img src="${esc(bild)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}</div><b>${esc(text)}</b><small>${o?`ab ${eur(gp(o))}/${unitK(artO(o))}<br>${esc(mbase(o.markt))}${dkm(mbase(o.markt))!=null?" · "+f1(dkm(mbase(o.markt)))+" km":""}`:(fvZeit==="jetzt"?"aktuell":"demnächst")+" kein Angebot"}</small><button type="button" class="lb${an?" an":""}" data-kg="${esc(k)}">${an?"✓ Auf der Liste":"＋ Auf die Liste"}</button>${an?`<span class="fv-l">${zEingabe(k)}</span>`:""}</div>`;
   };
-  const zeilen=gr.map(g=>{
+  const block=g=>{
     const gewaehlt=Object.keys(zettel).filter(k=>zk(k).g===g&&zk(k).ml).map(k=>zk(k).ml);
     return `<div class="fv-grp"><div class="fv-gk">${esc(g)}</div><div class="fv-gitter">${kachel(g,artG(g)==="st"?"Alle Packungen":"Alle Größen")}${fvGroessen(g,gewaehlt).map(ml=>kachel(g+"|"+ml,groesseText(ml,artG(g)))).join("")}</div></div>`;
+  };
+  // Favoriten derselben Suche stehen zusammen unter einer Überschrift
+  const sg=new Map();gr.forEach(g=>{const su=favSuche(g);if(su){const id=su+"|"+artG(g);(sg.get(id)||sg.set(id,[]).get(id)).push(g)}});
+  const fertig=new Set();
+  const zeilen=gr.map(g=>{
+    const su=favSuche(g),l=su?sg.get(su+"|"+artG(g)):null;
+    if(!l||l.length<2)return block(g);
+    const id=su+"|"+artG(g);if(fertig.has(id))return"";fertig.add(id);
+    return `<div class="fv-sg"><div class="fv-sk"><b>${esc(su[0].toUpperCase()+su.slice(1))}</b><small>Im Vergleich zählt nur das günstigste Produkt dieser Gruppe, die Menge gilt für die ganze Gruppe.</small></div>${l.map(block).join("")}</div>`;
   }).join("");
   let html=`<section class="ek"><div class="ek-h"><b>Favoriten</b><span class="ek-s" style="font-size:1rem">${namen.length} auf der Liste</span></div>`
     +`<div class="fv-add"><input id="neuArt" type="text" maxlength="40" autocomplete="off" placeholder="Produkt suchen, z. B. Butter oder Eier" value="${esc(neuText)}" aria-label="Produkt suchen"><button type="button" class="primary" id="neuBtn"${neuLaeuft?" disabled":""}>${neuLaeuft?"Suche läuft …":"Suchen"}</button></div>`
@@ -707,9 +729,9 @@ function zeichneFavoriten(){
   html+=`<button type="button" class="lb an" id="zurListe" style="align-self:flex-start;padding:8px 14px">${namen.length?"Zur Einkaufsliste mit Vergleich ("+namen.length+")":"Zur Einkaufsliste"}</button>`;
   favseite.innerHTML=html;
 }
-function zettelNamen(){const gr=fvGruppen();return Object.keys(zettel).filter(k=>zettel[k]>0&&gr.includes(zk(k).g)).sort((a,b)=>zLabel(a).localeCompare(zLabel(b),"de"))}
+function zettelNamen(){return zGruppen().map(l=>l[0]).sort((a,b)=>zLabel(a).localeCompare(zLabel(b),"de"))}
 function fvZettelHtml(namen){
-  return `<section class="ek"><div class="ek-h"><b>Meine Favoriten</b><span class="ek-s" style="font-size:1rem">${namen.length}</span></div>`+namen.map(k=>{const hat=fvAngebote(k).length>0;return `<div class="fv-z"><span style="flex:1;min-width:0"><b>${esc(zLabel(k))}</b>${hat?"":`<small>${fvZeit==="jetzt"?"aktuell":"demnächst"} kein Angebot</small>`}<span class="rwz">${rwEingabe(k)}</span></span><span class="fv-l">${zEingabe(k)}</span><button type="button" class="lb an" data-zx="${esc(k)}" aria-label="Von der Liste entfernen">✕</button></div>`}).join("")+`<p class="lbl" style="margin:8px 0 0">Die Menge gibst du in Litern, kg oder Stück an. Im Vergleich wird je Markt die Packungsgröße gewählt, die am besten dazu passt (zum Beispiel 6 × 330 ml bei 2 Litern). Der <b>Richtwert</b> ist, was der Artikel bei dir normalerweise kostet. Er wird nur gerechnet, wenn es im Markt kein günstigeres Angebot gibt, und überall gleich angenommen.</p></section>`;
+  return `<section class="ek"><div class="ek-h"><b>Meine Favoriten</b><span class="ek-s" style="font-size:1rem">${namen.length}</span></div>`+namen.map(k=>{const hat=fvAngebote(k).length>0;return `<div class="fv-z"><span style="flex:1;min-width:0"><b>${esc(zLabel(k))}</b>${zMitglieder(k).length>1?`<small>günstigstes von: ${zMitglieder(k).map(x=>esc(zLabel0(x))).join(", ")}</small>`:""}${hat?"":`<small>${fvZeit==="jetzt"?"aktuell":"demnächst"} kein Angebot</small>`}<span class="rwz">${rwEingabe(k)}</span></span><span class="fv-l">${zEingabe(k)}</span><button type="button" class="lb an" data-zx="${esc(k)}" aria-label="Von der Liste entfernen">✕</button></div>`}).join("")+`<p class="lbl" style="margin:8px 0 0">Die Menge gibst du in Litern, kg oder Stück an. Im Vergleich wird je Markt die Packungsgröße gewählt, die am besten dazu passt (zum Beispiel 6 × 330 ml bei 2 Litern). Der <b>Richtwert</b> ist, was der Artikel bei dir normalerweise kostet. Er wird nur gerechnet, wenn es im Markt kein günstigeres Angebot gibt, und überall gleich angenommen.</p></section>`;
 }
 const mf=(x,a)=>a==="st"?String(Math.round(x)):f1(x);
 function packText(t){
@@ -767,10 +789,10 @@ function fvVergleich(namen){
     const wo={};Object.entries(beste.zu).forEach(([g,x])=>{(wo[x.m]=wo[x.m]||[]).push([g,x.w])});
     Object.keys(wo).sort((a,b)=>(dkm(a)??99)-(dkm(b)??99)).forEach(m=>{
       const sum=wo[m].reduce((s,[g,w])=>s+w.kosten,0);
-      html+=`<div class="fv-rang" style="display:block"><div class="ek-h" style="border:0;margin:0">${mlogo(m)}<b>${esc(m)}</b>${dkm(m)!=null?`<span class="km">${f1(dkm(m))} km</span>`:""}<span class="ek-s">${eur(sum)}</span></div>${wo[m].map(([g,w])=>{const o=w.o,d=w.over,A=artO(o),U=unitK(A),hin=d>0.05?" · "+mf(d,A)+" "+U+" mehr":d<-0.05?" · "+mf(-d,A)+" "+U+" weniger":"";const pkt=packText;const frist=w.teile.slice().sort((a,b)=>(tage(a.o)??999)-(tage(b.o)??999))[0].o,lim=w.teile.find(t=>t.o.limit);return `<div class="ek-z"><span>${esc(zLabel(g))}: ${String(zettel[g]).replace(".",",")} ${U} gewünscht<br><small>${w.teile.map(pkt).join(" + ")} = ${mf(w.vol,A)} ${U}${hin}${lim?" · Limit: max. "+esc(lim.o.limit):""} · ${gueltig(frist)}</small></span><span>${eur(w.kosten)}<br><small>${eur(gp(o))}/${U}</small></span></div>`}).join("")}</div>`;
+      html+=`<div class="fv-rang" style="display:block"><div class="ek-h" style="border:0;margin:0">${mlogo(m)}<b>${esc(m)}</b>${dkm(m)!=null?`<span class="km">${f1(dkm(m))} km</span>`:""}<span class="ek-s">${eur(sum)}</span></div>${wo[m].map(([g,w])=>{const o=w.o,d=w.over,A=artO(o),U=unitK(A),hin=d>0.05?" · "+mf(d,A)+" "+U+" mehr":d<-0.05?" · "+mf(-d,A)+" "+U+" weniger":"";const pkt=zMitglieder(g).length>1?(t=>esc(t.o.gruppe||"")+": "+packText(t)):packText;const frist=w.teile.slice().sort((a,b)=>(tage(a.o)??999)-(tage(b.o)??999))[0].o,lim=w.teile.find(t=>t.o.limit);return `<div class="ek-z"><span>${esc(zLabel(g))}: ${String(zettel[g]).replace(".",",")} ${U} gewünscht<br><small>${w.teile.map(pkt).join(" + ")} = ${mf(w.vol,A)} ${U}${hin}${lim?" · Limit: max. "+esc(lim.o.limit):""} · ${gueltig(frist)}</small></span><span>${eur(w.kosten)}<br><small>${eur(gp(o))}/${U}</small></span></div>`}).join("")}</div>`;
     });
     if(beste.rw.length){
-      html+=`<div class="fv-rang" style="display:block"><div class="ek-h" style="border:0;margin:0"><b>Ohne Angebot (ca., nach deinen Richtwerten)</b><span class="ek-s">${eur(beste.rwSumme)}</span></div>`+beste.rw.map(g=>{const a=ARTEN[artG(zk(g).g)];return `<div class="ek-z"><span>${esc(zLabel(g))}: ${String(zettel[g]).replace(".",",")} ${a.u}<br><small>Normalpreis, in jedem Markt gleich angenommen</small></span><span>ca. ${eur(rwKosten(g))}<br><small>${eur(rwPreis(zk(g).g))}/${a.u}</small></span></div>`}).join("")+`</div>`;
+      html+=`<div class="fv-rang" style="display:block"><div class="ek-h" style="border:0;margin:0"><b>Ohne Angebot (ca., nach deinen Richtwerten)</b><span class="ek-s">${eur(beste.rwSumme)}</span></div>`+beste.rw.map(g=>{const a=ARTEN[artG(zk(g).g)];return `<div class="ek-z"><span>${esc(zLabel(g))}: ${String(zettel[g]).replace(".",",")} ${a.u}<br><small>Normalpreis, in jedem Markt gleich angenommen</small></span><span>ca. ${eur(rwKosten(g))}<br><small>${eur(rwPreis(g))}/${a.u}</small></span></div>`}).join("")+`</div>`;
     }
   }
   // Rangliste einzelner Märkte (auch unvollständige)
@@ -789,8 +811,8 @@ function fvVergleich(namen){
 function fvKlick(e){
   const z=e.target.closest("[data-z]");if(z){fvZeit=z.dataset.z;render();return true}
   const tb=e.target.closest("[data-t]");if(tb&&!tb.disabled){fvTour=tb.dataset.t;try{localStorage.setItem("pv-tour",fvTour)}catch(e){}render();return true}
-  const kg=e.target.closest("[data-kg]");if(kg){const k=kg.dataset.kg;if(zettel[k]>0)delete zettel[k];else zettel[k]=ARTEN[artG(zk(k).g)].std;zettelSpeichern();render();return true}
-  const x=e.target.closest("[data-zx]");if(x){delete zettel[x.dataset.zx];zettelSpeichern();render();return true}
+  const kg=e.target.closest("[data-kg]");if(kg){const k=kg.dataset.kg;if(zettel[k]>0)delete zettel[k];else{const gl=Object.keys(zettel).filter(q=>zettel[q]>0&&q!==k&&gidVon(q)===gidVon(k));zettel[k]=gl.length?zettel[gl[0]]:ARTEN[artG(zk(k).g)].std}zettelSpeichern();render();return true}
+  const x=e.target.closest("[data-zx]");if(x){zMitglieder(x.dataset.zx).forEach(m=>delete zettel[m]);zettelSpeichern();render();return true}
   return false;
 }
 favseite.onclick=e=>{if(e.target.closest("#zurListe")){tab="einkauf";render();window.scrollTo(0,0);return}if(e.target.closest("#neuBtn")){artikelSuchen();return}if(e.target.closest("#ohneBtn")){artikelOhne();return}const ef=e.target.closest("[data-ef]");if(ef){favHinzu(+ef.dataset.ef);return}fvKlick(e)};
@@ -798,9 +820,9 @@ function fvAender(e){
   const c=e.target.closest("input[type=checkbox][data-g]");
   if(c){if(c.checked)zettel[c.dataset.g]=zettel[c.dataset.g]||ARTEN[artG(zk(c.dataset.g).g)].std;else delete zettel[c.dataset.g];zettelSpeichern();render();return}
   const l=e.target.closest("input[data-l]");
-  if(l){const v=parseFloat(String(l.value).replace(",","."));if(v>0&&v<=500)zettel[l.dataset.l]=v;zettelSpeichern();render();return}
+  if(l){const v=parseFloat(String(l.value).replace(",","."));if(v>0&&v<=500)zMitglieder(l.dataset.l).forEach(m=>{zettel[m]=v});zettelSpeichern();render();return}
   const r=e.target.closest("input[data-r]");
-  if(r){const v=parseFloat(String(r.value).replace(",","."));if(v>0&&v<=1000)richt[r.dataset.r]=Math.round(v*100)/100;else delete richt[r.dataset.r];zettelSpeichern();render();return}
+  if(r){const v=parseFloat(String(r.value).replace(",","."));zMitglieder(r.dataset.r).forEach(m=>{delete richt[zk(m).g]});if(v>0&&v<=1000)richt[zk(r.dataset.r).g]=Math.round(v*100)/100;zettelSpeichern();render();return}
   if(e.target.id==="neuEinheit"){neuEinheit=e.target.value}
 }
 favseite.onchange=fvAender;einkauf.onchange=fvAender;
