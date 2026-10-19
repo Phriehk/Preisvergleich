@@ -1,10 +1,10 @@
-# Lädt den Cloudflare Worker hoch (Ordner worker/) und testet ihn danach.
+# Lädt Seite und Server (Cloudflare Worker, Ordner worker/) hoch und testet beides.
 name: Worker hochladen
 
 on:
   push:
     branches: [main]
-    paths: ["worker/**", ".github/workflows/worker.yml"]
+    paths: ["worker/**", "index.html", "sw.js", "manifest.webmanifest", "*.png", ".github/workflows/worker.yml"]
   workflow_dispatch:
 
 permissions:
@@ -28,41 +28,45 @@ jobs:
       - name: Hochladen und testen
         working-directory: worker
         run: |
-          set -o pipefail
           LOG=deploy-log.txt; : > $LOG
           log(){ echo "$@" | tee -a $LOG; }
           [ -n "$CLOUDFLARE_API_TOKEN" ] || { log "FEHLER: Secret CLOUDFLARE_API_TOKEN fehlt"; exit 1; }
           API=https://api.cloudflare.com/client/v4
           H="Authorization: Bearer $CLOUDFLARE_API_TOKEN"
-          log "Token: $(curl -s -H "$H" $API/user/tokens/verify | jq -c '{success, status: .result.status, errors}')"
           ACC=$(curl -s -H "$H" "$API/accounts" | jq -r '.result[0].id // empty')
-          log "Konto gefunden: $([ -n "$ACC" ] && echo ja || echo nein)"
+          [ -n "$ACC" ] || { log "FEHLER: Cloudflare-Konto nicht gefunden"; exit 1; }
           export CLOUDFLARE_ACCOUNT_ID=$ACC
           SUB=$(curl -s -H "$H" "$API/accounts/$ACC/workers/subdomain" | jq -r '.result.subdomain // empty')
-          if [ -z "$SUB" ]; then
-            for name in phriehk phriehk-pv preisvergleich-phriehk; do
-              R=$(curl -s -X PUT -H "$H" -H "Content-Type: application/json" -d "{\"subdomain\":\"$name\"}" "$API/accounts/$ACC/workers/subdomain")
-              log "Subdomain $name: $(echo "$R" | jq -c '{success, errors}')"
-              SUB=$(echo "$R" | jq -r '.result.subdomain // empty'); [ -n "$SUB" ] && break
-            done
-          fi
           log "workers.dev-Subdomain: $SUB"
-          npx --yes wrangler@4 deploy 2>&1 | tail -n 25 | tee -a $LOG
-          [ -n "$NTFY_TOPIC" ] && { echo "$NTFY_TOPIC" | npx --yes wrangler@4 secret put NTFY_TOPIC 2>&1 | tail -n 3 | tee -a $LOG; }
+          # die Seite wird zusammen mit dem Server ausgeliefert
+          mkdir -p public
+          cp ../index.html ../sw.js ../manifest.webmanifest ../icon-192.png ../icon-512.png ../apple-touch-icon.png public/
+          set -o pipefail
+          npx --yes wrangler@4 deploy 2>&1 | tail -n 14 | tee -a $LOG
+          # Geheimnisse (nur beim Server hinterlegt, nie im Repository)
+          [ -n "$NTFY_TOPIC" ] && { echo "$NTFY_TOPIC" | npx --yes wrangler@4 secret put NTFY_TOPIC 2>&1 | tail -n 1 | tee -a $LOG; }
+          ZUG=$(printf %s "$CLOUDFLARE_API_TOKEN" | sha256sum | cut -c1-10)
+          echo "$ZUG" | npx --yes wrangler@4 secret put ZUGANG 2>&1 | tail -n 1 | tee -a $LOG
           KEY=$(openssl rand -hex 24)
-          echo "$KEY" | npx --yes wrangler@4 secret put WARTUNG 2>&1 | tail -n 3 | tee -a $LOG
-          URL="https://preisvergleich.$SUB.workers.dev"
+          echo "$KEY" | npx --yes wrangler@4 secret put WARTUNG 2>&1 | tail -n 1 | tee -a $LOG
+          # alter Server mit dem langen Namen wird nicht mehr gebraucht
+          log "Alten Server entfernt: $(curl -s -X DELETE -H "$H" "$API/accounts/$ACC/workers/scripts/preisvergleich" | jq -c '{success}')"
+          URL="https://preise.$SUB.workers.dev"
           echo "{\"url\": \"$URL\"}" > ../worker.json
-          set +e   # ab hier nur Tests: Fehler protokollieren statt abbrechen
+          set +e
           for i in $(seq 1 24); do curl -sf -m 20 "$URL/status" >/dev/null && break; sleep 10; done
           log "Status: $(curl -s -m 30 $URL/status)"
-          T0=$(date +%s); R=$(curl -s -m 120 -X POST -H "X-Wartung: $KEY" "$URL/suche?q=Fanta")
-          log "Suche Fanta: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if type=="array" then {anzahl: length, erste: (.[0] // {} | {markt, produkt, preis_pro_liter})} else . end' 2>/dev/null || echo "$R" | head -c 400)"
+          log "Seite: $(curl -s -m 30 $URL/ | grep -o '<title>[^<]*</title>')"
+          log "Ohne Code schreiben: HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 -X POST $URL/aktualisieren)"
+          log "Mit Code, leere Suche (erwartet 400): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 -X POST -H "Authorization: Bearer $ZUG" "$URL/suche?q=")"
+          T0=$(date +%s); R=$(curl -s -m 120 -X POST -H "Authorization: Bearer $ZUG" "$URL/suche?q=Fanta")
+          log "Suche Fanta: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if type=="array" then {anzahl: length} else . end' 2>/dev/null || echo "$R" | head -c 300)"
           T0=$(date +%s); R=$(curl -s -m 300 -X POST -H "X-Wartung: $KEY" "$URL/aktualisieren")
-          log "Aktualisieren: $(( $(date +%s) - T0 )) s, $(echo "$R" | head -c 600)"
-          log "Angebote: $(curl -s -m 30 $URL/angebote.json | jq -c '{anzahl: length, gruppen: ([.[].gruppe] | unique), maerkte: ([.[].markt] | unique)}' 2>/dev/null)"
+          log "Aktualisieren: $(( $(date +%s) - T0 )) s, $(echo "$R" | head -c 400)"
+          log "Angebote: $(curl -s -m 30 $URL/angebote.json | jq -c '{anzahl: length, gruppen: ([.[].gruppe] | unique)}' 2>/dev/null)"
           log "Verlauf: $(curl -s -m 30 $URL/verlauf.csv | wc -l) Zeilen"
-          openssl rand -hex 24 | npx --yes wrangler@4 secret put WARTUNG >/dev/null 2>&1 || true   # Testschlüssel wieder unbrauchbar machen
+          openssl rand -hex 24 | npx --yes wrangler@4 secret put WARTUNG >/dev/null 2>&1   # Testschlüssel wieder unbrauchbar machen
+          rm -rf public
       - name: Ergebnis speichern
         if: always()
         run: |

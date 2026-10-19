@@ -1,9 +1,14 @@
 # Cloudflare Worker für den Preisvergleich (wird von .github/workflows/worker.yml hochgeladen)
-name = "preisvergleich"
+name = "preise"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
 compatibility_flags = ["enable_ctx_exports"]
 workers_dev = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
 
 [[kv_namespaces]]
 binding = "PV"

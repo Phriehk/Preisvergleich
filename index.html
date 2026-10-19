@@ -76,6 +76,7 @@ button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);fon
 .best-l b span{font-size:1.05rem;font-weight:600;color:var(--ink);margin-left:4px}
 .best-r{display:flex;flex-direction:column;gap:1px}
 .best-r span{color:var(--mute);font-size:.92rem}
+.so{color:var(--mute)}
 .ampel{grid-column:1/-1;border-top:1px solid color-mix(in srgb,var(--best) 35%,transparent);padding-top:8px;font-size:.92rem}
 .tablewrap{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow-x:auto;box-shadow:var(--shadow)}
 table{border-collapse:collapse;width:100%;table-layout:auto}
@@ -86,7 +87,7 @@ th button.sb{height:auto;padding:0;border:0;border-radius:4px;background:none;fo
 th button.sb:hover,th button.sb.on{color:var(--ink)}
 th button.sb .arr{display:inline-block;min-width:1em;margin-left:3px;font-size:.8em}
 td.num,th.num{text-align:right}
-td.gp{font:700 1.35rem "Barlow Condensed",sans-serif}
+td.gp{font:700 1.35rem "Barlow Condensed",sans-serif;color:color-mix(in srgb,var(--best) calc((1 - var(--t,0))*100%),var(--red))}
 tbody tr:hover td{background:var(--soft)}
 tr.top td{background:var(--bestbg)}
 tr.old td{opacity:.5}
@@ -291,7 +292,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
     <div id="uebersicht" hidden></div>
 
     <div id="verlaufBox" hidden>
-      <div class="filters"><label class="chip"><input type="checkbox" id="proMarkt"> Linien pro Markt</label><input id="vfile" type="file" accept=".csv,text/csv,text/plain" hidden></div>
+      <div class="filters"><label class="chip"><input type="checkbox" id="proMarkt"> Linien pro Markt</label><select id="vPack" aria-label="Packungsgröße im Verlauf"></select><input id="vfile" type="file" accept=".csv,text/csv,text/plain" hidden></div>
       <div id="vstats" class="hinweis"></div>
       <div class="tablewrap" style="padding:8px"><div id="chart"></div></div>
     </div>
@@ -345,6 +346,8 @@ const ab=o=>{if(!o.von)return null;const t=new Date();t.setHours(0,0,0,0);return
 const kommt=o=>{const d=ab(o);return d!==null&&d>0};
 const abgelaufen=o=>{const d=tage(o);return d!==null&&d<0};
 const gueltig=o=>{const a=ab(o);if(a!==null&&a>0)return a===1?"gültig ab morgen":"gültig in "+a+" Tagen";const d=tage(o);if(d===null)return"unbekannt";if(d<0)return"abgelaufen";if(d===0)return"nur heute";if(d===1)return"noch 1 Tag";return"noch "+d+" Tage"};
+function skala(o){const g=gp(o);return !(skalaMax>skalaMin)?0:Math.max(0,Math.min(1,(g-skalaMin)/(skalaMax-skalaMin)))}   // 0 = günstigster Preis der Liste (grün), 1 = teuer (rot)
+var skalaMin=0,skalaMax=0;
 function vorschau(o){const b=o.bild&&/^https?:\/\//.test(o.bild)?o.bild:"";return `<span class="thumb sm"><span class="ph">${esc(((o.marke||o.produkt||o.markt||"?")[0]||"?").toUpperCase())}</span>${b?`<img src="${esc(b)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}</span>`}
 function seiteZeigen(){const an=!(filters.hidden&&alarmRow.hidden);seite.hidden=!an;layout.classList.toggle("links",an)}
 function vonProdukt(){return offers.filter(o=>(o.gruppe||"Coca-Cola")===fProdukt.value&&!o.ausb)}
@@ -384,11 +387,12 @@ function render(){
     x.parentNode.setAttribute("aria-sort",an?(sortDir>0?"ascending":"descending"):"none");
   });
   rowList=list;
+  {const w=list.filter(o=>!abgelaufen(o)).map(gp).sort((a,b)=>a-b);skalaMin=w[0]||0;skalaMax=w.length?w[Math.min(w.length-1,Math.floor(w.length*.9))]:0}  // Farbskala: Beste bis 90 %-Wert
   const best=document.getElementById("best");
   if(!list.length){best.innerHTML="";rows.innerHTML='<tr><td class="empty" colspan="7">Keine Angebote in dieser Ansicht.</td></tr>';return}
   const b=gpSorted.find(o=>!abgelaufen(o)&&!kommt(o))||gpSorted[0];
   best.innerHTML=`<div class="best"><div class="best-l"><small>${tab==="jetzt"?"Günstigste Option jetzt":"Günstigste Option nächste Woche"}</small><b>${eur(gp(b))}<span>pro Liter</span></b></div><div class="best-r"><strong>${esc(b.markt)}</strong><span>${b.stueck} × ${b.ml} ml ${esc(b.form)} für ${eur(pr(b))}</span><span>${gueltig(b)}</span>${warnBadge(b,list.indexOf(b),false)}</div>${ampel(b)}</div>`;
-  rows.innerHTML=list.map((o,i)=>`<tr class="${o===b&&!abgelaufen(o)&&!kommt(o)?"top":abgelaufen(o)?"old":kommt(o)?"soon":""}"><td title="${esc(o.info||"")}"><div class="oz">${vorschau(o)}<div>${o.link&&/^https?:\/\//.test(o.link)?`<a href="${esc(o.link)}" target="_blank" rel="noopener noreferrer">${esc(o.markt)}</a>`:esc(o.markt)}${o.produkt?`<br><small style="color:var(--mute)">${esc(o.produkt)}</small>`:""}${o.app?`<br><small>🏷 App-Preis ${eur(o.app)}</small>`:""}${o.limit?`<br><small>max. ${esc(o.limit)}</small>`:""}${warnBadge(o,i,true)}</div></div></td><td data-l="Verpackung">${esc(o.form)}</td><td class="num" data-l="Menge">${o.stueck} × ${o.ml} ml</td><td class="num" data-l="Preis">${eur(pr(o))}</td><td class="num" data-l="Preis pro Stück">${eur(pr(o)/o.stueck)}</td><td class="num gp" data-l="pro Liter">${eur(gp(o))}</td><td data-l="Gültigkeit">${gueltig(o)}</td></tr>`).join("");
+  rows.innerHTML=list.map((o,i)=>`<tr class="${o===b&&!abgelaufen(o)&&!kommt(o)?"top":abgelaufen(o)?"old":kommt(o)?"soon":""}"><td title="${esc(o.info||"")}"><div class="oz">${vorschau(o)}<div>${o.link&&/^https?:\/\//.test(o.link)?`<a href="${esc(o.link)}" target="_blank" rel="noopener noreferrer">${esc(o.markt)}</a>`:esc(o.markt)}${o.produkt?`<br><small style="color:var(--mute)">${esc(o.produkt)}</small>`:""}${o.app?`<br><small>🏷 App-Preis ${eur(o.app)}</small>`:""}${o.limit?`<br><small>max. ${esc(o.limit)}</small>`:""}${warnBadge(o,i,true)}</div></div></td><td data-l="Verpackung">${esc(o.form)}</td><td class="num" data-l="Menge">${o.stueck} × ${o.ml} ml</td><td class="num" data-l="Preis">${eur(pr(o))}</td><td class="num" data-l="Preis pro Stück">${eur(pr(o)/o.stueck)}</td><td class="num gp" data-l="pro Liter" style="--t:${skala(o).toFixed(2)}">${eur(gp(o))}</td><td data-l="Gültigkeit">${gueltig(o)}</td></tr>`).join("");
 }
 fMarkt.onchange=fForm.onchange=fMl.onchange=fSorte.onchange=app.onchange=render;
 let hinweis="";
@@ -538,9 +542,13 @@ let vd=[];try{vd=JSON.parse(localStorage.getItem("pv-verlauf")||"[]")}catch(e){}
 const kurzD=s=>new Date(s+"T00:00:00").toLocaleDateString("de-DE",{day:"numeric",month:"numeric",year:"2-digit"});
 function zeile(z){const r=[];let c="",q=false;for(const ch of z){if(ch==='"')q=!q;else if(ch===";"&&!q){r.push(c);c=""}else c+=ch}r.push(c);return r}
 function malVerlauf(){
-  const proM=proMarkt.checked,t={};
-  vd.forEach(([d,m,p,bis,von,g])=>{
+  const proM=proMarkt.checked,t={},pv=vPack.value;
+  const packs=[...new Set(vd.filter(z=>(z[5]||"Coca-Cola")===fProdukt.value&&z[6]>0).map(z=>+(+z[6]).toFixed(3)))].sort((a,b)=>a-b);
+  vPack.innerHTML='<option value="">Alle Packungen (bester Preis)</option>'+packs.map(x=>`<option value="${x}">nur Packungen mit ${groesseText(Math.round(x*1000))} Inhalt</option>`).join("");
+  vPack.value=packs.map(String).includes(pv)?pv:"";vPack.hidden=packs.length<2;
+  vd.forEach(([d,m,p,bis,von,g,li])=>{
     if((g||"Coca-Cola")!==fProdukt.value)return;
+    if(vPack.value&&Math.abs((+li||0)-+vPack.value)>.002)return;
     if((bis&&bis<d)||(von&&von>d)||aus.has(m))return;
     const e=t[d]=t[d]||{};
     if(!(e.Bester<=p))e.Bester=p;
@@ -569,10 +577,10 @@ function malVerlauf(){
   chart.innerHTML=s;
 }
 vfile.onchange=()=>{const f=vfile.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{
-  vd=r.result.trim().split(/\r?\n/).slice(1).map(zeile).map(c=>[c[0],c[1],parseFloat(c[5]),c[6]||"",c[7]||"",c[8]||"Coca-Cola"]).filter(x=>x[0]&&isFinite(x[2]));
+  vd=r.result.trim().split(/\r?\n/).slice(1).map(zeile).map(c=>[c[0],c[1],parseFloat(c[5]),c[6]||"",c[7]||"",c[8]||"Coca-Cola",parseFloat(c[3])]).filter(x=>x[0]&&isFinite(x[2]));
   try{localStorage.setItem("pv-verlauf",JSON.stringify(vd))}catch(e){}
   render()};r.readAsText(f);vfile.value=""};
-proMarkt.onchange=render;
+proMarkt.onchange=vPack.onchange=render;
 file.onchange=()=>{
   const datei=file.files[0];if(!datei)return;
   const r=new FileReader();
@@ -605,11 +613,27 @@ var favs=[],suchAusMap={},auswahl={},tabGewaehlt=false;
 var lokal=/^https?:$/.test(location.protocol)&&/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 /* ---- Cloudflare-Worker (schnelle Suche und Aktualisierung; Adresse steht in worker.json) ---- */
 var wUrl="";
-const wBereit=lokal||!/^https?:$/.test(location.protocol)?Promise.resolve():fetch("worker.json",{cache:"no-store"}).then(r=>r.ok?r.json():{}).then(j=>{if(j&&/^https:\/\//.test(j.url||""))wUrl=j.url.replace(/\/+$/,"")}).catch(()=>{});
-async function wf(pfad,opt){
+var cf=/\.workers\.dev$/.test(location.hostname);   // Seite läuft beim Cloudflare-Server selbst
+var zugang="";
+try{
+  const m=location.hash.match(/code=([A-Za-z0-9]+)/);
+  if(m){localStorage.setItem("pv-code",m[1]);history.replaceState(null,"",location.pathname+location.search)}
+  zugang=localStorage.getItem("pv-code")||"";
+}catch(e){}
+if(cf)wUrl=location.origin;
+const wBereit=cf||lokal||!/^https?:$/.test(location.protocol)?Promise.resolve():fetch("worker.json",{cache:"no-store"}).then(r=>r.ok?r.json():{}).then(j=>{
+  if(j&&/^https:\/\//.test(j.url||"")){wUrl=j.url.replace(/\/+$/,"");if(/\.github\.io$/.test(location.hostname))location.replace(wUrl+"/"+(zugang?"#code="+zugang:""))}   // alte Adresse leitet auf den neuen Server um
+}).catch(()=>{});
+async function wf(pfad,opt,nochmal){
   opt=opt||{};
-  const r=await fetch(wUrl+pfad,{cache:"no-store",...opt,headers:{...(opt.headers||{}),...(ghToken?{"Authorization":"Bearer "+ghToken}:{})}});
-  if(!r.ok){let m="";try{m=(await r.json()).fehler||""}catch(e){}const e=new Error(m||"Cloudflare antwortet mit "+r.status);e.status=r.status;throw e}
+  const r=await fetch(wUrl+pfad,{cache:"no-store",...opt,headers:{...(opt.headers||{}),...(zugang?{"Authorization":"Bearer "+zugang}:{})}});
+  if(!r.ok){
+    if(r.status===401&&!nochmal&&opt.method&&opt.method!=="GET"){
+      const c=(prompt("Zugangscode eingeben (steht in der Nachricht von Claude, wird nur einmal gefragt):")||"").trim();
+      if(c){zugang=c;try{localStorage.setItem("pv-code",c)}catch(e){}return wf(pfad,opt,true)}
+    }
+    let m="";try{m=(await r.json()).fehler||""}catch(e){}const e=new Error(m||"Server antwortet mit "+r.status);e.status=r.status;throw e
+  }
   return r;
 }
 async function autoLaden(){
@@ -644,7 +668,7 @@ async function ghRaw(name){const r=await gh("/contents/"+name,{headers:{"Accept"
 async function ghFavSpeichern(liste){
   if(wUrl){
     await wf("/favoriten.json",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(liste)});
-    ghFavGithub(liste).catch(()=>{});  // Kopie bei GitHub für den Ersatzbetrieb
+    if(ghAktiv())ghFavGithub(liste).catch(()=>{});  // Kopie bei GitHub nur, wenn dort ein Token hinterlegt ist
     return;
   }
   await ghFavGithub(liste);
@@ -676,7 +700,7 @@ async function ghSuche(q,aus){
   await wBereit;
   if(wUrl){
     try{return await (await wf("/suche?q="+encodeURIComponent(q)+"&aus="+encodeURIComponent(aus),{method:"POST"})).text()}
-    catch(e){if(e.status===401)throw e}  // sonst Ersatz über GitHub
+    catch(e){if(e.status===401||cf||!ghAktiv())throw e}  // sonst Ersatz über GitHub
   }
   if(!await ghLauf("suche.yml",{suchbegriff:q,ausschliessen:aus}))throw new Error("Die Suche ist bei GitHub fehlgeschlagen (siehe Tab Actions im Repository)");
   return await ghRaw("suche.json");
@@ -687,7 +711,7 @@ async function ghDatenLaden(){
   try{dateiLaden(vfile,await ghRaw("verlauf.csv"),"verlauf.csv")}catch(e){}
   await new Promise(x=>setTimeout(x,600));
 }
-function netzFehler(e){return lokal&&/Failed to fetch|NetworkError|Load failed/i.test(e.message)?"Server nicht erreichbar. Läuft start.bat noch?":"Fehler: "+e.message}
+function netzFehler(e){return cf&&/Failed to fetch|NetworkError|Load failed/i.test(e.message)?"Keine Verbindung zum Server. Bitte Internet prüfen.":lokal&&/Failed to fetch|NetworkError|Load failed/i.test(e.message)?"Server nicht erreichbar. Läuft start.bat noch?":"Fehler: "+e.message}
 /* ---- Suche ---- */
 async function lokalSuche(q,aus){
   await fetch("suche?q="+encodeURIComponent(q)+"&aus="+encodeURIComponent(aus),{method:"POST",headers:HDR});
@@ -720,17 +744,21 @@ function ampelInfo(b){
     if((gr||"Coca-Cola")!==g||d>=heute||(bis&&bis<d)||(von&&von>d)||aus.has(m))return;
     if(!(t[d]<=p))t[d]=p;
   });
-  const tage=Object.keys(t).sort().slice(-56);
-  if(tage.length<3)return {n:tage.length};
-  const avg=tage.reduce((s,d)=>s+t[d],0)/tage.length,r=(b.preis/liter(b)/avg-1)*100;
+  const alle=Object.keys(t).sort(),v=b.preis/liter(b),tage=alle.slice(-56);
+  let so="",i=alle.length-1;
+  while(i>=0&&Math.abs(t[alle[i]]-v)<=v*.005)i--;   // das laufende Angebot selbst überspringen
+  if(i>=0){const k=alle.slice(0,i+1).filter(d=>t[d]<=v*1.005).pop();so=k?"So günstig war es zuletzt am "+kurzD(k)+".":"Seit Beginn der Aufzeichnung ("+kurzD(alle[0])+") war es nie so günstig."}
+  if(tage.length<3)return {n:tage.length,so};
+  const avg=tage.reduce((s,d)=>s+t[d],0)/tage.length,r=(v/avg-1)*100;
   const [sym,txt]=r<=-8?["🟢","Guter Preis"]:r<=8?["🟡","Normaler Preis"]:["🔴","Eher teuer"];
-  return {sym,txt,r,avg,n:tage.length};
+  return {sym,txt,r,avg,n:tage.length,so};
 }
 function ampel(b){
   if(tab!=="jetzt"||abgelaufen(b)||kommt(b))return"";
   const a=ampelInfo(b);if(!a)return"";
-  if(!a.sym)return `<div class="ampel"><small>Vergleich mit dem Durchschnitt: bisher erst ${a.n} Messtag${a.n===1?"":"e"}, es braucht mindestens 3.</small></div>`;
-  return `<div class="ampel">${a.sym} <b>${a.txt}:</b> ${Math.abs(a.r).toFixed(0)} % ${a.r<0?"unter":"über"} deinem Durchschnitt (Ø ${eur(a.avg)}/l, ${a.n} Messtage)</div>`;
+  const so=a.so?`<br><span class="so">${esc(a.so)}</span>`:"";
+  if(!a.sym)return `<div class="ampel"><small>Vergleich mit dem Durchschnitt: bisher erst ${a.n} Messtag${a.n===1?"":"e"}, es braucht mindestens 3.</small>${so}</div>`;
+  return `<div class="ampel">${a.sym} <b>${a.txt}:</b> ${Math.abs(a.r).toFixed(0)} % ${a.r<0?"unter":"über"} deinem Durchschnitt (Ø ${eur(a.avg)}/l, ${a.n} Messtage)${so}</div>`;
 }
 /* ---- Übersicht: eine Karte pro Produkt ---- */
 function zeichneUebersicht(){
@@ -794,7 +822,7 @@ async function favLaden(){
 }
 function favKnopf(){
   const g=fProdukt.value;
-  favBtn.hidden=!(lokal||ghAktiv());
+  favBtn.hidden=!(lokal||ghAktiv()||cf);
   favBtn.textContent=(favs||[]).some(f=>f.name===g)?"★ Favorit entfernen":"☆ Als Favorit speichern";
   alarmZeigen();
 }
@@ -827,7 +855,7 @@ favBtn.onclick=async()=>{
 /* ---- Preisalarm (Benachrichtigung aufs Handy) ---- */
 function groesseText(ml){return ml>=1000?String(ml/1000).replace(".",",")+" l":ml+" ml"}
 function alarmZeigen(){
-  const g=fProdukt.value,f=(favs||[]).find(x=>x.name===g),kann=lokal||ghAktiv();
+  const g=fProdukt.value,f=(favs||[]).find(x=>x.name===g),kann=lokal||ghAktiv()||cf;
   alarmRow.hidden=!(f&&kann);
   if(!f||!kann)return;
   const al=f.alarm;
@@ -872,7 +900,7 @@ async function aktualisieren(){
         const s=await (await wf("/aktualisieren",{method:"POST"})).json();
         await autoLaden();await new Promise(x=>setTimeout(x,600));
         hinweis="Preise aktualisiert ("+s.anzahl+" Angebote)."+(s.alarm&&s.alarm.length?" 🔔 "+s.alarm.join(" "):"");erledigt=true;
-      }catch(e){if(e.status===401)throw e}  // sonst Ersatz über GitHub
+      }catch(e){if(e.status===401||cf||!ghAktiv())throw e}  // sonst Ersatz über GitHub
     }
     if(erledigt){}
     else if(lokal){await fetch("update",{method:"POST",headers:HDR});await abwarten()}
@@ -906,6 +934,11 @@ if(lokal){
       if(s.laeuft){upd.disabled=true;hinweis="Preise werden aktualisiert (etwa 1 Minute) ...";render();await abwarten();upd.disabled=false;render()}
     }catch(e){}
   })();
+}else if(cf){
+  suchBox.hidden=false;suchBtn.onclick=suchen;suchtext.onkeydown=e=>{if(e.key==="Enter")suchen()};
+  upd.hidden=false;upd.onclick=aktualisieren;
+  (async()=>{await favLaden();await autoLaden()})();
+  if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 }else if(/^https?:$/.test(location.protocol)){autoLaden();ghEinrichtung();if("serviceWorker" in navigator&&ghInfo)navigator.serviceWorker.register("sw.js").catch(()=>{})}
 </script>
 </body>

@@ -5,7 +5,7 @@ import { WorkerEntrypoint } from "cloudflare:workers";
 
 const REPO = "Phriehk/Preisvergleich";
 const RAW = `https://raw.githubusercontent.com/${REPO}/main/`;
-const APP_URL = "https://phriehk.github.io/Preisvergleich/";
+const APP_URL = "https://preise.phriehk.workers.dev/";
 const UA = { "User-Agent": "Mozilla/5.0 (privates Testprojekt)" };
 const SEARCH = "https://api.marktguru.de/api/v1/offers/search";
 const PLZ = "47178", PLZ2 = "46535", PLZ2_MAERKTE = ["penny", "thomas philipps"], PLZ3 = "47053", PLZ3_MAERKTE = ["rewe"];
@@ -272,20 +272,25 @@ async function aktualisieren(env, ctx) {
   return { ...stand, alarm: gesendet };
 }
 
-/* ---------- Schreibrechte: derselbe GitHub-Token wie in der App (muss Schreibrechte am Repository haben) ---------- */
+/* ---------- Schreibrechte: Zugangscode (Secret ZUGANG), die App merkt ihn sich nach der ersten Eingabe ---------- */
 async function berechtigt(req, env) {
   const w = req.headers.get("X-Wartung");  // nur für den automatischen Test nach dem Hochladen
   if (w && env.WARTUNG && w === env.WARTUNG) return true;
   const t = (req.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
-  if (!t) return false;
-  const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)))].map(b => b.toString(16).padStart(2, "0")).join("");
-  const key = "auth:" + hash;
-  if (await env.PV.get(key)) return true;
-  const r = await fetch(`https://api.github.com/repos/${REPO}`, { headers: { ...UA, Authorization: "Bearer " + t, Accept: "application/vnd.github+json" } });
-  if (!r.ok) return false;
-  const ok = !!((await r.json()).permissions || {}).push;
-  if (ok) await env.PV.put(key, "1", { expirationTtl: 86400 });
-  return ok;
+  if (!t || !env.ZUGANG) return false;
+  const h = async x => new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(x)));
+  const [x, y] = [await h(t), await h(env.ZUGANG)];
+  let d = 0; for (let i = 0; i < x.length; i++) d |= x[i] ^ y[i];
+  return d === 0;
+}
+
+async function meldeFehler(env, text) {
+  const thema = (env.NTFY_TOPIC || "").trim();
+  if (!thema) return;
+  try {
+    await fetch("https://ntfy.sh", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic: thema, title: "Preislauf fehlgeschlagen", message: text.slice(0, 300), tags: ["warning"], priority: 4, click: APP_URL }) });
+  } catch (e) { /* mehr kann nicht getan werden */ }
 }
 
 export default {
@@ -297,10 +302,10 @@ export default {
         if (p === "/angebote.json") return antwort(JSON.stringify(await lade(env, "angebote", "json")));
         if (p === "/favoriten.json") return antwort(JSON.stringify(await lade(env, "favoriten", "json")));
         if (p === "/verlauf.csv") return antwort(await verlaufCsv(env), "text/csv; charset=utf-8");
-        if (p === "/status" || p === "/") return antwort({ ok: true, dienst: "preisvergleich", stand: await env.PV.get("stand", "json") });
-        return fehler("Unbekannte Adresse", 404);
+        if (p === "/status") return antwort({ ok: true, dienst: "preisvergleich", stand: await env.PV.get("stand", "json") });
+        return env.ASSETS.fetch(req);  // die Seite selbst (index.html, Symbole, ...)
       }
-      if (!(await berechtigt(req, env))) return fehler("Keine Berechtigung (GitHub-Token fehlt oder ohne Schreibrechte)", 401);
+      if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401);
       if (p === "/favoriten.json" && (req.method === "PUT" || req.method === "POST")) {
         const liste = await req.json();
         if (!Array.isArray(liste) || liste.some(f => !f || typeof f.name !== "string")) return fehler("Ungültige Favoritenliste", 400);
@@ -321,6 +326,7 @@ export default {
     }
   },
   async scheduled(event, env, ctx) {
-    await aktualisieren(env, ctx);
+    try { await aktualisieren(env, ctx); }
+    catch (e) { await meldeFehler(env, "Die tägliche Aktualisierung bei Cloudflare ist fehlgeschlagen: " + (e.message || e)); throw e; }
   },
 };
