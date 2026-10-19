@@ -3,7 +3,7 @@
     "name": "Coca-Cola",
     "aus": "",
     "alarm": {
-      "wert": 60,
+      "wert": 0.6,
       "einheit": "stueck",
       "ml": 330
     }
