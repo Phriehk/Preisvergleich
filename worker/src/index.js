@@ -272,6 +272,61 @@ async function aktualisieren(env, ctx) {
   return { ...stand, alarm: gesendet };
 }
 
+
+/* ---------- Entfernung zu den Märkten (OpenStreetMap, Luftlinie ab Postleitzahl-Mitte, einmal geholt und 30 Tage gemerkt) ---------- */
+const OSM_UA = { "User-Agent": "preisvergleich-privat/1.0 (privates Hobbyprojekt)" };
+const markenKern = m => m.replace(/\s*\(\d+\)\s*$/, "").trim();
+function markenRegex(m) {   // Suchmuster für den Namen im Kartenmaterial
+  const k = markenKern(m).toLowerCase();
+  if (k.startsWith("aldi")) return k.includes("nord") ? "ALDI N" : "ALDI S";
+  if (k.startsWith("netto")) return "Netto";
+  if (k.startsWith("edeka")) return "EDEKA";
+  return k.replace(/[^a-z0-9äöüß ]/g, ".").trim();
+}
+const rad = x => x * Math.PI / 180;
+const luftlinie = (a, b, c, d) => { const h = Math.sin(rad(c - a) / 2) ** 2 + Math.cos(rad(a)) * Math.cos(rad(c)) * Math.sin(rad(d - b) / 2) ** 2; return 12742 * Math.asin(Math.sqrt(h)); };
+async function overpass(abfrage) {
+  let letzter;
+  for (const host of ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]) {
+    try {
+      const r = await fetch(host, { method: "POST", headers: { ...OSM_UA, "Content-Type": "application/x-www-form-urlencoded" }, body: "data=" + encodeURIComponent(abfrage) });
+      if (r.ok) return await r.json();
+      letzter = new Error("Overpass HTTP " + r.status);
+    } catch (e) { letzter = e; }
+  }
+  throw letzter;
+}
+async function entfernungenBerechnen(env, maerkte) {
+  let mitte = await env.PV.get("mitte", "json");
+  if (!mitte) {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${PLZ}&country=de&format=json&limit=1`, { headers: OSM_UA });
+    const j = r.ok ? await r.json() : [];
+    if (!j.length) throw new Error("Postleitzahl nicht gefunden");
+    mitte = { lat: +j[0].lat, lon: +j[0].lon };
+    await env.PV.put("mitte", JSON.stringify(mitte));
+  }
+  const namen = [...new Set(maerkte.map(markenKern))].filter(Boolean);
+  const muster = namen.map(markenRegex).join("|");
+  const q = `[out:json][timeout:25];(nwr["name"~"${muster}",i](around:20000,${mitte.lat},${mitte.lon});nwr["brand"~"${muster}",i](around:20000,${mitte.lat},${mitte.lon}););out center tags 600;`;
+  const daten = await overpass(q);
+  const erg = {};
+  for (const n of namen) {
+    const re = new RegExp(markenRegex(n), "i");
+    let best = null;
+    for (const e of daten.elements || []) {
+      const t = e.tags || {};
+      if (!t.shop && t.amenity !== "marketplace") continue;
+      if (!re.test([t.name, t.brand, t.operator].filter(Boolean).join(" "))) continue;
+      const lat = e.lat ?? (e.center || {}).lat, lon = e.lon ?? (e.center || {}).lon;
+      if (lat == null) continue;
+      const km = luftlinie(mitte.lat, mitte.lon, lat, lon);
+      if (!best || km < best.km) best = { km: Math.round(km * 10) / 10, adresse: [t["addr:street"], t["addr:housenumber"]].filter(Boolean).join(" ") + (t["addr:city"] ? ", " + t["addr:city"] : "") };
+    }
+    erg[n] = best || { km: null };
+  }
+  return erg;
+}
+
 /* ---------- Schreibrechte: Zugangscode (Secret ZUGANG), die App merkt ihn sich nach der ersten Eingabe ---------- */
 async function berechtigt(req, env) {
   const w = req.headers.get("X-Wartung");  // nur für den automatischen Test nach dem Hochladen
@@ -302,6 +357,7 @@ export default {
         if (p === "/angebote.json") return antwort(JSON.stringify(await lade(env, "angebote", "json")));
         if (p === "/favoriten.json") return antwort(JSON.stringify(await lade(env, "favoriten", "json")));
         if (p === "/verlauf.csv") return antwort(await verlaufCsv(env), "text/csv; charset=utf-8");
+        if (p === "/entfernungen") return antwort((await env.PV.get("entfernungen", "json")) || {});
         if (p === "/status") return antwort({ ok: true, dienst: "preisvergleich", stand: await env.PV.get("stand", "json") });
         return env.ASSETS.fetch(req);  // die Seite selbst (index.html, Symbole, ...)
       }
@@ -318,6 +374,17 @@ export default {
         const aus = (url.searchParams.get("aus") || "").split(",").map(w => w.trim().toLowerCase()).filter(Boolean);
         const { liste } = await abfragen(ctx, [q], {}, aus);
         return antwort(liste);
+      }
+      if (p === "/entfernungen" && req.method === "POST") {
+        const gewollt = (url.searchParams.get("m") || "").split("|").map(x => x.trim()).filter(x => x && x.length < 40).slice(0, 30);
+        const alt = (await env.PV.get("entfernungen", "json")) || {}, jetzt = Date.now();
+        const fehlt = [...new Set(gewollt.map(markenKern))].filter(m => !alt[m] || jetzt - (alt[m].t || 0) > 30 * 864e5);
+        if (fehlt.length) {
+          const neu = await entfernungenBerechnen(env, fehlt);
+          for (const [m, v] of Object.entries(neu)) alt[m] = { ...v, t: jetzt };
+          await env.PV.put("entfernungen", JSON.stringify(alt));
+        }
+        return antwort(alt);
       }
       if (p === "/aktualisieren" && req.method === "POST") return antwort(await aktualisieren(env, ctx));
       return fehler("Unbekannte Adresse", 404);
