@@ -241,7 +241,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
 <header class="kopf">
   <div class="logo" aria-hidden="true">€/l</div>
   <div><h1 id="titel">Coca-Cola: günstigster Preis pro Liter</h1><p class="sub">Angebote von Marktguru, verglichen pro Liter</p></div>
-  <div class="hk"><button id="themeBtn" class="icon-btn" type="button" aria-label="Darstellung wechseln"></button><button id="gear" class="icon-btn" type="button" aria-label="Handy-Funktionen einrichten" title="Handy-Funktionen einrichten" hidden>⚙</button></div>
+  <div class="hk"><button id="ortBtn" class="icon-btn" type="button" aria-label="Meinen Standort eintragen" title="Meinen Standort eintragen" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.800 12 21 12 21z"/><circle cx="12" cy="9.500" r="2.500"/></svg></button><button id="themeBtn" class="icon-btn" type="button" aria-label="Darstellung wechseln"></button><button id="gear" class="icon-btn" type="button" aria-label="Handy-Funktionen einrichten" title="Handy-Funktionen einrichten" hidden>⚙</button></div>
 </header>
 
 <div id="ghSetup" class="card" hidden>
@@ -336,6 +336,15 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
 </div>
 </div>
 
+<div id="ortDlg" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="ortTitel">
+  <div class="card editbox">
+    <h2 id="ortTitel">Mein Standort</h2>
+    <p class="lbl" style="margin:0">Damit rechnet die Seite die Entfernung zur nächsten Filiale ab deiner Adresse. Sie wird nur in diesem Browser gespeichert und nicht an den Server dieser Seite geschickt. Für das Nachschlagen geht sie an OpenStreetMap.</p>
+    <label>Adresse oder Postleitzahl<input id="ortText" autocomplete="street-address" placeholder="z.B. Musterstraße 5, 47178 Duisburg"></label>
+    <div id="ortInfo" class="lbl" style="margin:0"></div>
+    <div class="row"><button id="ortSave" type="button" class="primary">Speichern</button><button id="ortGps" type="button">📍 Aktuellen Standort nehmen</button><button id="ortDel" type="button">Entfernen</button><button id="ortZu" type="button">Schließen</button></div>
+  </div>
+</div>
 <div id="korrDlg" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="eTitel">
   <div class="card editbox">
     <h2 id="eTitel"></h2>
@@ -383,25 +392,60 @@ function mlogo(m){
   if(!c){let s=0;for(const ch of k)s=(s*31+ch.charCodeAt(0))%360;c=["hsl("+s+" 45% 38%)","#fff"]}
   return `<span class="mb" style="background:${c[0]};color:${c[1]}" aria-hidden="true">${esc(b.replace(/[^A-Za-zÄÖÜäöü]/g,"").slice(0,2).toUpperCase()||"?")}</span>`;
 }
-var dist={};
+var dist={},ort=null;try{ort=JSON.parse(localStorage.getItem("pv-ort")||"null")}catch(e){}
 const f1=x=>x.toFixed(1).replace(".",",");
-function distText(o){const d=dist[mbase(o.markt)];return d&&d.km!=null?`<span class="km" title="Luftlinie von der Postleitzahl${d.adresse?" zu: "+esc(d.adresse):""}">${f1(d.km)} km</span>`:""}
+/* Entfernung eines Marktes: mit eigener Adresse zur nächsten Filiale, sonst ab der Postleitzahl des Servers */
+function dinfo(m){
+  const d=dist[mbase(m)];if(!d)return null;
+  if(ort&&d.filialen&&d.filialen.length){
+    let best=null;
+    for(const f of d.filialen){const k=luftKm(ort.lat,ort.lon,f[0],f[1]);if(!best||k<best.km)best={km:k,adresse:f[2]}}
+    return best;
+  }
+  return !ort&&d.km!=null?{km:d.km,adresse:d.adresse}:null;
+}
+const dkm=m=>{const d=dinfo(m);return d?d.km:null};
+function luftKm(a,b,c,d){const r=x=>x*Math.PI/180,q=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;return 12742*Math.asin(Math.sqrt(q))}
+function distText(o){const d=dinfo(o.markt);return d?`<span class="km" title="Luftlinie ${ort?"von deiner Adresse":"von der Postleitzahl"} zur nächsten Filiale${d.adresse?": "+esc(d.adresse):""}">${f1(d.km)} km</span>`:""}
 async function distLaden(){
   if(!wUrl)return;
+  ortBtn.hidden=false;
   try{
     await wBereit;
     dist=await (await wf("/entfernungen")).json();
-    const fehlt=[...new Set(offers.map(o=>mbase(o.markt)))].filter(x=>!(dist[x]&&"km" in dist[x]));
+    const fehlt=[...new Set(offers.map(o=>mbase(o.markt)))].filter(x=>!(dist[x]&&("filialen" in dist[x]||dist[x].km!=null)));
     if(fehlt.length&&zugang)dist=await (await wf("/entfernungen?m="+encodeURIComponent(fehlt.join("|")),{method:"POST"},true)).json();
     render();
   }catch(e){}
 }
+/* ---- Eigener Standort ---- */
+function ortSetzen(o){ort=o;try{o?localStorage.setItem("pv-ort",JSON.stringify(o)):localStorage.removeItem("pv-ort")}catch(e){}ortInfo.textContent=o?"Gespeichert: "+o.name:"";render()}
+ortBtn.onclick=()=>{ortText.value=ort?ort.name:"";ortInfo.textContent=ort?"Aktuell gespeichert: "+ort.name:"";ortDlg.hidden=false;ortText.focus()};
+ortZu.onclick=()=>{ortDlg.hidden=true};
+ortDlg.onclick=e=>{if(e.target===ortDlg)ortDlg.hidden=true};
+ortDel.onclick=()=>{ortSetzen(null);ortText.value="";ortInfo.textContent="Standort entfernt, es gilt wieder die Postleitzahl der Seite."};
+ortSave.onclick=async()=>{
+  const q=ortText.value.trim();if(q.length<3){ortInfo.textContent="Bitte eine Adresse oder Postleitzahl eingeben.";return}
+  ortInfo.textContent="Suche …";
+  try{
+    const r=await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=de&accept-language=de&q="+encodeURIComponent(q));
+    const j=r.ok?await r.json():[];
+    if(!j.length){ortInfo.textContent="Dazu habe ich nichts gefunden. Versuch es mit Straße, Hausnummer und Ort oder nur mit der Postleitzahl.";return}
+    ortSetzen({lat:+j[0].lat,lon:+j[0].lon,name:(j[0].display_name||q).split(",").slice(0,3).join(",").trim()});
+  }catch(e){ortInfo.textContent="Die Adresssuche ist gerade nicht erreichbar."}
+};
+ortText.onkeydown=e=>{if(e.key==="Enter")ortSave.click()};
+ortGps.onclick=()=>{
+  if(!navigator.geolocation){ortInfo.textContent="Dieses Gerät kann den Standort nicht bestimmen.";return}
+  ortInfo.textContent="Standort wird bestimmt …";
+  navigator.geolocation.getCurrentPosition(p=>ortSetzen({lat:p.coords.latitude,lon:p.coords.longitude,name:"aktueller Standort"}),()=>{ortInfo.textContent="Der Standort wurde nicht freigegeben."},{timeout:15000});
+};
 function fahrtZeile(b,liste){
-  const db=(dist[mbase(b.markt)]||{}).km;if(db==null)return"";
-  const kk=.30,nah=liste.filter(o=>!abgelaufen(o)&&!kommt(o)&&(dist[mbase(o.markt)]||{}).km!=null).sort((x,y)=>dist[mbase(x.markt)].km-dist[mbase(y.markt)].km||gp(x)-gp(y))[0];
+  const db=dkm(b.markt);if(db==null)return"";
+  const kk=.30,nah=liste.filter(o=>!abgelaufen(o)&&!kommt(o)&&dkm(o.markt)!=null).sort((x,y)=>dkm(x.markt)-dkm(y.markt)||gp(x)-gp(y))[0];
   let t=`🚗 ${esc(mbase(b.markt))} ist ${f1(db)} km entfernt (hin und zurück etwa ${eur(2*db*kk)} Fahrtkosten bei 0,30 €/km).`;
   if(nah&&mbase(nah.markt)!==mbase(b.markt)){
-    const dn=dist[mbase(nah.markt)].km,spar=(gp(nah)-gp(b))*liter(b),extra=2*(db-dn)*kk;
+    const dn=dkm(nah.markt),spar=(gp(nah)-gp(b))*liter(b),extra=2*(db-dn)*kk;
     t+=` Im nächstgelegenen Markt (${esc(mbase(nah.markt))}, ${f1(dn)} km) kostet dieselbe Menge ${eur(gp(nah)*liter(b))}. Ersparnis ${eur(spar)}, Mehrkosten für die Fahrt ${eur(extra)}: ${spar>extra?"die weitere Fahrt lohnt sich":"die weitere Fahrt lohnt sich nicht"}.`;
   }
   return `<div class="fahrt">${t}</div>`;
@@ -415,10 +459,10 @@ function zeichneEinkauf(){
   const l=eink.map(k=>offers.find(o=>kOf(o)===k)).filter(o=>o&&!o.ausb&&!abgelaufen(o));
   if(!l.length){einkauf.innerHTML='<div class="empty">Die Einkaufsliste ist leer. Tippe in der Tabelle bei einem Angebot auf „＋ Liste“.</div>';return}
   const g={};l.forEach(o=>{(g[mbase(o.markt)]=g[mbase(o.markt)]||[]).push(o)});
-  const ms=Object.keys(g).sort((a,b)=>((dist[a]||{}).km??99)-((dist[b]||{}).km??99));
+  const ms=Object.keys(g).sort((a,b)=>(dkm(a)??99)-(dkm(b)??99));
   let ges=0,fahrt=0,alle=true;
   const html=ms.map(m=>{
-    const sum=g[m].reduce((s,o)=>s+pr(o),0),d=(dist[m]||{}).km;ges+=sum;if(d==null)alle=false;else fahrt+=2*d*.30;
+    const sum=g[m].reduce((s,o)=>s+pr(o),0),d=dkm(m);ges+=sum;if(d==null)alle=false;else fahrt+=2*d*.30;
     return `<section class="ek"><div class="ek-h">${mlogo(m)}<b>${esc(m)}</b>${d!=null?`<span class="km">${f1(d)} km</span>`:""}<span class="ek-s">${eur(sum)}</span></div>`
       +g[m].map(o=>`<div class="ek-z"><span>${o.stueck} × ${o.ml} ml ${esc(o.produkt||o.gruppe)}<br><small>${esc(o.form)} · ${gueltig(o)}</small></span><span>${eur(pr(o))}<br><small>${eur(gp(o))}/l</small></span><button type="button" class="lb an" data-k="${esc(kOf(o))}" aria-label="Von der Liste entfernen">✕</button></div>`).join("")+"</section>";
   }).join("");

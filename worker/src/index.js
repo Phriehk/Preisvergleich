@@ -266,6 +266,7 @@ async function aktualisieren(env, ctx) {
   const neu = liste.map(x => [tag, x.markt, x.produkt, x.liter, x.preis, x.preis_pro_liter, x.gueltig_bis, x.gueltig_von, x.gruppe].map(csvFeld).join(";"));
   await env.PV.put("verlauf:" + monat, [...rest, ...neu].join("\n"));
   if (!monate.includes(monat)) { monate.push(monat); await env.PV.put("verlauf:monate", JSON.stringify(monate)); }
+  try { await entfernungenPflegen(env, liste.map(x => x.markt)); } catch (e) { /* Entfernungen sind nur eine Zugabe */ }
   const gesendet = await benachrichtige(env, liste, alarm);
   const stand = { zeit: berlin(new Date(), true), anzahl: liste.length, fehler: f.length };
   await env.PV.put("stand", JSON.stringify(stand));
@@ -301,19 +302,26 @@ async function overpass(abfrage) {
   throw letzter;
 }
 // Ausweichweg, falls Overpass nicht antwortet: Nominatim, ein Markt nach dem anderen (höchstens 1 Anfrage pro Sekunde)
+// Alle gefundenen Filialen (die 40 nächsten zur Mitte) werden gespeichert, damit jede Person die Entfernung ab ihrer eigenen Adresse im Browser rechnen kann.
+function filialenErgebnis(fil, mitte) {
+  if (!fil.length) return { km: null };
+  fil.sort((a, b) => luftlinie(mitte.lat, mitte.lon, a[0], a[1]) - luftlinie(mitte.lat, mitte.lon, b[0], b[1]));
+  const f = fil[0];
+  return { km: Math.round(luftlinie(mitte.lat, mitte.lon, f[0], f[1]) * 10) / 10, adresse: f[2], filialen: fil.slice(0, 40).map(x => [Math.round(x[0] * 1e5) / 1e5, Math.round(x[1] * 1e5) / 1e5, x[2]]) };
+}
 async function ueberNominatim(namen, mitte) {
   const erg = {}, d = 0.22;   // etwa 15 bis 25 km um die Mitte
   for (const n of namen) {
-    erg[n] = { km: null };
+    erg[n] = { km: null }; const fil = [];
     try {
       const u = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(markenKern(n))}&format=json&limit=40&bounded=1&viewbox=${mitte.lon - d},${mitte.lat + d * .65},${mitte.lon + d},${mitte.lat - d * .65}`;
       const r = await fetch(u, { headers: OSM_UA });
       if (r.ok) for (const e of await r.json()) {
         if (e.class !== "shop") continue;
-        const km = luftlinie(mitte.lat, mitte.lon, +e.lat, +e.lon);
-        if (erg[n].km == null || km < erg[n].km) erg[n] = { km: Math.round(km * 10) / 10, adresse: (e.display_name || "").split(",").slice(0, 3).join(",").trim() };
+        fil.push([+e.lat, +e.lon, (e.display_name || "").split(",").slice(0, 3).join(",").trim()]);
       }
     } catch (e) { /* nächster Markt */ }
+    erg[n] = filialenErgebnis(fil, mitte);
     await new Promise(r => setTimeout(r, 1100));
   }
   return erg;
@@ -336,18 +344,29 @@ async function entfernungenBerechnen(env, maerkte) {
   const erg = {};
   for (const n of namen) {
     const re = new RegExp(markenRegex(n), "i");
-    let best = null;
+    const fil = [];
     for (const e of daten.elements || []) {
       const t = e.tags || {};
       if (!re.test([t.name, t.brand, t.operator].filter(Boolean).join(" "))) continue;
       const lat = e.lat ?? (e.center || {}).lat, lon = e.lon ?? (e.center || {}).lon;
       if (lat == null) continue;
-      const km = luftlinie(mitte.lat, mitte.lon, lat, lon);
-      if (!best || km < best.km) best = { km: Math.round(km * 10) / 10, adresse: [t["addr:street"], t["addr:housenumber"]].filter(Boolean).join(" ") + (t["addr:city"] ? ", " + t["addr:city"] : "") };
+      fil.push([lat, lon, [t["addr:street"], t["addr:housenumber"]].filter(Boolean).join(" ") + (t["addr:city"] ? ", " + t["addr:city"] : "")]);
     }
-    erg[n] = best || { km: null };
+    erg[n] = filialenErgebnis(fil, mitte);
   }
   return erg;
+}
+
+// Fehlende oder veraltete Märkte nachladen (mit Filialen 30 Tage gültig, ohne Treffer nur 1 Tag, damit nicht bei jedem Lauf neu gesucht wird)
+async function entfernungenPflegen(env, maerkte) {
+  const alt = (await env.PV.get("entfernungen", "json")) || {}, jetzt = Date.now();
+  const fehlt = [...new Set(maerkte.map(markenKern))].filter(m => m && m.length < 40 && (!alt[m] || jetzt - (alt[m].t || 0) > ((alt[m].filialen || []).length ? 30 : 1) * 864e5)).slice(0, 12);
+  if (fehlt.length) {
+    const neu = await entfernungenBerechnen(env, fehlt);
+    for (const [m, v] of Object.entries(neu)) alt[m] = { ...v, t: jetzt };
+    await env.PV.put("entfernungen", JSON.stringify(alt));
+  }
+  return alt;
 }
 
 /* ---------- Schreibrechte: Zugangscode (Secret ZUGANG), die App merkt ihn sich nach der ersten Eingabe ---------- */
@@ -399,15 +418,8 @@ export default {
         return antwort(liste);
       }
       if (p === "/entfernungen" && req.method === "POST") {
-        const gewollt = (url.searchParams.get("m") || "").split("|").map(x => x.trim()).filter(x => x && x.length < 40).slice(0, 30);
-        const alt = (await env.PV.get("entfernungen", "json")) || {}, jetzt = Date.now();
-        const fehlt = [...new Set(gewollt.map(markenKern))].filter(m => !alt[m] || alt[m].km == null || jetzt - (alt[m].t || 0) > 30 * 864e5);
-        if (fehlt.length) {
-          const neu = await entfernungenBerechnen(env, fehlt);
-          for (const [m, v] of Object.entries(neu)) if (v.km != null) alt[m] = { ...v, t: jetzt };
-          await env.PV.put("entfernungen", JSON.stringify(alt));
-        }
-        return antwort(Object.fromEntries(Object.entries(alt).filter(([k]) => k !== "t")));
+        const gewollt = (url.searchParams.get("m") || "").split("|").map(x => x.trim()).filter(Boolean).slice(0, 30);
+        return antwort(await entfernungenPflegen(env, gewollt));
       }
       if (p === "/aktualisieren" && req.method === "POST") return antwort(await aktualisieren(env, ctx));
       return fehler("Unbekannte Adresse", 404);
