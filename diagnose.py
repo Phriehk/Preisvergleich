@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Temporäre Diagnose: schreibt in diagnose.json, was Marktguru für verschiedene Suchen liefert."""
+"""Temporäre Diagnose 2: wie fragt die Marktguru-Webseite REWE-Angebote ab? Schreibt diagnose.json."""
 import json
+import re
 import sys
 import traceback
 import urllib.parse
@@ -8,8 +9,7 @@ import urllib.parse
 sys.path.insert(0, ".")
 import test_marktguru as t
 
-OFFER_ID = "25362087"
-out = {"offer": {}, "queries": {}}
+out = {"seiten": {}, "varianten": {}, "plz": {}}
 
 
 def kurz(o):
@@ -18,35 +18,57 @@ def kurz(o):
             "adv": ((o.get("advertisers") or [{}])[0]).get("name"),
             "produkt": (o.get("product") or {}).get("name"),
             "marke": (o.get("brand") or {}).get("name"),
-            "beschr": o.get("description"),
-            "preis": o.get("price"),
-            "von": v.get("from"), "bis": v.get("to")}
+            "preis": o.get("price"), "bis": v.get("to")}
+
+
+def suche(params, h):
+    url = t.SEARCH + "?" + urllib.parse.urlencode(params)
+    try:
+        res = json.loads(t.http(url, h, versuche=2)).get("results", [])
+        return {"anzahl": len(res), "rewe": [kurz(o) for o in res if "rewe" in ((o.get("advertisers") or [{}])[0].get("name") or "").lower()],
+                "haendler": sorted({((o.get("advertisers") or [{}])[0]).get("name") for o in res})}
+    except Exception as e:  # noqa: BLE001
+        return {"fehler": str(e)[:200]}
 
 
 try:
     api, client = t.hole_schluessel()
     h = {"x-apikey": api, "x-clientkey": client}
-    basis = t.SEARCH.rsplit("/", 1)[0]
-    for name, url in (("mit_plz", f"{basis}/{OFFER_ID}?as=web&zipCode=47178"), ("ohne_plz", f"{basis}/{OFFER_ID}")):
+
+    # 1) Welche API-Aufrufe stecken in den Seiten der Webseite?
+    for pfad in ("/search/cola", "/offers/25362087", "/b/coca-cola", "/rp/rewe-prospekte", "/"):
         try:
-            roh = json.loads(t.http(url, h))
-            out["offer"][name] = {"kurz": kurz(roh), "roh": roh}
+            html = t.http("https://www.marktguru.de" + pfad)
+            html = html.replace("&q;", '"').replace("&a;", "&").replace("&s;", "'").replace("&l;", "<").replace("&g;", ">")
+            urls = sorted(set(re.findall(r"https?://api\.marktguru\.de/[^\"'\s<>\\]+", html)))
+            skripte = sorted(set(re.findall(r'src="([^"]+\.js)"', html)))
+            out["seiten"][pfad] = {"laenge": len(html), "api_urls": urls[:40], "skripte": skripte[:15]}
         except Exception as e:  # noqa: BLE001
-            out["offer"][name] = {"fehler": str(e)[:300]}
-    for plz in ("47178", "46535"):
-        for q in ("coca cola", "Coca-Cola", "Cola", "REWE Cola", "Coca-Cola REWE"):
-            try:
-                res = t.hole_treffer(plz, [q], api, client)
-                liste = [kurz(o) for o in res]
-                zaehler = {}
-                for k in liste:
-                    zaehler[k["adv"]] = zaehler.get(k["adv"], 0) + 1
-                out["queries"][f"{plz} | {q}"] = {"anzahl": len(liste), "haendler": zaehler,
-                                                  "gesuchte_id_dabei": any(str(k["id"]) == OFFER_ID for k in liste),
-                                                  "rewe": [k for k in liste if "rewe" in (k["adv"] or "").lower()],
-                                                  "alle": liste}
-            except Exception as e:  # noqa: BLE001
-                out["queries"][f"{plz} | {q}"] = {"fehler": str(e)[:300]}
+            out["seiten"][pfad] = {"fehler": str(e)[:200]}
+
+    # 2) Mögliche Filter-Parameter für die Suche
+    basis = {"as": "web", "limit": 100, "offset": 0, "zipCode": "47178"}
+    for name, extra in (
+        ("q=cola", {"q": "cola"}),
+        ("q=cola, as=mobile", {"q": "cola", "as": "mobile"}),
+        ("q=cola, advertisers=rewe", {"q": "cola", "advertisers": "rewe"}),
+        ("q=cola, advertisers=retailers/126802", {"q": "cola", "advertisers": "retailers/126802"}),
+        ("q=cola, retailers=rewe", {"q": "cola", "retailers": "rewe"}),
+        ("q=cola, advertiser=rewe", {"q": "cola", "advertiser": "rewe"}),
+        ("q=cola, advertiserIds=retailers/126802", {"q": "cola", "advertiserIds": "retailers/126802"}),
+        ("q=coca-cola, brands=coca-cola", {"q": "coca-cola", "brands": "coca-cola"}),
+        ("q=rewe", {"q": "rewe"}),
+        ("q=rewe cola", {"q": "rewe cola"}),
+        ("q=getränke rewe", {"q": "getränke rewe"}),
+        ("ohne q, brands=coca-cola", {"brands": "coca-cola"}),
+        ("ohne q, brand=coca-cola", {"brand": "coca-cola"}),
+        ("ohne q, advertisers=rewe", {"advertisers": "rewe"}),
+    ):
+        out["varianten"][name] = suche({**basis, **extra}, h)
+
+    # 3) Taucht REWE bei irgendeiner Postleitzahl in der Suche auf?
+    for plz in ("47051", "47119", "47139", "47166", "47169", "47226", "47441", "47506", "46045", "45127", "40210", "50667", "10115", "80331"):
+        out["plz"][plz] = suche({**basis, "q": "cola", "zipCode": plz}, h)
 except Exception:  # noqa: BLE001
     out["fehler"] = traceback.format_exc()[-800:]
 
