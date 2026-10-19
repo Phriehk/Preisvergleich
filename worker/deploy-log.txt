@@ -1,30 +1,27 @@
-Token: {"success":true,"status":"active","errors":[]}
-Konto gefunden: ja
 workers.dev-Subdomain: phriehk
-
- ⛅️ wrangler 4.151.2
-────────────────────
-Total Upload: 19.19 KiB / gzip: 6.88 KiB
-Worker Startup Time: 3 ms
+Total Upload: 19.49 KiB / gzip: 6.92 KiB
+Worker Startup Time: 2 ms
 Your Worker has access to the following bindings:
-Binding                                        Resource          
-env.PV (612e7d031a774977a2dbf2aea3f07c20)      KV Namespace      
+Binding                                            Resource          
+env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
+env.ASSETS                                         Assets            
 
-Uploaded preisvergleich (1.73 sec)
-Deployed preisvergleich triggers (0.66 sec)
-  https://preisvergleich.phriehk.workers.dev
+Uploaded preise (3.28 sec)
+Deployed preise triggers (0.55 sec)
+  https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: d1fc087d-b6e4-4881-9083-b9d06d38e689
+Current Version ID: 0005a0bc-27d9-455b-b20c-f8ef7fed3da5
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
-────────────────────
-🌀 Creating the secret for the Worker "preisvergleich"
 ✨ Success! Uploaded secret NTFY_TOPIC
-────────────────────
-🌀 Creating the secret for the Worker "preisvergleich"
+✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
-Status: {"ok":true,"dienst":"preisvergleich","stand":null}
-Suche Fanta: 1 s, {"anzahl":1,"erste":{"markt":"Netto Marken-Discount","produkt":"Steinofenpizza","preis_pro_liter":null}}
-Aktualisieren: 5 s, {"zeit":"2026-10-19T14:22","anzahl":20,"fehler":0,"alarm":[]}
-Angebote: {"anzahl":20,"gruppen":["Monster Energy","Red Bull","coca cola"],"maerkte":["ALDI SÜD","Lidl","Netto Marken-Discount","PENNY","PENNY (46535)","REWE (47053)","trinkgut"]}
+Alten Server entfernt: {"success":true}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-19T14:26","anzahl":20,"fehler":0}}
+Seite: <title>Getränke-Preisvergleich</title>
+Ohne Code schreiben: HTTP 401
+Mit Code, leere Suche (erwartet 400): HTTP 400
+Suche Fanta: 1 s, {"anzahl":1}
+Aktualisieren: 4 s, {"zeit":"2026-10-19T14:37","anzahl":20,"fehler":0,"alarm":[]}
+Angebote: {"anzahl":20,"gruppen":["Monster Energy","Red Bull","coca cola"]}
 Verlauf: 184 Zeilen
