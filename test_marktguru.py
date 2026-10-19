@@ -284,6 +284,8 @@ def main():
     ap.add_argument("--alarm", type=float, help="Meldung, wenn der beste gültige Coca-Cola-Literpreis darunter liegt, z.B. 0.80")
     ap.add_argument("--plz2", default="46535", help="zweite Postleitzahl nur für bestimmte Märkte")
     ap.add_argument("--plz2-maerkte", default="Penny,Thomas Philipps", help="Märkte, die zusätzlich in --plz2 gesucht werden")
+    ap.add_argument("--plz3", default="47053", help="dritte Postleitzahl für Märkte, die in --plz keine Prospekte haben (REWE hat für 47178 keine)")
+    ap.add_argument("--plz3-maerkte", default="REWE", help="Märkte, die zusätzlich in --plz3 gesucht werden (genauer Name)")
     ap.add_argument("--produkte", default="", help="zusätzliche Produkte, durch Komma getrennt (die Favoriten aus favoriten.json werden immer mit abgefragt)")
     ap.add_argument("--ausschliessen", default="", help="Wörter, die ein Angebot ausschließen, durch Komma getrennt")
     ap.add_argument("--out", default="angebote.json", help="Ausgabedatei")
@@ -314,6 +316,7 @@ def main():
     SUCHEN = {"Coca-Cola": [a.suche, "Coca Cola", "Cola"], "Red Bull": ["Red Bull"],
               "Monster Energy": ["Monster Energy", "Monster"]}
     zweit = [t.strip().lower() for t in a.plz2_maerkte.split(",") if t.strip()]
+    dritt = [t.strip().lower() for t in a.plz3_maerkte.split(",") if t.strip()]
     treffer = []
     produkte = [p.strip() for p in a.produkte.split(",") if p.strip()]
     produkte += [fv for fv in favs if fv not in produkte]
@@ -325,6 +328,13 @@ def main():
                 name = ((o.get("advertisers") or [{}])[0].get("name") or "").lower()
                 if any(z in name for z in zweit):
                     o["_plz"] = a.plz2
+                    gefunden_p.append(o)
+        if a.plz3 and dritt and a.plz3 != a.plz:  # z.B. REWE: für die eigene Postleitzahl gibt es dort keine Prospekte
+            bekannt = {o.get("id") for o in gefunden_p}
+            for o in hole_treffer(a.plz3, suchen, api, client):
+                name = ((o.get("advertisers") or [{}])[0].get("name") or "").strip().lower()
+                if name in dritt and o.get("id") not in bekannt:  # genauer Name: "REWE Dortmund" ist ein anderer Händler
+                    o["_plz"] = a.plz3
                     gefunden_p.append(o)
         for o in gefunden_p:
             o["_gruppe"] = produkt
