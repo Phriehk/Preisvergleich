@@ -38,9 +38,25 @@ test("Server: Mengen", () => {
   assert.deepEqual([...srv.menge("2 Liter")], [1, 2]);
   assert.equal(srv.menge("versch. Sorten"), null);
   // Strukturierte Angaben von Marktguru haben Vorrang
-  assert.deepEqual([...srv.mengenangabe({ einheit: "l", volume: 0.5, quantity: 6 })], [6, 3]);
-  assert.deepEqual([...srv.mengenangabe({ einheit: "l", volume: 1.5, quantity: 0 })], [1, 1.5]);
-  assert.deepEqual([...srv.mengenangabe({ desc: "12 x 1,0 l", name: "Cola" })], [12, 12]);
+  assert.deepEqual([...srv.mengenangabe({ einheit: "l", volume: 0.5, quantity: 6 })], [6, 3, "l"]);
+  assert.deepEqual([...srv.mengenangabe({ einheit: "l", volume: 1.5, quantity: 0 })], [1, 1.5, "l"]);
+  assert.deepEqual([...srv.mengenangabe({ desc: "12 x 1,0 l", name: "Cola" })], [12, 12, "l"]);
+});
+
+test("Server: Lebensmittel (Gewicht und Stück)", () => {
+  const m = (o) => { const r = srv.mengenangabe(o); return r && [...r]; };
+  assert.deepEqual(m({ desc: "250-g-Packung (1 kg = 7,96)", name: "Butter" }), [1, 0.25, "kg"]);
+  assert.deepEqual(m({ desc: "2 x 250 g", name: "Butter" }), [2, 0.5, "kg"]);
+  assert.deepEqual(m({ desc: "1,5-kg-Beutel", name: "Äpfel" }), [1, 1.5, "kg"]);
+  assert.deepEqual(m({ desc: "500 Gramm", name: "Nudeln" }), [1, 0.5, "kg"]);
+  assert.deepEqual(m({ desc: "je 100 g 0,89 €", name: "Salami", einheit: "" }), null);   // Grundpreis ist keine Packung
+  assert.deepEqual(m({ einheit: "g", volume: 250, quantity: 1, desc: "", name: "Butter" }), [1, 0.25, "kg"]);
+  assert.deepEqual(m({ einheit: "kg", desc: "lose", name: "Äpfel" }), [1, 1, "kg"]);
+  assert.deepEqual(m({ desc: "10 Stück, Größe M", name: "Eier" }), [10, 10, "st"]);
+  assert.deepEqual(m({ desc: "6er Packung", name: "Eier" }), [6, 6, "st"]);
+  assert.deepEqual(m({ einheit: "stk", quantity: 10, desc: "", name: "Eier" }), [10, 10, "st"]);
+  assert.deepEqual(m({ desc: "1 l", name: "Milch" }), [1, 1, "l"]);   // Flüssigkeiten behalten Vorrang
+  assert.equal(m({ desc: "versch. Sorten", name: "Joghurt" }), null);
 });
 
 test("Verpackung: Einweg, Dose, PET", () => {
