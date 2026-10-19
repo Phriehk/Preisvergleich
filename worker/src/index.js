@@ -360,7 +360,7 @@ async function entfernungenBerechnen(env, maerkte) {
 // Fehlende oder veraltete Märkte nachladen (mit Filialen 30 Tage gültig, ohne Treffer nur 1 Tag, damit nicht bei jedem Lauf neu gesucht wird)
 async function entfernungenPflegen(env, maerkte) {
   const alt = (await env.PV.get("entfernungen", "json")) || {}, jetzt = Date.now();
-  const fehlt = [...new Set(maerkte.map(markenKern))].filter(m => m && m.length < 40 && (!alt[m] || jetzt - (alt[m].t || 0) > ((alt[m].filialen || []).length ? 30 : 1) * 864e5)).slice(0, 12);
+  const fehlt = [...new Set(maerkte.map(markenKern))].filter(m => m && m.length < 40 && (!alt[m] || (alt[m].km != null && !alt[m].filialen) || jetzt - (alt[m].t || 0) > ((alt[m].filialen || []).length ? 30 : 1) * 864e5)).slice(0, 12);
   if (fehlt.length) {
     const neu = await entfernungenBerechnen(env, fehlt);
     for (const [m, v] of Object.entries(neu)) alt[m] = { ...v, t: jetzt };
