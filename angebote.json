@@ -1,6 +1,6 @@
 [
   {
-    "abgefragt": "2026-10-19T01:49",
+    "abgefragt": "2026-10-19T02:02",
     "gruppe": "Coca-Cola",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25396112/images/default/0/small.webp",
     "marke": "Coca-Cola",
@@ -11,12 +11,13 @@
     "beschreibung": "1.25 l zzgl. 0.25 Pfand",
     "preis": 0.99,
     "liter": 1.25,
+    "stueck": 1,
     "preis_pro_liter": 0.79,
     "gueltig_von": "2026-10-26",
     "gueltig_bis": "2026-10-31"
   },
   {
-    "abgefragt": "2026-10-19T01:49",
+    "abgefragt": "2026-10-19T02:02",
     "gruppe": "Coca-Cola",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25302077/images/default/0/small.webp",
     "marke": "Coca-Cola",
@@ -27,12 +28,13 @@
     "beschreibung": "oder Fanta Versch. Sorten; teilweise koffeinhaltig; 18 x 0,33 l = 5,94- l-Packung; zzgl. Pfand 18 x 0.25 = 4.50",
     "preis": 7.99,
     "liter": 5.94,
+    "stueck": 18,
     "preis_pro_liter": 1.35,
     "gueltig_von": "2026-10-23",
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T01:49",
+    "abgefragt": "2026-10-19T02:02",
     "gruppe": "Coca-Cola",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25384092/images/default/0/small.webp",
     "marke": "Coca-Cola",
@@ -43,12 +45,13 @@
     "beschreibung": "Sprite oder Fanta Versch. Sorten; teilweise koffeinhaltig; je 330-ml-Flasche zzgl. Pfand 0.25 Auch als 6er-Pack erhältlich",
     "preis": 0.62,
     "liter": 0.33,
+    "stueck": 1,
     "preis_pro_liter": 1.88,
     "gueltig_von": "2026-10-26",
     "gueltig_bis": "2026-10-31"
   },
   {
-    "abgefragt": "2026-10-19T01:49",
+    "abgefragt": "2026-10-19T02:02",
     "gruppe": "Coca-Cola",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25301467/images/default/0/small.webp",
     "marke": "Coca-Cola",
@@ -59,12 +62,13 @@
     "beschreibung": "6x0.33l 1.98l +1.50 Pfand, Standardpackung 0.33l",
     "preis": 3.99,
     "liter": 1.98,
+    "stueck": 6,
     "preis_pro_liter": 2.02,
     "gueltig_von": "2026-10-22",
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T01:49",
+    "abgefragt": "2026-10-19T02:02",
     "gruppe": "Coca-Cola",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25339052/images/default/0/small.webp",
     "marke": "Coca-Cola",
@@ -75,12 +79,13 @@
     "beschreibung": "Versch. Sorten, Erfrischungsgetränk, zzgl. 1.50 Pfand, je 6 x 0,33 l",
     "preis": 4.49,
     "liter": 1.98,
+    "stueck": 6,
     "preis_pro_liter": 2.27,
     "gueltig_von": "2026-10-22",
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T01:49",
+    "abgefragt": "2026-10-19T02:02",
     "gruppe": "Coca-Cola",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25339052/images/default/0/small.webp",
     "marke": "Coca-Cola",
@@ -91,12 +96,13 @@
     "beschreibung": "Versch. Sorten, Erfrischungsgetränk, zzgl. 1.50 Pfand, je 6 x 0,33 l",
     "preis": 4.49,
     "liter": 1.98,
+    "stueck": 6,
     "preis_pro_liter": 2.27,
     "gueltig_von": "2026-10-22",
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T01:49",
+    "abgefragt": "2026-10-19T02:02",
     "gruppe": "Coca-Cola",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25358162/images/default/0/small.webp",
     "marke": "Coca-Cola",
@@ -107,12 +113,13 @@
     "beschreibung": "Fanta, Sprite oder Mezzo Mix teilw. koffeinhaltig, versch. Sorten 2 Liter zzgl. Pfand 0.25",
     "preis": 1.49,
     "liter": null,
+    "stueck": 1,
     "preis_pro_liter": null,
     "gueltig_von": "2026-10-19",
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T01:49",
+    "abgefragt": "2026-10-19T02:02",
     "gruppe": "Monster Energy",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25333907/images/default/0/small.webp",
     "marke": "Monster Energy",
@@ -123,12 +130,13 @@
     "beschreibung": "Versch. Sorten, koffeinund taurinhaltig, zzgl. 0.25 Pfand, je 0,5 l",
     "preis": 0.99,
     "liter": 0.5,
+    "stueck": 1,
     "preis_pro_liter": 1.98,
     "gueltig_von": "2026-10-19",
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T01:49",
+    "abgefragt": "2026-10-19T02:02",
     "gruppe": "Monster Energy",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25333907/images/default/0/small.webp",
     "marke": "Monster Energy",
@@ -139,12 +147,13 @@
     "beschreibung": "Versch. Sorten, koffeinund taurinhaltig, zzgl. 0.25 Pfand, je 0,5 l",
     "preis": 0.99,
     "liter": 0.5,
+    "stueck": 1,
     "preis_pro_liter": 1.98,
     "gueltig_von": "2026-10-19",
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T01:49",
+    "abgefragt": "2026-10-19T02:02",
     "gruppe": "Monster Energy",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25295737/images/default/0/small.webp",
     "marke": "Spin Master",
@@ -155,12 +164,13 @@
     "beschreibung": "Details im Prospekt",
     "preis": 4.99,
     "liter": null,
+    "stueck": 1,
     "preis_pro_liter": null,
     "gueltig_von": "2026-10-26",
     "gueltig_bis": "2026-10-31"
   },
   {
-    "abgefragt": "2026-10-19T01:49",
+    "abgefragt": "2026-10-19T02:02",
     "gruppe": "Red Bull",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25301402/images/default/0/small.webp",
     "marke": "Red Bull",
@@ -171,12 +181,13 @@
     "beschreibung": "HINWEIS: MIT LIDL PLUS APP 19.99 € 24x0.25l +6.00 Pfand, Standardpackung 0.25l",
     "preis": 20.99,
     "liter": 6.0,
+    "stueck": 24,
     "preis_pro_liter": 3.5,
     "gueltig_von": "2026-10-19",
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T01:49",
+    "abgefragt": "2026-10-19T02:02",
     "gruppe": "Red Bull",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25384172/images/default/0/small.webp",
     "marke": "Red Bull",
@@ -187,12 +198,13 @@
     "beschreibung": "Versch. Sorten; taurin- und koffeinhaltig; je 250-ml-Dose zzgl. Pfand 0.25",
     "preis": 0.89,
     "liter": 0.25,
+    "stueck": 1,
     "preis_pro_liter": 3.56,
     "gueltig_von": "2026-10-26",
     "gueltig_bis": "2026-10-31"
   },
   {
-    "abgefragt": "2026-10-19T01:49",
+    "abgefragt": "2026-10-19T02:02",
     "gruppe": "Red Bull",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25337472/images/default/0/small.webp",
     "marke": "Red Bull",
@@ -203,12 +215,13 @@
     "beschreibung": "HINWEIS: MIT PENNY APP 0.88 € Versch. Sorten, koffein- und taurinhaltig, zzgl. 0.25 Pfand, je 250 ml. Auch jeweils als 4er-Pack erhältlich",
     "preis": 0.99,
     "liter": 0.25,
+    "stueck": 1,
     "preis_pro_liter": 3.96,
     "gueltig_von": "2026-10-19",
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T01:49",
+    "abgefragt": "2026-10-19T02:02",
     "gruppe": "Red Bull",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25337472/images/default/0/small.webp",
     "marke": "Red Bull",
@@ -219,12 +232,13 @@
     "beschreibung": "HINWEIS: MIT PENNY APP 0.88 € Versch. Sorten, koffein- und taurinhaltig, zzgl. 0.25 Pfand, je 250 ml. Auch jeweils als 4er-Pack erhältlich",
     "preis": 0.99,
     "liter": 0.25,
+    "stueck": 1,
     "preis_pro_liter": 3.96,
     "gueltig_von": "2026-10-19",
     "gueltig_bis": "2026-10-24"
   },
   {
-    "abgefragt": "2026-10-19T01:49",
+    "abgefragt": "2026-10-19T02:02",
     "gruppe": "Red Bull",
     "bild": "https://mg2de.b-cdn.net/api/v1/offers/25176863/images/default/0/small.webp",
     "marke": "Red Bull",
@@ -235,6 +249,7 @@
     "beschreibung": "Koffein- und taurinhaltig; 24 x 0,25 l = 6-l-Packung; zzgl. Pfand 24 x 0.25 = 6.00",
     "preis": 29.99,
     "liter": 6.0,
+    "stueck": 24,
     "preis_pro_liter": 5.0,
     "gueltig_von": "2026-10-19",
     "gueltig_bis": "2026-10-24"
