@@ -441,7 +441,7 @@ const fakt=m=>{const d=dinfo(m);return d&&d.weg!=null?1:STRASSE};   // Faktor Lu
 const STRASSE=1.3;   // Straße ist im Schnitt etwa 1,3-mal so lang wie die Luftlinie
 var kmSatz=.30;try{const x=parseFloat(localStorage.getItem("pv-km"));if(x>=0&&x<5)kmSatz=x}catch(e){}
 /* ---- Echte Fahrstrecke (öffentlicher OSRM-Dienst von OpenStreetMap), nur mit eigener Adresse ---- */
-var strasse={},strasseKey="";try{const s=JSON.parse(localStorage.getItem("pv-strasse")||"null");if(s&&s.k&&s.w){strasse=s.w;strasseKey=s.k}}catch(e){}
+var strasse={},strasseKey="",strMat=null;try{const s=JSON.parse(localStorage.getItem("pv-strasse")||"null");if(s&&s.k&&s.w){strasse=s.w;strasseKey=s.k;strMat=s.mat||null}}catch(e){}
 function ortKey(){return ort?ort.lat.toFixed(4)+","+ort.lon.toFixed(4):""}
 async function strasseLaden(){
   if(!ort||!Object.keys(dist).length)return;
@@ -452,7 +452,7 @@ async function strasseLaden(){
   });
   if(!z.length||z.length>60)return;
   const k=ortKey()+"|"+z.map(x=>x.lat.toFixed(4)+x.lon.toFixed(4)).join(",");
-  if(k===strasseKey)return;
+  if(k===strasseKey&&strMat)return;
   try{
     const c=[[ort.lon,ort.lat],...z.map(x=>[x.lon,x.lat])].map(q=>q[0].toFixed(5)+","+q[1].toFixed(5)).join(";");
     const ac=new AbortController(),to=setTimeout(()=>ac.abort(),9000);
@@ -460,10 +460,22 @@ async function strasseLaden(){
     if(!r.ok)return;
     const j=await r.json();if(j.code!=="Ok"||!j.distances||!j.distances[0])return;
     const w={};
-    z.forEach((x,i)=>{const dm=j.distances[0][i+1],du=j.durations&&j.durations[0][i+1];if(dm==null)return;const km=dm/1000;if(!w[x.m]||km<w[x.m].km)w[x.m]={km,min:du!=null?Math.round(du/60):null,adresse:x.adr}});
+    z.forEach((x,i)=>{const dm=j.distances[0][i+1],du=j.durations&&j.durations[0][i+1];if(dm==null)return;const km=dm/1000;if(!w[x.m]||km<w[x.m].km)w[x.m]={km,min:du!=null?Math.round(du/60):null,adresse:x.adr,lat:x.lat,lon:x.lon}});
     if(!Object.keys(w).length)return;
-    strasse=w;strasseKey=k;try{localStorage.setItem("pv-strasse",JSON.stringify({k,w}))}catch(e){}
+    strasse=w;strasseKey=k;strMat=null;try{localStorage.setItem("pv-strasse",JSON.stringify({k,w}))}catch(e){}
     render();
+    // Strecken zwischen den Märkten (für eine Tour): eine Tabelle über Zuhause und die jeweils nächste Filiale
+    const ms=Object.keys(w);
+    if(ms.length>1){
+      const c2=[[ort.lon,ort.lat],...ms.map(m=>[w[m].lon,w[m].lat])].map(q=>q[0].toFixed(5)+","+q[1].toFixed(5)).join(";");
+      const ac2=new AbortController(),to2=setTimeout(()=>ac2.abort(),9000);
+      const r2=await fetch("https://router.project-osrm.org/table/v1/driving/"+c2+"?annotations=distance",{signal:ac2.signal});clearTimeout(to2);
+      if(!r2.ok)return;
+      const j2=await r2.json();if(j2.code!=="Ok"||!j2.distances)return;
+      const mat={};ms.forEach((a,i)=>ms.forEach((b,jx)=>{const dm=j2.distances[i+1]&&j2.distances[i+1][jx+1];if(a!==b&&dm!=null)mat[a+"|"+b]=dm/1000}));
+      strMat=mat;try{localStorage.setItem("pv-strasse",JSON.stringify({k,w,mat}))}catch(e){}
+      render();
+    }
   }catch(e){}
 }
 function luftKm(a,b,c,d){const r=x=>x*Math.PI/180,q=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;return 12742*Math.asin(Math.sqrt(q))}
@@ -578,6 +590,25 @@ function zk(k){const m=String(k).match(/^(.*)\|(\d+)$/);return m?{g:m[1],ml:+m[2
 function zLabel(k){const x=zk(k);return x.ml?x.g+" "+groesseText(x.ml):x.g}
 function fvGroessen(g,extra){return [...new Set([...offers.filter(o=>(o.gruppe||"Coca-Cola")===g&&!o.ausb&&!abgelaufen(o)&&!aus.has(o.markt)).map(o=>o.ml),...extra])].sort((a,b)=>a-b)}
 function fvAngebote(k){const {g,ml}=zk(k);return offers.filter(o=>(o.gruppe||"Coca-Cola")===g&&(!ml||o.ml===ml)&&!o.ausb&&!abgelaufen(o)&&!aus.has(o.markt)&&(fvZeit==="jetzt"?!kommt(o):kommt(o)))}
+/* Tour: Zuhause -> Markt A -> Markt B -> Zuhause (bessere Reihenfolge); nur mit eigener Adresse */
+var fvTour="getrennt";try{fvTour=localStorage.getItem("pv-tour")==="tour"?"tour":"getrennt"}catch(e){}
+function mKoord(m){
+  const w=strasseKey.startsWith(ortKey()+"|")?strasse[m]:null;if(w&&w.lat!=null)return [w.lat,w.lon];
+  const d=dist[m];if(!ort||!d||!d.filialen||!d.filialen.length)return null;
+  let b=null;for(const f of d.filialen){const k=luftKm(ort.lat,ort.lon,f[0],f[1]);if(!b||k<b.k)b={k,c:[f[0],f[1]]}}return b.c;
+}
+function zwKm(a,b){
+  if(strMat&&strMat[a+"|"+b]!=null&&strasseKey.startsWith(ortKey()+"|"))return {km:strMat[a+"|"+b],echt:true};
+  const ca=mKoord(a),cb=mKoord(b);if(!ca||!cb)return null;
+  return {km:luftKm(ca[0],ca[1],cb[0],cb[1])*STRASSE,echt:false};
+}
+function tourFahrt(ms){
+  if(!ort||ms.length!==2)return null;
+  const [a,b]=ms,da=dkm(a),db=dkm(b);if(da==null||db==null)return null;
+  const ha=da*fakt(a),hb=db*fakt(b),ab=zwKm(a,b),ba=zwKm(b,a);if(!ab||!ba)return null;
+  const o1=ha+ab.km+hb,o2=hb+ba.km+ha,km=Math.min(o1,o2);
+  return {km,kosten:km*kmSatz,reihe:o1<=o2?[a,b]:[b,a],echt:ab.echt&&fakt(a)===1&&fakt(b)===1};
+}
 function fvFahrt(m){const d=dkm(m);return d==null?null:2*d*kmSatz*fakt(m)}
 /* Menge immer in Litern; im Vergleich wird je Markt die Packungsgröße gewählt, die am besten passt (ganze Packungen) */
 function zBedarf(k){return zettel[k]}
@@ -607,8 +638,10 @@ function fvPlan(ms,namen,t){
     zu[g]=b;ware+=b.w.kosten;
   }
   const benutzt=[...new Set(Object.values(zu).map(x=>x.m))];
-  let fahrt=0,unbekannt=false;benutzt.forEach(m=>{const f=fvFahrt(m);if(f==null)unbekannt=true;else fahrt+=f});
-  return {ms:benutzt,zu,ware,fahrt,gesamt:ware+fahrt,unbekannt};
+  let fahrt=0,unbekannt=false,tour=null;
+  if(fvTour==="tour"&&benutzt.length===2)tour=tourFahrt(benutzt);
+  if(tour)fahrt=tour.kosten;else benutzt.forEach(m=>{const f=fvFahrt(m);if(f==null)unbekannt=true;else fahrt+=f});
+  return {ms:benutzt,zu,ware,fahrt,gesamt:ware+fahrt,unbekannt,tour};
 }
 function zeichneFavoriten(){
   const gr=fvGruppen();
@@ -631,7 +664,7 @@ function fvZettelHtml(namen){
   return `<section class="ek"><div class="ek-h"><b>Meine Favoriten</b><span class="ek-s" style="font-size:1rem">${namen.length}</span></div>`+namen.map(k=>`<div class="fv-z"><span style="flex:1;min-width:0"><b>${esc(zLabel(k))}</b></span><span class="fv-l">${zEingabe(k)}</span><button type="button" class="lb an" data-zx="${esc(k)}" aria-label="Von der Liste entfernen">✕</button></div>`).join("")+`<p class="lbl" style="margin:8px 0 0">Die Favoriten wählst du auf der Seite „Favoriten“. Die Menge gibst du in Litern an. Im Vergleich wird je Markt die Packungsgröße gewählt, die am besten dazu passt (zum Beispiel 6 × 330 ml bei 2 Litern).</p></section>`;
 }
 function fvVergleich(namen){
-  const seg=`<div class="fv-seg"><button type="button" class="lb${fvZeit==="jetzt"?" an":""}" data-z="jetzt">Aktuell</button><button type="button" class="lb${fvZeit==="spaeter"?" an":""}" data-z="spaeter">Demnächst</button></div>`;
+  const seg=`<div class="fv-seg"><button type="button" class="lb${fvZeit==="jetzt"?" an":""}" data-z="jetzt">Aktuell</button><button type="button" class="lb${fvZeit==="spaeter"?" an":""}" data-z="spaeter">Demnächst</button></div>`+`<div class="fv-seg" style="margin-top:6px"><span class="lbl" style="margin:0;align-self:center">Bei mehreren Märkten:</span><button type="button" class="lb${fvTour==="getrennt"?" an":""}" data-t="getrennt">einzeln hin und zurück</button><button type="button" class="lb${fvTour==="tour"?" an":""}" data-t="tour"${ort?"":" disabled title=\"Dafür brauche ich deine Adresse (Mein Standort)\""}>eine Tour</button></div>`;
   const t=fvBest(namen);
   const ohne=namen.filter(g=>!Object.values(t).some(x=>x[g])),mit=namen.filter(g=>!ohne.includes(g));
   let html=`<section class="ek"><div class="ek-h"><b>Vergleich: Wo lohnt sich der Einkauf?</b></div>${seg}`;
@@ -651,9 +684,14 @@ function fvVergleich(namen){
     const nahVoll=ein.slice().sort((x,y)=>(dkm(x.ms[0])??99)-(dkm(y.ms[0])??99))[0];
     const vgl=nahVoll&&nahVoll!==beste?nahVoll:null,diff=vgl?vgl.gesamt-beste.gesamt:0;
     const kopf=`<div style="font-size:1.05rem">Beste Wahl: <b>${einzeln(beste)}</b>${beste.ms.length>1?" (zwei Märkte)":""}</div>`;
-    const rech=`<div class="fv-sum" style="margin-top:6px"><div class="fr3"><span>Ware</span><span>${eur(beste.ware)}</span></div><div class="fr3"><span>Fahrt${beste.ms.length>1?" (beide Märkte)":""}</span><span>${beste.unbekannt?"unbekannt":eur(beste.fahrt)}</span></div><div class="fr3 fb"><span>Zusammen</span><span>${eur(beste.gesamt)}</span></div></div>`;
+    const rech=`<div class="fv-sum" style="margin-top:6px"><div class="fr3"><span>Ware</span><span>${eur(beste.ware)}</span></div><div class="fr3"><span>${beste.tour?`Fahrt (eine Tour: Zuhause → ${beste.tour.reihe.map(esc).join(" → ")} → Zuhause, ${f1(beste.tour.km)} km${beste.tour.echt?"":", geschätzt"})`:`Fahrt${beste.ms.length>1?" (beide Märkte einzeln, hin und zurück)":""}`}</span><span>${beste.unbekannt?"unbekannt":eur(beste.fahrt)}</span></div><div class="fr3 fb"><span>Zusammen</span><span>${eur(beste.gesamt)}</span></div></div>`;
+    let tourHinweis="";
+    if(beste.ms.length===2){
+      const tf=beste.tour||tourFahrt(beste.ms),einzel=beste.ms.reduce((s,m)=>s+(fvFahrt(m)||0),0);
+      if(tf&&beste.ms.every(m=>fvFahrt(m)!=null)){const dd=einzel-tf.kosten;tourHinweis=beste.tour?`<p class="lbl" style="margin:6px 0 0">Einzeln hin und zurück wären es ${eur(einzel)} Fahrt: die Tour ${dd>0.004?"spart "+eur(dd):"kostet "+eur(-dd)+" mehr"}.</p>`:`<p class="lbl" style="margin:6px 0 0">Als eine Tour (Zuhause → ${tf.reihe.map(esc).join(" → ")} → Zuhause, ${f1(tf.km)} km) wären es ${eur(tf.kosten)} Fahrt: ${dd>0.004?"das spart "+eur(dd):"das kostet "+eur(-dd)+" mehr"}.</p>`}
+    }
     const vergl=vgl?`<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">Zum Vergleich ${vgl.ms.length===1&&dkm(vgl.ms[0])!=null?`der nächste Markt mit allen Artikeln (<b>${einzeln(vgl)}</b>, ${f1(dkm(vgl.ms[0]))} km)`:`<b>${einzeln(vgl)}</b>`}: Ware ${eur(vgl.ware)} + Fahrt ${eur(vgl.fahrt)} = ${eur(vgl.gesamt)}.<br><b class="${diff>0?"fl":""}" style="${diff>0?"color:var(--best)":""}">${diff>0.004?`Du sparst ${eur(diff)}`:"Kein Unterschied"}.</b></div>`:"";
-    const text=kopf+rech+vergl;
+    const text=kopf+rech+tourHinweis+vergl;
     html+=`<div class="hinweis fv-best" style="margin-top:8px">${text}${beste.unbekannt?'<p class="lbl" style="margin:6px 0 0">Für Märkte ohne bekannte Entfernung sind keine Fahrtkosten eingerechnet.</p>':""}</div>`;
     const wo={};Object.entries(beste.zu).forEach(([g,x])=>{(wo[x.m]=wo[x.m]||[]).push([g,x.w])});
     Object.keys(wo).sort((a,b)=>(dkm(a)??99)-(dkm(b)??99)).forEach(m=>{
@@ -675,6 +713,7 @@ function fvVergleich(namen){
 favseite.addEventListener("toggle",e=>{const d=e.target;if(d.classList&&d.classList.contains("fv-gr")){if(d.open)offen.add(d.dataset.g);else offen.delete(d.dataset.g)}},true);
 function fvKlick(e){
   const z=e.target.closest("[data-z]");if(z){fvZeit=z.dataset.z;render();return true}
+  const tb=e.target.closest("[data-t]");if(tb&&!tb.disabled){fvTour=tb.dataset.t;try{localStorage.setItem("pv-tour",fvTour)}catch(e){}render();return true}
   const x=e.target.closest("[data-zx]");if(x){delete zettel[x.dataset.zx];zettelSpeichern();render();return true}
   return false;
 }
