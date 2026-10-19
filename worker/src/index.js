@@ -121,10 +121,11 @@ async function parallel(aufgaben, n) {
   return erg;
 }
 
-async function abfragen(ctx, produkte, favInfo, extraAus) {
+async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2, PLZ3]) {   // erste Postleitzahl = Hauptgebiet, die weiteren liefern nur ausgewählte Märkte dazu
+  const HAUPT = plzListe[0];
   // produkte: Liste von Gruppennamen; favInfo: {name: {aus:[...], nur:Set}}
   const jobs = [];
-  for (const p of produkte) for (const s of (SUCHEN[p] || [p])) for (const plz of [PLZ, PLZ2, PLZ3]) jobs.push({ p, s, plz });
+  for (const p of produkte) for (const s of (SUCHEN[p] || [p])) for (const plz of plzListe) jobs.push({ p, s, plz });
   const teile = ctx.exports.Teil;
   const fehlerListe = [];
   const roh = await parallel(jobs.map(j => async () => {
@@ -135,12 +136,12 @@ async function abfragen(ctx, produkte, favInfo, extraAus) {
   for (const p of produkte) {
     const ids = new Set(), treffer = [];
     jobs.forEach((j, i) => {
-      if (j.p !== p || j.plz !== PLZ || !roh[i]) return;
+      if (j.p !== p || j.plz !== HAUPT || !roh[i]) return;
       for (const o of roh[i]) if (!ids.has(o.id)) { ids.add(o.id); treffer.push(o); }
     });
     const bekannt = new Set(treffer.map(o => o.id)), zweit = new Set();
     jobs.forEach((j, i) => {
-      if (j.p !== p || j.plz === PLZ || !roh[i]) return;
+      if (j.p !== p || j.plz === HAUPT || !roh[i]) return;
       for (const o of roh[i]) {
         const name = o.adv.trim().toLowerCase();
         const passt = j.plz === PLZ2 ? PLZ2_MAERKTE.some(z => name.includes(z)) : PLZ3_MAERKTE.includes(name) && !bekannt.has(o.id);
@@ -279,6 +280,8 @@ const OSM_UA = { "User-Agent": "preisvergleich-privat/1.0 (privates Hobbyprojekt
 const markenKern = m => m.replace(/\s*\(\d+\)\s*$/, "").trim();
 function markenRegex(m) {   // Suchmuster für den Namen im Kartenmaterial
   const k = markenKern(m).toLowerCase();
+  const w = k.split(/\s+/)[0];
+  if (["rewe", "edeka", "lidl", "kaufland", "penny", "rossmann", "trinkgut", "famila", "marktkauf", "norma", "globus", "combi", "nahkauf", "müller"].includes(w)) return w;   // z.B. "REWE Dortmund" -> rewe
   if (k.startsWith("aldi")) return k.includes("nord") ? "ALDI N" : "ALDI S";
   if (k.startsWith("netto")) return "Netto";
   if (k.startsWith("edeka")) return "EDEKA";
@@ -326,14 +329,15 @@ async function ueberNominatim(namen, mitte) {
   }
   return erg;
 }
-async function entfernungenBerechnen(env, maerkte) {
-  let mitte = await env.PV.get("mitte", "json");
+async function entfernungenBerechnen(env, maerkte, plz = PLZ) {
+  const mk = plz === PLZ ? "mitte" : "mitte:" + plz;
+  let mitte = await env.PV.get(mk, "json");
   if (!mitte) {
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${PLZ}&country=de&format=json&limit=1`, { headers: OSM_UA });
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${plz}&country=de&format=json&limit=1`, { headers: OSM_UA });
     const j = r.ok ? await r.json() : [];
     if (!j.length) throw new Error("Postleitzahl nicht gefunden");
     mitte = { lat: +j[0].lat, lon: +j[0].lon };
-    await env.PV.put("mitte", JSON.stringify(mitte));
+    await env.PV.put(mk, JSON.stringify(mitte));
   }
   const namen = [...new Set(maerkte.map(markenKern))].filter(Boolean);
   // erst nach Ladentyp filtern (schnell), den Markennamen prüfen wir danach selbst
@@ -358,15 +362,34 @@ async function entfernungenBerechnen(env, maerkte) {
 }
 
 // Fehlende oder veraltete Märkte nachladen (mit Filialen 30 Tage gültig, ohne Treffer nur 1 Tag, damit nicht bei jedem Lauf neu gesucht wird)
-async function entfernungenPflegen(env, maerkte) {
-  const alt = (await env.PV.get("entfernungen", "json")) || {}, jetzt = Date.now();
+async function entfernungenPflegen(env, maerkte, plz = PLZ) {
+  const ek = plz === PLZ ? "entfernungen" : "entf:" + plz;
+  const alt = (await env.PV.get(ek, "json")) || {}, jetzt = Date.now();
   const fehlt = [...new Set(maerkte.map(markenKern))].filter(m => m && m.length < 40 && (!alt[m] || (alt[m].km != null && !alt[m].filialen) || jetzt - (alt[m].t || 0) > ((alt[m].filialen || []).length ? 30 : 1) * 864e5)).slice(0, 12);
   if (fehlt.length) {
-    const neu = await entfernungenBerechnen(env, fehlt);
+    const neu = await entfernungenBerechnen(env, fehlt, plz);
     for (const [m, v] of Object.entries(neu)) alt[m] = { ...v, t: jetzt };
-    await env.PV.put("entfernungen", JSON.stringify(alt));
+    await env.PV.put(ek, JSON.stringify(alt));
   }
   return alt;
+}
+
+/* ---------- Angebote für eine beliebige Postleitzahl (öffentlich, 3 Stunden zwischengespeichert) ---------- */
+const plzOk = s => /^\d{5}$/.test(s) && +s >= 1001 && +s <= 99998;
+async function regionAngebote(env, ctx, sp) {
+  const plz = sp.get("plz") || "";
+  if (!plzOk(plz)) throw Object.assign(new Error("Ungültige Postleitzahl"), { status: 400 });
+  const begriffe = [...new Set((sp.get("q") || "").split("|").map(x => x.replace(/,/g, " ").trim()).filter(x => x && x.length <= 40))].slice(0, 6);
+  if (!begriffe.length) throw Object.assign(new Error("Bitte einen Suchbegriff angeben"), { status: 400 });
+  const roh = new TextEncoder().encode(begriffe.map(x => x.toLowerCase()).sort().join("|"));
+  const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", roh))].slice(0, 8).map(b => b.toString(16).padStart(2, "0")).join("");
+  const key = "reg:" + plz + ":" + hash, frisch = sp.get("neu") === "1";
+  const alt = await env.PV.get(key, "json");
+  if (alt && Date.now() - alt.t < (frisch ? 15 * 60e3 : 3 * 3600e3)) return alt.liste;
+  const { info } = favAuswerten(await lade(env, "favoriten", "json"));
+  const { liste } = await abfragen(ctx, begriffe, info, [], [plz]);
+  await env.PV.put(key, JSON.stringify({ t: Date.now(), liste }), { expirationTtl: 86400 });
+  return liste;
 }
 
 /* ---------- Schreibrechte: Zugangscode (Secret ZUGANG), die App merkt ihn sich nach der ersten Eingabe ---------- */
@@ -399,7 +422,14 @@ export default {
         if (p === "/angebote.json") return antwort(JSON.stringify(await lade(env, "angebote", "json")));
         if (p === "/favoriten.json") return antwort(JSON.stringify(await lade(env, "favoriten", "json")));
         if (p === "/verlauf.csv") return antwort(await verlaufCsv(env), "text/csv; charset=utf-8");
-        if (p === "/entfernungen") return antwort((await env.PV.get("entfernungen", "json")) || {});
+        if (p === "/entfernungen") {
+          const plz = url.searchParams.get("plz") || "";
+          if (!plz || plz === PLZ) return antwort((await env.PV.get("entfernungen", "json")) || {});
+          if (!plzOk(plz)) return fehler("Ungültige Postleitzahl", 400);
+          const gewollt = (url.searchParams.get("m") || "").split("|").map(x => x.trim()).filter(Boolean).slice(0, 12);
+          return antwort(gewollt.length ? await entfernungenPflegen(env, gewollt, plz) : ((await env.PV.get("entf:" + plz, "json")) || {}));
+        }
+        if (p === "/region") return antwort(await regionAngebote(env, ctx, url.searchParams));
         if (p === "/status") return antwort({ ok: true, dienst: "preisvergleich", stand: await env.PV.get("stand", "json") });
         return env.ASSETS.fetch(req);  // die Seite selbst (index.html, Symbole, ...)
       }
@@ -424,7 +454,7 @@ export default {
       if (p === "/aktualisieren" && req.method === "POST") return antwort(await aktualisieren(env, ctx));
       return fehler("Unbekannte Adresse", 404);
     } catch (e) {
-      return fehler(e.message || String(e));
+      return fehler(e.message || String(e), e.status === 400 ? 400 : 500);
     }
   },
   async scheduled(event, env, ctx) {

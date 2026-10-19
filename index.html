@@ -341,6 +341,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
     <h2 id="ortTitel">Mein Standort</h2>
     <p class="lbl" style="margin:0">Damit rechnet die Seite die Entfernung zur nächsten Filiale ab deiner Adresse. Sie wird nur in diesem Browser gespeichert und nicht an den Server dieser Seite geschickt. Für das Nachschlagen geht sie an OpenStreetMap.</p>
     <label>Adresse oder Postleitzahl<input id="ortText" autocomplete="street-address" placeholder="z.B. Musterstraße 5, 47178 Duisburg"></label>
+    <label class="chip"><input type="checkbox" id="ortAng" checked> Auch die Angebote für meine Postleitzahl laden</label>
     <div id="ortInfo" class="lbl" style="margin:0"></div>
     <div class="row"><button id="ortSave" type="button" class="primary">Speichern</button><button id="ortGps" type="button">📍 Aktuellen Standort nehmen</button><button id="ortDel" type="button">Entfernen</button><button id="ortZu" type="button">Schließen</button></div>
   </div>
@@ -412,6 +413,12 @@ async function distLaden(){
   ortBtn.hidden=false;
   try{
     await wBereit;
+    const rp=regionPlz();
+    if(rp){
+      const marken=[...new Set(offers.map(o=>mbase(o.markt)))].slice(0,12);
+      dist=marken.length?await (await wf("/entfernungen?plz="+rp+"&m="+encodeURIComponent(marken.join("|")))).json():{};
+      render();return;
+    }
     dist=await (await wf("/entfernungen")).json();
     const fehlt=[...new Set(offers.map(o=>mbase(o.markt)))].filter(x=>!(dist[x]&&("filialen" in dist[x]||dist[x].km!=null)));
     if(fehlt.length&&zugang)dist=await (await wf("/entfernungen?m="+encodeURIComponent(fehlt.join("|")),{method:"POST"},true)).json();
@@ -419,26 +426,42 @@ async function distLaden(){
   }catch(e){}
 }
 /* ---- Eigener Standort ---- */
-function ortSetzen(o){ort=o;try{o?localStorage.setItem("pv-ort",JSON.stringify(o)):localStorage.removeItem("pv-ort")}catch(e){}ortInfo.textContent=o?"Gespeichert: "+o.name:"";render()}
-ortBtn.onclick=()=>{ortText.value=ort?ort.name:"";ortInfo.textContent=ort?"Aktuell gespeichert: "+ort.name:"";ortDlg.hidden=false;ortText.focus()};
+const HEIM=["47178","46535","47053"];   // Postleitzahlen, für die der Server die Angebote ohnehin täglich holt
+function regionPlz(){return cf&&ort&&ort.angebote&&ort.plz&&!HEIM.includes(ort.plz)?ort.plz:""}
+async function ortSetzen(o){
+  const vorher=regionPlz();
+  ort=o;try{o?localStorage.setItem("pv-ort",JSON.stringify(o)):localStorage.removeItem("pv-ort")}catch(e){}
+  const rp=regionPlz();
+  ortInfo.textContent=o?"Gespeichert: "+o.name+(o.plz?" (PLZ "+o.plz+")":"")+(rp?". Die Angebote für diese Postleitzahl werden geladen …":o.plz&&HEIM.includes(o.plz)?". Diese Postleitzahl gehört zum Gebiet der Seite, die vorhandenen Angebote gelten dort.":!o.plz?". Keine Postleitzahl gefunden, die Angebote bleiben unverändert.":""):"";
+  render();
+  if(vorher!==rp)await autoLaden();
+  distLaden();
+  if(rp&&o)ortInfo.textContent="Gespeichert: "+o.name+" (PLZ "+o.plz+"). Angebote für diese Postleitzahl sind geladen.";
+}
+ortBtn.onclick=()=>{ortText.value=ort?ort.name:"";ortAng.checked=!ort||ort.angebote!==false;ortInfo.textContent=ort?"Aktuell gespeichert: "+ort.name+(ort.plz?" (PLZ "+ort.plz+")":""):"";ortDlg.hidden=false;ortText.focus()};
 ortZu.onclick=()=>{ortDlg.hidden=true};
 ortDlg.onclick=e=>{if(e.target===ortDlg)ortDlg.hidden=true};
-ortDel.onclick=()=>{ortSetzen(null);ortText.value="";ortInfo.textContent="Standort entfernt, es gilt wieder die Postleitzahl der Seite."};
+ortDel.onclick=()=>{ortText.value="";ortSetzen(null).then(()=>{ortInfo.textContent="Standort entfernt, es gelten wieder die Angebote und die Postleitzahl der Seite."})};
+const plzAus=j=>{const m=String((j&&j.address&&j.address.postcode)||"").match(/\b\d{5}\b/);return m?m[0]:""};
 ortSave.onclick=async()=>{
   const q=ortText.value.trim();if(q.length<3){ortInfo.textContent="Bitte eine Adresse oder Postleitzahl eingeben.";return}
   ortInfo.textContent="Suche …";
   try{
-    const r=await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=de&accept-language=de&q="+encodeURIComponent(q));
+    const r=await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&countrycodes=de&accept-language=de&q="+encodeURIComponent(q));
     const j=r.ok?await r.json():[];
     if(!j.length){ortInfo.textContent="Dazu habe ich nichts gefunden. Versuch es mit Straße, Hausnummer und Ort oder nur mit der Postleitzahl.";return}
-    ortSetzen({lat:+j[0].lat,lon:+j[0].lon,name:(j[0].display_name||q).split(",").slice(0,3).join(",").trim()});
+    await ortSetzen({lat:+j[0].lat,lon:+j[0].lon,name:(j[0].display_name||q).split(",").slice(0,3).join(",").trim(),plz:plzAus(j[0])||(/^\d{5}$/.test(q)?q:""),angebote:ortAng.checked});
   }catch(e){ortInfo.textContent="Die Adresssuche ist gerade nicht erreichbar."}
 };
 ortText.onkeydown=e=>{if(e.key==="Enter")ortSave.click()};
 ortGps.onclick=()=>{
   if(!navigator.geolocation){ortInfo.textContent="Dieses Gerät kann den Standort nicht bestimmen.";return}
   ortInfo.textContent="Standort wird bestimmt …";
-  navigator.geolocation.getCurrentPosition(p=>ortSetzen({lat:p.coords.latitude,lon:p.coords.longitude,name:"aktueller Standort"}),()=>{ortInfo.textContent="Der Standort wurde nicht freigegeben."},{timeout:15000});
+  navigator.geolocation.getCurrentPosition(async p=>{
+    let plz="";
+    try{const r=await fetch("https://nominatim.openstreetmap.org/reverse?format=json&addressdetails=1&accept-language=de&lat="+p.coords.latitude+"&lon="+p.coords.longitude);if(r.ok)plz=plzAus(await r.json())}catch(e){}
+    ortSetzen({lat:p.coords.latitude,lon:p.coords.longitude,name:"aktueller Standort",plz,angebote:ortAng.checked});
+  },()=>{ortInfo.textContent="Der Standort wurde nicht freigegeben."},{timeout:15000});
 };
 function fahrtZeile(b,liste){
   const db=dkm(b.markt);if(db==null)return"";
@@ -628,7 +651,7 @@ korrReset.onclick=()=>{offers.filter(o=>(o.gruppe||"Coca-Cola")===fProdukt.value
 function updateNote(){
   const e=offers.find(o=>o.quelle==="import"),alter=e?(Date.now()-new Date(e.geladen).getTime())/36e5:0,veraltet=alter>48;
   note.className="note"+(veraltet?" warn":e?" ok":"");
-  note.textContent=(veraltet?"ACHTUNG: Die Preise sind "+Math.floor(alter/24)+" Tage alt! Bitte aktualisieren. In der Handy-Version prüfe im Tab Actions bei GitHub, ob der tägliche Lauf noch läuft. ":"")+(e?"Echte Angebote von Marktguru (Stand "+new Date(e.geladen).toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"})+" Uhr). Die Verpackung ist geschätzt. Gelbe Zeilen sind noch nicht gültig.":"Prototyp mit erfundenen Beispieldaten, keine echten Preise. Lade oben deine angebote.json.")+(hinweis?" "+hinweis:"");
+  note.textContent=(veraltet?"ACHTUNG: Die Preise sind "+Math.floor(alter/24)+" Tage alt! Bitte aktualisieren. In der Handy-Version prüfe im Tab Actions bei GitHub, ob der tägliche Lauf noch läuft. ":"")+(e?"Echte Angebote von Marktguru (Stand "+new Date(e.geladen).toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"})+" Uhr). Die Verpackung ist geschätzt. Gelbe Zeilen sind noch nicht gültig.":"Prototyp mit erfundenen Beispieldaten, keine echten Preise. Lade oben deine angebote.json.")+(regionPlz()?" Angebote für die Postleitzahl "+regionPlz()+". Preisverlauf und Preisalarm gibt es nur für das Gebiet der Seite.":"")+(hinweis?" "+hinweis:"");
 }
 const RE1=/(\d+)\s*[x×]\s*(\d+(?:\.\d+)?)\s*-?\s*(milliliter|ml|centiliter|cl|liter|ltr|l)\b/,RE2=/(\d+(?:\.\d+)?)\s*-?\s*(milliliter|ml|centiliter|cl|liter|ltr|l)\b/;
 function menge(t){
@@ -781,9 +804,20 @@ async function wf(pfad,opt,nochmal){
   }
   return r;
 }
-async function autoLaden(){
+async function regionLaden(rp,frisch){
+  const namen=(favs||[]).map(f=>f.name);if(!namen.length)namen.push("Coca-Cola");
+  try{
+    const t=await (await wf("/region?plz="+rp+"&q="+encodeURIComponent(namen.join("|"))+(frisch?"&neu=1":""))).text();
+    dateiLaden(file,t,"angebote.json");
+    dateiLaden(vfile,"datum;markt;produkt;liter;preis;preis_pro_liter;gueltig_bis;gueltig_von;gruppe\n","verlauf.csv");
+    await new Promise(x=>setTimeout(x,600));
+    return true;
+  }catch(e){hinweis="Die Angebote für die Postleitzahl "+rp+" konnten nicht geladen werden: "+netzFehler(e);render();return false}
+}
+async function autoLaden(frisch){
   try{
     await wBereit;
+    const rp=regionPlz();if(rp&&await regionLaden(rp,frisch===true))return;
     let a,v;
     if(wUrl){try{[a,v]=await Promise.all([wf("/angebote.json"),wf("/verlauf.csv")])}catch(e){a=v=null}}
     if(!a)[a,v]=await Promise.all([fetch("angebote.json",{cache:"no-store"}),fetch("verlauf.csv",{cache:"no-store"})]);
@@ -843,6 +877,7 @@ async function ghLauf(wf,inputs){
 }
 async function ghSuche(q,aus){
   await wBereit;
+  if(regionPlz())return await (await wf("/region?plz="+regionPlz()+"&q="+encodeURIComponent(q))).text();
   if(wUrl){
     try{return await (await wf("/suche?q="+encodeURIComponent(q)+"&aus="+encodeURIComponent(aus),{method:"POST"})).text()}
     catch(e){if(e.status===401||cf||!ghAktiv())throw e}  // sonst Ersatz über GitHub
@@ -1013,8 +1048,8 @@ favBtn.onclick=async()=>{
 function groesseText(ml){return ml>=1000?String(ml/1000).replace(".",",")+" l":ml+" ml"}
 function alarmZeigen(){
   const g=fProdukt.value,f=(favs||[]).find(x=>x.name===g),kann=lokal||ghAktiv()||cf;
-  alarmRow.hidden=!(f&&kann);
-  if(!f||!kann)return;
+  alarmRow.hidden=!(f&&kann)||!!regionPlz();
+  if(!f||!kann||regionPlz())return;
   const al=f.alarm;
   alarmWert.value=al?al.wert.toFixed(2).replace(".",","):"";
   alarmEinheit.value=al?al.einheit:"l";
@@ -1053,6 +1088,10 @@ async function aktualisieren(){
   upd.disabled=true;hinweis="Preise werden aktualisiert ("+(!lokal&&wUrl?"etwa 10 Sekunden":"etwa "+(lokal?"1":"2")+" Minuten")+") ...";render();
   try{
     let erledigt=false;
+    if(regionPlz()){
+      if(await regionLaden(regionPlz(),true)){distLaden();hinweis="Angebote für die Postleitzahl "+regionPlz()+" aktualisiert."}
+      upd.disabled=false;render();return;
+    }
     if(!lokal&&wUrl){
       try{
         const s=await (await wf("/aktualisieren",{method:"POST"})).json();
