@@ -1,0 +1,40 @@
+# Sichert einmal pro Woche den Preisverlauf, die Favoriten und die Korrekturen aus Cloudflare ins Repository (Ordner sicherung/).
+name: Sicherung
+
+on:
+  schedule:
+    - cron: "17 6 * * 0"
+  push:
+    paths: [".github/workflows/sicherung.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sichern:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Daten von der Seite holen
+        run: |
+          URL=$(jq -r .url worker.json)
+          mkdir -p sicherung
+          curl -sf -m 60 "$URL/verlauf.csv" -o sicherung/verlauf.csv
+          curl -sf -m 60 "$URL/favoriten.json" -o sicherung/favoriten.json
+          curl -sf -m 60 "$URL/korrekturen.json" -o sicherung/korrekturen.json
+          ZEILEN=$(wc -l < sicherung/verlauf.csv)
+          echo "Verlauf: $ZEILEN Zeilen"
+          # eine leere oder kaputte Antwort darf die vorhandene Sicherung nicht überschreiben
+          [ "$ZEILEN" -gt 5 ] || { echo "Verlauf zu kurz, Sicherung abgebrochen"; git checkout -- sicherung 2>/dev/null; exit 1; }
+          jq -e . sicherung/favoriten.json >/dev/null
+          jq -e . sicherung/korrekturen.json >/dev/null
+      - name: Speichern
+        run: |
+          git config user.name "preisvergleich-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add sicherung
+          git diff --cached --quiet && { echo "Keine Änderung"; exit 0; }
+          git commit -m "Sicherung"
+          git pull --rebase origin main
+          git push

@@ -3,8 +3,6 @@
 // Aufruf, damit die Grenzen des kostenlosen Tarifs (10 ms Rechenzeit, 50 Abrufe je Aufruf) eingehalten werden.
 import { WorkerEntrypoint } from "cloudflare:workers";
 
-const REPO = "Phriehk/Preisvergleich";
-const RAW = `https://raw.githubusercontent.com/${REPO}/main/`;
 const APP_URL = "https://preise.phriehk.workers.dev/";
 const UA = { "User-Agent": "Mozilla/5.0 (privates Testprojekt)" };
 const SEARCH = "https://api.marktguru.de/api/v1/offers/search";
@@ -171,15 +169,10 @@ async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2,
   return { liste, fehler: fehlerListe };
 }
 
-/* ---------- Gespeicherte Daten (beim ersten Start aus dem GitHub-Repository übernommen) ---------- */
+/* ---------- Gespeicherte Daten (liegen im Cloudflare-Speicher KV) ---------- */
 async function lade(env, name, typ) {
-  let v = await env.PV.get(name, typ === "json" ? "json" : "text");
+  const v = await env.PV.get(name, typ === "json" ? "json" : "text");
   if (v !== null) return v;
-  const datei = { favoriten: "favoriten.json", angebote: "angebote.json", benachrichtigt: "benachrichtigt.json" }[name];
-  try {
-    const r = await fetch(RAW + datei, { headers: UA });
-    if (r.ok) { const t = await r.text(); await env.PV.put(name, t); return typ === "json" ? JSON.parse(t) : t; }
-  } catch (e) { /* weiter mit Standardwert */ }
   return name === "favoriten" ? START_FAVS : typ === "json" ? (name === "angebote" ? [] : {}) : "";
 }
 
@@ -236,14 +229,7 @@ function csvFeld(v) { const s = v == null ? "" : String(v); return /[;"\n]/.test
 
 const KOPF = "datum;markt;produkt;liter;preis;preis_pro_liter;gueltig_bis;gueltig_von;gruppe";
 async function verlaufMonate(env) {
-  let m = await env.PV.get("verlauf:monate", "json");
-  if (m) return m;
-  let alt = "";  // erster Start: bisherigen Verlauf aus dem GitHub-Repository übernehmen
-  try { const r = await fetch(RAW + "verlauf.csv", { headers: UA }); if (r.ok) alt = await r.text(); } catch (e) { /* ohne alten Verlauf weiter */ }
-  await env.PV.put("verlauf:alt", alt.split(/\r?\n/).filter(z => z.trim() && !z.startsWith("datum;")).join("\n"));
-  m = ["alt"];
-  await env.PV.put("verlauf:monate", JSON.stringify(m));
-  return m;
+  return (await env.PV.get("verlauf:monate", "json")) || [];
 }
 async function verlaufCsv(env) {
   const monate = await verlaufMonate(env);
