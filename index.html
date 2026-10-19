@@ -433,12 +433,12 @@ function updateNote(){
   note.className="note"+(veraltet?" warn":e?" ok":"");
   note.textContent=(veraltet?"ACHTUNG: Die Preise sind "+Math.floor(alter/24)+" Tage alt! Bitte aktualisieren. In der Handy-Version prüfe im Tab Actions bei GitHub, ob der tägliche Lauf noch läuft. ":"")+(e?"Echte Angebote von Marktguru (Stand "+new Date(e.geladen).toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"})+" Uhr). Die Verpackung ist geschätzt. Gelbe Zeilen sind noch nicht gültig.":"Prototyp mit erfundenen Beispieldaten, keine echten Preise. Lade oben deine angebote.json.")+(hinweis?" "+hinweis:"");
 }
-const RE1=/(\d+)\s*[x×]\s*(\d+(?:\.\d+)?)\s*-?\s*(ml|liter|l)\b/,RE2=/(\d+(?:\.\d+)?)\s*-?\s*(ml|liter|l)\b/;
+const RE1=/(\d+)\s*[x×]\s*(\d+(?:\.\d+)?)\s*-?\s*(milliliter|ml|centiliter|cl|liter|ltr|l)\b/,RE2=/(\d+(?:\.\d+)?)\s*-?\s*(milliliter|ml|centiliter|cl|liter|ltr|l)\b/;
 function menge(t){
   t=(t||"").toLowerCase().replace(/,/g,".").replace(/(\d)\s*i\b/g,"$1 l");
   let n=1,v,u,m=t.match(RE1);
   if(m){n=+m[1];v=+m[2];u=m[3]}else{m=t.match(RE2);if(!m)return null;v=+m[1];u=m[2]}
-  return {stueck:n,ml:Math.round(u==="ml"?v:v*1000)};
+  return {stueck:n,ml:Math.round(u==="ml"||u==="milliliter"?v:u==="cl"||u==="centiliter"?v*10:v*1000)};
 }
 function formVon(t,ml,g){t=(t||"").toLowerCase();return /^(Red Bull|Monster)/.test(g||"")?"Dose":/dose/.test(t)?"Dose":/glas/.test(t)?"Glas-Mehrweg":/mehrweg/.test(t)?"PET-Mehrweg":ml<=355?"Dose":"PET-Einweg"}
 let aus=new Set();try{aus=new Set(JSON.parse(localStorage.getItem("pv-aus")||"[]"))}catch(e){}
@@ -512,7 +512,7 @@ file.onchange=()=>{
     try{
       const arr=JSON.parse(r.result),jetzt=new Date().toISOString(),neu=[];let skip=0;
       arr.forEach((x,i)=>{
-        const mg=menge(x.beschreibung)||menge(x.produkt);
+        const mg=x.stueck>=1&&x.ml>0?{stueck:x.stueck,ml:x.ml}:(menge(x.beschreibung)||menge(x.produkt));  // bevorzugt die Mengenangaben aus dem Skript
         if(!mg||!x.preis){skip++;return}
         const ob={id:Date.now()+i,markt:x.markt||"?",produkt:x.produkt||"",info:x.beschreibung||"",form:formVon((x.beschreibung||"")+" "+(x.produkt||""),mg.ml,x.gruppe),gruppe:x.gruppe||"Coca-Cola",marke:x.marke||"",bild:x.bild||"",stueck:mg.stueck,ml:mg.ml,preis:+x.preis,sorte:sorteVon((x.beschreibung||"")+" "+(x.produkt||"")),app:appPreis(x.beschreibung),limit:limitVon(x.beschreibung),bis:x.gueltig_bis||"",von:x.gueltig_von||"",link:x.link||"",quelle:"import",geladen:x.abgefragt||jetzt};
         ob.k=korrKey(ob);korrAnwenden(ob);neu.push(ob);

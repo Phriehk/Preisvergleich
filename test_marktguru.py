@@ -50,19 +50,34 @@ def hole_schluessel():
     return api.group(1), client.group(1)
 
 
+EINHEIT = r"(milliliter|ml|centiliter|cl|liter|ltr|l)"
+TEILER = {"milliliter": 1000, "ml": 1000, "centiliter": 100, "cl": 100}  # alles andere (l, liter, ltr) zählt als Liter
+
+
 def menge(text):
     """Liest Stückzahl und Gesamtmenge in Litern aus Texten wie '6 x 1,5 l', '1,5-l-Fl.' oder '24 x 330 ml'."""
     t = (text or "").lower().replace(",", ".")
     t = re.sub(r"(\d)\s*i\b", r"\1 l", t)  # Tippfehler: "1,25 I" statt "1,25 l"
-    m = re.search(r"(\d+)\s*[x×]\s*(\d+(?:\.\d+)?)\s*-?\s*(ml|liter|l)\b", t)
+    m = re.search(r"(\d+)\s*[x×]\s*(\d+(?:\.\d+)?)\s*-?\s*" + EINHEIT + r"\b", t)
     if m:
         n, v, u = int(m[1]), float(m[2]), m[3]
     else:
-        m = re.search(r"(\d+(?:\.\d+)?)\s*-?\s*(ml|liter|l)\b", t)
+        m = re.search(r"(\d+(?:\.\d+)?)\s*-?\s*" + EINHEIT + r"\b", t)
         if not m:
             return None
         n, v, u = 1, float(m[1]), m[2]
-    return n, n * v / (1000 if u == "ml" else 1)
+    return n, n * v / TEILER.get(u, 1)
+
+
+def mengenangabe(o, beschr, name):
+    """Stückzahl und Gesamtmenge in Litern. Bevorzugt die strukturierten Angaben von Marktguru (Menge je Stück mal Anzahl,
+    damit sind auch Mehrfachpackungen wie '2 Kästen à 12 x 1 l' richtig), sonst wird der Beschreibungstext gelesen."""
+    einheit = ((o.get("unit") or {}).get("shortName") or "").lower()
+    vol, anz = o.get("volume"), o.get("quantity")
+    if einheit == "l" and isinstance(vol, (int, float)) and vol > 0:
+        n = int(anz) if isinstance(anz, (int, float)) and anz >= 1 else 1
+        return n, round(n * vol, 4)
+    return menge(beschr) or menge(name)
 
 
 def liter(text):
@@ -352,8 +367,9 @@ def main():
         name = (o.get("product") or {}).get("name", "?")
         beschr = o.get("description", "")
         preis = o.get("price")
-        l = liter(beschr) or liter(name)
-        st = (menge(beschr) or menge(name) or (1, None))[0]  # Stückzahl der Packung
+        mg = mengenangabe(o, beschr, name)
+        l = mg[1] if mg else None
+        st = mg[0] if mg else 1  # Stückzahl der Packung
         von, bis, rest = gueltigkeit(o)
         pro_l = round(preis / l, 2) if preis and l else None
         marke = (o.get("brand") or {}).get("name", "")
