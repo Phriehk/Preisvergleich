@@ -70,8 +70,11 @@ jobs:
           T0=$(date +%s); R=$(curl -s -m 120 "$URL/region?plz=40210&q=Fanta%7CRed%20Bull")
           log "Region 40210 ohne Code: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if type=="array" then {anzahl: length, maerkte: ([.[].markt] | unique | .[0:6])} else . end' 2>/dev/null || echo "$R" | head -c 300)"
           log "Region ungültige PLZ (erwartet 400): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 "$URL/region?plz=abc&q=x")"
-          T0=$(date +%s); R=$(curl -s -m 120 -G --data-urlencode "plz=40210" --data-urlencode "m=Lidl|REWE|ALDI SÜD" "$URL/entfernungen")
-          log "Entfernungen 40210 ohne Code: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'with_entries(.value |= {km: .km, fil: ((.filialen // []) | length)})' 2>/dev/null || echo "$R" | head -c 300)"
+          R=$(curl -s -m 60 -G --data-urlencode "plz=40210" --data-urlencode "m=Lidl|REWE|ALDI SÜD" "$URL/entfernungen")
+          log "Entfernungen 40210, erste Antwort: $(echo "$R" | head -c 200)"
+          sleep 40
+          R=$(curl -s -m 60 -G --data-urlencode "plz=40210" --data-urlencode "m=Lidl|REWE|ALDI SÜD" "$URL/entfernungen")
+          log "Entfernungen 40210, nach 40 s: $(echo "$R" | jq -c 'with_entries(.value |= {km: .km, fil: ((.filialen // []) | length)})' 2>/dev/null || echo "$R" | head -c 300)"
           openssl rand -hex 24 | npx --yes wrangler@4 secret put WARTUNG >/dev/null 2>&1   # Testschlüssel wieder unbrauchbar machen
           rm -rf public
       - name: Ergebnis speichern

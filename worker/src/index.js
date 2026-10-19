@@ -291,9 +291,9 @@ const rad = x => x * Math.PI / 180;
 const luftlinie = (a, b, c, d) => { const h = Math.sin(rad(c - a) / 2) ** 2 + Math.cos(rad(a)) * Math.cos(rad(c)) * Math.sin(rad(d - b) / 2) ** 2; return 12742 * Math.asin(Math.sqrt(h)); };
 async function overpass(abfrage) {
   let letzter;
-  for (const host of ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter", "https://overpass.private.coffee/api/interpreter"]) {
+  for (const host of ["https://overpass-api.de/api/interpreter"]) {
     try {
-      const r = await fetch(host, { method: "POST", headers: { ...OSM_UA, "Content-Type": "application/x-www-form-urlencoded" }, body: "data=" + encodeURIComponent(abfrage) });
+      const r = await fetch(host, { method: "POST", headers: { ...OSM_UA, "Content-Type": "application/x-www-form-urlencoded" }, body: "data=" + encodeURIComponent(abfrage), signal: AbortSignal.timeout(8000) });
       if (r.ok) {
         const j = await r.json();
         if (!(j.elements || []).length && j.remark) { letzter = new Error("Overpass: " + j.remark); continue; }
@@ -427,7 +427,14 @@ export default {
           if (!plz || plz === PLZ) return antwort((await env.PV.get("entfernungen", "json")) || {});
           if (!plzOk(plz)) return fehler("Ungültige Postleitzahl", 400);
           const gewollt = (url.searchParams.get("m") || "").split("|").map(x => x.trim()).filter(Boolean).slice(0, 12);
-          return antwort(gewollt.length ? await entfernungenPflegen(env, gewollt, plz) : ((await env.PV.get("entf:" + plz, "json")) || {}));
+          // Die Berechnung dauert bis zu 20 Sekunden: sie läuft im Hintergrund weiter, die Antwort enthält, was schon bekannt ist (die App fragt nach)
+          const stand = (await env.PV.get("entf:" + plz, "json")) || {};
+          const fehlt = gewollt.map(markenKern).filter(m => !stand[m]);
+          if (fehlt.length && !(await env.PV.get("sperre:" + plz))) {
+            await env.PV.put("sperre:" + plz, "1", { expirationTtl: 60 });
+            ctx.waitUntil(entfernungenPflegen(env, gewollt, plz).catch(() => {}));
+          }
+          return antwort(stand);
         }
         if (p === "/region") return antwort(await regionAngebote(env, ctx, url.searchParams));
         if (p === "/status") return antwort({ ok: true, dienst: "preisvergleich", stand: await env.PV.get("stand", "json") });

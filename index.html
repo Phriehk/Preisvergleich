@@ -416,8 +416,14 @@ async function distLaden(){
     const rp=regionPlz();
     if(rp){
       const marken=[...new Set(offers.map(o=>mbase(o.markt)))].slice(0,12);
-      dist=marken.length?await (await wf("/entfernungen?plz="+rp+"&m="+encodeURIComponent(marken.join("|")))).json():{};
-      render();return;
+      for(let i=0;i<5&&marken.length;i++){   // der Server rechnet im Hintergrund, bis zu etwa 20 Sekunden
+        dist=await (await wf("/entfernungen?plz="+rp+"&m="+encodeURIComponent(marken.join("|")))).json();
+        render();
+        if(marken.every(m=>dist[m]))break;
+        await new Promise(r=>setTimeout(r,12000));
+        if(regionPlz()!==rp)return;
+      }
+      return;
     }
     dist=await (await wf("/entfernungen")).json();
     const fehlt=[...new Set(offers.map(o=>mbase(o.markt)))].filter(x=>!(dist[x]&&("filialen" in dist[x]||dist[x].km!=null)));
