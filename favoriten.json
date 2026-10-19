@@ -1,7 +1,12 @@
 [
   {
     "name": "Coca-Cola",
-    "aus": ""
+    "aus": "",
+    "alarm": {
+      "wert": 60,
+      "einheit": "stueck",
+      "ml": 330
+    }
   },
   {
     "name": "Red Bull",
