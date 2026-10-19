@@ -589,7 +589,7 @@ function zeichneEinkauf(){
 }
 /* ---- Favoriten-Seite: Zettel (Favorit -> Liter) und Marktvergleich ---- */
 var zettel={};try{zettel=JSON.parse(localStorage.getItem("pv-zettel")||"{}")||{}}catch(e){}
-var fvZeit="jetzt",neuText="",neuEinheit="kg",neuLaeuft=false;
+var fvZeit="jetzt",neuText="",neuEinheit="kg",neuLaeuft=false,sucheQ="",sucheErg=null,sucheFav=null;
 /* eigene Artikel ohne Angebot (Name -> Einheit) und Richtwerte (Artikel -> Euro je Liter / kg / Stück) */
 var frei={};try{frei=JSON.parse(localStorage.getItem("pv-frei")||"{}")||{}}catch(e){}
 var richt={};try{richt=JSON.parse(localStorage.getItem("pv-richt")||"{}")||{}}catch(e){}
@@ -700,8 +700,9 @@ function zeichneFavoriten(){
     return `<div class="fv-grp"><div class="fv-gk">${esc(g)}</div><div class="fv-gitter">${kachel(g,artG(g)==="st"?"Alle Packungen":"Alle Größen")}${fvGroessen(g,gewaehlt).map(ml=>kachel(g+"|"+ml,groesseText(ml,artG(g)))).join("")}</div></div>`;
   }).join("");
   let html=`<section class="ek"><div class="ek-h"><b>Favoriten</b><span class="ek-s" style="font-size:1rem">${namen.length} auf der Liste</span></div>`
-    +`<div class="fv-add"><input id="neuArt" type="text" maxlength="40" autocomplete="off" placeholder="Artikel hinzufügen, z. B. Butter oder Eier" value="${esc(neuText)}" aria-label="Artikel hinzufügen"><select id="neuEinheit" aria-label="Einheit, falls kein Angebot gefunden wird"><option value="kg"${neuEinheit==="kg"?" selected":""}>kg</option><option value="l"${neuEinheit==="l"?" selected":""}>Liter</option><option value="st"${neuEinheit==="st"?" selected":""}>Stück</option></select><button type="button" class="primary" id="neuBtn"${neuLaeuft?" disabled":""}>${neuLaeuft?"Suche läuft …":"Hinzufügen"}</button></div>`
-    +`<p class="lbl" style="margin:4px 0 8px">Ich suche den Artikel bei Marktguru und lege ihn auf die Einkaufsliste. Die Einheit gilt nur, wenn es gerade kein Angebot gibt.</p>`
+    +`<div class="fv-add"><input id="neuArt" type="text" maxlength="40" autocomplete="off" placeholder="Produkt suchen, z. B. Butter oder Eier" value="${esc(neuText)}" aria-label="Produkt suchen"><button type="button" class="primary" id="neuBtn"${neuLaeuft?" disabled":""}>${neuLaeuft?"Suche läuft …":"Suchen"}</button></div>`
+    +`<p class="lbl" style="margin:4px 0 8px">Suche ein Produkt und wähle aus den Ergebnissen eines als Favorit. Die Favoriten erscheinen darunter als Kacheln.</p>`
+    +ergHtml()
     +`${gr.length?zeilen:'<div class="empty">Noch keine Favoriten. Füge oben einen Artikel hinzu oder suche ein Getränk und speichere es als Favorit.</div>'}<p class="lbl" style="margin:8px 0 0">Hake an, was auf die Einkaufsliste soll. Die Menge (Liter, kg oder Stück) stellst du dort ein.</p></section>`;
   html+=`<button type="button" class="lb an" id="zurListe" style="align-self:flex-start;padding:8px 14px">${namen.length?"Zur Einkaufsliste mit Vergleich ("+namen.length+")":"Zur Einkaufsliste"}</button>`;
   favseite.innerHTML=html;
@@ -792,7 +793,7 @@ function fvKlick(e){
   const x=e.target.closest("[data-zx]");if(x){delete zettel[x.dataset.zx];zettelSpeichern();render();return true}
   return false;
 }
-favseite.onclick=e=>{if(e.target.closest("#zurListe")){tab="einkauf";render();window.scrollTo(0,0);return}if(e.target.closest("#neuBtn")){artikelNeu();return}fvKlick(e)};
+favseite.onclick=e=>{if(e.target.closest("#zurListe")){tab="einkauf";render();window.scrollTo(0,0);return}if(e.target.closest("#neuBtn")){artikelSuchen();return}if(e.target.closest("#ohneBtn")){artikelOhne();return}const ef=e.target.closest("[data-ef]");if(ef){favHinzu(+ef.dataset.ef);return}fvKlick(e)};
 function fvAender(e){
   const c=e.target.closest("input[type=checkbox][data-g]");
   if(c){if(c.checked)zettel[c.dataset.g]=zettel[c.dataset.g]||ARTEN[artG(zk(c.dataset.g).g)].std;else delete zettel[c.dataset.g];zettelSpeichern();render();return}
@@ -804,7 +805,7 @@ function fvAender(e){
 }
 favseite.onchange=fvAender;einkauf.onchange=fvAender;
 favseite.oninput=e=>{if(e.target.id==="neuArt")neuText=e.target.value};
-favseite.onkeydown=e=>{if(e.key==="Enter"&&e.target.id==="neuArt"){e.preventDefault();artikelNeu()}};
+favseite.onkeydown=e=>{if(e.key==="Enter"&&e.target.id==="neuArt"){e.preventDefault();artikelSuchen()}};
 einkauf.onclick=e=>{fvKlick(e)};
 /* ---- Darstellung (automatisch / hell / dunkel) und Filter-Knopf am Handy ---- */
 var theme="auto";try{theme=localStorage.getItem("pv-theme")||"auto"}catch(e){}
@@ -1184,26 +1185,60 @@ async function serverSuche(q,aus,streng){
   if(regionPlz())return await (await wf("/region?plz="+regionPlz()+"&q="+encodeURIComponent(q)+(streng?"&streng=1":""))).text();
   return await (await wf("/suche?q="+encodeURIComponent(q)+"&aus="+encodeURIComponent(aus)+(streng?"&streng=1":""),{method:"POST"})).text();
 }
-/* Neuen Artikel für die Einkaufsliste: bei Marktguru suchen, als Favorit merken (nur mit Zugangscode), auf den Zettel setzen */
-async function artikelNeu(){
-  const name=neuText.replace(/[,|]/g," ").replace(/\s+/g," ").trim().slice(0,40);
-  if(!name||neuLaeuft)return;
-  const vorhanden=fvGruppen().find(g=>g.toLowerCase()===name.toLowerCase());
-  const ziel=vorhanden||name;
-  neuLaeuft=true;render();
-  if(!vorhanden){
-    let gefunden=false;
-    try{
-      const text=await serverSuche(name,"",true);
-      if(JSON.parse(text).length){merge=true;dateiLaden(file,text,"suche.json");await new Promise(r=>setTimeout(r,700));merge=false;gefunden=true}
-    }catch(e){merge=false;hinweis=netzFehler(e)}
-    gefunden=gefunden&&offers.some(o=>(o.gruppe||"Coca-Cola")===name);
-    if(!gefunden){frei[name]=neuEinheit;hinweis='Zu "'+name+'" gibt es gerade kein Angebot. Ich habe den Artikel ohne Angebot angelegt: Trage einen Richtwert ein, dann rechne ich ihn mit.'}
-    else{delete frei[name];hinweis='Angebote zu "'+name+'" gefunden.';distLaden()}
-    if(cf&&zugang){try{favs=await favAendern(true,name,"",[])}catch(e){}}
-  }
-  zettel[ziel]=zettel[ziel]||ARTEN[artG(ziel)].std;zettelSpeichern();
-  neuText="";neuLaeuft=false;tab="favoriten";tabGewaehlt=true;render();
+/* Suche nach Produkten: Ergebnisse als Karten (ein Produkt je Marke bzw. Name), daraus wählt man eines als Favorit */
+function favLabel(c){const m=(c.marke||"").trim(),p=(c.produkt||"").trim();return (!m?p:!p?m:p.toLowerCase().includes(m.toLowerCase())?p:m+" "+p).replace(/[,|]/g," ").replace(/\s+/g," ").trim().slice(0,40)||"?"}
+function ergKarten(l){
+  const heute=new Date().toISOString().slice(0,10),map=new Map();
+  (l||[]).filter(x=>x&&x.preis>0&&x.liter>0&&!(x.gueltig_bis&&x.gueltig_bis<heute)).forEach(x=>{
+    const k=(x.marke||x.produkt||"").trim().toLowerCase();if(!k)return;
+    const c=map.get(k)||{key:k,marke:x.marke||"",produkt:x.produkt||"",bild:"",os:[]};
+    if(!c.bild&&x.bild&&/^https?:\/\//.test(x.bild))c.bild=x.bild;
+    c.os.push(x);map.set(k,c);
+  });
+  return [...map.values()].map(c=>{
+    const z={};c.os.forEach(o=>{z[o.art||"l"]=(z[o.art||"l"]||0)+1});
+    const art=Object.entries(z).sort((a,b)=>b[1]-a[1])[0][0],os=c.os.filter(o=>(o.art||"l")===art).sort((a,b)=>a.preis_pro_liter-b.preis_pro_liter);
+    c.art=art;c.os=os;c.label=favLabel(c);c.min=os[0];
+    c.groessen=[...new Set(os.map(o=>art==="st"?o.stueck+" Stück":groesseText(o.ml,art)))];
+    c.maerkte=[...new Set(os.map(o=>mbase(String(o.markt).replace(/\s*\(\d+\)\s*$/,""))))];
+    return c;
+  }).sort((a,b)=>b.os.length-a.os.length||a.min.preis_pro_liter-b.min.preis_pro_liter).slice(0,40);
+}
+function ergHtml(){
+  if(sucheErg===null)return"";
+  if(!sucheErg.length)return `<div class="empty">Zu „${esc(sucheQ)}“ gibt es gerade keine Angebote.</div><div class="fv-add"><select id="neuEinheit" aria-label="Einheit"><option value="kg"${neuEinheit==="kg"?" selected":""}>kg</option><option value="l"${neuEinheit==="l"?" selected":""}>Liter</option><option value="st"${neuEinheit==="st"?" selected":""}>Stück</option></select><button type="button" class="lb an" id="ohneBtn">Trotzdem als Artikel ohne Angebot auf die Liste (mit Richtwert)</button></div>`;
+  return `<div class="ek-h" style="border:0;margin:6px 0 0"><b>Ergebnisse für „${esc(sucheQ)}“</b><span class="ek-s" style="font-size:1rem">${sucheErg.length}</span></div><div class="fv-gitter">`+sucheErg.map((c,i)=>{
+    const ist=(favs||[]).some(f=>f.name.toLowerCase()===c.label.toLowerCase()),m=c.min;
+    return `<div class="kachel${ist?" an":""}"><div class="kb"><span class="ph">${esc((c.label[0]||"?").toUpperCase())}</span>${c.bild?`<img src="${esc(c.bild)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}</div><b>${esc(c.label)}</b><small>${c.os.length} Angebot${c.os.length>1?"e":""} · ab ${eur(m.preis_pro_liter)}/${unitK(c.art)}<br>${esc(c.groessen.join(", "))}<br>${esc(c.maerkte.join(", "))}</small><button type="button" class="lb${ist?" an":""}" data-ef="${i}"${sucheFav!==null?" disabled":""}>${ist?"★ Favorit":sucheFav===i?"Speichere …":"☆ Als Favorit"}</button></div>`;
+  }).join("")+`</div>`;
+}
+async function artikelSuchen(){
+  const q=neuText.replace(/[,|]/g," ").replace(/\s+/g," ").trim().slice(0,40);
+  if(!q||neuLaeuft)return;
+  neuLaeuft=true;sucheQ=q;sucheErg=null;render();
+  try{sucheErg=ergKarten(JSON.parse(await serverSuche(q,"",true)))}
+  catch(e){hinweis=netzFehler(e);sucheErg=null}
+  neuLaeuft=false;render();
+}
+async function favHinzu(i){
+  const c=sucheErg&&sucheErg[i];if(!c||sucheFav!==null)return;
+  if((favs||[]).some(f=>f.name.toLowerCase()===c.label.toLowerCase())){hinweis='„'+c.label+'“ ist schon ein Favorit.';render();return}
+  sucheFav=i;render();
+  try{
+    favs=await favAendern(true,c.label,"",[c.key],sucheQ);
+    auswahl[c.label]=c.key;
+    await aktualisieren();
+    hinweis='Favorit „'+c.label+'“ gespeichert.';
+  }catch(e){hinweis=netzFehler(e)}
+  sucheFav=null;tab="favoriten";tabGewaehlt=true;render();
+}
+function artikelOhne(){
+  const name=sucheQ;if(!name)return;
+  frei[name]=neuEinheit;
+  zettel[name]=zettel[name]||ARTEN[neuEinheit].std;zettelSpeichern();
+  if(cf&&zugang)favAendern(true,name,"",[]).then(l=>{favs=l;render()}).catch(()=>{});
+  hinweis='„'+name+'“ ist ohne Angebot auf der Einkaufsliste. Trage dort einen Richtwert ein, dann rechne ich ihn mit.';
+  sucheErg=null;sucheQ="";neuText="";tab="favoriten";render();
 }
 async function favSpeichern(liste){await wf("/favoriten.json",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(liste)})}
 function dateiLaden(input,text,name){const dt=new DataTransfer();dt.items.add(new File([text],name));input.files=dt.files;input.onchange()}
@@ -1312,9 +1347,9 @@ function favKnopf(){
   favBtn.textContent=(favs||[]).some(f=>f.name===g)?"★ Favorit entfernen":"☆ Als Favorit speichern";
   alarmZeigen();
 }
-async function favAendern(hinzu,name,aus,nur){
+async function favAendern(hinzu,name,aus,nur,suche){
   const liste=(favs||[]).filter(f=>f.name.toLowerCase()!==name.toLowerCase());
-  if(hinzu){const alt=(favs||[]).find(f=>f.name.toLowerCase()===name.toLowerCase());liste.push({name,aus,nur:nur||[],...(alt&&alt.alarm?{alarm:alt.alarm}:{})})}
+  if(hinzu){const alt=(favs||[]).find(f=>f.name.toLowerCase()===name.toLowerCase());liste.push({name,aus,nur:nur||[],...(suche?{suche}:{}),...(alt&&alt.alarm?{alarm:alt.alarm}:{})})}
   await favSpeichern(liste);
   return liste;
 }

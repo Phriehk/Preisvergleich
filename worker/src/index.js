@@ -140,7 +140,8 @@ export class Teil extends WorkerEntrypoint {
     return Promise.all(auftraege.map(async a => {
       const ids = new Set(), alle = [];
       for (const seite of await Promise.all(a.suchen.map(s => teilAbfrage(this.env, plz, s)))) for (const o of seite) if (!ids.has(o.id)) { ids.add(o.id); alle.push(o); }
-      const t = alle.filter(o => istProdukt(a.p, o, a.aus));
+      // Ist ein bestimmtes Produkt als Favorit gewählt (nur), zählt allein dessen Marke bzw. Name, sonst die Zuordnung nach dem Artikelwort
+      const t = a.nur && a.nur.length ? alle.filter(o => a.nur.includes((o.brand || o.name).trim().toLowerCase())) : alle.filter(o => istProdukt(a.p, o, a.aus));
       return !t.length && ohneFilterFallback ? alle : t;
     }));
   }
@@ -178,7 +179,7 @@ async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2,
   const auftraege = [];
   for (const p of produkte) {
     const info = favInfo[p] || { aus: extraAus }, aus = info.aus && info.aus.length ? info.aus : extraAus;
-    for (const plz of plzListe) auftraege.push({ p, plz, suchen: SUCHEN[p] || [p], aus, roh: null });
+    for (const plz of plzListe) auftraege.push({ p, plz, suchen: info.suche ? [info.suche] : (SUCHEN[p] || [p]), aus, nur: info.nur && info.nur.size ? [...info.nur] : [], roh: null });
   }
   const stapel = [];
   for (const plz of plzListe) {
@@ -193,7 +194,7 @@ async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2,
   const einzeln = produkte.length === 1 && !streng;   // bei einer einzelnen Suche notfalls auch ungefilterte Treffer zeigen (außer "streng")
   const ergebnis = await parallel(stapel.map(st => async () => {
     try {
-      const r = await teile.holeStapel(st.plz, st.liste.map(a => ({ p: a.p, suchen: a.suchen, aus: a.aus })), einzeln);
+      const r = await teile.holeStapel(st.plz, st.liste.map(a => ({ p: a.p, suchen: a.suchen, aus: a.aus, nur: a.nur })), einzeln);
       st.liste.forEach((a, i) => { a.roh = r[i]; });
       return true;
     } catch (e) { fehlerListe.push(`${st.liste.map(a => a.p).join("+")}/${st.plz}: ${e.message}`); return false; }
@@ -249,7 +250,7 @@ function favAuswerten(favs) {
   const info = {}, alarm = {};
   for (const f of favs || []) {
     if (!f || !f.name) continue;
-    info[f.name] = { aus: String(f.aus || "").split(",").map(w => w.trim().toLowerCase()).filter(Boolean), nur: new Set((f.nur || []).map(k => String(k).trim().toLowerCase())) };
+    info[f.name] = { aus: String(f.aus || "").split(",").map(w => w.trim().toLowerCase()).filter(Boolean), nur: new Set((f.nur || []).map(k => String(k).trim().toLowerCase())), suche: String(f.suche || "").replace(/[,|]/g, " ").trim().slice(0, 40) };
     const al = f.alarm;
     if (al && ["l", "stueck"].includes(al.einheit) && +al.wert > 0) alarm[f.name] = { wert: +al.wert, einheit: al.einheit, ml: al.ml ? +al.ml : null };
   }
