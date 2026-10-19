@@ -33,3 +33,11 @@ jobs:
           git config user.email "preisvergleich-bot@users.noreply.github.com"
           git add angebote.json verlauf.csv favoriten.json benachrichtigt.json
           git diff --cached --quiet || { git commit -m "Preise aktualisiert" && git pull --rebase && git push; }
+      - name: Bei Fehler aufs Handy melden
+        if: failure() && env.NTFY_TOPIC != ''
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          curl -s -H "Title: Preislauf fehlgeschlagen" -H "Tags: warning" -H "Click: $RUN_URL" \
+            -d "Der taegliche Preislauf bei GitHub ist fehlgeschlagen. Tippen, um das Protokoll zu oeffnen." \
+            "https://ntfy.sh/$NTFY_TOPIC"

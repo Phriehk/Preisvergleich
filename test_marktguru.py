@@ -331,6 +331,8 @@ def main():
         treffer.extend(gefunden_p)
         print(f"{produkt}: {len(gefunden_p)} Angebote abgefragt.")
     print(f"{len(treffer)} Angebote insgesamt abgefragt.\n")
+    if not treffer and produkte and not a.ohne_favoriten:
+        sys.exit("FEHLER: Marktguru hat für keines der Produkte Angebote geliefert. Die Schnittstelle hat sich vermutlich geändert oder ist gerade gestört. Die bisherigen Daten bleiben unverändert.")
 
     ausgabe = []
     for o in treffer:
