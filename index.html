@@ -21,7 +21,7 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Barlow,system-ui,sans-serif}
 .wrap{max-width:880px;margin:0 auto;padding:18px 16px 56px}
-.wrap.breit{max-width:1200px}
+.wrap.breit{max-width:1280px}
 [hidden]{display:none!important}
 .top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
 .logo{flex:none;width:42px;height:42px;border-radius:12px;background:var(--red);color:#fff;display:grid;place-items:center;font:700 1rem/1 "Barlow Condensed",Impact,sans-serif;letter-spacing:.02em}
@@ -48,7 +48,7 @@ button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);fon
 .note.ok::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--best);margin-right:8px}
 .note.warn{background:#b3001b;border-color:#b3001b;color:#fff;font-weight:500}
 .layout{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:start}
-.breit .layout{grid-template-columns:minmax(0,1fr) 310px}
+.breit .layout{grid-template-columns:minmax(0,1fr) 290px}
 .tabs{display:inline-flex;gap:2px;padding:3px;margin-bottom:12px;background:var(--soft);border:1px solid var(--line);border-radius:12px;max-width:100%}
 .tabs button{height:36px;padding:0 14px;border:0;background:transparent;color:var(--mute);border-radius:9px;white-space:nowrap}
 .tabs button.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:var(--shadow)}
@@ -64,8 +64,9 @@ button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);fon
 .best-r span{color:var(--mute);font-size:.92rem}
 .ampel{grid-column:1/-1;border-top:1px solid color-mix(in srgb,var(--best) 35%,transparent);padding-top:8px;font-size:.92rem}
 .tablewrap{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow-x:auto;box-shadow:var(--shadow)}
-table{border-collapse:collapse;width:100%;min-width:600px}
-th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+table{border-collapse:collapse;width:100%;table-layout:auto}
+th,td{padding:10px 10px;text-align:left;vertical-align:middle;border-bottom:1px solid var(--line)}
+td.num,td.gp{white-space:nowrap}
 th{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);background:var(--soft)}
 td.num,th.num{text-align:right}
 td.gp{font:700 1.35rem "Barlow Condensed",sans-serif}
@@ -174,13 +175,14 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
   </div>
   <div id="suchBox" class="row" hidden>
     <input id="suchtext" type="search" class="grow" placeholder="Getränk suchen, z.B. Fanta oder Mineralwasser">
-    <input id="suchAus" placeholder="Ausschließen, z.B. zero, light" style="width:200px;max-width:100%">
     <button id="suchBtn" type="button" class="primary">Suchen</button>
   </div>
   <div id="alarmRow" class="row" hidden>
     <span class="lbl">🔔 Benachrichtigen, wenn unter</span>
     <input id="alarmWert" inputmode="decimal" placeholder="0,80" style="width:84px">
     <select id="alarmEinheit" aria-label="Einheit des Wunschpreises"><option value="l">€ pro Liter</option><option value="stueck">€ pro Stück</option></select>
+    <span class="lbl">bei</span>
+    <select id="alarmMl" aria-label="Packungsgröße für den Alarm"></select>
     <button id="alarmSave" type="button">Speichern</button>
     <button id="alarmAus" type="button" hidden>Aus</button>
   </div>
@@ -254,7 +256,7 @@ function fillFilters(){
   m.innerHTML='<option value="">Alle Supermärkte</option>'+markte.map(x=>`<option>${esc(x)}</option>`).join("");
   f.innerHTML='<option value="">Alle Verpackungen</option>'+formen.map(x=>`<option>${esc(x)}</option>`).join("");
   const groessen=[...new Set(offers.map(o=>o.ml))].sort((a,b)=>a-b);
-  g.innerHTML='<option value="">Alle Größen</option>'+groessen.map(x=>`<option value="${x}">${x} ml</option>`).join("");
+  g.innerHTML='<option value="">Alle Größen</option>'+groessen.map(x=>`<option value="${x}">${groesseText(x)}</option>`).join("");
   g.value=groessen.map(String).includes(gv)?gv:"";
   const so=document.getElementById("fSorte"),sv=so.value,sorten=[...new Set(offers.map(o=>o.sorte||"Classic"))];
   so.innerHTML='<option value="">Alle Sorten</option>'+sorten.map(x=>`<option>${esc(x)}</option>`).join("");so.value=sorten.includes(sv)?sv:"";
@@ -452,7 +454,7 @@ async function lokalSuche(q,aus){
 }
 async function suchen(){
   const q=suchtext.value.trim();if(!q)return;
-  const aus=suchAus.value.trim();
+  const aus="";
   suchAusMap[q.replace(/,/g," ").trim()]=aus;
   suchBtn.disabled=true;hinweis='Suche nach "'+q+'" läuft (etwa '+(lokal?"1":"2")+' Minuten) ...';render();
   try{
@@ -544,6 +546,7 @@ favBtn.onclick=async()=>{
   favBtn.disabled=false;
 };
 /* ---- Preisalarm (Benachrichtigung aufs Handy) ---- */
+function groesseText(ml){return ml>=1000?String(ml/1000).replace(".",",")+" l":ml+" ml"}
 function alarmZeigen(){
   const g=fProdukt.value,f=(favs||[]).find(x=>x.name===g),kann=lokal||ghAktiv();
   alarmRow.hidden=!(f&&kann);
@@ -551,20 +554,25 @@ function alarmZeigen(){
   const al=f.alarm;
   alarmWert.value=al?al.wert.toFixed(2).replace(".",","):"";
   alarmEinheit.value=al?al.einheit:"l";
+  const groessen=[...new Set(offers.filter(o=>(o.gruppe||"Coca-Cola")===g).map(o=>o.ml))];
+  if(al&&al.ml&&!groessen.includes(al.ml))groessen.push(al.ml);
+  groessen.sort((a,b)=>a-b);
+  alarmMl.innerHTML='<option value="">Alle Größen</option>'+groessen.map(x=>`<option value="${x}">${groesseText(x)}</option>`).join("");
+  alarmMl.value=al&&al.ml?String(al.ml):"";
   alarmAus.hidden=!al;
 }
 async function alarmSetzen(g,alarm){
   try{
-    if(lokal)favs=await (await fetch("favorit-alarm?name="+encodeURIComponent(g)+(alarm?"&wert="+alarm.wert+"&einheit="+alarm.einheit:""),{method:"POST",headers:HDR})).json();
+    if(lokal)favs=await (await fetch("favorit-alarm?name="+encodeURIComponent(g)+(alarm?"&wert="+alarm.wert+"&einheit="+alarm.einheit+(alarm.ml?"&ml="+alarm.ml:""):""),{method:"POST",headers:HDR})).json();
     else{const liste=(favs||[]).map(f=>f.name===g?{...f,alarm:alarm||undefined}:f);await ghFavSpeichern(liste);favs=liste}
-    hinweis=alarm?"Preisalarm gespeichert: unter "+alarm.wert.toFixed(2).replace(".",",")+(alarm.einheit==="l"?" €/l":" €/Stück")+". Du bekommst eine Nachricht, sobald ein Lauf ein passendes Angebot findet.":"Preisalarm ausgeschaltet.";
+    hinweis=alarm?"Preisalarm gespeichert: unter "+alarm.wert.toFixed(2).replace(".",",")+(alarm.einheit==="l"?" €/l":" €/Stück")+(alarm.ml?" bei "+groesseText(alarm.ml):"")+". Du bekommst eine Nachricht, sobald ein Lauf ein passendes Angebot findet.":"Preisalarm ausgeschaltet.";
   }catch(e){hinweis=netzFehler(e)}
   favKnopf();render();
 }
 alarmSave.onclick=()=>{
   const w=parseFloat(alarmWert.value.replace(",","."));
   if(!(w>0)){hinweis="Bitte einen Wunschpreis über 0 eingeben, z.B. 0,80.";render();return}
-  alarmSetzen(fProdukt.value,{wert:Math.round(w*100)/100,einheit:alarmEinheit.value});
+  alarmSetzen(fProdukt.value,{wert:Math.round(w*100)/100,einheit:alarmEinheit.value,ml:alarmMl.value?+alarmMl.value:null});
 };
 alarmAus.onclick=()=>alarmSetzen(fProdukt.value,null);
 function ntfyThema(neu){

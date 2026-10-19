@@ -239,6 +239,8 @@ def benachrichtige(ausgabe, fav_alarm):
         for x in ausgabe:
             if x["gruppe"] != gruppe or not x["preis"]:
                 continue
+            if al.get("ml") and x.get("ml") != al["ml"]:
+                continue  # Alarm gilt nur für diese Packungsgröße
             s = status(x["gueltig_von"], x["gueltig_bis"])
             if s == "abgelaufen":
                 continue
@@ -254,7 +256,8 @@ def benachrichtige(ausgabe, fav_alarm):
         einheit = "€/l" if al["einheit"] == "l" else "€/Stück"
         wann = f"Ab {kurz(x['gueltig_von'])}" if s.startswith("NOCH NICHT") else (f"Bis {kurz(x['gueltig_bis'])}" if x["gueltig_bis"] else "")
         packung = f"{x['stueck']} × " if x.get("stueck", 1) > 1 else ""
-        text = f"{x['markt']}: {de(wert)} {einheit} ({packung}{x['produkt']} für {de(x['preis'])} €). {wann}".strip()
+        groesse = f", {x['ml']} ml" if x.get("ml") else ""
+        text = f"{x['markt']}: {de(wert)} {einheit} ({packung}{x['produkt']}{groesse} für {de(x['preis'])} €). {wann}".strip()
         nachricht = {"topic": thema, "title": f"Preisalarm {gruppe}: {de(wert)} {einheit}", "message": text,
                      "tags": ["moneybag"], "priority": 3}
         if os.environ.get("APP_URL"):
@@ -302,7 +305,8 @@ def main():
                     fav_aus[fv["name"]] = tuple(w.strip().lower() for w in fv.get("aus", "").split(",") if w.strip())
                     al = fv.get("alarm")
                     if isinstance(al, dict) and al.get("einheit") in ("l", "stueck") and float(al.get("wert", 0)) > 0:
-                        fav_alarm[fv["name"]] = {"wert": float(al["wert"]), "einheit": al["einheit"]}
+                        fav_alarm[fv["name"]] = {"wert": float(al["wert"]), "einheit": al["einheit"],
+                                                 "ml": int(al["ml"]) if al.get("ml") else None}
         except (OSError, ValueError, KeyError, AttributeError, TypeError):
             print("Hinweis: favoriten.json konnte nicht gelesen werden und wird ignoriert.")
 
@@ -347,7 +351,7 @@ def main():
         if fav_nur.get(gruppe) and kandidat not in fav_nur[gruppe]:
             coke = False  # vom Nutzer für diesen Favoriten nicht ausgewählt
         ausgabe.append({"abgefragt": datetime.now().isoformat(timespec="minutes"), "gruppe": gruppe, "bild": bild_url(o), "marke": marke, "coke": coke, "link": angebots_link(o), "markt": markt, "produkt": name, "beschreibung": beschr, "preis": preis,
-                        "liter": l, "stueck": st, "preis_pro_liter": pro_l, "gueltig_von": von, "gueltig_bis": bis})
+                        "liter": l, "stueck": st, "ml": round(l * 1000 / st) if l and st else None, "preis_pro_liter": pro_l, "gueltig_von": von, "gueltig_bis": bis})
 
     roh_maerkte = {x["markt"].lower() for x in ausgabe}
     # Nur Coca-Cola (Marke steht im Feld "brand" oder im Text)
