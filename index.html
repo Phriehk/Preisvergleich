@@ -77,14 +77,35 @@ button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);fon
 .best-r{display:flex;flex-direction:column;gap:1px}
 .best-r span{color:var(--mute);font-size:.92rem}
 .so{color:var(--mute)}
-.fahrt{grid-column:1/-1;border-top:1px solid color-mix(in srgb,var(--best) 35%,transparent);padding-top:8px;font-size:.92rem}
+.fahrt{grid-column:1/-1;border-top:1px solid color-mix(in srgb,var(--best) 35%,transparent);padding-top:6px;font-size:.8rem;color:var(--mute)}
+.fahrt details{display:inline}
+.fahrt summary{display:inline;cursor:pointer;color:var(--ink);text-decoration:underline;list-style:none}
+.fahrt summary::-webkit-details-marker{display:none}
+.fahrt details[open]{display:block;margin-top:4px}
+.fahrt details[open] summary{display:block;margin-bottom:2px}
+.fahrt .fl{color:var(--best);font-weight:600}.fahrt .fn{font-weight:600}
 .mb{display:inline-block;width:10px;height:10px;margin-right:7px;border-radius:50%;vertical-align:0}
 .km{color:var(--mute);font-size:.8rem;margin-left:6px;white-space:nowrap}
 .lb{height:28px;padding:0 9px;margin-top:4px;font-size:.8rem;border-radius:8px}
 .lb.an{background:var(--bestbg);border-color:var(--best)}
 .hk{display:flex;gap:2px;margin-left:auto}
 .hk .icon-btn{margin-left:0}
-#einkauf{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+#einkauf,#favseite{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+.fv-z{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.fv-z:last-child{border-bottom:0}
+.fv-z label{display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:pointer}
+.fv-z label b{font-weight:600}
+.fv-z small{color:var(--mute);display:block}
+.fv-z input[type=checkbox]{width:20px;height:20px;flex:none}
+.fv-l{display:flex;align-items:center;gap:4px;flex:none;font-size:.85rem;color:var(--mute)}
+.fv-l input{width:4.2rem;padding:6px 8px;font:inherit;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.fv-rang{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.fv-rang:last-child{border-bottom:0}
+.fv-rang .rg{font:700 1.3rem "Barlow Condensed",sans-serif;width:1.4rem;color:var(--mute)}
+.fv-rang .tx{flex:1;min-width:0}.fv-rang small{color:var(--mute);display:block}
+.fv-rang b.s{font:700 1.35rem "Barlow Condensed",sans-serif;white-space:nowrap}
+.fv-best{border-color:var(--best)}
+.fv-seg{display:flex;gap:6px;flex-wrap:wrap}
 .ek{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px}
 .ek-h{display:flex;align-items:center;gap:4px;padding-bottom:6px;margin-bottom:4px;border-bottom:1px solid var(--line)}
 .ek-s{margin-left:auto;font:700 1.35rem "Barlow Condensed",sans-serif}
@@ -98,7 +119,7 @@ button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);fon
   .fz{display:flex}
   #filters:not(.offen)>:not(.fz){display:none}
 }
-#einkauf{order:5}
+#einkauf,#favseite{order:5}
 .icon-btn svg{width:20px;height:20px;display:block;margin:auto}
 .ampel{grid-column:1/-1;border-top:1px solid color-mix(in srgb,var(--best) 35%,transparent);padding-top:8px;font-size:.92rem}
 .tablewrap{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow-x:auto;box-shadow:var(--shadow)}
@@ -282,12 +303,13 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
     </div>
   </div>
   <div class="main">
-    <div class="tabs" role="tablist"><button id="tabUebersicht" type="button" role="tab">Übersicht</button><button id="tabJetzt" type="button" role="tab" class="on">Diese Woche</button><button id="tabSpaeter" type="button" role="tab">Nächste Woche</button><button id="tabVerlauf" type="button" role="tab">Preisverlauf</button><button id="tabEinkauf" type="button" role="tab">Einkaufsliste</button></div>
+    <div class="tabs" role="tablist"><button id="tabUebersicht" type="button" role="tab">Übersicht</button><button id="tabJetzt" type="button" role="tab" class="on">Diese Woche</button><button id="tabSpaeter" type="button" role="tab">Nächste Woche</button><button id="tabVerlauf" type="button" role="tab">Preisverlauf</button><button id="tabEinkauf" type="button" role="tab">Einkaufsliste</button><button id="tabFav" type="button" role="tab">Favoriten</button></div>
 
     <div id="vergleich" class="hinweis" hidden></div>
     <div id="korrInfo" class="hinweis" hidden><span id="korrText"></span><button id="korrReset" type="button">Korrekturen zurücksetzen</button></div>
     <div id="uebersicht" hidden></div>
     <div id="einkauf" hidden></div>
+    <div id="favseite" hidden></div>
 
     <div id="verlaufBox" hidden>
       <div class="filters"><label class="chip"><input type="checkbox" id="proMarkt"> Linien pro Markt</label><select id="vPack" aria-label="Packungsgröße im Verlauf"></select><input id="vfile" type="file" accept=".csv,text/csv,text/plain" hidden></div>
@@ -472,12 +494,13 @@ ortGps.onclick=()=>{
 function fahrtZeile(b,liste){
   const db=dkm(b.markt);if(db==null)return"";
   const kk=kmSatz*STRASSE,nah=liste.filter(o=>!abgelaufen(o)&&!kommt(o)&&dkm(o.markt)!=null).sort((x,y)=>dkm(x.markt)-dkm(y.markt)||gp(x)-gp(y))[0];
-  let t=`🚗 ${esc(mbase(b.markt))} ist ${f1(db)} km entfernt (Luftlinie, hin und zurück mit Straßenweg etwa ${eur(2*db*kk)} Fahrtkosten bei ${eur(kmSatz)} je km).`;
+  let kurz=`🚗 ${f1(db)} km · Fahrt ${eur(2*db*kk)}`,det=`${esc(mbase(b.markt))} ist ${f1(db)} km entfernt (Luftlinie, hin und zurück mit Straßenweg etwa ${eur(2*db*kk)} Fahrtkosten bei ${eur(kmSatz)} je km).`;
   if(nah&&mbase(nah.markt)!==mbase(b.markt)){
-    const dn=dkm(nah.markt),spar=(gp(nah)-gp(b))*liter(b),extra=2*(db-dn)*kk;
-    t+=` Im nächstgelegenen Markt (${esc(mbase(nah.markt))}, ${f1(dn)} km) kostet dieselbe Menge ${eur(gp(nah)*liter(b))}. Ersparnis ${eur(spar)}, Mehrkosten für die Fahrt ${eur(extra)}: ${spar>extra?"die weitere Fahrt lohnt sich":"die weitere Fahrt lohnt sich nicht"}.`;
+    const dn=dkm(nah.markt),spar=(gp(nah)-gp(b))*liter(b),extra=2*(db-dn)*kk,lohnt=spar>extra;
+    kurz+=` · <span class="${lohnt?"fl":"fn"}">${lohnt?"lohnt sich":"lohnt sich nicht"}</span>`;
+    det+=` Im nächstgelegenen Markt (${esc(mbase(nah.markt))}, ${f1(dn)} km) kostet dieselbe Menge ${eur(gp(nah)*liter(b))}. Ersparnis ${eur(spar)}, Mehrkosten für die Fahrt ${eur(extra)}: ${lohnt?"die weitere Fahrt lohnt sich":"die weitere Fahrt lohnt sich nicht"}.`;
   }
-  return `<div class="fahrt">${t}</div>`;
+  return `<div class="fahrt"><span>${kurz}</span> <details><summary>Details</summary>${det}</details></div>`;
 }
 /* ---- Einkaufsliste ---- */
 var eink=[];try{eink=JSON.parse(localStorage.getItem("pv-eink")||"[]")||[]}catch(e){}
@@ -497,6 +520,85 @@ function zeichneEinkauf(){
   }).join("");
   einkauf.innerHTML=html+`<div class="hinweis">Zusammen <b>${eur(ges)}</b> in ${ms.length} ${ms.length>1?"Märkten":"Markt"}.${alle&&ms.length?` Fahrtkosten bei getrennten Fahrten etwa ${eur(fahrt)}.`:""} <button type="button" id="ekLeer">Liste leeren</button></div>`;
 }
+/* ---- Favoriten-Seite: Zettel (Favorit -> Liter) und Marktvergleich ---- */
+var zettel={};try{zettel=JSON.parse(localStorage.getItem("pv-zettel")||"{}")||{}}catch(e){}
+var fvZeit="jetzt";
+function zettelSpeichern(ohneSync){try{localStorage.setItem("pv-zettel",JSON.stringify(zettel))}catch(e){}if(!ohneSync)kontoSync()}
+function fvGruppen(){return [...new Set([...(favs||[]).map(f=>f.name),...offers.map(o=>o.gruppe||"Coca-Cola")])]}
+function fvAngebote(g){return offers.filter(o=>(o.gruppe||"Coca-Cola")===g&&!o.ausb&&!abgelaufen(o)&&!aus.has(o.markt)&&(fvZeit==="jetzt"?!kommt(o):kommt(o)))}
+function fvFahrt(m){const d=dkm(m);return d==null?null:2*d*kmSatz*STRASSE}
+/* beste Angebote je Markt und Artikel: {markt:{artikel:Angebot}} */
+function fvBest(namen){
+  const t={};
+  namen.forEach(g=>fvAngebote(g).forEach(o=>{const m=mbase(o.markt),x=(t[m]=t[m]||{});if(!x[g]||gp(o)<gp(x[g]))x[g]=o}));
+  return t;
+}
+/* Ein Plan: Artikel -> Markt (günstigster der gewählten Märkte), alles muss abgedeckt sein */
+function fvPlan(ms,namen,t){
+  const zu={};let ware=0;
+  for(const g of namen){
+    let b=null;
+    for(const m of ms){const o=t[m]&&t[m][g];if(o&&(!b||gp(o)<gp(b.o)))b={m,o}}
+    if(!b)return null;
+    zu[g]=b;ware+=gp(b.o)*zettel[g];
+  }
+  const benutzt=[...new Set(Object.values(zu).map(x=>x.m))];
+  let fahrt=0,unbekannt=false;benutzt.forEach(m=>{const f=fvFahrt(m);if(f==null)unbekannt=true;else fahrt+=f});
+  return {ms:benutzt,zu,ware,fahrt,gesamt:ware+fahrt,unbekannt};
+}
+function zeichneFavoriten(){
+  const gr=fvGruppen();
+  Object.keys(zettel).forEach(k=>{if(!gr.includes(k)&&gr.length){/* Artikel, den es nicht mehr gibt: beim Vergleich ignorieren, nicht löschen */}});
+  const namen=gr.filter(g=>zettel[g]>0);
+  const seg=`<div class="fv-seg"><button type="button" class="lb${fvZeit==="jetzt"?" an":""}" data-z="jetzt">Angebote diese Woche</button><button type="button" class="lb${fvZeit==="spaeter"?" an":""}" data-z="spaeter">Nächste Woche</button></div>`;
+  const zeilen=gr.map(g=>{
+    const o=fvAngebote(g).sort((a,b)=>gp(a)-gp(b))[0],an=zettel[g]>0;
+    return `<div class="fv-z"><label><input type="checkbox" data-g="${esc(g)}"${an?" checked":""}><span><b>${esc(g)}</b><small>${o?`ab ${eur(gp(o))}/l bei ${esc(mbase(o.markt))}${dkm(mbase(o.markt))!=null?" · "+f1(dkm(mbase(o.markt)))+" km":""}`:"aktuell kein Angebot"}</small></span></label>${an?`<span class="fv-l"><input type="number" min="0.5" max="500" step="0.5" value="${zettel[g]}" data-l="${esc(g)}" aria-label="Liter ${esc(g)}"> Liter</span>`:""}</div>`;
+  }).join("");
+  let html=`<section class="ek"><div class="ek-h"><b>Favoriten</b><span class="ek-s" style="font-size:1rem">${namen.length} auf dem Zettel</span></div>${gr.length?zeilen:'<div class="empty">Noch keine Favoriten. Suche ein Getränk und speichere es als Favorit.</div>'}<p class="lbl" style="margin:8px 0 0">Hake an, was du kaufen willst, und gib die Menge in Litern an. Der Vergleich rechnet mit dem Literpreis; gekauft werden ganze Packungen.</p></section>`;
+  if(!namen.length){favseite.innerHTML=html;return}
+  const t=fvBest(namen);
+  const ohne=namen.filter(g=>!Object.values(t).some(x=>x[g])),mit=namen.filter(g=>!ohne.includes(g));
+  html+=`<section class="ek"><div class="ek-h"><b>Wo lohnt sich der Einkauf?</b></div>${seg}`;
+  if(ohne.length)html+=`<p class="lbl" style="margin:8px 0 0">Nirgends im Angebot (${fvZeit==="jetzt"?"diese":"nächste"} Woche): ${ohne.map(esc).join(", ")}. Sie fehlen im Vergleich.</p>`;
+  if(!mit.length){favseite.innerHTML=html+"</section>";return}
+  const ms=Object.keys(t);
+  // Einzelmärkte (alles dort) und Paare (je Artikel der günstigere der beiden)
+  const plaene=[];
+  ms.forEach(m=>{const p=fvPlan([m],mit,t);if(p)plaene.push(p)});
+  for(let i=0;i<ms.length;i++)for(let j=i+1;j<ms.length;j++){const p=fvPlan([ms[i],ms[j]],mit,t);if(p&&p.ms.length===2)plaene.push(p)}
+  plaene.sort((a,b)=>a.gesamt-b.gesamt);
+  const ein=plaene.filter(p=>p.ms.length===1),beste=plaene[0],besteEin=ein[0];
+  const einzeln=(p)=>esc(p.ms.join(" + "));
+  if(!beste){
+    html+=`<p class="lbl" style="margin:8px 0 0">Kein Markt (und keine Kombination aus zwei Märkten) hat alle Artikel im Angebot. Unten siehst du, was jeder Markt hat.</p>`;
+  }else{
+    const text=besteEin&&besteEin!==beste?`Am günstigsten: <b>${einzeln(beste)}</b> für ${eur(beste.gesamt)} (Ware ${eur(beste.ware)}${beste.fahrt?`, Fahrt ${eur(beste.fahrt)}`:""}). Alles in einem Markt: ${einzeln(besteEin)} für ${eur(besteEin.gesamt)}, also ${eur(besteEin.gesamt-beste.gesamt)} mehr.`:`Am günstigsten: <b>${einzeln(beste)}</b> für ${eur(beste.gesamt)} (Ware ${eur(beste.ware)}${beste.fahrt?`, Fahrt ${eur(beste.fahrt)}`:""}).`;
+    html+=`<div class="hinweis fv-best" style="margin-top:8px">${text}${beste.unbekannt?" Für Märkte ohne bekannte Entfernung sind keine Fahrtkosten eingerechnet.":""}</div>`;
+    const wo={};Object.entries(beste.zu).forEach(([g,x])=>{(wo[x.m]=wo[x.m]||[]).push([g,x.o])});
+    Object.keys(wo).sort((a,b)=>(dkm(a)??99)-(dkm(b)??99)).forEach(m=>{
+      const sum=wo[m].reduce((s,[g,o])=>s+gp(o)*zettel[g],0);
+      html+=`<div class="fv-rang" style="display:block"><div class="ek-h" style="border:0;margin:0">${mlogo(m)}<b>${esc(m)}</b>${dkm(m)!=null?`<span class="km">${f1(dkm(m))} km</span>`:""}<span class="ek-s">${eur(sum)}</span></div>${wo[m].map(([g,o])=>`<div class="ek-z"><span>${esc(g)}: ${zettel[g].toString().replace(".",",")} l<br><small>${o.stueck} × ${o.ml} ml ${esc(o.form||"")} für ${eur(pr(o))} · ${gueltig(o)}</small></span><span>${eur(gp(o)*zettel[g])}<br><small>${eur(gp(o))}/l</small></span></div>`).join("")}</div>`;
+    });
+  }
+  // Rangliste einzelner Märkte (auch unvollständige)
+  const reihe=ms.map(m=>{
+    const dabei=mit.filter(g=>t[m][g]),fehlt=mit.filter(g=>!t[m][g]);
+    const ware=dabei.reduce((s,g)=>s+gp(t[m][g])*zettel[g],0),f=fvFahrt(m);
+    return {m,dabei,fehlt,ware,f,gesamt:ware+(f||0)};
+  }).sort((a,b)=>(a.fehlt.length>0)-(b.fehlt.length>0)||a.gesamt-b.gesamt);
+  html+=`<p class="lbl" style="margin:10px 0 2px"><b>Alle Märkte einzeln</b> (Ware plus Hin- und Rückfahrt, Straße etwa ${STRASSE.toString().replace(".",",")}× Luftlinie)</p>`;
+  html+=reihe.map((r,i)=>`<div class="fv-rang"><span class="rg">${i+1}</span>${mlogo(r.m)}<span class="tx"><b>${esc(r.m)}</b>${r.f!=null?` <span class="km">${f1(dkm(r.m))} km</span>`:""}<small>${r.fehlt.length?`${r.dabei.length} von ${mit.length} Artikeln · fehlt: ${r.fehlt.map(esc).join(", ")}`:`alle ${mit.length} Artikel`} · Ware ${eur(r.ware)}${r.f!=null?` + Fahrt ${eur(r.f)}`:""}</small></span><b class="s">${eur(r.gesamt)}</b></div>`).join("");
+  html+="</section>";
+  favseite.innerHTML=html;
+}
+favseite.onclick=e=>{const z=e.target.closest("[data-z]");if(z){fvZeit=z.dataset.z;render()}};
+favseite.onchange=e=>{
+  const c=e.target.closest("input[type=checkbox][data-g]");
+  if(c){if(c.checked)zettel[c.dataset.g]=zettel[c.dataset.g]||6;else delete zettel[c.dataset.g];zettelSpeichern();render();return}
+  const l=e.target.closest("input[data-l]");
+  if(l){const v=parseFloat(String(l.value).replace(",","."));if(v>0&&v<=500)zettel[l.dataset.l]=v;zettelSpeichern();render()}
+};
 einkauf.onclick=e=>{
   const b=e.target.closest(".lb");if(b){listeUm(b.dataset.k);return}
   if(e.target.id==="ekLeer"){eink=[];einkSpeichern();render()}
@@ -537,17 +639,18 @@ function fillFilters(){
   m.value=markte.includes(mv)?mv:"";f.value=formen.includes(fv)?fv:"";
 }
 function render(){
-  medC={};updateNote();chips();titel.textContent=tab==="uebersicht"?"Preisübersicht":tab==="einkauf"?"Einkaufsliste":fProdukt.value+": günstigster Preis pro Liter";fzText();favKnopf();trefferZeichnen();
+  medC={};updateNote();chips();titel.textContent=tab==="uebersicht"?"Preisübersicht":tab==="einkauf"?"Einkaufsliste":tab==="favoriten"?"Favoriten und Einkauf":fProdukt.value+": günstigster Preis pro Liter";fzText();favKnopf();trefferZeichnen();
   const m=fMarkt.value,f=fForm.value,g=fMl.value,s=fSorte.value;
   let list=offers.filter(o=>(o.gruppe||"Coca-Cola")===fProdukt.value&&gewaehlt(o)&&(!m||o.markt===m)&&(!f||o.form===f)&&(!g||o.ml==g)&&(!s||(o.sorte||"Classic")===s)&&!aus.has(o.markt)&&!o.ausb).sort((a,b)=>gp(a)-gp(b));
   const jetztL=list.filter(o=>!abgelaufen(o)&&!kommt(o)),spaeterL=list.filter(kommt);
   tabInfo(jetztL,spaeterL);
   const gv=offers.filter(o=>(o.gruppe||"Coca-Cola")===fProdukt.value),nk=gv.filter(o=>o.korr).length,na=gv.filter(o=>o.ausb).length;
-  korrInfo.hidden=tab==="verlauf"||tab==="uebersicht"||tab==="einkauf"||!(nk||na);
+  korrInfo.hidden=tab==="verlauf"||tab==="uebersicht"||tab==="einkauf"||tab==="favoriten"||!(nk||na);
   korrText.textContent="✎ "+[nk?nk+" Angebot"+(nk>1?"e":"")+" von dir korrigiert":"",na?na+" ausgeblendet":""].filter(Boolean).join(", ")+".";
-  const vm=tab==="verlauf",ue=tab==="uebersicht",ek=tab==="einkauf";liste.hidden=vm||ue||ek;filters.hidden=vm||ue||ek;seiteZeigen();verlaufBox.hidden=!vm;uebersicht.hidden=!ue;einkauf.hidden=!ek;
+  const vm=tab==="verlauf",ue=tab==="uebersicht",ek=tab==="einkauf",fv=tab==="favoriten";liste.hidden=vm||ue||ek||fv;filters.hidden=vm||ue||ek||fv;seiteZeigen();verlaufBox.hidden=!vm;uebersicht.hidden=!ue;einkauf.hidden=!ek;favseite.hidden=!fv;
   if(ue){vergleich.hidden=true;zeichneUebersicht();return}
   if(ek){vergleich.hidden=true;zeichneEinkauf();return}
+  if(fv){vergleich.hidden=true;zeichneFavoriten();return}
   if(vm){vergleich.hidden=true;malVerlauf();return}
   list=tab==="jetzt"?jetztL:spaeterL;
   const gpSorted=list;  // nach Literpreis sortiert, daraus wird das günstigste Angebot bestimmt
@@ -714,7 +817,7 @@ function limitVon(t){const m=(t||"").match(/max\.?\s*(\d+\s*[a-zäöüß]+)/i);r
 let tab="jetzt";
 function tabInfo(j,k){
   tabJetzt.textContent="Diese Woche ("+j.length+")";tabSpaeter.textContent="Nächste Woche ("+k.length+")";
-  tabJetzt.classList.toggle("on",tab==="jetzt");tabSpaeter.classList.toggle("on",tab==="spaeter");tabVerlauf.classList.toggle("on",tab==="verlauf");tabUebersicht.classList.toggle("on",tab==="uebersicht");tabEinkauf.classList.toggle("on",tab==="einkauf");tabEinkauf.textContent="Einkaufsliste"+(eink.length?" ("+eink.length+")":"");
+  tabJetzt.classList.toggle("on",tab==="jetzt");tabSpaeter.classList.toggle("on",tab==="spaeter");tabVerlauf.classList.toggle("on",tab==="verlauf");tabUebersicht.classList.toggle("on",tab==="uebersicht");tabEinkauf.classList.toggle("on",tab==="einkauf");tabFav.classList.toggle("on",tab==="favoriten");tabEinkauf.textContent="Einkaufsliste"+(eink.length?" ("+eink.length+")":"");
   const v=document.getElementById("vergleich"),bj=j[0],bk=k[0];
   if(!bk){v.hidden=true;return}
   v.hidden=false;
@@ -730,6 +833,7 @@ tabJetzt.onclick=()=>{tab="jetzt";tabGewaehlt=true;render()};
 tabSpaeter.onclick=()=>{tab="spaeter";tabGewaehlt=true;render()};
 tabVerlauf.onclick=()=>{tab="verlauf";tabGewaehlt=true;render()};
 tabEinkauf.onclick=()=>{tab="einkauf";tabGewaehlt=true;render()};
+tabFav.onclick=()=>{tab="favoriten";tabGewaehlt=true;render()};
 fProdukt.onchange=()=>{fillFilters();render()};
 let vd=[];try{vd=JSON.parse(localStorage.getItem("pv-verlauf")||"[]")}catch(e){}
 const kurzD=s=>new Date(s+"T00:00:00").toLocaleDateString("de-DE",{day:"numeric",month:"numeric",year:"2-digit"});
@@ -930,7 +1034,7 @@ function trefferZeichnen(){
     const k=kKey(o),e=map.get(k)||{label:o.marke||o.produkt||"?",bild:"",n:0,min:Infinity};
     e.n++;e.min=Math.min(e.min,gp(o));if(!e.bild&&o.bild)e.bild=o.bild;map.set(k,e);
   });
-  const zeigen=tab!=="verlauf"&&tab!=="uebersicht"&&tab!=="einkauf"&&map.size>=2;
+  const zeigen=tab!=="verlauf"&&tab!=="uebersicht"&&tab!=="einkauf"&&tab!=="favoriten"&&map.size>=2;
   treffer.hidden=!zeigen;layout.classList.toggle("rechts",zeigen);
   if(!zeigen)return;
   const a=(auswahl||{})[g]||"",werte=[...map.values()],gesamt=werte.reduce((x,e)=>x+e.n,0),bestMin=Math.min(...werte.map(e=>e.min));
@@ -988,8 +1092,8 @@ favBtn.onclick=async()=>{
 function groesseText(ml){return ml>=1000?String(ml/1000).replace(".",",")+" l":ml+" ml"}
 function alarmZeigen(){
   const g=fProdukt.value,f=(favs||[]).find(x=>x.name===g),kann=cf;
-  alarmRow.hidden=!(f&&kann)||!!regionPlz();
-  if(!f||!kann||regionPlz())return;
+  alarmRow.hidden=!(f&&kann)||!!regionPlz()||tab==="favoriten";
+  if(!f||!kann||regionPlz()||tab==="favoriten")return;
   const al=f.alarm;
   alarmWert.value=al?al.wert.toFixed(2).replace(".",","):"";
   alarmEinheit.value=al?al.einheit:"l";
@@ -1093,7 +1197,7 @@ function kontoSync(){
   if(!konto||!wUrl)return;
   clearTimeout(kPush);
   kPush=setTimeout(async()=>{
-    try{await kFetch("/konto/daten","PUT",{daten:{ort,km:kmSatz,eink}},konto.token)}
+    try{await kFetch("/konto/daten","PUT",{daten:{ort,km:kmSatz,eink,zettel}},konto.token)}
     catch(e){if(e.status===401)kontoAbgelaufen()}
   },1500);
 }
@@ -1108,9 +1212,10 @@ async function kontoLaden(start,erstmals){
     if(typeof d.km==="number"){kmSatz=d.km;try{localStorage.setItem("pv-km",String(d.km))}catch(e){}}
     if(Array.isArray(d.eink))eink=(start&&!erstmals)?d.eink:[...new Set([...d.eink,...eink])];
     einkSpeichernOhneSync();
+    if(d.zettel&&typeof d.zettel==="object"){zettel=(start&&!erstmals)?d.zettel:{...d.zettel,...zettel};zettelSpeichern(true)}
     if(neuOrt)await ortSetzen(d.ort,true);else render();
     const g=x=>JSON.stringify(x);
-    if(g({ort:ort||undefined,km:kmSatz,eink})!==g({ort:d.ort,km:d.km,eink:d.eink}))kontoSync();   // nur hochladen, wenn dieses Gerät etwas anderes hat als der Server
+    if(g({ort:ort||undefined,km:kmSatz,eink,zettel})!==g({ort:d.ort,km:d.km,eink:d.eink,zettel:d.zettel||{}}))kontoSync();   // nur hochladen, wenn dieses Gerät etwas anderes hat als der Server
   }catch(e){if(e.status===401)kontoAbgelaufen()}
 }
 function einkSpeichernOhneSync(){try{localStorage.setItem("pv-eink",JSON.stringify(eink))}catch(e){}}

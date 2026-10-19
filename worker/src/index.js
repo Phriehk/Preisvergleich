@@ -430,6 +430,10 @@ function datenPruefen(d) {   // nur erwartete Felder und Größen werden gespeic
   if (d && d.ort && Number.isFinite(+d.ort.lat) && Number.isFinite(+d.ort.lon)) o.ort = { lat: +d.ort.lat, lon: +d.ort.lon, name: String(d.ort.name || "").slice(0, 120), plz: /^\d{5}$/.test(d.ort.plz) ? d.ort.plz : "", angebote: d.ort.angebote !== false };
   if (d && Number.isFinite(+d.km) && +d.km >= 0 && +d.km < 5) o.km = +d.km;
   if (d && Array.isArray(d.eink)) o.eink = d.eink.filter(x => typeof x === "string" && x.length < 300).slice(0, 100);
+  if (d && d.zettel && typeof d.zettel === "object" && !Array.isArray(d.zettel)) {   // Einkaufszettel: Favorit -> Liter
+    o.zettel = {};
+    for (const [k, v] of Object.entries(d.zettel).slice(0, 60)) if (k.length <= 60 && Number.isFinite(+v) && +v > 0 && +v <= 500) o.zettel[k] = +v;
+  }
   return o;
 }
 async function kontoRoute(req, env, p) {
