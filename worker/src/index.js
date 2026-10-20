@@ -136,16 +136,15 @@ async function teilAbfrage(env, plz, suche) {
 async function erkunden(env) {
   const k = await schluessel(env), H = { headers: { ...UA, "x-apikey": k.api, "x-clientkey": k.client } }, B = "https://api.marktguru.de/api/v1", out = [];
   const j = async u => { const r = await fetch(B + u, H); if (!r.ok) throw new Error(r.status + " " + u); return r.json(); };
-  for (const u of ["/offers/categories?as=web&zipCode=47178&limit=500", "/categories?as=web&limit=500"]) try {
-    const c = await j(u), l = Array.isArray(c) ? c : (c.results || []);
-    out.push(u + ": " + l.length + (c.totalResults != null ? " von " + c.totalResults : "") + " · erste " + JSON.stringify(l.slice(0, 2)).slice(0, 400));
-    const byId = new Map(l.map(x => [x.id, x])), top = l.filter(x => !x.parentId || !byId.has(x.parentId));
-    out.push("oben: " + top.length + " · " + top.map(x => x.id + "=" + x.name + "(" + (x.parentId ?? "-") + ")").join("; ").slice(0, 1500));
+  try {
+    const l = [...((await j("/categories?as=web&limit=500&offset=0")).results || []), ...((await j("/categories?as=web&limit=500&offset=500")).results || [])];
+    const byId = new Map(l.map(x => [x.id, x])), top = l.filter(x => !x.parentId);
     const tiefe = x => { let d = 0; while (x && x.parentId && byId.has(x.parentId) && d < 9) { x = byId.get(x.parentId); d++; } return d; };
-    const td = {}; l.forEach(x => { const d = tiefe(x); td[d] = (td[d] || 0) + 1; }); out.push("Tiefen: " + JSON.stringify(td));
-    const z = l.find(x => x.id === 189); if (z) { let x = z, w = []; while (x) { w.push(x.name); x = byId.get(x.parentId); } out.push("Pfad 189: " + w.join(" < ")); }
-    const zw = l.filter(x => tiefe(x) === 1).slice(0, 40).map(x => x.name + "<" + (byId.get(x.parentId) || {}).name).join("; "); out.push("Ebene 1: " + zw.slice(0, 1200));
-  } catch (e) { out.push(u + ": " + e.message); }
+    const td = {}; l.forEach(x => { const d = tiefe(x); td[d] = (td[d] || 0) + 1; }); out.push("Kategorien " + l.length + " · Tiefen: " + JSON.stringify(td) + " · fehlende Eltern " + l.filter(x => x.parentId && !byId.has(x.parentId)).length);
+    out.push("oben: " + top.map(x => x.id + "=" + x.name + "[" + l.filter(y => y.parentId === x.id).length + "]").join("; ").slice(0, 1800));
+    for (const id of [189, 23, 16]) { let x = byId.get(id), w = []; while (x) { w.push(x.name + "#" + x.id); x = byId.get(x.parentId); } out.push("Pfad " + id + ": " + w.join(" < ")); }
+    const mitte = l.filter(x => tiefe(x) === 1).map(x => x.name + "<" + (byId.get(x.parentId) || {}).name); out.push("Ebene 1 (" + mitte.length + "): " + mitte.join("; ").slice(0, 1800));
+  } catch (e) { out.push("Kategorien: " + e.message); }
   return out;
 }
 
