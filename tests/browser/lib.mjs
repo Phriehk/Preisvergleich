@@ -57,7 +57,7 @@ export async function umgebung(opts = {}) {
 export async function browserStarten(u, { breite = 390, hoehe = 844, code = "betreiber" } = {}) {
   const pw = playwright();
   const b = await pw.chromium.launch();
-  const c = await b.newContext({ viewport: { width: breite, height: hoehe } });
+  const c = await b.newContext({ viewport: { width: breite, height: hoehe }, serviceWorkers: "block" });   // ein Service Worker würde an page.route vorbei ins echte Netz gehen
   await c.addInitScript(([cd]) => { localStorage.setItem("pv-ort", JSON.stringify({ lat: 51.40, lon: 6.70, name: "Test 1, Duisburg", plz: "47178", angebote: true })); if (cd) localStorage.setItem("pv-code", cd); }, [code]);
   const p = await c.newPage();
   const fehler = [];
