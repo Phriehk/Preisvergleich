@@ -10,7 +10,7 @@ const grab = (src, from, to) => { const a = src.indexOf(from); assert.ok(a >= 0,
 
 // ---- App (index.html) ----
 const re = html.match(/const RE1=.*?;\n?/s)[0].replace(/\n/g, "");
-const appCode = re + grab(html, "function menge(t){", "function formVon") + grab(html, "function formVon", "\n}\n") + "\n}\n;({menge,formVon})";
+const appCode = re + grab(html, "function mengeAusText(t){", "// Verpackung") + grab(html, "function formVon", "\n}\n") + "\n}\n;({menge:mengeAusText,formVon})";
 const app = vm.runInNewContext(appCode);
 
 // ---- Server (worker/src/index.js) ----

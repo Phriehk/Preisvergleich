@@ -4,7 +4,7 @@ name: Worker hochladen
 on:
   push:
     branches: [main]
-    paths: ["worker/**", "index.html", "sw.js", "manifest.webmanifest", "*.png", ".github/workflows/worker.yml"]
+    paths: ["worker/**", "index.html", "alt.html", "sw.js", "manifest.webmanifest", "*.png", ".github/workflows/worker.yml"]
   workflow_dispatch:
 
 permissions:
@@ -41,7 +41,7 @@ jobs:
           log "workers.dev-Subdomain: $SUB"
           # die Seite wird zusammen mit dem Server ausgeliefert
           mkdir -p public
-          cp ../index.html ../sw.js ../manifest.webmanifest ../icon-192.png ../icon-512.png ../icon-maskable-192.png ../icon-maskable-512.png ../apple-touch-icon.png public/
+          cp ../index.html ../alt.html ../sw.js ../manifest.webmanifest ../icon-192.png ../icon-512.png ../icon-maskable-192.png ../icon-maskable-512.png ../apple-touch-icon.png public/
           set -o pipefail
           npx --yes wrangler@4 deploy 2>&1 | tail -n 14 | tee -a $LOG
           # Geheimnisse (nur beim Server hinterlegt, nie im Repository)
@@ -83,10 +83,6 @@ jobs:
           T0=$(date +%s); R=$(curl -s -m 120 -G --data-urlencode "plz=47178" --data-urlencode "q=Butter|Eier|Mehl|Nudeln|Joghurt|Kartoffeln" --data-urlencode "streng=1" "$URL/region")
           log "Lebensmittel-Probe: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if type=="array" then (group_by(.gruppe) | map({(.[0].gruppe): length}) | add) else . end' 2>/dev/null || echo "$R" | head -c 300)"
           echo "$R" | jq -r 'if type=="array" then .[0:40][] | "  Probe: \(.gruppe) | \(.markt) | \(.produkt[0:28]) | art=\(.art) liter=\(.liter) stueck=\(.stueck) ml=\(.ml) preis=\(.preis) | \(.beschreibung[0:70])" else empty end' 2>/dev/null | while IFS= read -r z; do log "$z"; done
-          for Q in Butter Cola; do
-            R=$(curl -s -m 60 -w '\nHTTP %{http_code}' -X POST -G -H "Authorization: Bearer $ZUG" --data-urlencode "plz=47178" --data-urlencode "q=$Q" "$URL/rohfelder"); S=$(echo "$R" | tail -n 1); R=$(echo "$R" | sed '$d')
-            log "Rohfelder $Q ($S): $(echo "$R" | jq -c '{anzahl, felder}' 2>/dev/null || echo "$R" | head -c 300)"
-          done
           R=$(curl -s -m 60 -G --data-urlencode "plz=40210" --data-urlencode "m=Lidl|REWE|ALDI SÜD" "$URL/entfernungen")
           log "Entfernungen 40210, erste Antwort: $(echo "$R" | head -c 200)"
           sleep 40

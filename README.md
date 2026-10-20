@@ -1,37 +1,28 @@
 # Preisvergleich
 
-Privater Getränke-Preisvergleich mit Angeboten von Marktguru.
+Private Web-App: Supermarkt-Angebote von Marktguru vergleichen, eine Einkaufsliste planen (welcher Markt lohnt sich, mit Fahrtkosten) und beim Einkaufen abhaken.
 
-- **Seite und Server:** laufen bei Cloudflare (Ordner `worker/`, Seite in `index.html`). Hochgeladen wird automatisch über `.github/workflows/worker.yml`, sobald sich etwas ändert.
-- **Daten:** liegen im Cloudflare-Speicher (KV). Der Workflow `sicherung.yml` kopiert sie einmal pro Woche nach `sicherung/`.
-- **Tests:** `node --test tests/` prüft die Mengen- und Verpackungserkennung.
+- **Seite:** `index.html` (eine Datei, keine Bibliotheken). Die bisherige Version liegt als Sicherung in `alt.html` und ist unter `/alt.html` erreichbar. Beide nutzen dieselben Daten im Browser und auf dem Server.
+- **Server:** Cloudflare Worker in `worker/` (Marktguru-Abfragen, täglicher Lauf um 7 Uhr, Preisalarm per ntfy, Konten ohne E-Mail, Entfernungen über OpenStreetMap). Hochgeladen wird automatisch über `.github/workflows/worker.yml`.
+- **Daten:** im Cloudflare-Speicher (KV). `sicherung.yml` kopiert Verlauf, Favoriten und Korrekturen einmal pro Woche nach `sicherung/`.
 - **Geheimnisse (GitHub, Settings, Secrets):** `CLOUDFLARE_API_TOKEN`, `NTFY_TOPIC`, optional `ZUGANGSCODE`.
 
-## Lebensmittel und Einkaufsliste
+## Aufbau der Seite
 
-Neben Getränken (Preis pro Liter) kann die Seite Lebensmittel vergleichen (Preis pro kg oder pro Stück). Die Einheit erkennt der Server aus den Angaben von Marktguru (Liter, Gramm, Kilogramm, Stück). Auf der Seite „Favoriten“ fügt man mit „Artikel hinzufügen“ beliebige Artikel hinzu. Auf der Einkaufsliste gibt man die Menge an und optional einen **Richtwert** (was der Artikel normalerweise kostet). Der Vergleich rechnet Artikel ohne Angebot mit dem Richtwert (als „ca.“ gekennzeichnet, in jedem Markt gleich) und zeigt, in welchem Markt die meisten Artikel im Angebot sind, samt Fahrt.
+| Bereich | Inhalt |
+|---|---|
+| Angebote | Eine Karte je Favorit: bester Preis je Liter, kg oder Stück, Markt mit Entfernung, Gültigkeit, Vergleich mit dem eigenen Durchschnitt, Hinweis auf günstigere Angebote demnächst. Antippen öffnet die Produktseite (alle Angebote, Filter, Preisverlauf, Preisalarm, Korrektur auffälliger Preise). |
+| Suchen | Ein Artikel oder eine ganze Liste (z. B. aus Erinnerungen, auch per Link `#import=`). Pro Artikel Kacheln: alle Marken, einzelne Produkte als Favorit, ohne Angebot. |
+| Liste | Menge in Stück (übliche Packungsgröße), Normalpreis für Artikel ohne Angebot, beste Wahl mit Ware und Fahrt (auch zwei Märkte als Tour), alle Märkte im Vergleich, Weitergeben als Text oder Kurzbefehl, Meldung bei Angeboten. |
+| Einkaufen | Liste zum Abhaken, nach Markt gegliedert, eigene Artikel, Abgehakte entfernen. |
+| Mehr | Standort und Fahrtkosten, Märkte ausblenden, App-Preise, Darstellung, Konto, Betreiber (Zugangscode, Preise neu holen, Passwort-Anfragen). |
 
-Grenzen: Normalpreise gibt es nicht automatisch (Marktguru liefert nur Angebote). Die Zuordnung von Angeboten zu einem Artikel arbeitet mit dem Namen (zusammengesetzte Wörter am Ende zählen, „Butter-Mandel-Stollen“ nicht) und ist nicht perfekt. Bei Lebensmitteln stehen im Deploy-Log unter „Lebensmittel-Probe“ echte Beispiele zur Kontrolle.
+**Mit Zugangscode** (Betreiber) liegen die Favoriten auf dem Server, werden täglich abgefragt und haben Preisverlauf und Preisalarm. **Ohne Zugangscode** hat jede Person eigene Favoriten im Browser (mit Konto auf allen Geräten), die Angebote kommen dann über die öffentliche Abfrage `/region` für die eigene Postleitzahl.
 
-## Einkaufsliste importieren (z. B. aus Erinnerungen)
+## Tests
 
-Eigener Tab „Import“: Zeilen einfügen (oder „Aus Zwischenablage einfügen“) (eine pro Artikel, Mengen wie „2 kg Äpfel“ oder „6 Eier“ werden erkannt) und „Angebote suchen“.
-Pro Artikel gibt es Kacheln: vorhandene Favoriten, „Alle Marken“ (günstigstes aller Marken) auf die Liste legen, ein Produkt als Favorit speichern („☆ Favorit“) oder direkt mit auf die Liste („＋ Liste“), oder ohne Angebot mit Richtwert.
-Per Link (z. B. aus einem iPhone-Kurzbefehl): `https://preise.phriehk.workers.dev/#import=<URL-codierte Zeilen>`. Der Text bleibt im Browser und geht nicht an den Server (nur die Suchbegriffe).
-`/suche` (POST) nimmt bis zu 8 Suchbegriffe, getrennt mit `|`.
+`node --test tests/erkennung.test.mjs tests/alarm.test.mjs` und mit installiertem Playwright `node --test tests/browser/seite.test.mjs` (die echte Seite im Browser gegen den echten Worker-Code, Marktguru nachgebaut). Alles läuft bei jedem Push (Workflow „Tests“); bei Fehlern schreibt die Pipeline die Ausgabe nach `tests/ergebnis/browser.txt`.
 
-## Export und Stück
+## Grenzen
 
-Einkaufsliste → „Liste exportieren“: Text nach Markt gegliedert (Beste Wahl oder alles bei einem Markt), kopieren, teilen oder per Kurzbefehl (`shortcuts://run-shortcut?name=…&input=text&text=…`) an Erinnerungen übergeben.
-Mengen werden in Stück angegeben. 1 Stück ist die häufigste Packungsgröße aus den Angeboten (z. B. 250 g Butter); intern wird weiter in kg bzw. Liter gerechnet. Artikel ohne Angebot sind standardmäßig Stück.
-
-## Einkaufen (Abhaken), Alarm, Tests
-
-- Tab „Einkaufen“: die Liste nach Markt gegliedert zum Abhaken (Haken bleiben auf dem Gerät gespeichert). „Demnächst“ liegt jetzt unter „Mehr“.
-- Neue Artikel suchst du nur noch im Tab „Import“ (auch einzelne); die Favoriten-Seite zeigt nur die Kacheln.
-- Preisalarm gibt es auch für Gewicht (€/kg) und Stück (€/Stück). In der Einkaufsliste schaltet „Melden, wenn Artikel meiner Liste im Angebot sind“ einen Alarm für alle Favoriten der Liste (unter dem Richtwert, sonst bei jedem Angebot).
-- Tests: `node --test tests/erkennung.test.mjs tests/alarm.test.mjs` und mit installiertem Playwright `node --test tests/browser/seite.test.mjs` (echte Seite im Browser gegen den echten Worker-Code). Beides läuft bei jedem Push (Workflow „Tests“).
-
-## Alter Preis
-
-Marktguru liefert nur bei wenigen Angeboten einen alten Preis (`oldPrice`, im Test bei etwa 2 von 38 Butter- und 1 von 14 Cola-Angeboten). Wo er da ist, zeigt die Seite „statt X € (−Y %)“. `referencePrice` ist der Grundpreis, kein Normalpreis. Einen Normalpreis für alle Artikel gibt es so nicht, dafür bleiben die Richtwerte. `POST /rohfelder?q=…` (Zugangscode) zeigt die rohen Marktguru-Felder zur Kontrolle.
+Normalpreise liefert Marktguru nicht (nur selten einen alten Preis, dann steht „statt …“ da), deshalb gibt es eigene Normalpreise. Die Zuordnung von Angeboten zu einem Artikel arbeitet mit dem Namen und ist nicht perfekt. Verpackung und Menge werden aus dem Prospekttext abgeleitet.

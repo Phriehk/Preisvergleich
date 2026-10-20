@@ -1,7 +1,7 @@
 {
-  "name": "Getränke-Preisvergleich",
+  "name": "Preisvergleich",
   "short_name": "Preise",
-  "description": "Günstigste Getränkepreise im Supermarkt, täglich aktualisiert",
+  "description": "Supermarkt-Angebote vergleichen, Einkaufsliste planen und abhaken",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

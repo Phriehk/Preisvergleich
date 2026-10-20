@@ -132,19 +132,6 @@ async function teilAbfrage(env, plz, suche) {
   return aus;
 }
 
-/* Diagnose: welche Felder liefert Marktguru wirklich (z. B. alter Preis)? Nur mit Zugangscode. */
-async function rohfelder(env, plz, q) {
-  const k = await schluessel(env);
-  const url = SEARCH + "?" + new URLSearchParams({ as: "web", limit: "100", offset: "0", q, zipCode: plz });
-  const r = await http(url, { "x-apikey": k.api, "x-clientkey": k.client });
-  const seite = (await r.json()).results || [];
-  const haeufig = {};
-  for (const o of seite) for (const [f, v] of Object.entries(o)) if (v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && !v.length)) haeufig[f] = (haeufig[f] || 0) + 1;
-  const kurz = v => { const t = JSON.stringify(v); return t && t.length > 160 ? t.slice(0, 160) + "…" : t; };
-  const mit = seite.filter(o => ["oldPrice", "referencePrice", "regularPrice", "priceOld", "originalPrice"].some(f => o[f] != null)).slice(0, 3);
-  return { anzahl: seite.length, felder: haeufig, beispiele: [...mit, ...seite.slice(0, 2)].slice(0, 5).map(o => Object.fromEntries(Object.entries(o).map(([f, v]) => [f, kurz(v)]))) };
-}
-
 // Eigener Einstiegspunkt, damit jede Teilabfrage als eigener Aufruf mit eigenen Grenzen läuft.
 // Ein Aufruf holt mehrere Artikel in einer Postleitzahl und sortiert unpassende Treffer gleich aus (spart Aufrufe und Rechenzeit im Hauptaufruf).
 export class Teil extends WorkerEntrypoint {
@@ -512,23 +499,31 @@ async function sitzungPruefen(env, req) {
   if (!u || u.gen !== s.gen) throw konto(401, "Bitte neu anmelden");
   return { name: s.name, u, token };
 }
+const FELDER = ["ort", "km", "zettel", "richt", "frei", "extra", "haken", "aus", "favs"];
 function datenPruefen(d) {   // nur erwartete Felder und Größen werden gespeichert
-  const o = {};
-  if (d && d.ort && Number.isFinite(+d.ort.lat) && Number.isFinite(+d.ort.lon)) o.ort = { lat: +d.ort.lat, lon: +d.ort.lon, name: String(d.ort.name || "").slice(0, 120), plz: /^\d{5}$/.test(d.ort.plz) ? d.ort.plz : "", angebote: d.ort.angebote !== false };
-  if (d && Number.isFinite(+d.km) && +d.km >= 0 && +d.km < 5) o.km = +d.km;
-  if (d && Array.isArray(d.eink)) o.eink = d.eink.filter(x => typeof x === "string" && x.length < 300).slice(0, 100);
-  if (d && d.zettel && typeof d.zettel === "object" && !Array.isArray(d.zettel)) {   // Einkaufszettel: Favorit -> Liter
+  const o = {}, obj = x => x && typeof x === "object" && !Array.isArray(x), text = (x, n) => typeof x === "string" && x.length > 0 && x.length <= n;
+  if (!obj(d)) return o;
+  if (d.ort && Number.isFinite(+d.ort.lat) && Number.isFinite(+d.ort.lon)) o.ort = { lat: +d.ort.lat, lon: +d.ort.lon, name: String(d.ort.name || "").slice(0, 120), plz: /^\d{5}$/.test(d.ort.plz) ? d.ort.plz : "", angebote: d.ort.angebote !== false };
+  if (Number.isFinite(+d.km) && d.km !== null && +d.km >= 0 && +d.km < 5) o.km = +d.km;
+  if (obj(d.zettel)) {   // Einkaufsliste: Artikel -> Menge in Liter, kg oder Stück
     o.zettel = {};
-    for (const [k, v] of Object.entries(d.zettel).slice(0, 120)) if (k.length <= 60 && Number.isFinite(+v) && +v > 0 && +v <= 500) o.zettel[k] = +v;
+    for (const [k, v] of Object.entries(d.zettel).slice(0, 150)) if (k.length <= 60 && Number.isFinite(+v) && +v > 0 && +v <= 500) o.zettel[k] = +v;
   }
-  if (d && d.richt && typeof d.richt === "object" && !Array.isArray(d.richt)) {   // eigene Richtwerte: Artikel -> Euro je Liter / kg / Stück
+  if (obj(d.richt)) {   // Normalpreise: Artikel -> Euro je Liter / kg / Stück
     o.richt = {};
-    for (const [k, v] of Object.entries(d.richt).slice(0, 120)) if (k.length <= 60 && Number.isFinite(+v) && +v > 0 && +v <= 1000) o.richt[k] = Math.round(+v * 100) / 100;
+    for (const [k, v] of Object.entries(d.richt).slice(0, 150)) if (k.length <= 60 && Number.isFinite(+v) && +v > 0 && +v <= 1000) o.richt[k] = Math.round(+v * 1e4) / 1e4;
   }
-  if (d && d.frei && typeof d.frei === "object" && !Array.isArray(d.frei)) {   // eigene Artikel ohne Angebot: Name -> Einheit
+  if (obj(d.frei)) {   // Artikel ohne Angebot: Name -> Einheit
     o.frei = {};
-    for (const [k, v] of Object.entries(d.frei).slice(0, 120)) if (k.length <= 40 && ["l", "kg", "st"].includes(v)) o.frei[k] = v;
+    for (const [k, v] of Object.entries(d.frei).slice(0, 150)) if (k.length <= 60 && ["l", "kg", "st"].includes(v)) o.frei[k] = v;
   }
+  if (Array.isArray(d.extra)) o.extra = d.extra.filter(x => text(x, 40)).slice(0, 100);   // von Hand notierte Artikel
+  if (obj(d.haken)) {   // beim Einkaufen abgehakt
+    o.haken = {};
+    for (const k of Object.keys(d.haken).slice(0, 300)) if (k.length <= 130 && d.haken[k]) o.haken[k] = 1;
+  }
+  if (Array.isArray(d.aus)) o.aus = d.aus.filter(x => text(x, 60)).slice(0, 80);   // ausgeblendete Märkte
+  if (Array.isArray(d.favs)) o.favs = d.favs.filter(f => f && text(f.name, 40)).slice(0, 80).map(f => ({ name: f.name, aus: "", nur: (Array.isArray(f.nur) ? f.nur : []).filter(x => text(x, 60)).slice(0, 10), ...(text(f.suche, 40) ? { suche: f.suche } : {}) }));   // eigene Favoriten (ohne Zugangscode)
   return o;
 }
 async function kontoRoute(req, env, p) {
@@ -555,7 +550,11 @@ async function kontoRoute(req, env, p) {
   if (p === "/konto/daten" && req.method === "PUT") {
     const { name, u } = await sitzungPruefen(env, req), b = await koerper();
     if (begrenzt("daten:" + name, 60)) throw zuViel();
-    u.daten = datenPruefen(b.daten);
+    // Nur die mitgeschickten Felder ändern sich; ein Feld mit ungültigem Wert (z. B. null) wird gelöscht. So überschreibt die alte Seite (alt.html) nichts, was sie nicht kennt.
+    const neu = datenPruefen(b.daten), d = { ...(u.daten || {}) };
+    delete d.eink;
+    for (const k of FELDER) if (b.daten && typeof b.daten === "object" && k in b.daten) { if (k in neu) d[k] = neu[k]; else delete d[k]; }
+    u.daten = d;
     await env.PV.put("u:" + name, JSON.stringify(u));
     return { name, daten: u.daten };
   }
@@ -680,11 +679,6 @@ export default {
         if (!Array.isArray(liste) || liste.some(f => !f || typeof f.name !== "string")) return fehler("Ungültige Favoritenliste", 400);
         await env.PV.put("favoriten", JSON.stringify(liste, null, 2));
         return antwort(liste);
-      }
-      if (p === "/rohfelder" && req.method === "POST") {
-        const q = (url.searchParams.get("q") || "").slice(0, 40), plz = (url.searchParams.get("plz") || PLZ).replace(/\D/g, "").slice(0, 5);
-        if (!q) return fehler("q fehlt", 400);
-        try { return antwort(await rohfelder(env, plz, q)); } catch (e) { return fehler("Marktguru: " + e.message, 502); }
       }
       if (p === "/korrekturen" && req.method === "POST") {
         // Korrekturen auffälliger Preise (Preis, Stückzahl, Größe, "passt so", "ausgeblendet"): geteilt zwischen allen Geräten mit Zugangscode

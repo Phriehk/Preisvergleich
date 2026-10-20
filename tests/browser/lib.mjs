@@ -38,8 +38,13 @@ export async function umgebung(opts = {}) {
   const W = await ladeWorker(), H = W.default;
   const store = new Map();
   const KV = { async get(k, t) { const v = store.get(k); return v == null ? null : t === "json" ? JSON.parse(v) : v; }, async put(k, v) { store.set(k, v); }, async delete(k) { store.delete(k); } };
-  const html = fs.readFileSync(path.join(wurzel, "index.html"));
-  const env = { PV: KV, ZUGANG: "betreiber", NTFY_TOPIC: opts.ntfy ? "test" : undefined, ASSETS: { fetch: async () => new Response(html, { headers: { "content-type": "text/html" } }) } };
+  const TYPEN = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".webmanifest": "application/manifest+json", ".png": "image/png" };
+  const ASSETS = { fetch: async r => {   // wie bei Cloudflare: Dateien aus dem Ordner der Seite
+    const p = new URL(r.url).pathname, datei = path.join(wurzel, p === "/" ? "index.html" : p.replace(/^\/+/, ""));
+    if (!datei.startsWith(wurzel) || !fs.existsSync(datei) || fs.statSync(datei).isDirectory()) return new Response("Nicht gefunden", { status: 404 });
+    return new Response(fs.readFileSync(datei), { headers: { "content-type": TYPEN[path.extname(datei)] || "application/octet-stream" } });
+  } };
+  const env = { PV: KV, ZUGANG: "betreiber", NTFY_TOPIC: opts.ntfy ? "test" : undefined, ASSETS };
   const ctx = { exports: { Teil: new W.Teil({}, env) }, waitUntil() {} };
   const ntfy = [];
   globalThis.fetch = async (u, o) => {

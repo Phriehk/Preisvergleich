@@ -9,151 +9,173 @@ const t = (name, fn) => test(name, { skip: !ok && "Playwright nicht installiert"
 
 async function mitSeite(opts, fn) {
   const u = await umgebung(opts);
-  await u.KV.put("favoriten", JSON.stringify([{ name: "Eier", aus: "" }, { name: "Reis", aus: "" }, { name: "Äpfel", aus: "" }]));
+  await u.KV.put("favoriten", JSON.stringify(opts.favs || [{ name: "Eier", aus: "" }, { name: "Reis", aus: "" }, { name: "Äpfel", aus: "" }]));
   await u.A("/aktualisieren", "POST");
   const s = await browserStarten(u, opts);
-  try { await s.oeffnen(); await fn(s, u); }
+  try { await s.oeffnen(opts.hash || ""); await fn(s, u); }
   finally { await s.b.close(); }
 }
-const klick = async (p, sel) => { await p.evaluate(s => document.querySelector(s).click(), sel); await p.waitForTimeout(1200); };
+const klick = async (p, sel) => { await p.evaluate(s => document.querySelector(s).click(), sel); await p.waitForTimeout(900); };
+const bereich = async (p, v) => { await p.click(`#leiste [data-v="${v}"]`); await p.waitForTimeout(300); };
+const suche = async (p, text) => { await bereich(p, "suchen"); await p.fill("#sucheText", text); await p.click('[data-aktion="suchen"]'); await p.waitForFunction(() => !S.suche.laeuft, null, { timeout: 15000 }); await p.waitForTimeout(200); };
 
-t("Alle Tabs laden ohne Fehler", async () => {
+t("Alle Bereiche laden ohne Fehler, auch die Produktseite und die alte Version", async () => {
   await mitSeite({}, async ({ p, fehler }) => {
-    for (const id of ["#tabFav", "#tabEinkauf", "#tabEinkaufen", "#tabImport", "#tabJetzt"]) { await p.click(id); await p.waitForTimeout(300); }
-    await p.click("#tabMehr"); await p.click("#tabSpaeter"); await p.click("#tabMehr"); await p.click("#tabUebersicht");
+    assert.deepEqual(await p.$$eval(".produkt h3", e => e.map(x => x.textContent)), ["Äpfel", "Eier", "Reis"]);
+    for (const v of ["suchen", "liste", "einkaufen", "mehr", "angebote"]) await bereich(p, v);
+    await p.click('.produkt[data-p="Eier"]'); await p.waitForTimeout(300);
+    assert.equal(await p.textContent("#titel"), "Eier");
+    assert.ok(await p.$$eval("tbody tr", e => e.length) >= 2);
+    await p.click('[data-seg="sort2"][data-wert="preis"]');
+    await p.goBack(); await p.waitForTimeout(300);
+    assert.equal(await p.textContent("#titel"), "Angebote");
+    await p.goto("https://preise.phriehk.workers.dev/alt.html"); await p.waitForTimeout(1500);
+    assert.match(await p.textContent("body"), /alte Version/);
     assert.deepEqual(fehler, []);
   });
 });
 
-t("Konto anlegen funktioniert (Dialog, Passwortprüfung)", async () => {
-  await mitSeite({ code: "" }, async ({ p, fehler }) => {
-    await p.click("#kontoBtn"); await p.click("#kModen [data-m=neu]");
+t("Konto anlegen: Passwortprüfung, Anmeldung, Abgleich ohne Datenverlust für die alte Version", async () => {
+  await mitSeite({ code: "" }, async ({ p, fehler }, u) => {
+    await bereich(p, "mehr");
+    await p.click('[data-seg="kMode"][data-wert="neu"]');
     await p.fill("#kName", "Anna"); await p.fill("#kPw", "geheim123"); await p.fill("#kPw2", "falsch123"); await p.click("#kGo");
-    assert.match(await p.textContent("#kInfo"), /überein|gleich/i);
-    await p.fill("#kPw2", "geheim123"); await p.click("#kGo"); await p.waitForTimeout(1500);
-    assert.equal((await p.textContent("#kWer")).trim().toLowerCase(), "anna");
+    assert.match(await p.textContent("#kInfo"), /nicht gleich/);
+    await p.fill("#kPw2", "geheim123"); await p.click("#kGo");
+    await p.waitForSelector("#kWer", { timeout: 15000 });
+    assert.equal((await p.textContent("#kWer")).trim(), "anna");
+    // eine eigene Notiz landet im Konto ...
+    await bereich(p, "einkaufen");
+    await p.fill("#extraName", "Zahnpasta"); await p.press("#extraName", "Enter"); await p.waitForTimeout(2200);
+    let d = JSON.parse(u.store.get("u:anna")).daten;
+    assert.deepEqual(d.extra, ["Zahnpasta"]);
+    // ... und bleibt, wenn die alte Seite nur ihre Felder schickt
+    const tok = await p.evaluate(() => konto.token);
+    await u.H.fetch(new Request("https://preise.phriehk.workers.dev/konto/daten", { method: "PUT", headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" }, body: JSON.stringify({ daten: { ort: null, km: 0.3, zettel: { Eier: 6 }, richt: {}, frei: {} } }) }), u.env, u.ctx);
+    d = JSON.parse(u.store.get("u:anna")).daten;
+    assert.deepEqual(d.extra, ["Zahnpasta"]); assert.deepEqual(d.zettel, { Eier: 6 });
     assert.deepEqual(fehler, []);
   });
 });
 
-t("Import: Liste einfügen, suchen, auf die Liste, Favorit, ohne Angebot; Tab und Scrollposition bleiben", async () => {
+t("Suchen: Liste einfügen, auf die Liste, Favorit, ohne Angebot; Ansicht und Scrollposition bleiben", async () => {
   await mitSeite({}, async ({ p, fehler }, u) => {
-    await p.click("#tabImport");
-    await p.fill("#impText", "Milch\n2 kg Äpfel\nButter\nSalz");
-    await p.click("#impBtn"); await p.waitForTimeout(2500);
-    const it = await p.evaluate(() => imp.items.map(i => [i.name, i.status, i.roh.length]));
+    await suche(p, "Milch\n2 kg Äpfel\nButter\nSalz");
+    const it = await p.evaluate(() => S.suche.items.map(i => [i.name, i.status, i.roh.length]));
     assert.deepEqual(it.map(x => x[0]), ["Milch", "Äpfel", "Butter", "Salz"]);
     assert.ok(it[0][2] > 0 && it[3][2] === 0, JSON.stringify(it));
-    // keine doppelte Kachel „Äpfel“ neben „Alle Marken“
-    const apfel = await p.evaluate(() => [...document.querySelectorAll("#impseite .fv-grp")][1].querySelectorAll(".kachel b").length && [...document.querySelectorAll("#impseite .fv-grp")][1].innerText.replace(/\s+/g, " "));
-    assert.ok(/Alle Marken/.test(apfel) && /Ohne Angebot/.test(apfel) && !/Äpfel\s+\d+ Angebot/.test(apfel), apfel);
-    await klick(p, '[data-ia="0"]');                                   // Milch: günstigstes aller Marken
-    const bi = await p.evaluate(() => imp.items.findIndex(i => i.name === "Butter"));
+    const apfel = await p.evaluate(() => [...document.querySelectorAll("#ansicht .gruppe")][1].innerText.replace(/\s+/g, " "));
+    assert.ok(/Alle Marken/.test(apfel) && /Ohne Angebot/.test(apfel), apfel);
+    await klick(p, '[data-ia="0"]');                                    // Milch: günstigstes aller Marken
+    const bi = await p.evaluate(() => S.suche.items.findIndex(i => i.name === "Butter"));
     await p.evaluate(i => document.querySelector(`[data-il="${i}|1"]`).scrollIntoView({ block: "center", behavior: "instant" }), bi);
-    await p.waitForTimeout(800);   // die Seite scrollt weich: erst danach die Position messen
+    await p.waitForTimeout(500);
     const y0 = await p.evaluate(() => Math.round(scrollY));
-    await p.evaluate(i => document.querySelector(`[data-il="${i}|1"]`).click(), bi);   // ohne Playwright-eigenes Scrollen
+    await p.evaluate(i => document.querySelector(`[data-il="${i}|1"]`).click(), bi);
     const spur = [];
-    for (let i = 0; i < 8; i++) { await p.waitForTimeout(150); spur.push(await p.evaluate(() => tab + "@" + Math.round(scrollY))); }
-    // Tab bleibt, und die Seite springt nicht nach oben (die Position darf sich um die Höhe einer neuen Meldung verschieben)
-    assert.ok(spur.every(x => { const [tb, y] = x.split("@"); return tb === "import" && Math.abs(+y - y0) < 150; }), `Tab oder Scroll gesprungen: ${spur.join(" ")} (vorher ${y0})`);
-    const si = await p.evaluate(() => imp.items.findIndex(i => i.name === "Salz"));
-    await klick(p, `[data-io="${si}"]`);
+    for (let i = 0; i < 8; i++) { await p.waitForTimeout(150); spur.push(await p.evaluate(() => S.v + "@" + Math.round(scrollY))); }
+    assert.ok(spur.every(x => { const [v, y] = x.split("@"); return v === "suchen" && Math.abs(+y - y0) < 150; }), `gesprungen: ${spur.join(" ")} (vorher ${y0})`);
+    await klick(p, `[data-io="${await p.evaluate(() => S.suche.items.findIndex(i => i.name === "Salz"))}"]`);
     const z = await p.evaluate(() => ({ zettel, frei }));
-    assert.ok(z.zettel.Milch > 0 && z.zettel["Salz"] > 0 && Object.keys(z.zettel).length === 3, JSON.stringify(z));
+    assert.ok(z.zettel.Milch > 0 && z.zettel.Salz > 0 && Object.keys(z.zettel).length === 3, JSON.stringify(z));
     assert.equal(z.frei.Salz, "st");
+    const server = JSON.parse(u.store.get("favoriten")).map(f => f.name);
+    assert.ok(server.includes("Milch") && !server.includes("Salz"), JSON.stringify(server));
     assert.deepEqual(fehler, []);
   });
 });
 
-t("Einkaufen: nach Markt, abhaken bleibt gespeichert; Export nur mit Namen", async () => {
+t("Einkaufen: nach Markt, abhaken bleibt nach Neuladen, eigene Artikel, Abgehakte entfernen; Export nur mit Namen", async () => {
   await mitSeite({}, async ({ p, fehler }, u) => {
-    await p.click("#tabImport");
-    await p.fill("#impText", "Milch\nÄpfel\nSalz");
-    await p.click("#impBtn"); await p.waitForTimeout(2500);
+    await suche(p, "Milch\nÄpfel\nSalz");
     await klick(p, '[data-ia="0"]'); await klick(p, '[data-ia="1"]');
-    const si = await p.evaluate(() => imp.items.findIndex(i => i.name === "Salz"));
-    await klick(p, `[data-io="${si}"]`);
-    await p.click("#tabEinkaufen"); await p.waitForTimeout(400);
-    const gr = await p.$$eval("#hakenseite .hk-g", e => e.map(x => x.innerText.replace(/\s+/g, " ")));
-    assert.ok(gr.length === 3 && gr.some(x => /Äpfel/.test(x)) && gr.some(x => /Milch/.test(x)) && /Egal wo.*Salz/.test(gr[2]), JSON.stringify(gr));
-    await p.click("#hakenseite .hk >> nth=0"); await p.waitForTimeout(300);
-    assert.match(await p.textContent("#hakenseite .ek-s"), /1 von 3/);
-    await u.A("/aktualisieren", "POST");   // der Server kennt die neuen Favoriten (sonst erst nach ein paar Sekunden)
-    const vorher = await p.evaluate(() => ({ zettel, frei, favs: favs.map(f => f.name), hinweis, tab }));
-    await p.reload();
-    try { await p.waitForFunction(() => offers.some(o => o.gruppe === "Milch") && favs && favs.some(f => f.name === "Milch"), null, { timeout: 15000 }); }
-    catch (e) { throw new Error("nach Neuladen fehlt Milch: " + JSON.stringify({ vorher, server: JSON.parse(u.store.get("favoriten")).map(f => f.name), serverOffers: JSON.parse(u.store.get("angebote")).map(o => o.gruppe).filter((x, i, a) => a.indexOf(x) === i), jetzt: await p.evaluate(() => ({ favs: favs.map(f => f.name), gruppen: [...new Set(offers.map(o => o.gruppe))], hinweis })) })); }
-    await p.waitForTimeout(500); await p.click("#tabEinkaufen");
-    assert.match(await p.textContent("#hakenseite .ek-s"), /1 von 3/, "Haken bleibt nach Neuladen");
-    await p.click("#tabEinkauf"); await p.waitForTimeout(400);
+    await klick(p, `[data-io="${await p.evaluate(() => S.suche.items.findIndex(i => i.name === "Salz"))}"]`);
+    await bereich(p, "einkaufen");
+    await p.fill("#extraName", "Batterien"); await p.click('[data-aktion="extraHinzu"]'); await p.waitForTimeout(200);
+    const gr = await p.$$eval(".haken-gruppe", e => e.map(x => x.innerText.replace(/\s+/g, " ")));
+    assert.ok(gr.length === 4 && gr.some(x => /Äpfel/.test(x)) && gr.some(x => /Milch/.test(x)) && /Egal wo.*Salz/.test(gr[2]) && /Sonstiges.*Batterien/.test(gr[3]), JSON.stringify(gr));
+    await p.click(".haken label >> nth=0"); await p.waitForTimeout(300);
+    assert.match(await p.textContent(".box-kopf h2"), /1 von 4/);
+    await u.A("/aktualisieren", "POST");   // der Server kennt die neuen Favoriten
+    await p.reload(); await p.waitForFunction(() => offers.some(o => o.gruppe === "Milch"), null, { timeout: 15000 });
+    await bereich(p, "einkaufen");
+    assert.match(await p.textContent(".box-kopf h2"), /1 von 4/, "Haken bleibt nach Neuladen");
+    await bereich(p, "liste");
+    await p.click("details[data-merk] summary"); await p.waitForTimeout(200);
     const text = await p.$eval("#expText", e => e.value);
-    assert.match(text, /^Äpfel \(\w+\)$/m); assert.match(text, /^Salz$/m);
+    assert.match(text, /^Äpfel \(\w+\)$/m); assert.match(text, /^Salz$/m); assert.match(text, /^Batterien$/m);
     assert.doesNotMatch(text, /×|\d\s?(kg|l|g)\b/, "keine Mengen im Export");
+    await bereich(p, "einkaufen");
+    await p.click('[data-aktion="abgehakteWeg"]'); await p.waitForTimeout(300);
+    assert.match(await p.textContent(".box-kopf h2"), /0 von 3/);
     assert.deepEqual(fehler, []);
   });
 });
 
-t("Import per Link (#import=) startet die Suche", async () => {
-  const u = await umgebung({});
-  await u.KV.put("favoriten", "[]");
-  const s = await browserStarten(u);
-  try {
-    await s.oeffnen("#import=" + encodeURIComponent("Reis\nMilch"));
-    await s.p.waitForTimeout(2500);
-    assert.equal(await s.p.evaluate(() => tab), "import");
-    assert.deepEqual(await s.p.evaluate(() => imp.items.map(i => [i.name, i.status])), [["Reis", "fertig"], ["Milch", "fertig"]]);
-    assert.equal(await s.p.evaluate(() => location.hash), "");
-  } finally { await s.b.close(); }
+t("Import per Link (#import=) öffnet die Suche und startet sie", async () => {
+  await mitSeite({ hash: "#import=" + encodeURIComponent("Reis\nMilch") }, async ({ p, fehler }) => {
+    await p.waitForFunction(() => S.suche.items.length === 2 && !S.suche.laeuft, null, { timeout: 15000 });
+    assert.equal(await p.evaluate(() => S.v), "suchen");
+    assert.deepEqual(await p.evaluate(() => S.suche.items.map(i => [i.name, i.status])), [["Reis", "fertig"], ["Milch", "fertig"]]);
+    assert.equal(await p.evaluate(() => location.hash), "#suchen");
+    assert.deepEqual(fehler, []);
+  });
 });
 
-t("Preisalarm: Lebensmittel-Alarm und Meldung für die Liste", async () => {
+t("Preisalarm für Lebensmittel und Meldung für die Liste", async () => {
   await mitSeite({}, async ({ p, fehler }, u) => {
-    // Alarm für Gewichts-Artikel auf der Aktuell-Seite
-    await p.click("#tabJetzt"); await p.selectOption("#fProdukt", "Äpfel"); await p.waitForTimeout(400);
-    assert.equal(await p.$eval("#alarmRow", e => !e.hidden), true, "Alarmzeile bei Äpfeln sichtbar");
-    assert.deepEqual(await p.$$eval("#alarmEinheit option", e => e.map(x => x.value)), ["kg"]);
-    await p.fill("#alarmWert", "1,50"); await p.click("#alarmSave"); await p.waitForTimeout(1200);
+    await p.click('.produkt[data-p="Äpfel"]'); await p.waitForTimeout(300);
+    assert.deepEqual(await p.$$eval("#aEinheit option", e => e.map(x => x.value)), ["kg"]);
+    await p.fill("#aWert", "1,50"); await p.click('[data-aktion="alarmSpeichern"]'); await p.waitForTimeout(900);
+    assert.deepEqual(JSON.parse(u.store.get("favoriten")).find(f => f.name === "Äpfel").alarm, { wert: 1.5, einheit: "kg", ml: null });
+    await p.click('[data-aktion="pListe"]'); await p.waitForTimeout(200);
+    await bereich(p, "liste");
+    await p.click('[data-aktion="listeAlarm"]'); await p.waitForTimeout(900);
     const fav = JSON.parse(u.store.get("favoriten")).find(f => f.name === "Äpfel");
-    assert.deepEqual(fav.alarm, { wert: 1.5, einheit: "kg", ml: null });
-    // Meldung für die Liste
-    await p.click("#tabImport"); await p.fill("#impText", "Milch"); await p.click("#impBtn"); await p.waitForTimeout(2000);
-    await klick(p, '[data-ia="0"]');
-    await p.click("#tabEinkauf"); await p.waitForTimeout(400);
-    await p.click("#listeAlarm"); await p.waitForTimeout(1200);
-    const milch = JSON.parse(u.store.get("favoriten")).find(f => f.name === "Milch");
-    assert.equal(milch.alarm.liste, true); assert.equal(milch.alarm.einheit, "l");
-    await p.click("#listeAlarm"); await p.waitForTimeout(1200);
-    assert.equal(JSON.parse(u.store.get("favoriten")).find(f => f.name === "Milch").alarm, undefined);
+    assert.equal(fav.alarm.wert, 1.5, "eigener Wunschpreis bleibt");
+    await bereich(p, "angebote");
+    await p.click('.produkt[data-p="Eier"] .p-plus'); await bereich(p, "liste");
+    await p.click('[data-aktion="listeAlarm"]'); await p.waitForTimeout(900);
+    assert.equal(JSON.parse(u.store.get("favoriten")).find(f => f.name === "Eier").alarm.liste, true);
     assert.deepEqual(fehler, []);
   });
 });
 
-t("Einkaufen: eigene Artikel von Hand hinzufügen, abhaken, entfernen, im Export", async () => {
-  await mitSeite({}, async ({ p, fehler }) => {
-    await p.click("#tabEinkaufen");
-    await p.fill("#extraName", "Zahnpasta"); await p.press("#extraName", "Enter"); await p.waitForTimeout(300);
-    await p.fill("#extraName", "Batterien"); await p.click("#extraBtn"); await p.waitForTimeout(300);
-    await p.fill("#extraName", "zahnpasta"); await p.press("#extraName", "Enter"); await p.waitForTimeout(300);   // Doppeltes wird ignoriert
-    const namen = await p.$$eval("#hakenseite .hk span", e => e.map(x => x.textContent));
-    assert.deepEqual(namen.sort(), ["Batterien", "Zahnpasta"]);
-    await p.click("#hakenseite .hk >> nth=0"); await p.waitForTimeout(300);
-    assert.match(await p.textContent("#hakenseite .ek-s"), /1 von 2/);
-    await p.reload(); await p.waitForTimeout(1500); await p.click("#tabEinkaufen");
-    assert.deepEqual((await p.$$eval("#hakenseite .hk span", e => e.map(x => x.textContent))).sort(), ["Batterien", "Zahnpasta"], "bleibt nach Neuladen");
-    await p.click('[data-xdel="Zahnpasta"]'); await p.waitForTimeout(300);
-    assert.deepEqual(await p.$$eval("#hakenseite .hk span", e => e.map(x => x.textContent)), ["Batterien"]);
+t("Liste: Menge in Stück, Normalpreis je Stück, Vergleich mit bester Wahl", async () => {
+  await mitSeite({ favs: [{ name: "Butter", aus: "" }, { name: "Eier", aus: "" }] }, async ({ p, fehler }) => {
+    await p.click('.produkt[data-p="Butter"] .p-plus'); await p.click('.produkt[data-p="Eier"] .p-plus');
+    await bereich(p, "liste");
+    assert.match(await p.textContent(".zeile"), /Stück à 250 g/);
+    await p.click('.zeile [data-schritt="1"] >> nth=0'); await p.waitForTimeout(200);
+    assert.equal(await p.evaluate(() => zettel.Butter), 0.5);
+    const rw = p.locator(".zeile >> nth=0").locator("input[data-r]");
+    await rw.fill("2,29"); await rw.press("Tab"); await p.waitForTimeout(200);
+    assert.equal(await p.evaluate(() => richt.Butter), 9.16);
+    assert.match(await p.textContent(".bon"), /Beste Wahl/);
     assert.deepEqual(fehler, []);
   });
 });
 
-t("Alter Preis (oldPrice) wird als „statt …“ angezeigt, wenn Marktguru ihn liefert", async () => {
-  await mitSeite({}, async ({ p }, u) => {
-    await p.click("#tabImport"); await p.fill("#impText", "Milch"); await p.click("#impBtn"); await p.waitForTimeout(2000);
-    assert.match(await p.textContent("#impseite"), /statt\s+1,09/);
-    const o = JSON.parse(u.store.get("angebote")); assert.ok(Array.isArray(o));
-    await klick(p, '[data-ia="0"]');
-    await p.click("#tabJetzt"); await p.selectOption("#fProdukt", "Milch"); await p.waitForTimeout(400);
-    assert.match(await p.textContent("#rows"), /statt\s+1,09\s*€\s*\(−18 %\)/);
+t("Alter Preis (oldPrice) wird als „statt …“ angezeigt", async () => {
+  await mitSeite({ favs: [{ name: "Milch", aus: "" }] }, async ({ p }) => {
+    assert.match(await p.textContent('.produkt[data-p="Milch"]'), /statt 1,09/);
+    await p.click('.produkt[data-p="Milch"]'); await p.waitForTimeout(300);
+    assert.match(await p.textContent("tbody"), /statt\s+1,09/);
+  });
+});
+
+t("Ohne Zugangscode: eigene Favoriten im Browser, Angebote über die öffentliche Abfrage", async () => {
+  await mitSeite({ code: "" }, async ({ p, fehler }, u) => {
+    assert.match(await p.textContent("#ansicht"), /Noch keine Favoriten/);
+    await suche(p, "Butter");
+    await klick(p, '[data-ik="0|0"]');
+    const lokal = await p.evaluate(() => JSON.parse(localStorage.getItem("pv-favs")));
+    assert.equal(lokal.length, 1); assert.equal(lokal[0].suche, "Butter");
+    assert.equal(JSON.parse(u.store.get("favoriten")).length, 3, "Server-Favoriten unverändert");
+    await p.reload(); await p.waitForTimeout(1500); await bereich(p, "angebote");
+    const karten = await p.$$eval(".produkt h3", e => e.map(x => x.textContent));
+    assert.deepEqual(karten, [lokal[0].name]);
+    assert.match(await p.textContent(".produkt .preisschild"), /€/);
+    assert.deepEqual(fehler, []);
   });
 });
