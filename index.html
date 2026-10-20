@@ -595,9 +595,60 @@ function fahrtZeile(b,liste){
 }
 /* ---- Einkaufsliste ---- */
 try{localStorage.removeItem("pv-eink")}catch(e){}   // alte Einzelangebots-Liste gibt es nicht mehr
+/* ---- Export der Einkaufsliste (nach Markt gegliedert), z. B. für Erinnerungen ---- */
+var expPlaene=[],expSel=0,expFmt="kopf",kurzName="Einkaufsliste in Erinnerungen";try{kurzName=localStorage.getItem("pv-kurz")||kurzName}catch(e){}
+const expMenge=g=>String(zettel[g]).replace(".",",")+" "+ARTEN[artG(zk(g).g)].u;
+function expPack(t){const o=t.o,a=artO(o);return t.packs+" × "+(a==="l"?(o.stueck>1?o.stueck+"er-Pack":groesseText(o.ml)):mengeText(o))}
+function expZeile(g,w){
+  const gr=zMitglieder(g).length>1,t0=w.teile[0];
+  return (gr?(t0.o.gruppe||zLabel(g)):zLabel(g))+": "+w.teile.map(expPack).join(" + ");
+}
+function expPlan(label,p,fehl){const wo={};Object.entries(p.zu).forEach(([g,x])=>{(wo[x.m]=wo[x.m]||[]).push([g,x.w])});return {label,wo,rw:p.rw.slice(),fehl:fehl.slice()}}
+function expBauen(p,fmt){
+  const z=[],ms=Object.keys(p.wo).sort((a,b)=>(dkm(a)??99)-(dkm(b)??99)),ohne=[...p.rw,...p.fehl].map(g=>zLabel(g)+": "+expMenge(g));
+  if(fmt==="kopf"){
+    ms.forEach(m=>{z.push("— "+m+" —");p.wo[m].forEach(([g,w])=>z.push(expZeile(g,w)))});
+    if(ohne.length){z.push("— Egal wo (kein Angebot) —");z.push(...ohne)}
+  }else{
+    ms.forEach(m=>p.wo[m].forEach(([g,w])=>z.push(expZeile(g,w)+" ("+m+")")));
+    ohne.forEach(x=>z.push(x));
+  }
+  return z.join("\n");
+}
+function exportHtml(){
+  if(!expPlaene.length)return"";
+  const i=Math.min(expSel,expPlaene.length-1),txt=expBauen(expPlaene[i],expFmt),n=txt?txt.split("\n").length:0;
+  return `<section class="ek"><div class="ek-h"><b>Liste exportieren</b><span class="ek-s" style="font-size:1rem">${n} Zeilen</span></div>`
+    +`<div class="fv-add"><select data-exp="plan" aria-label="Welcher Plan">${expPlaene.map((q,j)=>`<option value="${j}"${j===i?" selected":""}>${esc(q.label)}</option>`).join("")}</select>`
+    +`<select data-exp="fmt" aria-label="Format"><option value="kopf"${expFmt==="kopf"?" selected":""}>Mit Überschrift je Markt</option><option value="zeile"${expFmt==="zeile"?" selected":""}>Markt hinter jedem Artikel</option></select></div>`
+    +`<textarea id="expText" readonly rows="${Math.min(14,Math.max(4,n+1))}" aria-label="Exportierte Liste">${esc(txt)}</textarea>`
+    +`<div class="fv-add"><button type="button" class="primary" id="expKopie">Kopieren</button>${navigator.share?`<button type="button" class="lb" id="expTeilen">Teilen</button>`:""}<button type="button" class="lb" id="expKurz">In Erinnerungen (Kurzbefehl)</button></div>`
+    +`<p class="lbl" style="margin:6px 0 0">Kopieren und in einer neuen Erinnerungen-Liste einfügen: jede Zeile wird eine Erinnerung. „Kurzbefehl“ ruft deinen Kurzbefehl <input id="expName" size="22" value="${esc(kurzName)}" aria-label="Name des Kurzbefehls"> mit dem Text auf (Aktionen: Text aufteilen nach Neuen Zeilen → Wiederholen mit jedem Element → Erinnerung hinzufügen).</p></section>`;
+}
+function expText1(){const i=Math.min(expSel,expPlaene.length-1);return expPlaene.length?expBauen(expPlaene[i],expFmt):""}
+function expKlick(e){
+  const g=id=>e.target.closest(id);
+  if(g("#expKopie")){
+    const t=expText1(),ta=document.getElementById("expText");
+    const fertig=()=>{hinweis="Liste kopiert.";render()};
+    (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t).then(fertig):Promise.reject()).catch(()=>{try{ta.focus();ta.select();ta.setSelectionRange(0,t.length+1);document.execCommand("copy");fertig()}catch(x){hinweis="Kopieren nicht möglich. Bitte den Text markieren und selbst kopieren.";render()}});
+    return true;
+  }
+  if(g("#expTeilen")){navigator.share({title:"Einkaufsliste",text:expText1()}).catch(()=>{});return true}
+  if(g("#expKurz")){const nm=(document.getElementById("expName")||{}).value||kurzName;kurzName=nm.trim()||kurzName;try{localStorage.setItem("pv-kurz",kurzName)}catch(x){}
+    try{location.href="shortcuts://run-shortcut?name="+encodeURIComponent(kurzName)+"&input=text&text="+encodeURIComponent(expText1())}catch(x){}return true}
+  return false;
+}
+function expAender(e){
+  const t=e.target;
+  if(t.dataset&&t.dataset.exp==="plan"){expSel=+t.value||0;render();return true}
+  if(t.dataset&&t.dataset.exp==="fmt"){expFmt=t.value;render();return true}
+  if(t.id==="expName"){kurzName=t.value.trim()||kurzName;try{localStorage.setItem("pv-kurz",kurzName)}catch(x){}return true}
+  return false;
+}
 function zeichneEinkauf(){
   const zn=zettelNamen();
-  einkauf.innerHTML=zn.length?fvZettelHtml(zn)+fvVergleich(zn):'<div class="empty">Die Einkaufsliste ist leer. Wähle auf der Seite „Favoriten“ aus, was du kaufen willst.</div>';
+  einkauf.innerHTML=zn.length?fvZettelHtml(zn)+fvVergleich(zn)+exportHtml():'<div class="empty">Die Einkaufsliste ist leer. Wähle auf der Seite „Favoriten“ aus, was du kaufen willst.</div>';
 }
 /* ---- Favoriten-Seite: Zettel (Favorit -> Liter) und Marktvergleich ---- */
 var zettel={};try{zettel=JSON.parse(localStorage.getItem("pv-zettel")||"{}")||{}}catch(e){}
@@ -716,7 +767,7 @@ function zeichneFavoriten(){
     const os=fvAngebote1(k).sort((a,b)=>gp(a)-gp(b)),o=os[0],an=zettel[k]>0;
     const x=zk(k),alle=offers.filter(q=>(q.gruppe||"Coca-Cola")===x.g&&(!x.ml||q.ml===x.ml)&&!q.ausb&&q.bild&&/^https?:\/\//.test(q.bild));
     const bild=(os.find(q=>q.bild&&/^https?:\/\//.test(q.bild))||alle[0]||{}).bild||"";
-    return `<div class="kachel${an?" an":""}"><div class="kb"><span class="ph">${esc((x.g[0]||"?").toUpperCase())}</span>${bild?`<img src="${esc(bild)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}</div>${kName(text,o)}<small>${o?`ab ${eur(gp(o))}/${unitK(artO(o))}<br>${esc(mbase(o.markt))}${dkm(mbase(o.markt))!=null?" · "+f1(dkm(mbase(o.markt)))+" km":""}`:(fvZeit==="jetzt"?"aktuell":"demnächst")+" kein Angebot"}</small><button type="button" class="lb${an?" an":""}" data-kg="${esc(k)}">${an?"✓ Auf der Liste":"＋ Auf die Liste"}</button>${an?`<span class="fv-l">${zEingabe(k)}</span>`:""}</div>`;
+    return `<div class="kachel${an?" an":""}"><div class="kb"><span class="ph">${esc((x.g[0]||"?").toUpperCase())}</span>${bild?`<img src="${esc(bild)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}</div>${kachelName(text,o)}<small>${o?`ab ${eur(gp(o))}/${unitK(artO(o))}<br>${esc(mbase(o.markt))}${dkm(mbase(o.markt))!=null?" · "+f1(dkm(mbase(o.markt)))+" km":""}`:(fvZeit==="jetzt"?"aktuell":"demnächst")+" kein Angebot"}</small><button type="button" class="lb${an?" an":""}" data-kg="${esc(k)}">${an?"✓ Auf der Liste":"＋ Auf die Liste"}</button>${an?`<span class="fv-l">${zEingabe(k)}</span>`:""}</div>`;
   };
   const block=g=>{
     const gewaehlt=Object.keys(zettel).filter(k=>zk(k).g===g&&zk(k).ml).map(k=>zk(k).ml);
@@ -757,7 +808,9 @@ function fvVergleich(namen){
   let html=`<section class="ek"><div class="ek-h"><b>Vergleich: Wo lohnt sich der Einkauf?</b></div>${seg}`;
   if(fehlend.length)html+=`<p class="lbl" style="margin:8px 0 0">Nirgends im Angebot (${zeitWort}): ${fehlend.map(x=>esc(zLabel(x))).join(", ")}. Trage bei diesen Artikeln oben einen Richtwert ein, dann rechne ich sie mit. Bis dahin fehlen sie im Vergleich.</p>`;
   if(ohneR.length)html+=`<p class="lbl" style="margin:8px 0 0">Nirgends im Angebot (${zeitWort}): ${ohneR.map(x=>esc(zLabel(x))).join(", ")}. Sie sind mit deinem Richtwert eingerechnet (ca.), in jedem Markt gleich.</p>`;
+  expPlaene=[];
   if(!mit.length){
+    expPlaene=[{label:"Einkaufsliste",wo:{},rw:ohneR.slice(),fehl:fehlend.slice()}];
     if(ohneR.length){const sum=ohneR.reduce((q,g)=>q+rwKosten(g),0);html+=`<div class="hinweis fv-best" style="margin-top:8px">Keiner deiner Artikel ist ${zeitWort} im Angebot. Der Einkauf zu deinen Richtwerten kostet etwa <b>${eur(sum)}</b> (ohne Fahrt). Den Markt kannst du dann frei wählen, zum Beispiel den nächsten.</div>`}
     return html+"</section>";
   }
@@ -768,6 +821,8 @@ function fvVergleich(namen){
   for(let i=0;i<ms.length;i++)for(let j=i+1;j<ms.length;j++){const p=fvPlan([ms[i],ms[j]],mit,t,ohneR);if(p&&p.ms.length===2)plaene.push(p)}
   plaene.sort((a,b)=>a.gesamt-b.gesamt);
   const ein=plaene.filter(p=>p.ms.length===1),beste=plaene[0],besteEin=ein[0];
+  if(beste){expPlaene=[expPlan("Beste Wahl: "+beste.ms.join(" + "),beste,fehlend)];ein.filter(p=>p!==beste).forEach(p=>expPlaene.push(expPlan("Alles bei "+p.ms[0],p,fehlend)))}
+  else expPlaene=[{label:"Ohne Marktzuordnung",wo:{},rw:[],fehl:namen.slice()}];
   const einzeln=(p)=>esc(p.ms.join(" + "));
   if(!beste){
     html+=`<p class="lbl" style="margin:8px 0 0">Kein Markt (und keine Kombination aus zwei Märkten) deckt alle Artikel ab. Unten siehst du, was jeder Markt hat. Mit Richtwerten für die fehlenden Artikel kann ich sie mitrechnen.</p>`;
@@ -836,10 +891,10 @@ function fvAender(e){
   if(e.target.id==="neuEinheit"){neuEinheit=e.target.value}
   if(e.target.dataset&&e.target.dataset.ie!==undefined){const it=imp.items[+e.target.dataset.ie];if(it)it.einheit=e.target.value}
 }
-favseite.onchange=fvAender;einkauf.onchange=fvAender;
+favseite.onchange=fvAender;einkauf.onchange=e=>{if(expAender(e))return;fvAender(e)};
 favseite.oninput=e=>{if(e.target.id==="neuArt")neuText=e.target.value;if(e.target.id==="impText")imp.text=e.target.value};
 favseite.onkeydown=e=>{if(e.key==="Enter"&&e.target.id==="neuArt"){e.preventDefault();artikelSuchen()}};
-einkauf.onclick=e=>{fvKlick(e)};
+einkauf.onclick=e=>{if(expKlick(e))return;fvKlick(e)};
 /* ---- Darstellung (automatisch / hell / dunkel) und Filter-Knopf am Handy ---- */
 var theme="auto";try{theme=localStorage.getItem("pv-theme")||"auto"}catch(e){}
 function themeSetzen(){
@@ -1236,7 +1291,8 @@ function impParsen(t){
     if(m){menge={wert:parseFloat(m[1].replace(",",".")),einheit:(m[2]||"").toLowerCase().replace(".","").replace("gramm","g").replace("liter","l")};z=m[3]}
     z=z.replace(/[,|]/g," ").replace(/\s+/g," ").trim().slice(0,40);
     if(z.length<2||seen.has(z.toLowerCase()))return;
-    seen.add(z.toLowerCase());out.push({name:z,menge,roh:[],karten:[],art:"l",status:"wartet",einheit:"kg"});
+    seen.add(z.toLowerCase());const eh=menge?(menge.einheit==="kg"||menge.einheit==="g"?"kg":menge.einheit==="l"||menge.einheit==="ml"?"l":"st"):"kg";
+    out.push({name:z,menge,roh:[],karten:[],art:"l",status:"wartet",einheit:eh});
   });
   return out.slice(0,40);
 }
@@ -1314,12 +1370,13 @@ function impKlick(e){
   }
   if(b=g("[data-io]")){
     const it=imp.items[+b.dataset.io];if(!it)return true;
+    if(impAuf(it.name)&&frei[it.name]){impAb(it.name);return true}
     frei[it.name]=it.einheit||"kg";impHinzu([{name:it.name,entries:[],nur:[],menge:it.menge,liste:true}]);return true;
   }
   return false;
 }
-const kName=(t,o)=>o&&o.link&&/^https?:\/\//.test(o.link)?`<b><a class="kl" href="${esc(o.link)}" target="_blank" rel="noopener noreferrer" title="Angebot bei Marktguru ansehen">${esc(t)}</a></b>`:`<b>${esc(t)}</b>`;
-const impKachel=(buchst,bild,kopf,info,knoepfe,an,name,lk)=>`<div class="kachel${an?" an":""}"><div class="kb"><span class="ph">${esc((buchst||"?")[0].toUpperCase())}</span>${bild&&/^https?:\/\//.test(bild)?`<img src="${esc(bild)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}</div>${kName(kopf,lk)}<small>${info}</small>${knoepfe}${an&&name?`<span class="fv-l">${zEingabe(name)}</span>`:""}</div>`;
+const kachelName=(t,o)=>o&&o.link&&/^https?:\/\//.test(o.link)?`<b><a class="kl" href="${esc(o.link)}" target="_blank" rel="noopener noreferrer" title="Angebot bei Marktguru ansehen">${esc(t)}</a></b>`:`<b>${esc(t)}</b>`;
+const impKachel=(buchst,bild,kopf,info,knoepfe,an,name,lk)=>`<div class="kachel${an?" an":""}"><div class="kb"><span class="ph">${esc((buchst||"?")[0].toUpperCase())}</span>${bild&&/^https?:\/\//.test(bild)?`<img src="${esc(bild)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}</div>${kachelName(kopf,lk)}<small>${info}</small>${knoepfe}${an&&name?`<span class="fv-l">${zEingabe(name)}</span>`:""}</div>`;
 const impBild=os=>((os||[]).find(q=>q.bild&&/^https?:\/\//.test(q.bild))||{}).bild||"";
 const impIstFav=n=>(favs||[]).some(f=>f.name.toLowerCase()===String(n).toLowerCase());
 function impAb(name){Object.keys(zettel).filter(k=>zk(k).g===name).forEach(k=>delete zettel[k]);zettelSpeichern();render()}
@@ -1351,7 +1408,7 @@ function zeichneImport(){
           return impKachel(c.label,c.bild,c.label,`${c.os.length} Angebot${c.os.length>1?"e":""} · ab ${eur(c.min.preis_pro_liter)}/${unitK(c.art)}<br>${esc(c.groessen.join(", "))}<br>${esc(c.maerkte.join(", "))}`,
             `<button type="button" class="lb${fav?" an":""}" data-ik="${i}|${j}"${dis}>${fav?"★ Favorit":"☆ Als Favorit"}</button><button type="button" class="lb${an?" an":""}" data-il="${i}|${j}"${dis}>${an?"✓ Auf der Liste":"＋ Auf die Liste"}</button>`,an,c.label,c.min);
         }).join("");
-        if(!it.roh.length)kach+=`<div class="kachel"><div class="kb"><span class="ph">${esc(it.name[0].toUpperCase())}</span></div><b>Kein Angebot</b><small>Ohne Angebot mit eigenem Richtwert planen</small><select data-ie="${i}" aria-label="Einheit"><option value="kg"${it.einheit==="kg"?" selected":""}>kg</option><option value="l"${it.einheit==="l"?" selected":""}>Liter</option><option value="st"${it.einheit==="st"?" selected":""}>Stück</option></select><button type="button" class="lb" data-io="${i}"${dis}>Ohne Angebot auf die Liste</button></div>`;
+        if(!it.roh.length&&!impIstFav(it.name)){const fa=impAuf(it.name)&&!!frei[it.name];kach+=`<div class="kachel${fa?" an":""}"><div class="kb"><span class="ph">${esc(it.name[0].toUpperCase())}</span></div><b>Kein Angebot</b><small>${fa?"Steht ohne Angebot auf der Liste. Den Richtwert trägst du in der Einkaufsliste ein.":"Trotzdem auf die Liste setzen, du planst ihn mit einem eigenen Richtwert."}</small>${fa?"":`<select data-ie="${i}" aria-label="Einheit"><option value="kg"${it.einheit==="kg"?" selected":""}>kg</option><option value="l"${it.einheit==="l"?" selected":""}>Liter</option><option value="st"${it.einheit==="st"?" selected":""}>Stück</option></select>`}<button type="button" class="lb${fa?" an":""}" data-io="${i}"${dis}>${fa?"✓ Auf der Liste":"＋ Auf die Liste (ohne Angebot)"}</button>${fa?`<span class="fv-l">${zEingabe(it.name)}</span>`:""}</div>`}
       }
       return `<div class="fv-grp"><div class="fv-gk">${esc(it.name)}${it.menge?` <small>· ${esc(impMengeText(it.menge))}</small>`:""} <small>${esc(stat)}</small></div>${kach?`<div class="fv-gitter">${kach}</div>`:""}</div>`;
     }).join("");
@@ -1383,7 +1440,7 @@ function ergHtml(){
   if(!sucheErg.length)return `<div class="empty">Zu „${esc(sucheQ)}“ gibt es gerade keine Angebote.</div><div class="fv-add"><select id="neuEinheit" aria-label="Einheit"><option value="kg"${neuEinheit==="kg"?" selected":""}>kg</option><option value="l"${neuEinheit==="l"?" selected":""}>Liter</option><option value="st"${neuEinheit==="st"?" selected":""}>Stück</option></select><button type="button" class="lb an" id="ohneBtn">Trotzdem als Artikel ohne Angebot auf die Liste (mit Richtwert)</button></div>`;
   return `<div class="ek-h" style="border:0;margin:6px 0 0"><b>Ergebnisse für „${esc(sucheQ)}“</b><span class="ek-s" style="font-size:1rem">${sucheErg.length}</span></div><div class="fv-gitter">`+sucheErg.map((c,i)=>{
     const ist=(favs||[]).some(f=>f.name.toLowerCase()===c.label.toLowerCase()),m=c.min;
-    return `<div class="kachel${ist?" an":""}"><div class="kb"><span class="ph">${esc((c.label[0]||"?").toUpperCase())}</span>${c.bild?`<img src="${esc(c.bild)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}</div>${kName(c.label,m)}<small>${c.os.length} Angebot${c.os.length>1?"e":""} · ab ${eur(m.preis_pro_liter)}/${unitK(c.art)}<br>${esc(c.groessen.join(", "))}<br>${esc(c.maerkte.join(", "))}</small><button type="button" class="lb${ist?" an":""}" data-ef="${i}"${sucheFav!==null?" disabled":""}>${ist?"★ Favorit":sucheFav===i?"Speichere …":"☆ Als Favorit"}</button></div>`;
+    return `<div class="kachel${ist?" an":""}"><div class="kb"><span class="ph">${esc((c.label[0]||"?").toUpperCase())}</span>${c.bild?`<img src="${esc(c.bild)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`:""}</div>${kachelName(c.label,m)}<small>${c.os.length} Angebot${c.os.length>1?"e":""} · ab ${eur(m.preis_pro_liter)}/${unitK(c.art)}<br>${esc(c.groessen.join(", "))}<br>${esc(c.maerkte.join(", "))}</small><button type="button" class="lb${ist?" an":""}" data-ef="${i}"${sucheFav!==null?" disabled":""}>${ist?"★ Favorit":sucheFav===i?"Speichere …":"☆ Als Favorit"}</button></div>`;
   }).join("")+`</div>`;
 }
 async function artikelSuchen(){
