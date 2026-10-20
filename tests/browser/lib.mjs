@@ -24,11 +24,11 @@ export function playwright() {
 
 const V = [{ from: "2026-10-19T00:00:00Z", to: "2099-10-25T21:59:00Z" }];
 let nr = 100;
-const O = (adv, name, brand, desc, price, unit, volume, quantity) => ({ id: ++nr, url: "https://www.marktguru.de/offers/" + nr, advertisers: [{ name: adv }], product: { name }, brand: { name: brand }, description: desc, price, unit: unit ? { shortName: unit } : undefined, volume, quantity, validityDates: V });
+const O = (adv, name, brand, desc, price, unit, volume, quantity, oldPrice) => ({ id: ++nr, oldPrice, url: "https://www.marktguru.de/offers/" + nr, advertisers: [{ name: adv }], product: { name }, brand: { name: brand }, description: desc, price, unit: unit ? { shortName: unit } : undefined, volume, quantity, validityDates: V });
 export const DATEN = {
   butter: [O("ALDI SÜD", "Butter", "Kerrygold", "250-g-Packung", 1.99), O("PENNY", "Butter", "Weihenstephan", "250 g", 1.79, "g", 250, 1), O("REWE", "Butter", "Milram", "2 x 250 g", 3.49), O("Lidl", "Erdnussbutter", "Skippy", "350 g", 3.99)],
   eier: [O("Kaufland", "Freilandeier", "", "10 Stück", 2.39), O("ALDI SÜD", "Freiland-Eier", "", "10 Stück, Größe M", 2.29), O("PENNY", "Eier", "", "6er Packung", 1.49)],
-  milch: [O("PENNY", "Milch", "Weihenstephan", "1 l", 0.95, "l", 1, 1), O("Lidl", "Milch", "Milbona", "1 l", 0.89, "l", 1, 1), O("Kaufland", "Milch", "K-Classic", "1 l", 1.05, "l", 1, 1)],
+  milch: [O("PENNY", "Milch", "Weihenstephan", "1 l", 0.95, "l", 1, 1), O("Lidl", "Milch", "Milbona", "1 l", 0.89, "l", 1, 1, 1.09), O("Kaufland", "Milch", "K-Classic", "1 l", 1.05, "l", 1, 1)],
   "äpfel": [O("PENNY", "Äpfel", "", "lose", 1.99, "kg"), O("ALDI SÜD", "Äpfel", "", "1,5-kg-Beutel", 2.49)],
   reis: [O("Lidl", "Basmati Reis", "Tilda", "1 kg", 1.99), O("ALDI SÜD", "Reis", "", "500 g", 0.89)],
 };

@@ -86,7 +86,6 @@ jobs:
           for Q in Butter Cola; do
             R=$(curl -s -m 60 -w '\nHTTP %{http_code}' -X POST -G -H "Authorization: Bearer $ZUG" --data-urlencode "plz=47178" --data-urlencode "q=$Q" "$URL/rohfelder"); S=$(echo "$R" | tail -n 1); R=$(echo "$R" | sed '$d')
             log "Rohfelder $Q ($S): $(echo "$R" | jq -c '{anzahl, felder}' 2>/dev/null || echo "$R" | head -c 300)"
-            echo "$R" | jq -c '.beispiele[]?' 2>/dev/null | head -n 4 | cut -c1-1800 | sed 's/^/  Beispiel: /' | tee -a $LOG
           done
           R=$(curl -s -m 60 -G --data-urlencode "plz=40210" --data-urlencode "m=Lidl|REWE|ALDI SÜD" "$URL/entfernungen")
           log "Entfernungen 40210, erste Antwort: $(echo "$R" | head -c 200)"

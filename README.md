@@ -31,3 +31,7 @@ Mengen werden in Stück angegeben. 1 Stück ist die häufigste Packungsgröße a
 - Neue Artikel suchst du nur noch im Tab „Import“ (auch einzelne); die Favoriten-Seite zeigt nur die Kacheln.
 - Preisalarm gibt es auch für Gewicht (€/kg) und Stück (€/Stück). In der Einkaufsliste schaltet „Melden, wenn Artikel meiner Liste im Angebot sind“ einen Alarm für alle Favoriten der Liste (unter dem Richtwert, sonst bei jedem Angebot).
 - Tests: `node --test tests/erkennung.test.mjs tests/alarm.test.mjs` und mit installiertem Playwright `node --test tests/browser/seite.test.mjs` (echte Seite im Browser gegen den echten Worker-Code). Beides läuft bei jedem Push (Workflow „Tests“).
+
+## Alter Preis
+
+Marktguru liefert nur bei wenigen Angeboten einen alten Preis (`oldPrice`, im Test bei etwa 2 von 38 Butter- und 1 von 14 Cola-Angeboten). Wo er da ist, zeigt die Seite „statt X € (−Y %)“. `referencePrice` ist der Grundpreis, kein Normalpreis. Einen Normalpreis für alle Artikel gibt es so nicht, dafür bleiben die Richtwerte. `POST /rohfelder?q=…` (Zugangscode) zeigt die rohen Marktguru-Felder zur Kontrolle.

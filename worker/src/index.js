@@ -124,7 +124,7 @@ async function teilAbfrage(env, plz, suche) {
     for (const o of seite) {
       const v = (o.validityDates || [{}])[0] || {};
       aus.push({ id: o.id, adv: (((o.advertisers || [{}])[0]) || {}).name || "?", name: (o.product || {}).name || "?", brand: (o.brand || {}).name || "",
-        desc: o.description || "", price: o.price, einheit: (((o.unit || {}).shortName) || "").toLowerCase(), volume: o.volume, quantity: o.quantity,
+        desc: o.description || "", price: o.price, alt: +o.oldPrice > +o.price ? +o.oldPrice : null, einheit: (((o.unit || {}).shortName) || "").toLowerCase(), volume: o.volume, quantity: o.quantity,
         von: lokalDatum(v.from), bis: lokalDatum(v.to), bild: bildUrl(o), link: link(o) });
     }
     if (seite.length < 100) break;
@@ -237,7 +237,7 @@ async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2,
       let coke = true;   // passende Treffer sind schon im Teilaufruf ausgewählt
       if (info.nur && info.nur.size && !info.nur.has(kandidat)) coke = false;
       ausgabe.push({ abgefragt: jetzt, gruppe: p, bild: o.bild, marke: o.brand, coke, link: o.link, markt: o.adv + (o.plz ? ` (${o.plz})` : ""), produkt: o.name,
-        beschreibung: o.desc, preis: o.price, art, liter: l, stueck: st, ml: l && st ? Math.round(l * 1000 / st) : null,
+        beschreibung: o.desc, preis: o.price, preis_alt: o.alt || null, art, liter: l, stueck: st, ml: l && st ? Math.round(l * 1000 / st) : null,
         preis_pro_liter: o.price && l ? Math.round(o.price / l * 100) / 100 : null, gueltig_von: o.von, gueltig_bis: o.bis });
     }
   }

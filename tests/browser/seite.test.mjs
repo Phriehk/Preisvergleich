@@ -146,3 +146,14 @@ t("Einkaufen: eigene Artikel von Hand hinzufügen, abhaken, entfernen, im Export
     assert.deepEqual(fehler, []);
   });
 });
+
+t("Alter Preis (oldPrice) wird als „statt …“ angezeigt, wenn Marktguru ihn liefert", async () => {
+  await mitSeite({}, async ({ p }, u) => {
+    await p.click("#tabImport"); await p.fill("#impText", "Milch"); await p.click("#impBtn"); await p.waitForTimeout(2000);
+    assert.match(await p.textContent("#impseite"), /statt\s+1,09/);
+    const o = JSON.parse(u.store.get("angebote")); assert.ok(Array.isArray(o));
+    await klick(p, '[data-ia="0"]');
+    await p.click("#tabJetzt"); await p.selectOption("#fProdukt", "Milch"); await p.waitForTimeout(400);
+    assert.match(await p.textContent("#rows"), /statt\s+1,09\s*€\s*\(−18 %\)/);
+  });
+});
