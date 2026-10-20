@@ -597,7 +597,7 @@ function fahrtZeile(b,liste){
 try{localStorage.removeItem("pv-eink")}catch(e){}   // alte Einzelangebots-Liste gibt es nicht mehr
 /* ---- Export der Einkaufsliste (nach Markt gegliedert), z. B. für Erinnerungen ---- */
 var expPlaene=[],expSel=0,expFmt="kopf",kurzName="Einkaufsliste in Erinnerungen";try{kurzName=localStorage.getItem("pv-kurz")||kurzName}catch(e){}
-const expMenge=g=>String(zettel[g]).replace(".",",")+" "+ARTEN[artG(zk(g).g)].u;
+const expMenge=g=>zMengeText(g);
 function expPack(t){const o=t.o,a=artO(o);return t.packs+" × "+(a==="l"?(o.stueck>1?o.stueck+"er-Pack":groesseText(o.ml)):mengeText(o))}
 function expZeile(g,w){
   const gr=zMitglieder(g).length>1,t0=w.teile[0];
@@ -652,7 +652,7 @@ function zeichneEinkauf(){
 }
 /* ---- Favoriten-Seite: Zettel (Favorit -> Liter) und Marktvergleich ---- */
 var zettel={};try{zettel=JSON.parse(localStorage.getItem("pv-zettel")||"{}")||{}}catch(e){}
-var fvZeit="jetzt",neuText="",neuEinheit="kg",neuLaeuft=false,sucheQ="",sucheErg=null,sucheFav=null;
+var fvZeit="jetzt",neuText="",neuEinheit="st",neuLaeuft=false,sucheQ="",sucheErg=null,sucheFav=null;
 /* eigene Artikel ohne Angebot (Name -> Einheit) und Richtwerte (Artikel -> Euro je Liter / kg / Stück) */
 var frei={};try{frei=JSON.parse(localStorage.getItem("pv-frei")||"{}")||{}}catch(e){}
 var richt={};try{richt=JSON.parse(localStorage.getItem("pv-richt")||"{}")||{}}catch(e){}
@@ -700,7 +700,21 @@ function tourFahrt(ms){
 function fvFahrt(m){const d=dkm(m);return d==null?null:2*d*kmSatz*fakt(m)}
 /* Menge immer in Litern; im Vergleich wird je Markt die Packungsgröße gewählt, die am besten passt (ganze Packungen) */
 function zBedarf(k){return zettel[k]}
-function zEingabe(k){const a=ARTEN[artG(zk(k).g)];return `<input type="number" min="${a.min}" max="500" step="${a.step}" value="${zettel[k]}" data-l="${esc(k)}" aria-label="${a.wort} ${esc(zLabel(k))}"> ${a.wort}`}
+/* Menge in Stück statt kg/Liter: 1 Stück = die übliche Packungsgröße aus den Angeboten (häufigste Größe); intern bleibt alles in kg bzw. Liter */
+const zRund=x=>Math.round(x*100)/100;
+function zRef(k){
+  const x=zk(k),a=artG(x.g);if(a==="st")return null;
+  if(x.ml>0)return x.ml/1000;
+  const c=new Map();
+  offers.filter(o=>!o.ausb&&o.ml>0&&artO(o)===a&&zMitglieder(k).some(m=>zk(m).g===(o.gruppe||"Coca-Cola"))).forEach(o=>c.set(o.ml,(c.get(o.ml)||0)+1));
+  if(!c.size)return null;
+  return [...c.entries()].sort((p,q)=>q[1]-p[1]||p[0]-q[0])[0][0]/1000;
+}
+const zStd=k=>{const g=zk(k).g,a=artG(g);return zRef(k)||(a==="st"&&!offers.some(o=>(o.gruppe||"Coca-Cola")===g)?1:ARTEN[a].std)};
+function zMengeText(k){const a=artG(zk(k).g),r=zRef(k),v=zettel[k];return r?`${String(zRund(v/r)).replace(".",",")} Stück (à ${groesseText(Math.round(r*1000),a)})`:`${String(v).replace(".",",")} ${ARTEN[a].u}`}
+function zEingabe(k){const a=ARTEN[artG(zk(k).g)],r=zRef(k);
+  if(r)return `<input type="number" min="1" max="500" step="1" value="${zRund(zettel[k]/r)}" data-l="${esc(k)}" data-ref="${r}" aria-label="Stück ${esc(zLabel(k))}"> Stück <small>à ${esc(groesseText(Math.round(r*1000),artG(zk(k).g)))}</small>`;
+  return `<input type="number" min="${a.min}" max="500" step="${a.step}" value="${zettel[k]}" data-l="${esc(k)}" aria-label="${a.wort} ${esc(zLabel(k))}"> ${a.wort}`}
 function rwEingabe(k){const g=zk(k).g,a=ARTEN[artG(g)];return `<label class="rw">Richtwert <input inputmode="decimal" size="5" placeholder="1,99" value="${rwPreis(k)!=null?String(rwPreis(k)).replace(".",","):""}" data-r="${esc(k)}" aria-label="Richtwert in Euro je ${a.u} für ${esc(g)}"> € je ${a.u}</label>`}
 /* Kauflimit eines Angebots ("max. 2 Packungen", "max. 6 Flaschen") in ganze Packungen umgerechnet */
 function maxPack(o){
@@ -854,7 +868,7 @@ function fvVergleich(namen){
     const wo={};Object.entries(beste.zu).forEach(([g,x])=>{(wo[x.m]=wo[x.m]||[]).push([g,x.w])});
     Object.keys(wo).sort((a,b)=>(dkm(a)??99)-(dkm(b)??99)).forEach(m=>{
       const sum=wo[m].reduce((s,[g,w])=>s+w.kosten,0);
-      html+=`<div class="fv-rang" style="display:block"><div class="ek-h" style="border:0;margin:0">${mlogo(m)}<b>${esc(m)}</b>${dkm(m)!=null?`<span class="km">${f1(dkm(m))} km</span>`:""}<span class="ek-s">${eur(sum)}</span></div>${wo[m].map(([g,w])=>{const o=w.o,d=w.over,A=artO(o),U=unitK(A),hin=d>0.05?" · "+mf(d,A)+" "+U+" mehr":d<-0.05?" · "+mf(-d,A)+" "+U+" weniger":"";const pkt=zMitglieder(g).length>1?(t=>esc(t.o.gruppe||"")+": "+packText(t)):packText;const frist=w.teile.slice().sort((a,b)=>(tage(a.o)??999)-(tage(b.o)??999))[0].o,lim=w.teile.find(t=>t.o.limit);return `<div class="ek-z"><span>${esc(zLabel(g))}: ${String(zettel[g]).replace(".",",")} ${U} gewünscht<br><small>${w.teile.map(pkt).join(" + ")} = ${mf(w.vol,A)} ${U}${hin}${lim?" · Limit: max. "+esc(lim.o.limit):""} · ${gueltig(frist)}</small></span><span>${eur(w.kosten)}<br><small>${eur(gp(o))}/${U}</small></span></div>`}).join("")}</div>`;
+      html+=`<div class="fv-rang" style="display:block"><div class="ek-h" style="border:0;margin:0">${mlogo(m)}<b>${esc(m)}</b>${dkm(m)!=null?`<span class="km">${f1(dkm(m))} km</span>`:""}<span class="ek-s">${eur(sum)}</span></div>${wo[m].map(([g,w])=>{const o=w.o,d=w.over,A=artO(o),U=unitK(A),hin=d>0.05?" · "+mf(d,A)+" "+U+" mehr":d<-0.05?" · "+mf(-d,A)+" "+U+" weniger":"";const pkt=zMitglieder(g).length>1?(t=>esc(t.o.gruppe||"")+": "+packText(t)):packText;const frist=w.teile.slice().sort((a,b)=>(tage(a.o)??999)-(tage(b.o)??999))[0].o,lim=w.teile.find(t=>t.o.limit);return `<div class="ek-z"><span>${esc(zLabel(g))}: ${zMengeText(g)} gewünscht<br><small>${w.teile.map(pkt).join(" + ")} = ${mf(w.vol,A)} ${U}${hin}${lim?" · Limit: max. "+esc(lim.o.limit):""} · ${gueltig(frist)}</small></span><span>${eur(w.kosten)}<br><small>${eur(gp(o))}/${U}</small></span></div>`}).join("")}</div>`;
     });
     if(beste.rw.length){
       html+=`<div class="fv-rang" style="display:block"><div class="ek-h" style="border:0;margin:0"><b>Ohne Angebot (ca., nach deinen Richtwerten)</b><span class="ek-s">${eur(beste.rwSumme)}</span></div>`+beste.rw.map(g=>{const a=ARTEN[artG(zk(g).g)];return `<div class="ek-z"><span>${esc(zLabel(g))}: ${String(zettel[g]).replace(".",",")} ${a.u}<br><small>Normalpreis, in jedem Markt gleich angenommen</small></span><span>ca. ${eur(rwKosten(g))}<br><small>${eur(rwPreis(g))}/${a.u}</small></span></div>`}).join("")+`</div>`;
@@ -876,16 +890,16 @@ function fvVergleich(namen){
 function fvKlick(e){
   const z=e.target.closest("[data-z]");if(z){fvZeit=z.dataset.z;render();return true}
   const tb=e.target.closest("[data-t]");if(tb&&!tb.disabled){fvTour=tb.dataset.t;try{localStorage.setItem("pv-tour",fvTour)}catch(e){}render();return true}
-  const kg=e.target.closest("[data-kg]");if(kg){const k=kg.dataset.kg;if(zettel[k]>0)delete zettel[k];else{const gl=Object.keys(zettel).filter(q=>zettel[q]>0&&q!==k&&gidVon(q)===gidVon(k));zettel[k]=gl.length?zettel[gl[0]]:ARTEN[artG(zk(k).g)].std}zettelSpeichern();render();return true}
+  const kg=e.target.closest("[data-kg]");if(kg){const k=kg.dataset.kg;if(zettel[k]>0)delete zettel[k];else{const gl=Object.keys(zettel).filter(q=>zettel[q]>0&&q!==k&&gidVon(q)===gidVon(k));zettel[k]=gl.length?zettel[gl[0]]:zStd(k)}zettelSpeichern();render();return true}
   const x=e.target.closest("[data-zx]");if(x){zMitglieder(x.dataset.zx).forEach(m=>delete zettel[m]);zettelSpeichern();render();return true}
   return false;
 }
 favseite.onclick=e=>{if(e.target.closest("#zurListe")){tab="einkauf";render();window.scrollTo(0,0);return}if(e.target.closest("#neuBtn")){artikelSuchen();return}if(e.target.closest("#ohneBtn")){artikelOhne();return}const ef=e.target.closest("[data-ef]");if(ef){favHinzu(+ef.dataset.ef);return}if(impKlick(e))return;fvKlick(e)};
 function fvAender(e){
   const c=e.target.closest("input[type=checkbox][data-g]");
-  if(c){if(c.checked)zettel[c.dataset.g]=zettel[c.dataset.g]||ARTEN[artG(zk(c.dataset.g).g)].std;else delete zettel[c.dataset.g];zettelSpeichern();render();return}
+  if(c){if(c.checked)zettel[c.dataset.g]=zettel[c.dataset.g]||zStd(c.dataset.g);else delete zettel[c.dataset.g];zettelSpeichern();render();return}
   const l=e.target.closest("input[data-l]");
-  if(l){const v=parseFloat(String(l.value).replace(",","."));if(v>0&&v<=500)zMitglieder(l.dataset.l).forEach(m=>{zettel[m]=v});zettelSpeichern();render();return}
+  if(l){let v=parseFloat(String(l.value).replace(",","."));const rf=parseFloat(l.dataset.ref);if(rf>0)v=Math.round(v*rf*1000)/1000;if(v>0&&v<=500)zMitglieder(l.dataset.l).forEach(m=>{zettel[m]=v});zettelSpeichern();render();return}
   const r=e.target.closest("input[data-r]");
   if(r){const v=parseFloat(String(r.value).replace(",","."));zMitglieder(r.dataset.r).forEach(m=>{delete richt[zk(m).g]});if(v>0&&v<=1000)richt[zk(r.dataset.r).g]=Math.round(v*100)/100;zettelSpeichern();render();return}
   if(e.target.id==="neuEinheit"){neuEinheit=e.target.value}
@@ -1291,7 +1305,7 @@ function impParsen(t){
     if(m){menge={wert:parseFloat(m[1].replace(",",".")),einheit:(m[2]||"").toLowerCase().replace(".","").replace("gramm","g").replace("liter","l")};z=m[3]}
     z=z.replace(/[,|]/g," ").replace(/\s+/g," ").trim().slice(0,40);
     if(z.length<2||seen.has(z.toLowerCase()))return;
-    seen.add(z.toLowerCase());const eh=menge?(menge.einheit==="kg"||menge.einheit==="g"?"kg":menge.einheit==="l"||menge.einheit==="ml"?"l":"st"):"kg";
+    seen.add(z.toLowerCase());const eh=menge?(menge.einheit==="kg"||menge.einheit==="g"?"kg":menge.einheit==="l"||menge.einheit==="ml"?"l":"st"):"st";
     out.push({name:z,menge,roh:[],karten:[],art:"l",status:"wartet",einheit:eh});
   });
   return out.slice(0,40);
@@ -1331,7 +1345,7 @@ function impFavs(name){const q=name.toLowerCase();return (favs||[]).filter(f=>{c
 const impAuf=g=>Object.keys(zettel).some(k=>zk(k).g===g&&zettel[k]>0);
 function impListe(name,menge){   // Artikel auf den Zettel (Menge in der Einheit des Artikels; in einer Gruppe gilt deren Menge)
   const art=artG(name),v=impMenge(menge,art),gl=Object.keys(zettel).filter(q=>zettel[q]>0&&gidVon(q)===gidVon(name));
-  zettel[name]=v||(gl.length?zettel[gl[0]]:ARTEN[art].std);
+  zettel[name]=v||(gl.length?zettel[gl[0]]:zStd(name));
 }
 /* akt: [{name, entries (Angebote), nur, suche, menge, liste}] : Favoriten in einem Schritt speichern, Angebote sofort anzeigen, ggf. auf den Zettel */
 async function impHinzu(akt){
