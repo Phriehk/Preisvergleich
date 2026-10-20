@@ -58,6 +58,7 @@ jobs:
           set +e
           for i in $(seq 1 24); do curl -sf -m 20 "$URL/status" >/dev/null && break; sleep 10; done
           log "Status: $(curl -s -m 30 $URL/status)"
+          log "Alte Version: $(curl -sL -m 30 -o /tmp/alt.html -w '%{http_code} %{url_effective}' "$URL/alt.html") $(grep -o '<title>[^<]*' /tmp/alt.html | head -1)"
           log "Seite: $(curl -s -m 30 $URL/ | grep -o '<title>[^<]*</title>')"
           log "Ohne Code schreiben: HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 -X POST $URL/aktualisieren)"
           log "Mit Code, leere Suche (erwartet 400): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 -X POST -H "Authorization: Bearer $ZUG" "$URL/suche?q=")"
