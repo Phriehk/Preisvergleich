@@ -135,44 +135,22 @@ async function teilAbfrage(env, plz, suche) {
 /* Vorübergehende Diagnose: welche Abfragen bietet Marktguru für alle Angebote eines Marktes? (nur mit Zugangscode) */
 async function erkunden(env) {
   const k = await schluessel(env), H = { "x-apikey": k.api, "x-clientkey": k.client }, B = "https://api.marktguru.de/api/v1";
-  const urls = [
-    B + "/offers/search?as=web&limit=5&offset=0&q=&zipCode=47178",
-    B + "/offers/search?as=web&limit=5&offset=0&q=*&zipCode=47178",
-    B + "/offers/search?as=web&limit=5&offset=0&q=lidl&zipCode=47178",
-    B + "/offers?as=web&limit=5&offset=0&zipCode=47178",
-    B + "/retailers/127153/offers?as=web&limit=5&offset=0&zipCode=47178",
-    B + "/retailers/aldi-sued/offers?as=web&limit=5&offset=0&zipCode=47178",
-    B + "/leaflets?as=web&limit=5&zipCode=47178",
-    B + "/leaflets/search?as=web&limit=5&zipCode=47178",
-    B + "/retailers?as=web&limit=5&zipCode=47178",
-    B + "/leaflet-flights/297182/offers?as=web&limit=5",
-    B + "/leaflet-flights/297182?as=web",
-    B + "/leaflets/297182?as=web",
-    B + "/leaflets/297182/offers?as=web&limit=5",
-  ];
+  const O = B + "/offers?as=web&limit=3&offset=0&zipCode=47178";
+  const urls = [O, O + "&retailerIds=126679", O + "&retailerId=126679", O + "&advertiserIds=126679", O + "&advertiserIds=retailers/126679", O + "&retailers=lidl", O + "&advertisers=lidl", O + "&retailerUniqueNames=lidl", O + "&publisherIds=126679", O + "&publishers=lidl",
+    B + "/offers/publishers?as=web&zipCode=47178", B + "/offers/publishers?as=web&zipCode=47178&limit=50", B + "/advertisers?as=web&zipCode=47178", B + "/offers/categories?as=web&zipCode=47178"];
   const out = [];
   for (const u of urls) {
     try {
       const r = await fetch(u, { headers: { ...UA, ...H } }), t = await r.text();
       let info = "";
-      try { const j = JSON.parse(t); info = Array.isArray(j) ? "Liste " + j.length + (j[0] ? " Felder " + Object.keys(j[0]).join(",") : "") : "Felder " + Object.keys(j).join(",") + (Array.isArray(j.results) ? " · results " + j.results.length + " von " + (j.totalResults ?? j.total ?? "?") + (j.results[0] ? " · erstes: " + JSON.stringify(j.results[0]).slice(0, 400) : "") : ""); } catch (e) { info = t.slice(0, 160).replace(/\s+/g, " "); }
+      try { const j = JSON.parse(t); info = Array.isArray(j) ? "Liste " + j.length + (j[0] ? " erstes: " + JSON.stringify(j[0]).slice(0, 300) : "") : "Felder " + Object.keys(j).join(",") + (j.totalResults != null ? " · total " + j.totalResults : "") + (Array.isArray(j.results) && j.results[0] ? " · Märkte " + [...new Set(j.results.map(o => ((o.advertisers || [])[0] || {}).name))].join("/") : "") + (j.filters ? " · filters " + JSON.stringify(j.filters).slice(0, 500) : "") + (!Array.isArray(j.results) ? " · " + JSON.stringify(j).slice(0, 400) : ""); } catch (e) { info = t.slice(0, 160).replace(/\s+/g, " "); }
       out.push(r.status + " " + u.replace(B, "") + " → " + info);
     } catch (e) { out.push("FEHLER " + u.replace(B, "") + " " + e.message); }
   }
-  // Welche Pfade nutzt die Webseite selbst?
-  try {
-    const html = await (await fetch("https://www.marktguru.de/r/aldi-sued", { headers: UA })).text();
-    const pfade = new Set((html.match(/api\/v1\/[A-Za-z0-9_\-\/{}.$:]+/g) || []));
-    const skripte = [...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map(m => m[1]).slice(0, 12);
-    out.push("Seite: " + html.length + " Zeichen, Skripte " + skripte.length + ", Pfade im HTML: " + [...pfade].slice(0, 30).join(" "));
-    for (const s of skripte) {
-      try {
-        const u = s.startsWith("http") ? s : "https://www.marktguru.de" + (s.startsWith("/") ? "" : "/") + s, js = await (await fetch(u, { headers: UA })).text();
-        const p = [...new Set(js.match(/["'`][^"'`]{0,40}(?:offers|leaflet|retailer|advertiser)[^"'`]{0,60}["'`]/gi) || [])].filter(x => x.includes("/")).slice(0, 25);
-        if (p.length) out.push("Skript " + s.slice(-40) + ": " + p.join(" "));
-      } catch (e) { }
-    }
-  } catch (e) { out.push("Seite nicht geladen: " + e.message); }
+  try {   // Filter der Suche
+    const r = await fetch(B + "/offers/search?as=web&limit=1&offset=0&q=milch&zipCode=47178", { headers: { ...UA, ...H } }), j = await r.json();
+    out.push("Suche filters: " + JSON.stringify(j.filters).slice(0, 1500));
+  } catch (e) { }
   return out;
 }
 
