@@ -1128,7 +1128,7 @@ maerkte.onchange=e=>{const m=e.target.dataset.m;if(!m)return;e.target.checked?au
 function sorteVon(t){t=t.toLowerCase();return /zero|sugar|zuckerfrei|ultra/.test(t)?"Zero":/light/.test(t)?"Light":/cherry|kirsch/.test(t)?"Cherry":/vanill/.test(t)?"Vanilla":/lemon|zitron/.test(t)?"Lemon":"Classic"}
 function appPreis(t){const m=(t||"").match(/(?:lidl plus|app)[^0-9]{0,12}(\d+[.,]\d{2})\s*€/i);return m?+m[1].replace(",","."):null}
 function limitVon(t){const m=(t||"").match(/max\.?\s*(\d+\s*[a-zäöüß]+)/i);return m?m[1]:""}
-let tab="jetzt";
+let tab="jetzt";var stumm=false,stummCb=null;   // stumm: Angebote still einmischen, ohne Tab-Wechsel und Neuzeichnen (Import)
 function tabInfo(j,k){
   tabJetzt.textContent="Aktuell ("+j.length+")";tabSpaeter.textContent="Demnächst ("+k.length+")";
   tabJetzt.classList.toggle("on",tab==="jetzt");tabSpaeter.classList.toggle("on",tab==="spaeter");tabVerlauf.classList.toggle("on",tab==="verlauf");tabUebersicht.classList.toggle("on",tab==="uebersicht");tabEinkauf.classList.toggle("on",tab==="einkauf");tabFav.classList.toggle("on",tab==="favoriten");tabImport.classList.toggle("on",tab==="import");mehrMenu.hidden=true;tabMehr.setAttribute("aria-expanded","false");{const mt=tab==="uebersicht"?"Übersicht":tab==="verlauf"?"Preisverlauf":"Mehr";tabMehr.textContent=mt+" ▾";tabMehr.classList.toggle("on",tab==="uebersicht"||tab==="verlauf")}
@@ -1220,11 +1220,12 @@ file.onchange=()=>{
       if(merge)auswahl[neu[0].gruppe]=null;
       offers=merge?offers.filter(o=>!neu.some(n=>n.gruppe===o.gruppe)).concat(neu):neu;
       if(!merge)korrAufraeumen(neu);
-      produktFuellen(sel);
-      if(merge){tab="jetzt";tabGewaehlt=true}
+      produktFuellen(stumm?fProdukt.value:sel);
+      if(merge){if(!stumm){tab="jetzt";tabGewaehlt=true}}
       else if(!tabGewaehlt&&new Set(offers.map(o=>o.gruppe||"Coca-Cola")).size>=2)tab="uebersicht";
-      save();fillFilters();render();
+      save();fillFilters();if(!stumm)render();
     }catch(err){hinweis="Die Datei konnte nicht gelesen werden.";render()}
+    finally{if(stummCb){const cb=stummCb;stummCb=null;cb()}}
     file.value="";
   };
   r.readAsText(datei);
@@ -1350,22 +1351,24 @@ function impListe(name,menge){   // Artikel auf den Zettel (Menge in der Einheit
 /* akt: [{name, entries (Angebote), nur, suche, menge, liste}] : Favoriten in einem Schritt speichern, Angebote sofort anzeigen, ggf. auf den Zettel */
 async function impHinzu(akt){
   if(imp.busy||!akt.length)return;
-  imp.busy=true;render();
+  const neuZeichnen=()=>{const y=window.scrollY;render();window.scrollTo(0,y)};   // Scrollposition behalten
+  imp.busy=true;neuZeichnen();
   try{
     const liste=(favs||[]).slice();
-    akt.forEach(a=>{if(!liste.some(f=>f.name.toLowerCase()===a.name.toLowerCase()))liste.push({name:a.name,aus:"",nur:a.nur||[],...(a.suche?{suche:a.suche}:{})})});
+    akt.forEach(a=>{if(!a.frei&&!liste.some(f=>f.name.toLowerCase()===a.name.toLowerCase()))liste.push({name:a.name,aus:"",nur:a.nur||[],...(a.suche?{suche:a.suche}:{})})});
     if(liste.length!==(favs||[]).length){await favSpeichern(liste);favs=liste}
     const eintr=akt.flatMap(a=>a.entries.map(o=>({...o,gruppe:a.name})));
-    if(eintr.length){merge=true;dateiLaden(file,JSON.stringify(eintr),"suche.json");await new Promise(r=>setTimeout(r,800));merge=false}
+    if(eintr.length){stumm=true;merge=true;await new Promise(r=>{stummCb=r;dateiLaden(file,JSON.stringify(eintr),"suche.json");setTimeout(r,3000)});merge=false;stumm=false;stummCb=null}
     akt.forEach(a=>{if(a.nur&&a.nur.length)auswahl[a.name]=a.nur[0];if(a.liste)impListe(a.name,a.menge)});
     zettelSpeichern();
     clearTimeout(impTimer);if(cf)impTimer=setTimeout(()=>{aktualisieren()},4000);   // Angebote der neuen Favoriten auch auf dem Server ablegen
     hinweis=akt.length===1?'„'+akt[0].name+'“ gespeichert.':akt.length+" Artikel gespeichert.";
   }catch(e){merge=false;hinweis=netzFehler(e)}
-  imp.busy=false;tab="import";tabGewaehlt=true;render();
+  imp.busy=false;tab="import";tabGewaehlt=true;neuZeichnen();
 }
 function impKarteAkt(i,j,liste){const it=imp.items[i],c=it&&it.karten[j];return c?{name:c.label,entries:c.os,nur:[c.key],suche:it.name,menge:it.menge,liste}:null}
 function impAlleMarken(it){return {name:it.name,entries:it.roh,nur:[],menge:it.menge,liste:true}}
+const impFreiName=it=>it.roh.length?it.name+" (ohne Angebot)":it.name;   // eigener Name, damit er nicht mit dem Favoriten gleichen Namens (mit Angeboten) kollidiert
 function impKlick(e){
   const g=id=>e.target.closest(id);
   if(g("#impBtn")){impStarten();return true}
@@ -1384,8 +1387,9 @@ function impKlick(e){
   }
   if(b=g("[data-io]")){
     const it=imp.items[+b.dataset.io];if(!it)return true;
-    if(impAuf(it.name)&&frei[it.name]){impAb(it.name);return true}
-    frei[it.name]=it.einheit||"kg";impHinzu([{name:it.name,entries:[],nur:[],menge:it.menge,liste:true}]);return true;
+    const fn=impFreiName(it);
+    if(impAuf(fn)&&frei[fn]){impAb(fn);return true}
+    frei[fn]=it.einheit||"st";impHinzu([{name:fn,entries:[],nur:[],menge:it.menge,liste:true,frei:true}]);return true;
   }
   return false;
 }
@@ -1422,7 +1426,7 @@ function zeichneImport(){
           return impKachel(c.label,c.bild,c.label,`${c.os.length} Angebot${c.os.length>1?"e":""} · ab ${eur(c.min.preis_pro_liter)}/${unitK(c.art)}<br>${esc(c.groessen.join(", "))}<br>${esc(c.maerkte.join(", "))}`,
             `<button type="button" class="lb${fav?" an":""}" data-ik="${i}|${j}"${dis}>${fav?"★ Favorit":"☆ Als Favorit"}</button><button type="button" class="lb${an?" an":""}" data-il="${i}|${j}"${dis}>${an?"✓ Auf der Liste":"＋ Auf die Liste"}</button>`,an,c.label,c.min);
         }).join("");
-        if(!it.roh.length&&!impIstFav(it.name)){const fa=impAuf(it.name)&&!!frei[it.name];kach+=`<div class="kachel${fa?" an":""}"><div class="kb"><span class="ph">${esc(it.name[0].toUpperCase())}</span></div><b>Kein Angebot</b><small>${fa?"Steht ohne Angebot auf der Liste. Den Richtwert trägst du in der Einkaufsliste ein.":"Trotzdem auf die Liste setzen, du planst ihn mit einem eigenen Richtwert."}</small>${fa?"":`<select data-ie="${i}" aria-label="Einheit"><option value="kg"${it.einheit==="kg"?" selected":""}>kg</option><option value="l"${it.einheit==="l"?" selected":""}>Liter</option><option value="st"${it.einheit==="st"?" selected":""}>Stück</option></select>`}<button type="button" class="lb${fa?" an":""}" data-io="${i}"${dis}>${fa?"✓ Auf der Liste":"＋ Auf die Liste (ohne Angebot)"}</button>${fa?`<span class="fv-l">${zEingabe(it.name)}</span>`:""}</div>`}
+        if(it.roh.length||!impIstFav(it.name)){const fn=impFreiName(it),fa=impAuf(fn)&&!!frei[fn];kach+=`<div class="kachel${fa?" an":""}"><div class="kb"><span class="ph">${esc(it.name[0].toUpperCase())}</span></div><b>${it.roh.length?"Ohne Angebot":"Kein Angebot"}</b><small>${fa?"Steht ohne Angebot auf der Liste. Den Richtwert trägst du in der Einkaufsliste ein.":it.roh.length?"Nichts davon passt? Trotzdem auf die Liste setzen und mit eigenem Richtwert planen.":"Trotzdem auf die Liste setzen, du planst ihn mit einem eigenen Richtwert."}</small>${fa?"":`<select data-ie="${i}" aria-label="Einheit"><option value="kg"${it.einheit==="kg"?" selected":""}>kg</option><option value="l"${it.einheit==="l"?" selected":""}>Liter</option><option value="st"${it.einheit==="st"?" selected":""}>Stück</option></select>`}<button type="button" class="lb${fa?" an":""}" data-io="${i}"${dis}>${fa?"✓ Auf der Liste":"＋ Auf die Liste (ohne Angebot)"}</button>${fa?`<span class="fv-l">${zEingabe(fn)}</span>`:""}</div>`}
       }
       return `<div class="fv-grp"><div class="fv-gk">${esc(it.name)}${it.menge?` <small>· ${esc(impMengeText(it.menge))}</small>`:""} <small>${esc(stat)}</small></div>${kach?`<div class="fv-gitter">${kach}</div>`:""}</div>`;
     }).join("");
