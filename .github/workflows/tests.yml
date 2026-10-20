@@ -34,8 +34,8 @@ jobs:
         run: |
           set -o pipefail
           node --test tests/browser/seite.test.mjs 2>&1 | tee browser.log
-      - name: Testausgabe ins Repository schreiben (die Logs sind von außen schwer lesbar)
-        if: always()
+      - name: Bei Fehlern die Testausgabe ins Repository schreiben (die Logs sind von außen schwer lesbar)
+        if: failure()
         run: |
           git config user.name "preisvergleich-bot"
           git config user.email "bot@users.noreply.github.com"

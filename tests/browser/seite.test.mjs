@@ -51,7 +51,7 @@ t("Import: Liste einfügen, suchen, auf die Liste, Favorit, ohne Angebot; Tab un
     const bi = await p.evaluate(() => imp.items.findIndex(i => i.name === "Butter"));
     await p.evaluate(i => document.querySelector(`[data-il="${i}|1"]`).scrollIntoView({ block: "center" }), bi);
     const y0 = await p.evaluate(() => Math.round(scrollY));
-    await p.click(`[data-il="${bi}|1"]`);
+    await p.evaluate(i => document.querySelector(`[data-il="${i}|1"]`).click(), bi);   // ohne Playwright-eigenes Scrollen
     const spur = [];
     for (let i = 0; i < 8; i++) { await p.waitForTimeout(150); spur.push(await p.evaluate(() => tab + "@" + Math.round(scrollY))); }
     assert.ok(spur.every(x => x === "import@" + y0), `Tab oder Scroll gesprungen: ${spur.join(" ")} (vorher ${y0})`);
@@ -65,7 +65,7 @@ t("Import: Liste einfügen, suchen, auf die Liste, Favorit, ohne Angebot; Tab un
 });
 
 t("Einkaufen: nach Markt, abhaken bleibt gespeichert; Export nur mit Namen", async () => {
-  await mitSeite({}, async ({ p, fehler }) => {
+  await mitSeite({}, async ({ p, fehler }, u) => {
     await p.click("#tabImport");
     await p.fill("#impText", "Milch\nÄpfel\nSalz");
     await p.click("#impBtn"); await p.waitForTimeout(2500);
@@ -77,6 +77,7 @@ t("Einkaufen: nach Markt, abhaken bleibt gespeichert; Export nur mit Namen", asy
     assert.ok(gr.length === 3 && gr.some(x => /Äpfel/.test(x)) && gr.some(x => /Milch/.test(x)) && /Egal wo.*Salz/.test(gr[2]), JSON.stringify(gr));
     await p.click("#hakenseite .hk >> nth=0"); await p.waitForTimeout(300);
     assert.match(await p.textContent("#hakenseite .ek-s"), /1 von 3/);
+    await u.A("/aktualisieren", "POST");   // der Server kennt die neuen Favoriten (sonst erst nach ein paar Sekunden)
     await p.reload(); await p.waitForTimeout(1500); await p.click("#tabEinkaufen");
     assert.match(await p.textContent("#hakenseite .ek-s"), /1 von 3/, "Haken bleibt nach Neuladen");
     await p.click("#tabEinkauf"); await p.waitForTimeout(400);
