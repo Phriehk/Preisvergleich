@@ -24,14 +24,19 @@ export function playwright() {
 
 const V = [{ from: "2026-10-19T00:00:00Z", to: "2099-10-25T21:59:00Z" }];
 let nr = 100;
-const O = (adv, name, brand, desc, price, unit, volume, quantity, oldPrice) => ({ id: ++nr, oldPrice, url: "https://www.marktguru.de/offers/" + nr, advertisers: [{ name: adv }], product: { name }, brand: { name: brand }, description: desc, price, unit: unit ? { shortName: unit } : undefined, volume, quantity, validityDates: V });
+const RID = { "ALDI SÜD": 127153, PENNY: 126765, REWE: 126802, Lidl: 126679, Kaufland: 126654 };
+const O = (adv, name, brand, desc, price, unit, volume, quantity, oldPrice) => ({ id: ++nr, oldPrice, url: "https://www.marktguru.de/offers/" + nr, advertisers: [{ id: "retailers/" + RID[adv], name: adv }], product: { name }, brand: { name: brand }, description: desc, price, unit: unit ? { shortName: unit } : undefined, volume, quantity, validityDates: V });
 export const DATEN = {
   butter: [O("ALDI SÜD", "Butter", "Kerrygold", "250-g-Packung", 1.99), O("PENNY", "Butter", "Weihenstephan", "250 g", 1.79, "g", 250, 1), O("REWE", "Butter", "Milram", "2 x 250 g", 3.49), O("Lidl", "Erdnussbutter", "Skippy", "350 g", 3.99)],
   eier: [O("Kaufland", "Freilandeier", "", "10 Stück", 2.39), O("ALDI SÜD", "Freiland-Eier", "", "10 Stück, Größe M", 2.29), O("PENNY", "Eier", "", "6er Packung", 1.49)],
   milch: [O("PENNY", "Milch", "Weihenstephan", "1 l", 0.95, "l", 1, 1), O("Lidl", "Milch", "Milbona", "1 l", 0.89, "l", 1, 1, 1.09), O("Kaufland", "Milch", "K-Classic", "1 l", 1.05, "l", 1, 1)],
   "äpfel": [O("PENNY", "Äpfel", "", "lose", 1.99, "kg"), O("ALDI SÜD", "Äpfel", "", "1,5-kg-Beutel", 2.49)],
   reis: [O("Lidl", "Basmati Reis", "Tilda", "1 kg", 1.99), O("ALDI SÜD", "Reis", "", "500 g", 0.89)],
+  akkuschrauber: [O("Lidl", "Akkuschrauber", "Parkside", "12 V, mit Akku", 29.99)],
 };
+// Kategorien wie bei Marktguru (Elternkategorie 107 = Molkereiprodukte, 149 = Obst, 116 = Reis, 382 = Elektrowerkzeug)
+const KAT = { butter: [102, "Butter", 107], eier: [104, "Eier", 107], milch: [101, "Milch", 107], "äpfel": [300, "Äpfel", 149], reis: [400, "Reis", 116], akkuschrauber: [500, "Akkuschrauber", 382] };
+for (const [k, l] of Object.entries(DATEN)) for (const o of l) o.categories = [{ id: KAT[k][0], name: KAT[k][1], parentId: KAT[k][2] }];
 
 /** Umgebung: Speicher, Marktguru-Nachbau, ntfy-Protokoll */
 export async function umgebung(opts = {}) {
@@ -51,6 +56,14 @@ export async function umgebung(opts = {}) {
     u = String(u);
     if (u === "https://www.marktguru.de") return new Response('..."apiKey":"k","clientKey":"c"...');
     if (u === "https://ntfy.sh") { ntfy.push(JSON.parse(o.body)); return new Response("{}"); }
+    if (u.startsWith("https://api.marktguru.de/api/v1/offers/publishers")) {   // Märkte der Gegend
+      const m = new Map(); Object.values(opts.daten || DATEN).flat().forEach(o => m.set(o.advertisers[0].id, o.advertisers[0].name));
+      return new Response(JSON.stringify({ totalResults: m.size, results: [...m].map(([id, name]) => ({ id, name, uniqueName: name.toLowerCase(), offers: [] })) }));
+    }
+    if (u.startsWith("https://api.marktguru.de") && new URL(u).searchParams.get("retailers")) {   // alle Angebote eines Marktes
+      const q = new URL(u).searchParams, l = Object.values(opts.daten || DATEN).flat().filter(o => o.advertisers[0].id === "retailers/" + q.get("retailers"));
+      return new Response(JSON.stringify({ totalResults: l.length, results: l.slice(+q.get("offset"), +q.get("offset") + +q.get("limit")) }));
+    }
     if (u.startsWith("https://api.marktguru.de")) { const q = new URL(u).searchParams; return new Response(JSON.stringify({ results: q.get("offset") === "0" ? (opts.daten || DATEN)[q.get("q").toLowerCase()] || [] : [] })); }
     return new Response("nf", { status: 404 });
   };

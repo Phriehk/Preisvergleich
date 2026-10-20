@@ -201,6 +201,42 @@ t("Liste: Name führt zur Produktseite (mit Marktguru-Link), Zurück an dieselbe
   });
 });
 
+t("Alle Angebote je Markt: Märkte, Gruppen, Suche, Favorit und Liste", async () => {
+  await mitSeite({ favs: [{ name: "Eier", aus: "" }] }, async ({ p, fehler }, u) => {
+    await p.click('[data-seg="aTab"][data-wert="markt"]');
+    await p.waitForSelector(".mk-chips .chip", { timeout: 10000 });
+    assert.equal(await p.evaluate(() => location.hash), "#markt");
+    assert.equal(await p.locator('#leiste [data-v="angebote"].an').count(), 1);
+    const chips = await p.$$eval(".mk-chips .chip", e => e.map(x => x.textContent.replace(/\s+/g, " ").trim()));
+    assert.ok(chips.some(c => /^Lidl 4$/.test(c)) && chips.some(c => /^PENNY 4$/.test(c)), JSON.stringify(chips));
+    await p.click('.mk-chips [data-mk="126679"]');
+    await p.waitForSelector(".mk-gruppe", { timeout: 10000 });
+    const gruppen = async () => p.$$eval(".mk-gruppe > summary", e => e.map(x => x.textContent.replace(/\s+/g, " ").trim()));
+    let g = await gruppen();
+    assert.ok(g.includes("Milch, Käse & Eier 2") && g.includes("Nudeln, Reis & Spezialitäten 1") && !g.some(x => /Garten/.test(x)), JSON.stringify(g));
+    assert.equal(await p.locator(".mk-z").count(), 0, "Gruppen sind zu, bis man sie öffnet");
+    await p.click('[data-seg="mkBereich"][data-wert="alle"]');
+    g = await gruppen(); assert.ok(g.some(x => /^Garten & Heimwerken 1/.test(x)), JSON.stringify(g));
+    await p.click('.mk-gruppe:has-text("Milch, Käse") > summary'); await p.waitForTimeout(300);
+    const milch = p.locator(".mk-z", { hasText: "Milbona" });
+    assert.match(await milch.textContent(), /0,89\s*€[\s\S]*statt 1,09/);
+    assert.match(await milch.locator("a.plink").getAttribute("href"), /^https:\/\/www\.marktguru\.de\/offers\/\d+/);
+    await p.fill("#mkSuche", "reis"); await p.waitForTimeout(300);
+    const zeilen = await p.$$eval(".mk-z", e => e.map(x => x.querySelector(".mk-t b").textContent));
+    assert.deepEqual(zeilen, ["Tilda Basmati Reis"]);
+    await p.click('.mk-z [data-mkl]'); await p.waitForFunction(() => !S.suche.busy && aufListe("Tilda Basmati Reis"), null, { timeout: 10000 });
+    const fav = JSON.parse(u.store.get("favoriten")).find(f => f.name === "Tilda Basmati Reis");
+    assert.ok(fav && fav.suche === "Tilda Basmati Reis" && JSON.stringify(fav.nur) === '["tilda"]', JSON.stringify(fav));
+    assert.match(await p.textContent(".mk-z [data-mkl]"), /✓/);
+    assert.match(await p.textContent(".mk-z [data-mkf]"), /★/);
+    await p.fill("#mkSuche", ""); await p.waitForTimeout(200);
+    await p.click('#leiste [data-v="liste"]'); await p.waitForTimeout(300);
+    assert.match(await p.textContent("#ansicht"), /Tilda Basmati Reis/);
+    assert.match(await p.textContent(".zeile", { timeout: 2000 }), /Lidl/);
+    assert.deepEqual(fehler, []);
+  });
+});
+
 t("Alter Preis (oldPrice) wird als „statt …“ angezeigt", async () => {
   await mitSeite({ favs: [{ name: "Milch", aus: "" }] }, async ({ p }) => {
     assert.match(await p.textContent('.produkt[data-p="Milch"]'), /statt 1,09/);

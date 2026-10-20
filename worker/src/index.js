@@ -114,22 +114,14 @@ function link(o) {
 const lokalDatum = s => { if (!s) return ""; const d = new Date(s); return isNaN(d) ? s.slice(0, 10) : berlin(d); };
 
 async function teilAbfrage(env, plz, suche) {
-  let k = await schluessel(env), aus = [];
-  for (const offset of [0, 100]) {
-    const url = SEARCH + "?" + new URLSearchParams({ as: "web", limit: "100", offset: String(offset), q: suche, zipCode: plz });
-    let r;
-    try { r = await http(url, { "x-apikey": k.api, "x-clientkey": k.client }); }
-    catch (e) { if (e.status === 401 || e.status === 403) { k = await schluessel(env, true); r = await http(url, { "x-apikey": k.api, "x-clientkey": k.client }); } else throw e; }
-    const seite = (await r.json()).results || [];
-    for (const o of seite) {
-      const v = (o.validityDates || [{}])[0] || {};
-      aus.push({ id: o.id, adv: (((o.advertisers || [{}])[0]) || {}).name || "?", name: (o.product || {}).name || "?", brand: (o.brand || {}).name || "",
-        desc: o.description || "", price: o.price, alt: +o.oldPrice > +o.price ? +o.oldPrice : null, einheit: (((o.unit || {}).shortName) || "").toLowerCase(), volume: o.volume, quantity: o.quantity,
-        von: lokalDatum(v.from), bis: lokalDatum(v.to), bild: bildUrl(o), link: link(o) });
-    }
-    if (seite.length < 100) break;
-  }
-  return aus;
+  // eine Abfrage mit bis zu 250 Treffern: beim Blättern überschneiden sich die Seiten, eine zweite Seite brächte Doppelte, andere fehlten
+  const j = await mgHole(env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "250", offset: "0", q: suche, zipCode: plz }));
+  return (j.results || []).map(o => {
+    const v = (o.validityDates || [{}])[0] || {};
+    return { id: o.id, adv: (((o.advertisers || [{}])[0]) || {}).name || "?", name: (o.product || {}).name || "?", brand: (o.brand || {}).name || "",
+      desc: o.description || "", price: o.price, alt: +o.oldPrice > +o.price ? +o.oldPrice : null, einheit: (((o.unit || {}).shortName) || "").toLowerCase(), volume: o.volume, quantity: o.quantity,
+      von: lokalDatum(v.from), bis: lokalDatum(v.to), bild: bildUrl(o), link: link(o) };
+  });
 }
 
 /* ---------- Alle Angebote eines Marktes (zum Durchstöbern) ----------
@@ -178,9 +170,9 @@ async function marktAngebote(env, ctx, sp, ip) {
   if (begrenzt("mk:" + ip, 30) || !(await tagesOk(env, "markt", 400))) { if (alt) return alt; throw zuViel(); }
   const m = (await maerkteRegion(env, plz)).find(x => x.id === id);
   if (!m) throw Object.assign(new Error("Diesen Markt gibt es hier gerade nicht"), { status: 404 });
-  const teile = ctx.exports.Teil, erste = await teile.marktSeite(m.plz, m.name, id, 0);
-  const seiten = Math.min(12, Math.ceil(erste.total / 100));   // höchstens 1200 Angebote
-  const rest = await parallel(Array.from({ length: Math.max(0, seiten - 1) }, (_, i) => () => teile.marktSeite(m.plz, m.name, id, (i + 1) * 100).catch(e => ({ liste: [], fehler: String(e.message || e).slice(0, 80) }))), GLEICHZEITIG);
+  // Die Reihenfolge der Treffer ist beim Blättern nicht fest (Seiten überschneiden sich), deshalb alles in einer Abfrage, höchstens 1000
+  const teile = ctx.exports.Teil, lim = Math.min(1000, Math.max(100, (m.n || 0) + 50)), erste = await teile.marktSeite(m.plz, m.name, id, 0, lim);
+  const rest = erste.total > lim && lim < 1000 ? [await teile.marktSeite(m.plz, m.name, id, 0, 1000).catch(e => ({ liste: [], fehler: String(e.message || e).slice(0, 80) }))] : [];
   const ids = new Set(), angebote = [], info = [];
   for (const s of [erste, ...rest]) { let neu = 0; for (const o of s.liste) if (!ids.has(o.id)) { ids.add(o.id); angebote.push(o); neu++; } info.push(s.fehler ? "F:" + s.fehler : s.roh + "/" + s.liste.length + "/" + neu); }
   const erg = { t: Date.now(), id, name: m.name, plz: m.plz, total: erste.total, seiten: info, angebote };
@@ -188,31 +180,12 @@ async function marktAngebote(env, ctx, sp, ip) {
   return erg;
 }
 
-/* Vorübergehende Diagnose: stabile Reihenfolge beim Blättern? (nur mit Zugangscode) */
-async function erkunden(env) {
-  const out = [], basis = SEARCH + "?as=web&zipCode=47178&q=" + encodeURIComponent("Netto Marken-Discount") + "&retailers=126735";
-  const varianten = ["", "&sortBy=price", "&sort=price", "&orderBy=price", "&sortBy=price&sortOrder=asc", "&sort=validFrom", "&sortBy=id"];
-  for (const v of varianten) {
-    try {
-      const seiten = await Promise.all([0, 100, 200, 300].map(o => mgHole(env, basis + v + "&limit=100&offset=" + o)));
-      const ids = new Set(); let n = 0; seiten.forEach(j => (j.results || []).forEach(o => { ids.add(o.id); n++; }));
-      out.push("Variante '" + v + "': " + n + " geliefert, " + ids.size + " verschieden, erste Preise " + (seiten[0].results || []).slice(0, 5).map(o => o.price).join(","));
-    } catch (e) { out.push("Variante '" + v + "': " + e.message); }
-  }
-  for (const lim of [400, 1000]) try {
-    const t0 = Date.now(), r = await fetch(SEARCH + "?as=web&zipCode=47178&q=Lidl&retailers=126679&offset=0&limit=" + lim, { headers: { ...UA, "x-apikey": (await schluessel(env)).api, "x-clientkey": (await schluessel(env)).client } });
-    const t = await r.text(), j = JSON.parse(t), ids = new Set((j.results || []).map(o => o.id));
-    out.push("Lidl limit " + lim + ": HTTP " + r.status + ", " + (j.results || []).length + " geliefert, " + ids.size + " verschieden, " + t.length + " Zeichen, " + (Date.now() - t0) + " ms");
-  } catch (e) { out.push("Lidl limit " + lim + ": " + e.message); }
-  return out;
-}
-
 // Eigener Einstiegspunkt, damit jede Teilabfrage als eigener Aufruf mit eigenen Grenzen läuft.
 // Ein Aufruf holt mehrere Artikel in einer Postleitzahl und sortiert unpassende Treffer gleich aus (spart Aufrufe und Rechenzeit im Hauptaufruf).
 export class Teil extends WorkerEntrypoint {
   async hole(plz, suche) { return teilAbfrage(this.env, plz, suche); }
-  async marktSeite(plz, name, id, offset) {   // eine Seite (100 Angebote) eines Marktes, schon verkleinert
-    const j = await mgHole(this.env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "100", offset: String(offset), q: name, retailers: id, zipCode: plz }));
+  async marktSeite(plz, name, id, offset, limit) {   // Angebote eines Marktes, schon verkleinert
+    const j = await mgHole(this.env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: String(limit), offset: String(offset), q: name, retailers: id, zipCode: plz }));
     const alle = j.results || [], passend = alle.filter(o => haendlerId(o) === id);
     return { total: j.totalResults || 0, roh: alle.length, liste: (passend.length || !alle.length ? passend : alle).map(kompakt) };
   }
@@ -758,7 +731,6 @@ export default {
         return env.ASSETS.fetch(req);  // die Seite selbst (index.html, Symbole, ...)
       }
       if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401);
-      if (p === "/erkunden" && req.method === "POST") return antwort(await erkunden(env));
       if (p === "/favoriten.json" && (req.method === "PUT" || req.method === "POST")) {
         const liste = await req.json();
         if (!Array.isArray(liste) || liste.some(f => !f || typeof f.name !== "string")) return fehler("Ungültige Favoritenliste", 400);

@@ -291,6 +291,29 @@ textarea.export{font-size:.92rem;min-height:120px}
 .chip{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:0 12px;border:1px solid var(--linie);border-radius:999px;background:var(--flaeche);font-size:.9rem;cursor:pointer}
 .chip input{margin:0}
 .chip.aus{opacity:.55;text-decoration:line-through}
+.chip.an{background:var(--tinte);border-color:var(--tinte);color:var(--flaeche);font-weight:600}
+.chip.an .km{color:inherit;opacity:.75}
+.chip.leise{opacity:.6}
+.mk-chips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;margin:0 -16px;padding-left:16px;padding-right:16px;scrollbar-width:thin}
+.mk-chips .chip{flex:none}
+.mk-gruppe{gap:0;padding:12px 14px}
+.mk-gruppe>summary{padding:2px 0}
+.mk-gruppe[open]>summary{margin-bottom:6px}
+.mk-z{display:grid;grid-template-columns:44px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--linie)}
+.mk-z .bild{width:44px;height:44px;border-radius:8px}
+.mk-t{min-width:0;display:flex;flex-direction:column;gap:1px}
+.mk-t b{font-weight:600;overflow-wrap:anywhere}
+.mk-t small{color:var(--grau);font-size:.8rem}
+.mk-p{text-align:right;display:flex;flex-direction:column;white-space:nowrap}
+.mk-p b{font:700 1.15rem var(--f-display)}
+.mk-p .statt{color:var(--grau);font-size:.75rem;text-decoration:line-through}
+.mk-k{display:flex;gap:6px}
+.rund{width:36px;height:36px;border-radius:50%;border:1px solid var(--linie);background:var(--flaeche);color:var(--tinte);font-size:1.1rem;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
+.rund.an{background:var(--gruen);border-color:var(--gruen);color:#fff}
+.mk-werkzeug .feld{flex:1 1 220px}
+.mk-werkzeug .segment{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.mk-werkzeug .segment button{flex:none}
+@media (max-width:480px){.mk-z{grid-template-columns:40px minmax(0,1fr) auto;grid-template-areas:"b t p" "b t k";row-gap:4px}.mk-z .bild{grid-area:b;width:40px;height:40px;align-self:start}.mk-t{grid-area:t}.mk-p{grid-area:p}.mk-k{grid-area:k;justify-content:flex-end}.mk-k .rund{width:32px;height:32px;font-size:1rem}}
 .formular .chip{flex-direction:row;font-size:.9rem;color:var(--tinte);gap:6px}
 
 /* ---------- Dialog (Preis korrigieren) ---------- */
@@ -527,6 +550,34 @@ function auftraege(){
   Object.keys(zettel).forEach(k=>{const g=zk(k).g;if(!namen.has(g)&&!frei[g]){namen.add(g);l.push({name:g,term:g,nur:[]})}});
   return l;
 }
+/* ---------- Angebote je Markt: erst die Märkte der Gegend, dann alle Angebote des gewählten Marktes ---------- */
+function mkAuto(){
+  if(demo||!online||S.v!=="markt")return;
+  const plz=quellPlz();
+  if(!S.mk.liste||S.mk.plz!==plz){if(!S.mk.laedt&&!S.mk.versucht["liste:"+plz])mkListeLaden(plz);return}
+  const m=mkAktuell();if(!m||m.demo)return;
+  const k=mkKey(m),d=S.mk.daten[k];
+  if((!d||Date.now()-d.geholt>3*3600e3)&&!S.mk.lade[k]&&!S.mk.versucht[k])mkLaden(m);
+}
+async function mkListeLaden(plz){
+  const k="liste:"+plz;S.mk.laedt=true;S.mk.versucht[k]=1;delete S.mk.fehler[k];
+  try{S.mk.liste=await (await wf("/maerkte?plz="+encodeURIComponent(plz))).json();S.mk.plz=plz}
+  catch(e){S.mk.fehler[k]=netzFehler(e)}
+  S.mk.laedt=false;if(S.v==="markt")render();
+}
+async function mkLaden(m){
+  const k=mkKey(m);S.mk.lade[k]=1;S.mk.versucht[k]=1;delete S.mk.fehler[k];
+  try{const j=await (await wf("/markt?plz="+encodeURIComponent(m.plz)+"&id="+encodeURIComponent(m.id))).json();S.mk.daten[k]={...j,angebote:Array.isArray(j.angebote)?j.angebote:[],geholt:Date.now()}}
+  catch(e){S.mk.fehler[k]=netzFehler(e)}
+  delete S.mk.lade[k];if(S.v==="markt")render();
+}
+function mkAkt(o,liste){   // ein Angebot als Favorit (wie eine Kachel in der Suche): gesucht wird nach Marke und Name, gezählt wird nur diese Marke
+  const m=mkAktuell(),label=favLabel(o);
+  const e={gruppe:label,bild:o.bild,marke:o.marke,coke:true,link:o.link,markt:m?mkName(m):"?",produkt:o.produkt,beschreibung:o.beschreibung,preis:o.preis,preis_alt:o.preis_alt,
+    art:o.art,liter:o.liter,stueck:o.stueck,ml:o.ml,preis_pro_liter:o.preis_pro_liter,gueltig_von:o.gueltig_von,gueltig_bis:o.gueltig_bis};
+  return {name:label,entries:[e],nur:[kKey(o)],suche:label,liste,menge:null};
+}
+
 async function regionLaden(frisch){
   const auf=auftraege(),plz=quellPlz();
   const terms=[...new Set(auf.map(a=>a.term.toLowerCase()))].map(t=>auf.find(a=>a.term.toLowerCase()===t).term);
@@ -742,6 +793,7 @@ const S={
   form:{},                   // Eingaben in Formularen (bleiben beim Neuzeichnen erhalten)
   kMode:"login",kInfo:"",kBusy:false,anfragen:null,
   filter:"",sort:"name",
+  mk:{id:ls.raw("pv-markt")||"",liste:null,plz:"",laedt:false,lade:{},versucht:{},fehler:{},daten:{},q:"",zeit:"jetzt",bereich:"L"},   // Angebote je Markt
   erledigtAus:ls.raw("pv-erledigt")==="aus"
 };
 
@@ -953,7 +1005,7 @@ function gruppenInfo(g){
 /* ======================================================================
    Ansichten
    ====================================================================== */
-const TITEL={angebote:"Angebote",suchen:"Suchen",liste:"Einkaufsliste",einkaufen:"Einkaufen",alarm:"Preisalarm",mehr:"Mehr"};
+const TITEL={angebote:"Angebote",markt:"Angebote",suchen:"Suchen",liste:"Einkaufsliste",einkaufen:"Einkaufen",alarm:"Preisalarm",mehr:"Mehr"};
 let toastT=null,online=false,demo=false;
 function melde(text,fehler){
   const t=$("toast");$("toastText").textContent=text;t.classList.toggle("fehler",!!fehler);t.hidden=false;
@@ -968,6 +1020,7 @@ function untertitel(){
   if(S.v==="produkt"){const a=artG(S.p);return "Preis pro "+ARTEN[a].wort}
   if(S.v==="liste"){const n=zettelNamen().length+extra.length;return n?n+" Artikel":""}
   if(S.v==="einkaufen")return "";
+  if(S.v==="markt"){const m=mkAktuell(),d=m&&mkDaten(m);return demo?"Vorschau mit Beispieldaten":d&&d.t?"Stand "+new Date(d.t).toLocaleString("de-DE",{weekday:"short",hour:"2-digit",minute:"2-digit"})+" Uhr":"PLZ "+quellPlz()}
   if(S.v==="angebote"){
     const plz=lokalModus()?"PLZ "+quellPlz():"";
     if(demo)return "Vorschau mit Beispieldaten";
@@ -984,13 +1037,14 @@ function render(){
   $("untertitel").textContent=untertitel();
   $("zurueck").hidden=S.v!=="produkt";
   const akt=$("aktBtn");akt.hidden=!online||S.v==="mehr";akt.classList.toggle("dreht",laeuft);akt.disabled=laeuft;
-  document.querySelectorAll("#leiste button").forEach(b=>b.classList.toggle("an",b.dataset.v===S.v||(S.v==="produkt"&&b.dataset.v===(S.von||"angebote"))));
+  document.querySelectorAll("#leiste button").forEach(b=>b.classList.toggle("an",b.dataset.v===S.v||((S.v==="markt"||S.v==="produkt"&&S.von==="markt")&&b.dataset.v==="angebote")||(S.v==="produkt"&&b.dataset.v===(S.von||"angebote"))));
   document.querySelector('#leiste [data-v="alarm"]').hidden=!betreiber();
   const n=zettelNamen().length+extra.length,z=$("listeZahl");z.hidden=!n;z.textContent=n;
   document.title=(S.v==="produkt"?S.p:TITEL[S.v])+" · Preisvergleich";
   $("ansicht").innerHTML=(ANSICHT[S.v]||ANSICHT.angebote)();
   if(gleich)window.scrollTo(0,y);
   render.letzte=schluessel;
+  if(S.v==="markt")setTimeout(mkAuto,0);   // Märkte und Angebote bei Bedarf nachladen
   if(fokus){const el=$(fokus.id);if(el){el.focus({preventScroll:true});try{if(fokus.s!=null)el.setSelectionRange(fokus.s,fokus.e)}catch(e){}}}
 }
 
@@ -1029,8 +1083,9 @@ function karte(x){
     <button type="button" class="p-plus${an?" an":""}" data-liste="${esc(g)}" aria-label="${an?esc(g)+" von der Liste nehmen":esc(g)+" auf die Liste"}" title="${an?"Auf der Liste":"Auf die Liste"}">${an?"✓":"+"}</button>
   </article>`;
 }
+const aTabs=()=>`<div class="reihe">${segment("aTab",[["angebote","Meine Favoriten"],["markt","Nach Markt"]],S.v)}</div>`;
 function vAngebote(){
-  let h=statusHtml();
+  let h=aTabs()+statusHtml();
   const namen=favs().map(f=>f.name);
   if(!namen.length)return h+leerHtml("Noch keine Favoriten","Suche nach Artikeln wie Milch oder Cola und markiere ein Produkt mit ☆. Hier siehst du dann jeden Tag das beste Angebot.",`<button type="button" class="knopf haupt" data-go="suchen">Artikel suchen</button>`);
   const q=S.filter.trim().toLowerCase();
@@ -1428,7 +1483,93 @@ function vAlarm(){
   return h;
 }
 const listeFavNamen=()=>[...new Set(Object.keys(zettel).filter(k=>zettel[k]>0).map(k=>zk(k).g))].filter(n=>favs().some(f=>f.name===n));
-const ANSICHT={angebote:vAngebote,produkt:vProdukt,suchen:vSuchen,liste:vListe,einkaufen:vEinkaufen,alarm:vAlarm,mehr:vMehr};
+/* ---------------- Alle Angebote eines Marktes ---------------- */
+// Marktguru-Kategorien (Elternkategorie) zu Gruppen zusammengefasst; Bereich L = Essen und Trinken, D = Drogerie, Haushalt, Tier, N = alles andere, "?" = unbekannt (immer sichtbar)
+const MK_GRUPPEN=[
+  ["Obst & Gemüse","L",[149,147,101]],["Fleisch & Geflügel","L",[103]],["Wurst & Aufschnitt","L",[104]],["Fisch","L",[106]],["Milch, Käse & Eier","L",[107]],
+  ["Brot & Backwaren","L",[191,23]],["Tiefkühl","L",[120]],["Feinkost & Fertiggerichte","L",[115,112]],["Konserven","L",[113]],["Nudeln, Reis & Spezialitäten","L",[116,16]],
+  ["Öle, Soßen & Gewürze","L",[108,174]],["Backen & Zucker","L",[110]],["Frühstück & Aufstriche","L",[119,473,187]],["Kaffee & Tee","L",[193]],["Süßes","L",[20]],["Knabbereien","L",[102]],
+  ["Wasser & Softdrinks","L",[69]],["Bier","L",[70]],["Wein & Sekt","L",[363,497]],["Spirituosen","L",[364,454]],
+  ["Körperpflege & Kosmetik","D",[402,137,414,126]],["Baby","D",[136]],["Gesundheit","D",[17,10]],["Waschen & Putzen","D",[50]],["Haushalt","D",[415]],["Tierbedarf","D",[83,85,90,91,93,8]],
+  ["Küche & Wohnen","N",[143,144,3,97,227,218,398]],["Elektronik","N",[12,32,35,122,124,204]],["Kleidung & Schuhe","N",[94,95,427,428,129]],
+  ["Garten & Heimwerken","N",[15,19,26,28,53,142,378,382,383,384,385,386,387,390,392]],["Freizeit & Spielzeug","N",[5,6,22,4,14,11,125,1,2,7,160]],["Saison & Aktionen","?",[630]]];
+const MK_NACH=new Map();MK_GRUPPEN.forEach(([n,b,ids],i)=>ids.forEach(id=>MK_NACH.set(id,i)));
+// Märkte mit Lebensmitteln und Drogerie stehen vorne, Möbel- und Baumärkte unter „Weitere“
+const MK_LM=["lidl","aldi","kaufland","rewe","penny","netto","edeka","trinkgut","thomas philipps","handelshof","rossmann","dm","norma","globus","marktkauf","famila","getränke","nahkauf","hit ","real","müller","combi","np ","mix markt","metro","denns","alnatura","budni","tegut","v-markt","wasgau"];
+const mkLm=m=>MK_LM.some(x=>(mbase(m.name).toLowerCase()+" ").startsWith(x));
+const mkName=m=>m.name+(m.plz&&m.plz!==quellPlz()?" ("+m.plz+")":"");
+const mkKey=m=>m.plz+"|"+m.id;
+let mkZeilen=[];   // die gerade gezeigten Angebote (für die Knöpfe)
+function mkMaerkte(){
+  if(demo||!online){   // ohne Server: Märkte aus den vorhandenen Angeboten
+    const z=new Map();offers.forEach(o=>{const n=mbase(o.markt);z.set(n,(z.get(n)||0)+1)});
+    return [...z].map(([name,n])=>({id:"d:"+name,name,plz:"",n,demo:true}));
+  }
+  return S.mk.liste||[];
+}
+const mkAktuell=()=>{const l=mkMaerkte();return l.find(m=>m.id===S.mk.id)||null};
+function mkDaten(m){
+  if(m.demo){   // Vorschau: Angebote der Favoriten, nach Favorit gruppiert
+    return {t:0,angebote:offers.filter(o=>mbase(o.markt)===m.name).map(o=>({id:o.id,marke:o.marke,produkt:o.produkt,beschreibung:o.info,preis:o.preis,preis_alt:o.alt,art:o.art,liter:liter(o),stueck:o.stueck,ml:o.ml,preis_pro_liter:gp(o),gueltig_von:o.von,gueltig_bis:o.bis,bild:o.bild,link:o.link,kat:o.gruppe,kp:0}))};
+  }
+  return S.mk.daten[mkKey(m)]||null;
+}
+function mkGruppe(o){const i=MK_NACH.get(o.kp);return i!=null?{n:MK_GRUPPEN[i][0],b:MK_GRUPPEN[i][1],i}:o.kat&&!o.kp?{n:o.kat,b:"?",i:100}:{n:"Sonstiges",b:"?",i:999}}
+function mkZeile(o,i){
+  const label=favLabel(o),fav=istFav(label),an=fav&&aufListe(label),mitMenge=o.liter>0&&ARTEN[o.art];
+  const menge=mitMenge?mengeText(o):"",grund=mitMenge&&o.preis_pro_liter&&!(o.art==="st"&&o.stueck===1)?eur(o.preis_pro_liter)+"/"+unitK(o.art):"";
+  const name=esc(label),titel=o.link&&/^https?:\/\//.test(o.link)?`<a class="plink" href="${esc(o.link)}" target="_blank" rel="noopener noreferrer" title="Angebot bei Marktguru ansehen">${name}</a>`:name;
+  const info=[menge,grund,gueltig({von:o.gueltig_von,bis:o.gueltig_bis})].filter(Boolean).join(" · ");
+  const amExtra=extra.includes(label.slice(0,40));
+  return `<div class="mk-z">${bildHtml(o.bild,label)}<div class="mk-t"><b>${titel}</b>${o.kat&&o.kp?`<small>${esc(o.kat)}</small>`:""}<small>${esc(info)}</small></div>
+    <div class="mk-p"><b>${eur(o.preis)}</b>${o.preis_alt?`<small class="statt">statt ${eur(o.preis_alt)}</small>`:""}</div>
+    <div class="mk-k"><button type="button" class="rund${fav?" an":""}" data-mkf="${i}" aria-label="${fav?esc(label)+" ist Favorit, Seite öffnen":esc(label)+" als Favorit merken"}" title="${fav?"Favorit (öffnen)":"Als Favorit merken"}">${fav?"★":"☆"}</button><button type="button" class="rund${an||amExtra?" an":""}" data-mkl="${i}" aria-label="${an||amExtra?esc(label)+" von der Liste nehmen":esc(label)+" auf die Einkaufsliste"}" title="${mitMenge?"Auf die Einkaufsliste":"Als eigener Artikel auf die Liste"}">${an||amExtra?"✓":"+"}</button></div></div>`;
+}
+function vMarkt(){
+  let h=aTabs();
+  const l=mkMaerkte();
+  const fehlerHtml=k=>`<div class="banner warn">${esc(S.mk.fehler[k])} <button type="button" class="knopf klein" data-aktion="mkNeu">Noch einmal</button></div>`;
+  if(!l.length){
+    if(S.mk.fehler["liste:"+quellPlz()])return h+fehlerHtml("liste:"+quellPlz());
+    return h+`<p class="leise-text">${S.mk.laedt?"Ich hole die Märkte für PLZ "+esc(quellPlz())+" …":"Für diese Gegend kenne ich keine Märkte."}</p>`;
+  }
+  if(!S.mk.id||!l.some(m=>m.id===S.mk.id)){const lm=l.filter(m=>mkLm(m)&&!aus.has(mkName(m)));S.mk.id=(lm.sort((a,b)=>(b.n||0)-(a.n||0))[0]||l[0]).id}
+  const chip=m=>`<button type="button" class="chip${m.id===S.mk.id?" an":""}${aus.has(mkName(m))?" leise":""}" data-mk="${esc(m.id)}" aria-pressed="${m.id===S.mk.id}">${mlogo(m.name)}${esc(mkName(m))}${m.n!=null?` <span class="km">${m.n}</span>`:""}</button>`;
+  const vorne=l.filter(m=>mkLm(m)).sort((a,b)=>(b.n||0)-(a.n||0)),weitere=l.filter(m=>!mkLm(m)).sort((a,b)=>a.name.localeCompare(b.name,"de"));
+  const akt=mkAktuell();
+  h+=`<div class="chips mk-chips" role="group" aria-label="Markt wählen">${vorne.map(chip).join("")}${weitere.some(m=>m.id===S.mk.id)?chip(akt):""}</div>`;
+  if(weitere.length)h+=`<details data-merk="mkWeitere"${S.form.mkWeitere?" open":""}><summary class="klein-text">Weitere Geschäfte (${weitere.length})</summary><div class="chips" style="margin-top:8px">${weitere.filter(m=>m.id!==S.mk.id).map(chip).join("")}</div></details>`;
+  const d=mkDaten(akt);
+  if(!d){
+    if(S.mk.fehler[mkKey(akt)])return h+fehlerHtml(mkKey(akt));
+    return h+`<p class="leise-text">Ich lade alle Angebote von ${esc(mkName(akt))}${akt.n>300?" (das dauert ein paar Sekunden)":""} …</p>`;
+  }
+  const heute=new Date().toISOString().slice(0,10);
+  const alle=d.angebote.filter(o=>o.preis>0&&!(o.gueltig_bis&&o.gueltig_bis<heute)).map(o=>({...o,stueck:o.stueck||1,g:mkGruppe(o)}));
+  const jetzt=alle.filter(o=>!kommt({von:o.gueltig_von})),spaeter=alle.filter(o=>kommt({von:o.gueltig_von}));
+  const zeit=S.mk.zeit==="spaeter"&&spaeter.length||!jetzt.length?"spaeter":"jetzt",basis=zeit==="jetzt"?jetzt:spaeter;
+  const nB=b=>basis.filter(o=>b==="alle"||o.g.b===b||o.g.b==="?").length;
+  let bereich=S.mk.bereich||"L";if(bereich!=="alle"&&!basis.some(o=>o.g.b===bereich))bereich="alle";
+  const q=S.mk.q.trim().toLowerCase();
+  const sicht=basis.filter(o=>(bereich==="alle"||o.g.b===bereich||o.g.b==="?")&&(!q||[o.marke,o.produkt,o.beschreibung,o.kat].join(" ").toLowerCase().includes(q)));
+  const B=[["L","Lebensmittel"],["D","Drogerie"],["N","Sonstiges"],["alle","Alles"]].filter(([b])=>b==="alle"||basis.some(o=>o.g.b===b));
+  h+=`<div class="werkzeug mk-werkzeug"><input class="feld" id="mkSuche" type="search" placeholder="In ${esc(akt.name)} suchen" value="${esc(S.mk.q)}" aria-label="In den Angeboten suchen" autocomplete="off">
+    ${spaeter.length&&jetzt.length?segment("mkZeit",[["jetzt",`Aktuell <span class="km">${jetzt.length}</span>`],["spaeter",`Demnächst <span class="km">${spaeter.length}</span>`]],zeit):""}
+    ${B.length>2?segment("mkBereich",B.map(([b,t])=>[b,`${t} <span class="km">${nB(b)}</span>`]),bereich):""}</div>`;
+  if(!sicht.length)return h+`<p class="leise-text">${q?`Nichts passt zu „${esc(S.mk.q)}“.`:"Hier gibt es gerade keine Angebote."}</p>`;
+  const gruppen=new Map();sicht.forEach(o=>{const k=o.g.n;if(!gruppen.has(k))gruppen.set(k,{g:o.g,os:[]});gruppen.get(k).os.push(o)});
+  const reihe=[...gruppen.values()].sort((a,b)=>a.g.i-b.g.i||a.g.n.localeCompare(b.g.n,"de"));
+  mkZeilen=[];
+  h+=`<p class="klein-text" style="margin:0">${sicht.length} Angebot${sicht.length===1?"":"e"}${zeit==="spaeter"?" ab "+tagD(sicht.map(o=>o.gueltig_von).filter(Boolean).sort()[0]||heute):""} · Name: Angebot bei Marktguru · ☆ Favorit · + Einkaufsliste</p>`;
+  h+=reihe.map(({g,os})=>{
+    const zwang=!!q||reihe.length===1,offen=zwang||!!S.form["mk:"+g.n];
+    os.sort((a,b)=>(a.kat||"").localeCompare(b.kat||"","de")||a.preis-b.preis);
+    return `<details class="karte-box mk-gruppe" ${zwang?"":` data-merk="mk:${esc(g.n)}"`}${offen?" open":""}><summary><b>${esc(g.n)}</b> <span class="km">${os.length}</span></summary>${offen?os.map(o=>{mkZeilen.push(o);return mkZeile(o,mkZeilen.length-1)}).join(""):""}</details>`;
+  }).join("");
+  return h;
+}
+
+const ANSICHT={angebote:vAngebote,markt:vMarkt,produkt:vProdukt,suchen:vSuchen,liste:vListe,einkaufen:vEinkaufen,alarm:vAlarm,mehr:vMehr};
 </script>
 <script>
 /* ======================================================================
@@ -1699,7 +1840,8 @@ const AKTION={
     render();
   },
   codeWeg:async()=>{zugang="";ls.setRaw("pv-code",null);S.anfragen=null;try{await angeboteLaden()}catch(e){}render()},
-  aktualisieren:()=>serverAktualisieren(false)
+  aktualisieren:()=>serverAktualisieren(false),
+  mkNeu:()=>{const m=mkAktuell();delete S.mk.versucht["liste:"+quellPlz()];if(m){delete S.mk.versucht[mkKey(m)];delete S.mk.daten[mkKey(m)]}render()}
 };
 $("ansicht").addEventListener("click",e=>{
   const t=e.target;let b;
@@ -1715,6 +1857,9 @@ $("ansicht").addEventListener("click",e=>{
     else if(n==="tour"){tourArt=w;ls.setRaw("pv-tour",w)}
     else if(n==="theme"){theme=w;ls.setRaw("pv-theme",w);themeSetzen()}
     else if(n==="kMode"){S.kMode=w;S.kInfo=""}
+    else if(n==="aTab"){zeige(w);return}
+    else if(n==="mkZeit")S.mk.zeit=w;
+    else if(n==="mkBereich")S.mk.bereich=w;
     render();return;
   }
   if(b=t.closest("[data-sort]")){const k=b.dataset.sort;S.d.dir=S.d.sort===k?-(S.d.dir||1):1;S.d.sort=k;render();return}
@@ -1723,6 +1868,20 @@ $("ansicht").addEventListener("click",e=>{
     const g=b.dataset.alModus,jedes=b.dataset.wert==="jedes";
     alarmSetzen([g],f=>{const al=f.alarm||{einheit:alarmEinheiten(artG(g))[0][0],ml:null};if(jedes)return {...al,wert:JEDES};const gi=gruppenInfo(g);return {...al,wert:al.wert<JEDES?al.wert:(gi.b?Math.max(0.01,Math.floor(gp(gi.b)*90)/100):1)}});
     render();return;
+  }
+  if(b=t.closest("[data-mk]")){S.mk.id=b.dataset.mk;ls.setRaw("pv-markt",S.mk.id);render();return}
+  if(b=t.closest("[data-mkf]")){
+    const o=mkZeilen[+b.dataset.mkf];if(!o)return;const label=favLabel(o);
+    if(istFav(label)){zeige("produkt",label);return}
+    if(o.liter>0&&ARTEN[o.art])sucheHinzu([mkAkt(o,false)]);else melde("Zu diesem Angebot fehlt die Menge, deshalb lässt es sich nicht als Favorit vergleichen.",true);
+    return;
+  }
+  if(b=t.closest("[data-mkl]")){
+    const o=mkZeilen[+b.dataset.mkl];if(!o)return;const label=favLabel(o),x=label.slice(0,40);
+    if(istFav(label)&&aufListe(label)){vonListe(label);listeSpeichern();render();return}
+    if(extra.includes(x)){extra=extra.filter(y=>y!==x);delete haken["+|"+x];listeSpeichern();render();return}
+    if(o.liter>0&&ARTEN[o.art]){sucheHinzu([mkAkt(o,true)]);return}
+    extra.push(x);listeSpeichern();melde("„"+x+"“ steht auf der Liste unter „Sonstiges“.");render();return;
   }
   if(b=t.closest("[data-korr]")){const o=zeilenListe[+b.dataset.korr];if(o)editOeffnen(o);return}
   if(b=t.closest("[data-schritt]")){
@@ -1766,6 +1925,7 @@ $("ansicht").addEventListener("input",e=>{
   const t=e.target;
   if(t.id==="sucheText"){S.suche.text=t.value;return}
   if(t.id==="filterText"){S.filter=t.value;render();return}
+  if(t.id==="mkSuche"){S.mk.q=t.value;render();return}
   if(t.dataset.f){S.form[t.dataset.f]=t.type==="checkbox"?t.checked:t.value;return}
 });
 $("ansicht").addEventListener("change",e=>{
@@ -1796,7 +1956,11 @@ $("ansicht").addEventListener("change",e=>{
     listeSpeichern();render();return;
   }
 });
-$("ansicht").addEventListener("toggle",e=>{const d=e.target;if(d.dataset&&d.dataset.merk)S.form[d.dataset.merk]=d.open},true);
+$("ansicht").addEventListener("toggle",e=>{
+  const d=e.target;if(!d.dataset||!d.dataset.merk)return;
+  const vorher=!!S.form[d.dataset.merk];S.form[d.dataset.merk]=d.open;
+  if(d.dataset.merk.startsWith("mk:")&&vorher!==d.open)render();   // Angebote einer Gruppe erst beim Aufklappen zeichnen
+},true);
 
 /* ---------- Darstellung ---------- */
 function themeSetzen(){const r=document.documentElement;if(theme==="dark"||theme==="light")r.setAttribute("data-theme",theme);else r.removeAttribute("data-theme")}
