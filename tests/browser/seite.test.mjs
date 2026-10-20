@@ -49,12 +49,14 @@ t("Import: Liste einfügen, suchen, auf die Liste, Favorit, ohne Angebot; Tab un
     assert.ok(/Alle Marken/.test(apfel) && /Ohne Angebot/.test(apfel) && !/Äpfel\s+\d+ Angebot/.test(apfel), apfel);
     await klick(p, '[data-ia="0"]');                                   // Milch: günstigstes aller Marken
     const bi = await p.evaluate(() => imp.items.findIndex(i => i.name === "Butter"));
-    await p.evaluate(i => document.querySelector(`[data-il="${i}|1"]`).scrollIntoView({ block: "center" }), bi);
+    await p.evaluate(i => document.querySelector(`[data-il="${i}|1"]`).scrollIntoView({ block: "center", behavior: "instant" }), bi);
+    await p.waitForTimeout(800);   // die Seite scrollt weich: erst danach die Position messen
     const y0 = await p.evaluate(() => Math.round(scrollY));
     await p.evaluate(i => document.querySelector(`[data-il="${i}|1"]`).click(), bi);   // ohne Playwright-eigenes Scrollen
     const spur = [];
     for (let i = 0; i < 8; i++) { await p.waitForTimeout(150); spur.push(await p.evaluate(() => tab + "@" + Math.round(scrollY))); }
-    assert.ok(spur.every(x => x === "import@" + y0), `Tab oder Scroll gesprungen: ${spur.join(" ")} (vorher ${y0})`);
+    // Tab bleibt, und die Seite springt nicht nach oben (die Position darf sich um die Höhe einer neuen Meldung verschieben)
+    assert.ok(spur.every(x => { const [tb, y] = x.split("@"); return tb === "import" && Math.abs(+y - y0) < 150; }), `Tab oder Scroll gesprungen: ${spur.join(" ")} (vorher ${y0})`);
     const si = await p.evaluate(() => imp.items.findIndex(i => i.name === "Salz"));
     await klick(p, `[data-io="${si}"]`);
     const z = await p.evaluate(() => ({ zettel, frei }));
@@ -78,7 +80,7 @@ t("Einkaufen: nach Markt, abhaken bleibt gespeichert; Export nur mit Namen", asy
     await p.click("#hakenseite .hk >> nth=0"); await p.waitForTimeout(300);
     assert.match(await p.textContent("#hakenseite .ek-s"), /1 von 3/);
     await u.A("/aktualisieren", "POST");   // der Server kennt die neuen Favoriten (sonst erst nach ein paar Sekunden)
-    await p.reload(); await p.waitForTimeout(1500); await p.click("#tabEinkaufen");
+    await p.reload(); await p.waitForFunction(() => offers.length > 0 && favs && favs.length > 0, null, { timeout: 15000 }); await p.waitForTimeout(500); await p.click("#tabEinkaufen");
     assert.match(await p.textContent("#hakenseite .ek-s"), /1 von 3/, "Haken bleibt nach Neuladen");
     await p.click("#tabEinkauf"); await p.waitForTimeout(400);
     const text = await p.$eval("#expText", e => e.value);
