@@ -135,22 +135,28 @@ async function teilAbfrage(env, plz, suche) {
 /* Vorübergehende Diagnose: welche Abfragen bietet Marktguru für alle Angebote eines Marktes? (nur mit Zugangscode) */
 async function erkunden(env) {
   const k = await schluessel(env), H = { "x-apikey": k.api, "x-clientkey": k.client }, B = "https://api.marktguru.de/api/v1";
-  const O = B + "/offers?as=web&limit=3&offset=0&zipCode=47178";
-  const urls = [O, O + "&retailerIds=126679", O + "&retailerId=126679", O + "&advertiserIds=126679", O + "&advertiserIds=retailers/126679", O + "&retailers=lidl", O + "&advertisers=lidl", O + "&retailerUniqueNames=lidl", O + "&publisherIds=126679", O + "&publishers=lidl",
-    B + "/offers/publishers?as=web&zipCode=47178", B + "/offers/publishers?as=web&zipCode=47178&limit=50", B + "/advertisers?as=web&zipCode=47178", B + "/offers/categories?as=web&zipCode=47178"];
+  const Q = B + "/offers/search?as=web&limit=3&offset=0&zipCode=47178";
+  const urls = [Q + "&q=milch", Q + "&q=milch&retailerIds=126679", Q + "&q=milch&retailerId=126679", Q + "&q=milch&retailers=126679", Q + "&q=milch&retailerIds[]=126679", Q + "&q=milch&filters.retailers=126679",
+    Q + "&q=&retailerIds=126679", Q + "&q=*&retailerIds=126679", Q + "&q=lidl&retailerIds=126679",
+    B + "/offers/publishers?as=web&zipCode=47178&limit=3", B + "/advertisers?as=web&zipCode=47178&limit=3"];
   const out = [];
   for (const u of urls) {
     try {
       const r = await fetch(u, { headers: { ...UA, ...H } }), t = await r.text();
       let info = "";
-      try { const j = JSON.parse(t); info = Array.isArray(j) ? "Liste " + j.length + (j[0] ? " erstes: " + JSON.stringify(j[0]).slice(0, 300) : "") : "Felder " + Object.keys(j).join(",") + (j.totalResults != null ? " · total " + j.totalResults : "") + (Array.isArray(j.results) && j.results[0] ? " · Märkte " + [...new Set(j.results.map(o => ((o.advertisers || [])[0] || {}).name))].join("/") : "") + (j.filters ? " · filters " + JSON.stringify(j.filters).slice(0, 500) : "") + (!Array.isArray(j.results) ? " · " + JSON.stringify(j).slice(0, 400) : ""); } catch (e) { info = t.slice(0, 160).replace(/\s+/g, " "); }
+      try { const j = JSON.parse(t); info = Array.isArray(j) ? "Liste " + j.length + (j[0] ? " erstes: " + JSON.stringify(j[0]).slice(0, 300) : "") : "Felder " + Object.keys(j).join(",") + (j.totalResults != null ? " · total " + j.totalResults : "") + (Array.isArray(j.results) && j.results[0] ? " · Märkte " + [...new Set(j.results.map(o => ((o.advertisers || [])[0] || {}).name))].join("/") : "") + (j.filters && j.filters.retailers ? " · Filter-Märkte " + j.filters.retailers.length : "") + (Array.isArray(j.results) && j.results[0] && !j.results[0].price ? " · erstes: " + JSON.stringify(j.results[0]).slice(0, 500) : "") + (!Array.isArray(j.results) ? " · " + JSON.stringify(j).slice(0, 400) : ""); } catch (e) { info = t.slice(0, 160).replace(/\s+/g, " "); }
       out.push(r.status + " " + u.replace(B, "") + " → " + info);
     } catch (e) { out.push("FEHLER " + u.replace(B, "") + " " + e.message); }
   }
-  try {   // Filter der Suche
-    const r = await fetch(B + "/offers/search?as=web&limit=1&offset=0&q=milch&zipCode=47178", { headers: { ...UA, ...H } }), j = await r.json();
-    out.push("Suche filters: " + JSON.stringify(j.filters).slice(0, 1500));
-  } catch (e) { }
+  try {   // Was steht in der Seite eines Marktes?
+    const html = await (await fetch("https://www.marktguru.de/r/lidl", { headers: UA })).text();
+    const ids = new Set([...html.matchAll(/api\/v1\/offers\/(\d+)\/images/g)].map(m => m[1]));
+    const marker = ["__NEXT_DATA__", "__INITIAL_STATE__", "__NUXT__", "application/ld+json", "window.__", "data-offer", "offerId"].map(m => m + ":" + html.split(m).length);
+    out.push("Seite /r/lidl: " + html.length + " Zeichen, Angebots-IDs " + ids.size + ", " + marker.join(" "));
+    const m = html.match(/<script[^>]*>\s*(?:window\.[A-Za-z_]+\s*=|var [A-Za-z_]+\s*=)([\s\S]{0,300})/);
+    if (m) out.push("Skript-Daten: " + m[1].slice(0, 300));
+    const ld = html.match(/application\/ld\+json[^>]*>([\s\S]{0,500})/); if (ld) out.push("LD: " + ld[1].slice(0, 400));
+  } catch (e) { out.push("Seite: " + e.message); }
   return out;
 }
 
