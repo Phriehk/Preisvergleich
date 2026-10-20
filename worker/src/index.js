@@ -188,6 +188,25 @@ async function marktAngebote(env, ctx, sp, ip) {
   return erg;
 }
 
+/* Vorübergehende Diagnose: stabile Reihenfolge beim Blättern? (nur mit Zugangscode) */
+async function erkunden(env) {
+  const out = [], basis = SEARCH + "?as=web&zipCode=47178&q=" + encodeURIComponent("Netto Marken-Discount") + "&retailers=126735";
+  const varianten = ["", "&sortBy=price", "&sort=price", "&orderBy=price", "&sortBy=price&sortOrder=asc", "&sort=validFrom", "&sortBy=id"];
+  for (const v of varianten) {
+    try {
+      const seiten = await Promise.all([0, 100, 200, 300].map(o => mgHole(env, basis + v + "&limit=100&offset=" + o)));
+      const ids = new Set(); let n = 0; seiten.forEach(j => (j.results || []).forEach(o => { ids.add(o.id); n++; }));
+      out.push("Variante '" + v + "': " + n + " geliefert, " + ids.size + " verschieden, erste Preise " + (seiten[0].results || []).slice(0, 5).map(o => o.price).join(","));
+    } catch (e) { out.push("Variante '" + v + "': " + e.message); }
+  }
+  for (const lim of [400, 1000]) try {
+    const t0 = Date.now(), r = await fetch(SEARCH + "?as=web&zipCode=47178&q=Lidl&retailers=126679&offset=0&limit=" + lim, { headers: { ...UA, "x-apikey": (await schluessel(env)).api, "x-clientkey": (await schluessel(env)).client } });
+    const t = await r.text(), j = JSON.parse(t), ids = new Set((j.results || []).map(o => o.id));
+    out.push("Lidl limit " + lim + ": HTTP " + r.status + ", " + (j.results || []).length + " geliefert, " + ids.size + " verschieden, " + t.length + " Zeichen, " + (Date.now() - t0) + " ms");
+  } catch (e) { out.push("Lidl limit " + lim + ": " + e.message); }
+  return out;
+}
+
 // Eigener Einstiegspunkt, damit jede Teilabfrage als eigener Aufruf mit eigenen Grenzen läuft.
 // Ein Aufruf holt mehrere Artikel in einer Postleitzahl und sortiert unpassende Treffer gleich aus (spart Aufrufe und Rechenzeit im Hauptaufruf).
 export class Teil extends WorkerEntrypoint {
@@ -739,6 +758,7 @@ export default {
         return env.ASSETS.fetch(req);  // die Seite selbst (index.html, Symbole, ...)
       }
       if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401);
+      if (p === "/erkunden" && req.method === "POST") return antwort(await erkunden(env));
       if (p === "/favoriten.json" && (req.method === "PUT" || req.method === "POST")) {
         const liste = await req.json();
         if (!Array.isArray(liste) || liste.some(f => !f || typeof f.name !== "string")) return fehler("Ungültige Favoritenliste", 400);
