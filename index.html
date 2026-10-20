@@ -212,6 +212,8 @@ tr.bald td{background:color-mix(in srgb,var(--gelb) 22%,transparent)}
 .zeile{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--linie)}
 .zeile:last-child{border-bottom:0}
 .zeile .name b{font-weight:600}
+.plink{color:inherit;text-decoration:underline dotted;text-underline-offset:3px;text-decoration-color:var(--grau)}
+.plink:hover,.plink:focus-visible{text-decoration-style:solid;text-decoration-color:currentColor}
 .zeile .name small{display:block;color:var(--grau);font-size:.8rem}
 .zeile .x{border:0;background:transparent;color:var(--grau);font-size:1.1rem;width:34px;height:34px;border-radius:8px;cursor:pointer}
 .zeile .x:hover{background:var(--weich);color:var(--rot)}
@@ -731,7 +733,7 @@ async function kontoLaden(start,erstmals){
    Zustand der Oberfläche und Rechenlogik (Einkaufsliste, Marktvergleich)
    ====================================================================== */
 const S={
-  v:"angebote",p:null,       // Ansicht und Produkt (Produktseite)
+  v:"angebote",p:null,von:"angebote",   // Ansicht, Produkt (Produktseite) und von wo die Produktseite geöffnet wurde
   lzeit:"jetzt",             // Vergleich der Liste: aktuell oder demnächst
   plan:0,                    // gewählter Plan (Beste Wahl, alles bei einem Markt)
   expFmt:"zeile",            // Export: Markt hinter jedem Artikel oder Überschrift je Markt
@@ -982,7 +984,7 @@ function render(){
   $("untertitel").textContent=untertitel();
   $("zurueck").hidden=S.v!=="produkt";
   const akt=$("aktBtn");akt.hidden=!online||S.v==="mehr";akt.classList.toggle("dreht",laeuft);akt.disabled=laeuft;
-  document.querySelectorAll("#leiste button").forEach(b=>b.classList.toggle("an",b.dataset.v===S.v||(S.v==="produkt"&&b.dataset.v==="angebote")));
+  document.querySelectorAll("#leiste button").forEach(b=>b.classList.toggle("an",b.dataset.v===S.v||(S.v==="produkt"&&b.dataset.v===(S.von||"angebote"))));
   document.querySelector('#leiste [data-v="alarm"]').hidden=!betreiber();
   const n=zettelNamen().length+extra.length,z=$("listeZahl");z.hidden=!n;z.textContent=n;
   document.title=(S.v==="produkt"?S.p:TITEL[S.v])+" · Preisvergleich";
@@ -1233,10 +1235,15 @@ function postenHtml(k,V){
   const spaeter=S.lzeit==="jetzt"?offers.filter(o=>zMitglieder(k).some(m=>{const x=zk(m);return grp(o)===x.g&&(!x.ml||o.ml===x.ml)})&&!o.ausb&&!aus.has(o.markt)&&kommt(o)).sort((x,y)=>gp(x)-gp(y))[0]:null;
   return `<div class="posten-info leise">${spaeter?`Ab ${tagD(spaeter.von)} im Angebot bei ${esc(mbase(spaeter.markt))} (${eur(gp(spaeter))}/${unitK(spaeter.art)})`:"Gerade nirgends im Angebot"}${rwPreis(k)==null?" · trag einen Normalpreis ein, dann rechne ich ihn mit":""}</div>`;
 }
+// Name eines Listenartikels: führt zur Produktseite mit allen Angeboten (von dort weiter zu Marktguru)
+const pLink=(x,t)=>istFav(zk(x).g)?`<a href="${esc(hashVon("produkt",zk(x).g))}" class="plink" data-zp="${esc(x)}" title="Alle Angebote für ${esc(zLabel0(x))} ansehen">${esc(t)}</a>`:esc(t);
 function zeileHtml(k,V){
   const mit=zMitglieder(k),a=ARTEN[artG(zk(k).g)],rw=rwPreis(k),ref=zRef(k);   // Normalpreis bei Packungsware je Stück, gespeichert je kg bzw. Liter
   const rwId="r"+[...k].reduce((s,c)=>(s*31+c.charCodeAt(0))>>>0,7).toString(36);
-  return `<div class="zeile"><div class="name"><b>${esc(zLabel(k))}</b>${mit.length>1?`<small>günstigstes von: ${mit.map(x=>esc(zLabel0(x))).join(", ")}</small>`:""}</div>
+  // bei zusammengelegten Artikeln führt der Name zu dem, dessen Angebot gewählt ist (sonst zum günstigsten)
+  let ziel=k;
+  if(mit.length>1){const w=V.beste&&V.beste.zu[k]?V.beste.zu[k].w.teile[0].o:fvAngebote(k).slice().sort((x,y)=>gp(x)-gp(y))[0];ziel=(w&&mit.find(m=>zk(m).g===grp(w)&&(!zk(m).ml||zk(m).ml===w.ml)))||mit.find(m=>zk(m).g===(w&&grp(w)))||mit[0]}
+  return `<div class="zeile"><div class="name"><b>${pLink(ziel,zLabel(k))}</b>${mit.length>1?`<small>günstigstes von: ${mit.map(x=>pLink(x,zLabel0(x))).join(", ")}</small>`:""}</div>
     <button type="button" class="x" data-zx="${esc(k)}" aria-label="${esc(zLabel(k))} von der Liste nehmen">✕</button>
     ${postenHtml(k,V)}
     <div class="mengen">${mengeHtml(k)}<label class="rw" title="Was der Artikel normalerweise kostet. Gilt, wenn es kein günstigeres Angebot gibt.">Normalpreis <input id="${rwId}" inputmode="decimal" placeholder="–" value="${rw!=null?(ref?(Math.round(rw*ref*100)/100).toFixed(2).replace(".",","):zt(rw)):""}" data-r="${esc(k)}"${ref?` data-ref="${ref}"`:""} aria-label="Normalpreis in Euro je ${ref?"Stück":a.u}"> € je ${ref?"Stück":a.u}</label></div></div>`;
@@ -1434,16 +1441,24 @@ function ausHash(){
   if(h.startsWith("produkt/"))return {v:"produkt",p:decodeURIComponent(h.slice(8))};
   return {v:ANSICHT[h]&&h!=="produkt"?h:"angebote",p:null};
 }
+const scrollPos={};   // Scrollposition je Bereich, damit „Zurück“ an dieselbe Stelle führt
+try{history.scrollRestoration="manual"}catch(e){}
 function zeige(v,p,ersetzen){
   if(v==="produkt"&&p!==S.p){S.d={zeit:"jetzt",sort:"liter",dir:1};["pGroesse","aWert","aEinheit","aMl","aAlle"].forEach(k=>delete S.form[k])}
+  if(S.v!=="produkt")scrollPos[S.v]=window.scrollY;
+  if(v==="produkt"&&S.v!=="produkt")S.von=S.v;
   S.v=v;S.p=v==="produkt"?p:null;
-  try{history[ersetzen?"replaceState":"pushState"]({v,p:S.p},"",hashVon(v,S.p))}catch(e){}
+  try{history[ersetzen?"replaceState":"pushState"]({v,p:S.p,von:S.von},"",hashVon(v,S.p))}catch(e){}
   render();window.scrollTo(0,0);
   if(v==="mehr"&&betreiber())anfragenLaden();
 }
-window.addEventListener("popstate",e=>{const s=e.state||ausHash();S.v=s.v;S.p=s.p;if(S.v==="produkt"&&!S.p)S.v="angebote";render()});
+window.addEventListener("popstate",e=>{
+  if(S.v!=="produkt")scrollPos[S.v]=window.scrollY;
+  const s=e.state||ausHash();S.v=s.v;S.p=s.p;if(s.von)S.von=s.von;if(S.v==="produkt"&&!S.p)S.v="angebote";
+  render();window.scrollTo(0,S.v==="produkt"?0:scrollPos[S.v]||0);
+});
 $("leiste").onclick=e=>{const b=e.target.closest("button[data-v]");if(b)zeige(b.dataset.v)};
-$("zurueck").onclick=()=>{if(history.state&&history.state.v==="produkt"&&history.length>1)history.back();else zeige("angebote")};
+$("zurueck").onclick=()=>{if(history.state&&history.state.v==="produkt"&&history.length>1)history.back();else zeige(S.von||"angebote")};
 $("aktBtn").onclick=()=>serverAktualisieren(false);
 $("toastZu").onclick=()=>{$("toast").hidden=true};
 
@@ -1688,6 +1703,7 @@ const AKTION={
 };
 $("ansicht").addEventListener("click",e=>{
   const t=e.target;let b;
+  if(b=t.closest("a[data-zp]")){e.preventDefault();const x=zk(b.dataset.zp);zeige("produkt",x.g);if(x.ml){S.d.ml=String(x.ml);render()}return}
   if(b=t.closest("[data-go]")){zeige(b.dataset.go);return}
   if(b=t.closest("[data-liste]")){e.stopPropagation();listeUmschalten(b.dataset.liste);return}
   if(b=t.closest("[data-seg]")){

@@ -179,6 +179,28 @@ t("Liste: Menge in Stück, Normalpreis je Stück, Vergleich mit bester Wahl", as
   });
 });
 
+t("Liste: Name führt zur Produktseite (mit Marktguru-Link), Zurück an dieselbe Stelle", async () => {
+  await mitSeite({ favs: [{ name: "Butter", aus: "" }, { name: "Eier", aus: "" }, { name: "Milch", aus: "" }] }, async ({ p, fehler }) => {
+    for (const n of ["Butter", "Eier", "Milch"]) await p.click(`.produkt[data-p="${n}"] .p-plus`);
+    await bereich(p, "liste");
+    await p.setViewportSize({ width: 390, height: 420 });
+    const link = p.locator(".zeile a.plink", { hasText: "Milch" }).first();
+    await link.scrollIntoViewIfNeeded(); await p.waitForTimeout(100);
+    const y = await p.evaluate(() => scrollY);
+    assert.ok(y > 50, "Liste ist gescrollt: " + y);
+    await link.click(); await p.waitForTimeout(300);
+    assert.equal(await p.evaluate(() => S.v + "|" + S.p), "produkt|Milch");
+    assert.equal(await p.textContent("#titel"), "Milch");
+    assert.ok(await p.locator('tbody a[href^="https://"]').count() > 0, "Link zu Marktguru auf der Produktseite");
+    assert.equal(await p.locator('#leiste [data-v="liste"].an').count(), 1, "Liste bleibt in der Leiste markiert");
+    await p.click("#zurueck"); await p.waitForTimeout(300);
+    assert.equal(await p.evaluate(() => S.v), "liste");
+    const y2 = await p.evaluate(() => scrollY);
+    assert.ok(Math.abs(y2 - y) < 30, `gleiche Stelle: ${y} → ${y2}`);
+    assert.deepEqual(fehler, []);
+  });
+});
+
 t("Alter Preis (oldPrice) wird als „statt …“ angezeigt", async () => {
   await mitSeite({ favs: [{ name: "Milch", aus: "" }] }, async ({ p }) => {
     assert.match(await p.textContent('.produkt[data-p="Milch"]'), /statt 1,09/);
