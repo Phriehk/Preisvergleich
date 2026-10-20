@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 44.12 KiB / gzip: 13.33 KiB
-Worker Startup Time: 3 ms
+Total Upload: 43.51 KiB / gzip: 13.24 KiB
+Worker Startup Time: 1 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (10.40 sec)
-Deployed preise triggers (3.17 sec)
+Uploaded preise (5.21 sec)
+Deployed preise triggers (1.07 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: c7ad665a-4fa5-402c-8246-0eee6b5ae275
+Current Version ID: 62a0784f-556e-48d8-99d0-e93a9d848549
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,12 +18,12 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-20T16:34","anzahl":37,"fehler":0}}
-Seite: <title>Getränke-Preisvergleich</title>
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-20T16:37","anzahl":37,"fehler":0}}
+Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
 Suche Fanta: 1 s, {"anzahl":1}
-Aktualisieren: 3 s, {"zeit":"2026-10-20T16:37","anzahl":37,"fehler":0,"alarm":[]}
+Aktualisieren: 5 s, {"zeit":"2026-10-20T21:49","anzahl":37,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":37,"gruppen":["Beckers Frikandellen","Capri Sun Säfte","Capri sun","K-Classic H-Vollmilch","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","coca cola"]}
 Verlauf: 225 Zeilen
 Korrekturen lesen: {}
@@ -31,9 +31,9 @@ Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
 Korrektur gespeichert und gelesen: true
 Test-Korrektur gelöscht: true
 Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
-Region 40210 ohne Code: 0 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
+Region 40210 ohne Code: 2 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
-Lebensmittel-Probe: 0 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl":3,"Nudeln":2}
+Lebensmittel-Probe: 2 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl":3,"Nudeln":2}
   Probe: Butter | Netto Marken-Discount | Butter | art=kg liter=0.45 stueck=1 ml=450 preis=0.99 | 450 g versch. Sorten
   Probe: Butter | Netto Marken-Discount | Butter | art=kg liter=0.25 stueck=1 ml=250 preis=0.99 | oder Streichzart gekühlt, versch. Sorten 250 g
   Probe: Butter | EDEKA | Beste Butter | art=kg liter=0.25 stueck=1 ml=250 preis=1.19 | 250 g Packung
@@ -74,18 +74,16 @@ Lebensmittel-Probe: 0 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | ALDI SÜD | Herzogin-Kartoffeln | art=kg liter=0.6 stueck=1 ml=600 preis=1.69 | 600-g-Packung
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | Je 125 g
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | 125 g
-Rohfelder Butter (HTTP 200): {"anzahl":38,"felder":{"brand":38,"advertisers":38,"categories":38,"id":38,"description":37,"volume":38,"quantity":38,"isMultiProduct":38,"price":38,"referencePrice":38,"requiresLoyalityMembership":38,"leafletFlightId":38,"validityDates":38,"externalTrackingUrls":15,"externalTrackings":15,"externalUrl":10,"type":38,"industries":38,"product":38,"unit":38,"images":38,"imageType":38,"oldPrice":2}}
-Rohfelder Cola (HTTP 200): {"anzahl":14,"felder":{"brand":14,"advertisers":14,"categories":14,"id":14,"description":14,"volume":14,"quantity":14,"isMultiProduct":14,"price":14,"oldPrice":1,"referencePrice":14,"requiresLoyalityMembership":14,"leafletFlightId":14,"validityDates":14,"externalTrackingUrls":6,"externalTrackings":6,"externalUrl":4,"type":14,"industries":14,"product":14,"unit":14,"images":14,"imageType":14}}
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792507123","token":true}
+Konto anlegen: {"name":"test1792525807","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792507123","daten":{}}
+Konto Daten: {"name":"test1792525807","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792507123"]
+Konto Anfragen mit Code: ["test1792525807"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792507123","token":true}
-Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 200
-Code ein zweites Mal (erwartet Fehler): HTTP 200
-Konto löschen: HTTP 401
+Neues Passwort mit Code: {"name":"test1792525807","token":true}
+Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
+Code ein zweites Mal (erwartet Fehler): HTTP 401
+Konto löschen: HTTP 200
