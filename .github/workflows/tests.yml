@@ -28,4 +28,12 @@ jobs:
           npm install --no-save --no-package-lock playwright
           npx playwright install --with-deps chromium
       - name: Browser-Tests (echte Seite gegen den Worker-Code)
-        run: node --test tests/browser/seite.test.mjs
+        run: |
+          set -o pipefail
+          node --test tests/browser/seite.test.mjs 2>&1 | tee browser.log
+      - name: Testausgabe sichern
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-log
+          path: browser.log
