@@ -132,6 +132,19 @@ async function teilAbfrage(env, plz, suche) {
   return aus;
 }
 
+/* Diagnose: welche Felder liefert Marktguru wirklich (z. B. alter Preis)? Nur mit Zugangscode. */
+async function rohfelder(env, plz, q) {
+  const k = await schluessel(env);
+  const url = SEARCH + "?" + new URLSearchParams({ as: "web", limit: "100", offset: "0", q, zipCode: plz });
+  const r = await http(url, { "x-apikey": k.api, "x-clientkey": k.client });
+  const seite = (await r.json()).results || [];
+  const haeufig = {};
+  for (const o of seite) for (const [f, v] of Object.entries(o)) if (v !== null && v !== undefined && v !== "" && !(Array.isArray(v) && !v.length)) haeufig[f] = (haeufig[f] || 0) + 1;
+  const kurz = v => { const t = JSON.stringify(v); return t && t.length > 160 ? t.slice(0, 160) + "…" : t; };
+  const mit = seite.filter(o => ["oldPrice", "referencePrice", "regularPrice", "priceOld", "originalPrice"].some(f => o[f] != null)).slice(0, 3);
+  return { anzahl: seite.length, felder: haeufig, beispiele: [...mit, ...seite.slice(0, 2)].slice(0, 5).map(o => Object.fromEntries(Object.entries(o).map(([f, v]) => [f, kurz(v)]))) };
+}
+
 // Eigener Einstiegspunkt, damit jede Teilabfrage als eigener Aufruf mit eigenen Grenzen läuft.
 // Ein Aufruf holt mehrere Artikel in einer Postleitzahl und sortiert unpassende Treffer gleich aus (spart Aufrufe und Rechenzeit im Hauptaufruf).
 export class Teil extends WorkerEntrypoint {
@@ -667,6 +680,11 @@ export default {
         if (!Array.isArray(liste) || liste.some(f => !f || typeof f.name !== "string")) return fehler("Ungültige Favoritenliste", 400);
         await env.PV.put("favoriten", JSON.stringify(liste, null, 2));
         return antwort(liste);
+      }
+      if (p === "/rohfelder" && req.method === "GET") {
+        const q = (url.searchParams.get("q") || "").slice(0, 40), plz = (url.searchParams.get("plz") || PLZ).replace(/\D/g, "").slice(0, 5);
+        if (!q) return fehler("q fehlt", 400);
+        try { return antwort(await rohfelder(env, plz, q)); } catch (e) { return fehler("Marktguru: " + e.message, 502); }
       }
       if (p === "/korrekturen" && req.method === "POST") {
         // Korrekturen auffälliger Preise (Preis, Stückzahl, Größe, "passt so", "ausgeblendet"): geteilt zwischen allen Geräten mit Zugangscode
