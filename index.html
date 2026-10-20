@@ -128,6 +128,14 @@ button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);fon
 .rwz{display:block}
 .fv-sg{border:1px solid var(--line);border-radius:12px;padding:6px 10px 2px;margin:8px 0;background:var(--soft)}
 .fv-sk{display:flex;flex-direction:column;gap:2px;margin:4px 0}.fv-sk small{color:var(--mute)}
+.imp{border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin:4px 0 10px;background:var(--soft)}
+.imp>summary{cursor:pointer;padding:2px 0}.imp summary small{color:var(--mute)}
+.imp textarea{width:100%;box-sizing:border-box;margin-top:8px;padding:8px 10px;font:inherit;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);resize:vertical}
+.imp-z{border-top:1px dashed var(--line);padding:8px 0}
+.imp-h{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.imp-h small,.imp-s,.imp-f small,.imp-p small{color:var(--mute)}
+.imp-f{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.imp-f select{padding:5px 6px;font:inherit;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.imp-p{display:flex;gap:6px;align-items:center;padding:4px 0 0 8px}.imp-p>span{flex:1;min-width:0}.imp-p small{display:block}
 .fv-rang{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line)}
 .fv-rang:last-child{border-bottom:0}
 .fv-rang .rg{font:700 1.3rem "Barlow Condensed",sans-serif;width:1.4rem;color:var(--mute)}
@@ -722,6 +730,7 @@ function zeichneFavoriten(){
     return `<div class="fv-sg"><div class="fv-sk"><b>${esc(su[0].toUpperCase()+su.slice(1))}</b><small>Im Vergleich zählt nur das günstigste Produkt dieser Gruppe, die Menge gilt für die ganze Gruppe.</small></div>${l.map(block).join("")}</div>`;
   }).join("");
   let html=`<section class="ek"><div class="ek-h"><b>Favoriten</b><span class="ek-s" style="font-size:1rem">${namen.length} auf der Liste</span></div>`
+    +impHtml()
     +`<div class="fv-add"><input id="neuArt" type="text" maxlength="40" autocomplete="off" placeholder="Produkt suchen, z. B. Butter oder Eier" value="${esc(neuText)}" aria-label="Produkt suchen"><button type="button" class="primary" id="neuBtn"${neuLaeuft?" disabled":""}>${neuLaeuft?"Suche läuft …":"Suchen"}</button></div>`
     +`<p class="lbl" style="margin:4px 0 8px">Suche ein Produkt und wähle aus den Ergebnissen eines als Favorit. Die Favoriten erscheinen darunter als Kacheln.</p>`
     +ergHtml()
@@ -815,7 +824,7 @@ function fvKlick(e){
   const x=e.target.closest("[data-zx]");if(x){zMitglieder(x.dataset.zx).forEach(m=>delete zettel[m]);zettelSpeichern();render();return true}
   return false;
 }
-favseite.onclick=e=>{if(e.target.closest("#zurListe")){tab="einkauf";render();window.scrollTo(0,0);return}if(e.target.closest("#neuBtn")){artikelSuchen();return}if(e.target.closest("#ohneBtn")){artikelOhne();return}const ef=e.target.closest("[data-ef]");if(ef){favHinzu(+ef.dataset.ef);return}fvKlick(e)};
+favseite.onclick=e=>{if(e.target.closest("#zurListe")){tab="einkauf";render();window.scrollTo(0,0);return}if(e.target.closest("#neuBtn")){artikelSuchen();return}if(e.target.closest("#ohneBtn")){artikelOhne();return}const ef=e.target.closest("[data-ef]");if(ef){favHinzu(+ef.dataset.ef);return}if(impKlick(e))return;fvKlick(e)};
 function fvAender(e){
   const c=e.target.closest("input[type=checkbox][data-g]");
   if(c){if(c.checked)zettel[c.dataset.g]=zettel[c.dataset.g]||ARTEN[artG(zk(c.dataset.g).g)].std;else delete zettel[c.dataset.g];zettelSpeichern();render();return}
@@ -824,9 +833,10 @@ function fvAender(e){
   const r=e.target.closest("input[data-r]");
   if(r){const v=parseFloat(String(r.value).replace(",","."));zMitglieder(r.dataset.r).forEach(m=>{delete richt[zk(m).g]});if(v>0&&v<=1000)richt[zk(r.dataset.r).g]=Math.round(v*100)/100;zettelSpeichern();render();return}
   if(e.target.id==="neuEinheit"){neuEinheit=e.target.value}
+  if(e.target.dataset&&e.target.dataset.ie!==undefined){const it=imp.items[+e.target.dataset.ie];if(it)it.einheit=e.target.value}
 }
 favseite.onchange=fvAender;einkauf.onchange=fvAender;
-favseite.oninput=e=>{if(e.target.id==="neuArt")neuText=e.target.value};
+favseite.oninput=e=>{if(e.target.id==="neuArt")neuText=e.target.value;if(e.target.id==="impText")imp.text=e.target.value};
 favseite.onkeydown=e=>{if(e.key==="Enter"&&e.target.id==="neuArt"){e.preventDefault();artikelSuchen()}};
 einkauf.onclick=e=>{fvKlick(e)};
 /* ---- Darstellung (automatisch / hell / dunkel) und Filter-Knopf am Handy ---- */
@@ -1152,12 +1162,14 @@ var favs=[],suchAusMap={},auswahl={},tabGewaehlt=false;
 var wUrl="";
 var cf=/\.workers\.dev$/.test(location.hostname);   // Seite läuft beim Cloudflare-Server selbst
 var zugang="";
+var impStart="";try{const mi=location.hash.match(/import=([^&]*)/);if(mi)impStart=decodeURIComponent(mi[1].replace(/\+/g," "))}catch(e){}
 try{
   const m=location.hash.match(/code=([A-Za-z0-9]+)/);
   if(m){localStorage.setItem("pv-code",m[1]);history.replaceState(null,"",location.pathname+location.search)}
   zugang=localStorage.getItem("pv-code")||"";
 }catch(e){}
 if(cf)wUrl=location.origin;
+if(impStart){try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}}
 if(/\.github\.io$/.test(location.hostname))location.replace("https://preise.phriehk.workers.dev/"+(zugang?"#code="+zugang:""));   // alte Adresse leitet auf die neue Seite um
 const wBereit=Promise.resolve();
 async function wf(pfad,opt,nochmal){
@@ -1206,6 +1218,125 @@ async function serverSuche(q,aus,streng){
   if(!wUrl)throw new Error("Suche und Aktualisieren gehen nur auf der Seite bei Cloudflare.");
   if(regionPlz())return await (await wf("/region?plz="+regionPlz()+"&q="+encodeURIComponent(q)+(streng?"&streng=1":""))).text();
   return await (await wf("/suche?q="+encodeURIComponent(q)+"&aus="+encodeURIComponent(aus)+(streng?"&streng=1":""),{method:"POST"})).text();
+}
+/* ---- Einkaufsliste importieren (z. B. aus Erinnerungen): Zeilen -> Angebote suchen -> Favorit wählen / neu als Favorit / direkt auf die Liste ---- */
+var imp={text:"",items:[],laeuft:false,busy:false},impTimer=null;
+function impParsen(t){
+  let zeilen=String(t||"").split(/\r?\n/).map(z=>z.trim()).filter(Boolean);
+  if(zeilen.length===1&&zeilen[0].includes(","))zeilen=zeilen[0].split(",").map(z=>z.trim()).filter(Boolean);
+  const out=[],seen=new Set();
+  zeilen.forEach(z=>{
+    z=z.replace(/^(?:[-•*·–]|[☐☑✓✔□○◯]|\[[ xX]?\])+\s*/,"").replace(/^\d+[.)]\s+/,"").trim();
+    let menge=null;
+    const m=z.match(/^(\d+(?:[.,]\d+)?)\s*(kg|gramm|g|liter|ml|l|x|stk\.?|stück)?\s+(.+)$/i);
+    if(m){menge={wert:parseFloat(m[1].replace(",",".")),einheit:(m[2]||"").toLowerCase().replace(".","").replace("gramm","g").replace("liter","l")};z=m[3]}
+    z=z.replace(/[,|]/g," ").replace(/\s+/g," ").trim().slice(0,40);
+    if(z.length<2||seen.has(z.toLowerCase()))return;
+    seen.add(z.toLowerCase());out.push({name:z,menge,roh:[],karten:[],art:"l",status:"wartet",einheit:"kg"});
+  });
+  return out.slice(0,40);
+}
+/* gewünschte Menge in die Einheit des Artikels umrechnen (kg, Liter oder Stück); passt die Einheit nicht, gilt die Standardmenge */
+function impMenge(m,art){
+  if(!m||!(m.wert>0))return null;
+  const e=m.einheit;let v=null;
+  if(e==="kg")v=art==="kg"?m.wert:null;
+  else if(e==="g")v=art==="kg"?m.wert/1000:null;
+  else if(e==="l")v=art==="l"?m.wert:null;
+  else if(e==="ml")v=art==="l"?m.wert/1000:null;
+  else v=art==="kg"?null:m.wert;
+  return v&&v>0&&v<=500?Math.round(v*100)/100:null;
+}
+const impMengeText=m=>m?String(m.wert).replace(".",",")+(m.einheit&&m.einheit!=="x"?" "+m.einheit:"×"):"";
+async function impStarten(){
+  const items=impParsen(imp.text);
+  if(!items.length){hinweis="Keine Artikel erkannt. Bitte eine Zeile pro Artikel einfügen.";render();return}
+  imp.items=items;imp.laeuft=true;render();
+  for(let i=0;i<items.length;i+=6){
+    const teil=items.slice(i,i+6);teil.forEach(x=>{x.status="laeuft"});render();
+    try{
+      const l=JSON.parse(await serverSuche(teil.map(x=>x.name).join("|"),"",true));
+      teil.forEach(x=>{
+        const roh=l.filter(o=>String(o.gruppe).toLowerCase()===x.name.toLowerCase()&&o.preis>0&&o.liter>0);
+        const z={};roh.forEach(o=>{z[o.art||"l"]=(z[o.art||"l"]||0)+1});
+        x.art=(Object.entries(z).sort((a,b)=>b[1]-a[1])[0]||["l"])[0];
+        x.roh=roh.filter(o=>(o.art||"l")===x.art);x.karten=ergKarten(x.roh);x.status="fertig";
+      });
+    }catch(e){teil.forEach(x=>{x.status="fehler";x.fehler=netzFehler(e)})}
+    render();
+  }
+  imp.laeuft=false;render();
+}
+function impFavs(name){const q=name.toLowerCase();return (favs||[]).filter(f=>{const fn=f.name.toLowerCase();return fn===q||favSuche(f.name)===q||(q.length>=3&&fn.includes(q))})}
+const impAuf=g=>Object.keys(zettel).some(k=>zk(k).g===g&&zettel[k]>0);
+function impListe(name,menge){   // Artikel auf den Zettel (Menge in der Einheit des Artikels; in einer Gruppe gilt deren Menge)
+  const art=artG(name),v=impMenge(menge,art),gl=Object.keys(zettel).filter(q=>zettel[q]>0&&gidVon(q)===gidVon(name));
+  zettel[name]=v||(gl.length?zettel[gl[0]]:ARTEN[art].std);
+}
+/* akt: [{name, entries (Angebote), nur, suche, menge, liste}] : Favoriten in einem Schritt speichern, Angebote sofort anzeigen, ggf. auf den Zettel */
+async function impHinzu(akt){
+  if(imp.busy||!akt.length)return;
+  imp.busy=true;render();
+  try{
+    const liste=(favs||[]).slice();
+    akt.forEach(a=>{if(!liste.some(f=>f.name.toLowerCase()===a.name.toLowerCase()))liste.push({name:a.name,aus:"",nur:a.nur||[],...(a.suche?{suche:a.suche}:{})})});
+    if(liste.length!==(favs||[]).length){await favSpeichern(liste);favs=liste}
+    const eintr=akt.flatMap(a=>a.entries.map(o=>({...o,gruppe:a.name})));
+    if(eintr.length){merge=true;dateiLaden(file,JSON.stringify(eintr),"suche.json");await new Promise(r=>setTimeout(r,800));merge=false}
+    akt.forEach(a=>{if(a.nur&&a.nur.length)auswahl[a.name]=a.nur[0];if(a.liste)impListe(a.name,a.menge)});
+    zettelSpeichern();
+    clearTimeout(impTimer);if(cf)impTimer=setTimeout(()=>{aktualisieren()},4000);   // Angebote der neuen Favoriten auch auf dem Server ablegen
+    hinweis=akt.length===1?'„'+akt[0].name+'“ gespeichert.':akt.length+" Artikel gespeichert.";
+  }catch(e){merge=false;hinweis=netzFehler(e)}
+  imp.busy=false;tab="favoriten";tabGewaehlt=true;render();
+}
+function impKarteAkt(i,j,liste){const it=imp.items[i],c=it&&it.karten[j];return c?{name:c.label,entries:c.os,nur:[c.key],suche:it.name,menge:it.menge,liste}:null}
+function impAlleMarken(it){return {name:it.name,entries:it.roh,nur:[],menge:it.menge,liste:true}}
+function impKlick(e){
+  const g=id=>e.target.closest(id);
+  if(g("#impBtn")){impStarten();return true}
+  if(g("#impZu")){imp.items=[];imp.text="";render();return true}
+  if(g("#impAlle")){impHinzu(imp.items.filter(it=>it.roh.length&&!impAuf(it.name)).map(impAlleMarken));return true}
+  let b;
+  if(b=g("[data-ia]")){const it=imp.items[+b.dataset.ia];if(it)impHinzu([impAlleMarken(it)]);return true}
+  if(b=g("[data-ik]")){const [i,j]=b.dataset.ik.split("|").map(Number),a=impKarteAkt(i,j,false);if(a)impHinzu([a]);return true}
+  if(b=g("[data-il]")){const [i,j]=b.dataset.il.split("|").map(Number),a=impKarteAkt(i,j,true);if(a)impHinzu([a]);return true}
+  if(b=g("[data-if]")){
+    const [name,i]=[b.dataset.if.slice(0,b.dataset.if.lastIndexOf("|")),+b.dataset.if.slice(b.dataset.if.lastIndexOf("|")+1)];
+    if(impAuf(name))Object.keys(zettel).filter(k=>zk(k).g===name).forEach(k=>delete zettel[k]);else impListe(name,(imp.items[i]||{}).menge);
+    zettelSpeichern();render();return true;
+  }
+  if(b=g("[data-io]")){
+    const it=imp.items[+b.dataset.io];if(!it)return true;
+    frei[it.name]=it.einheit||"kg";impHinzu([{name:it.name,entries:[],nur:[],menge:it.menge,liste:true}]);return true;
+  }
+  return false;
+}
+function impHtml(){
+  const n=imp.items.length,offen=n>0||imp.text.length>0;
+  let h=`<details class="imp"${offen?" open":""}><summary><b>Einkaufsliste importieren</b> <small>z. B. aus Erinnerungen</small></summary>`
+    +`<textarea id="impText" rows="5" placeholder="Eine Zeile pro Artikel, zum Beispiel&#10;Milch&#10;2 kg Äpfel&#10;Butter" aria-label="Einkaufsliste einfügen">${esc(imp.text)}</textarea>`
+    +`<div class="fv-add"><button type="button" class="primary" id="impBtn"${imp.laeuft?" disabled":""}>${imp.laeuft?"Suche läuft …":"Angebote suchen"}</button>${n&&!imp.laeuft?`<button type="button" class="lb" id="impZu">Import schließen</button>`:""}</div>`
+    +`<p class="lbl" style="margin:4px 0 8px">iPhone: In Erinnerungen die Einträge markieren, kopieren und hier einfügen. Mit einem Kurzbefehl geht es auch per Link: Adresse dieser Seite plus <b>#import=</b> und die Zeilen (URL-codiert). Mengen wie „2 kg Äpfel“ oder „6 Eier“ werden übernommen.</p>`;
+  if(n){
+    const fertig=imp.items.filter(it=>it.status==="fertig"),neu=fertig.filter(it=>it.roh.length&&!impAuf(it.name));
+    h+=`<div class="ek-h" style="border:0;margin:6px 0 0"><b>${n} Artikel</b>${neu.length>1?`<button type="button" class="lb an" id="impAlle"${imp.busy?" disabled":""}>Alle ${neu.length} (günstigstes aller Marken) auf die Liste</button>`:""}</div>`;
+    h+=imp.items.map((it,i)=>{
+      const fm=impFavs(it.name),stat=it.status==="laeuft"?"suche …":it.status==="wartet"?"wartet":it.status==="fehler"?"Fehler":"";
+      let z=`<div class="imp-z"><div class="imp-h"><b>${esc(it.name)}</b>${it.menge?`<small>${esc(impMengeText(it.menge))}</small>`:""}<small class="imp-s">${esc(stat)}</small></div>`;
+      if(fm.length)z+=`<div class="imp-f"><small>Deine Favoriten:</small>${fm.map(f=>{const an=impAuf(f.name);return `<button type="button" class="lb${an?" an":""}" data-if="${esc(f.name)}|${i}">${an?"✓":"＋"} ${esc(f.name)}</button>`}).join("")}</div>`;
+      if(it.status==="fehler")z+=`<small class="imp-s">${esc(it.fehler||"")}</small>`;
+      if(it.status==="fertig"){
+        if(it.roh.length){
+          const m=it.roh.slice().sort((a,b)=>a.preis_pro_liter-b.preis_pro_liter)[0],an=(favs||[]).some(f=>f.name.toLowerCase()===it.name.toLowerCase())&&impAuf(it.name);
+          z+=`<div class="imp-f"><button type="button" class="lb${an?" an":""}" data-ia="${i}"${imp.busy?" disabled":""}>${an?"✓ Auf der Liste":"＋ Günstigstes aller Marken auf die Liste"}</button><small>ab ${eur(m.preis_pro_liter)}/${unitK(it.art)} · ${it.roh.length} Angebote</small></div>`;
+          z+=it.karten.slice(0,4).map((c,j)=>`<div class="imp-p"><span><b>${esc(c.label)}</b><small>${c.os.length} Angebot${c.os.length>1?"e":""} · ab ${eur(c.min.preis_pro_liter)}/${unitK(c.art)} · ${esc(c.groessen.join(", "))}</small></span><button type="button" class="lb" data-ik="${i}|${j}"${imp.busy?" disabled":""} title="Als Favorit speichern">☆ Favorit</button><button type="button" class="lb" data-il="${i}|${j}"${imp.busy?" disabled":""} title="Als Favorit speichern und auf die Liste">＋ Liste</button></div>`).join("");
+        }else z+=`<div class="imp-f"><small>Kein Angebot gefunden.</small><select data-ie="${i}" aria-label="Einheit"><option value="kg"${it.einheit==="kg"?" selected":""}>kg</option><option value="l"${it.einheit==="l"?" selected":""}>Liter</option><option value="st"${it.einheit==="st"?" selected":""}>Stück</option></select><button type="button" class="lb" data-io="${i}"${imp.busy?" disabled":""}>Ohne Angebot auf die Liste (mit Richtwert)</button></div>`;
+      }
+      return z+"</div>";
+    }).join("");
+  }
+  return h+"</details>";
 }
 /* Suche nach Produkten: Ergebnisse als Karten (ein Produkt je Marke bzw. Name), daraus wählt man eines als Favorit */
 function favLabel(c){const m=(c.marke||"").trim(),p=(c.produkt||"").trim();return (!m?p:!p?m:p.toLowerCase().includes(m.toLowerCase())?p:m+" "+p).replace(/[,|]/g," ").replace(/\s+/g," ").trim().slice(0,40)||"?"}
@@ -1543,7 +1674,7 @@ if(cf){
   suchBox.hidden=false;suchBtn.onclick=suchen;suchtext.onkeydown=e=>{if(e.key==="Enter")suchen()};
   upd.hidden=false;upd.onclick=aktualisieren;
   kontoBtn.hidden=false;
-  (async()=>{await favLaden();await korrLaden();await kontoLaden(true);await autoLaden();distLaden()})();
+  (async()=>{await favLaden();await korrLaden();await kontoLaden(true);await autoLaden();distLaden();if(impStart){imp.text=impStart;tab="favoriten";tabGewaehlt=true;render();impStarten()}})();
   if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
 }else if(/^https?:$/.test(location.protocol))autoLaden();
 </script>

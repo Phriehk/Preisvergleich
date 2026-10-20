@@ -682,10 +682,12 @@ export default {
         return antwort(alt);
       }
       if (p === "/suche" && req.method === "POST") {
-        const q = (url.searchParams.get("q") || "").replace(/,/g, " ").trim();
-        if (!q || q.length > 60) return fehler("Bitte einen Suchbegriff angeben", 400);
+        // ein oder mehrere Suchbegriffe, getrennt durch "|" (bis zu 8, z. B. für den Import einer Einkaufsliste)
+        const qs = [...new Set((url.searchParams.get("q") || "").split("|").map(x => x.replace(/,/g, " ").trim()).filter(Boolean))];
+        if (!qs.length || qs.some(x => x.length > 60)) return fehler("Bitte einen Suchbegriff angeben", 400);
+        if (qs.length > 8) return fehler("Höchstens 8 Suchbegriffe auf einmal", 400);
         const aus = (url.searchParams.get("aus") || "").split(",").map(w => w.trim().toLowerCase()).filter(Boolean);
-        const { liste } = await abfragen(ctx, [q], {}, aus, undefined, url.searchParams.get("streng") === "1");
+        const { liste } = await abfragen(ctx, qs, {}, aus, undefined, url.searchParams.get("streng") === "1");
         return antwort(liste);
       }
       if (p === "/entfernungen" && req.method === "POST") {
