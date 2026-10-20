@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 46.37 KiB / gzip: 14.00 KiB
+Total Upload: 45.65 KiB / gzip: 13.80 KiB
 Worker Startup Time: 2 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (3.13 sec)
-Deployed preise triggers (0.66 sec)
+Uploaded preise (3.10 sec)
+Deployed preise triggers (0.82 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: 3e19036f-4150-4de1-911e-ce721e94e64f
+Current Version ID: bc2ba659-2d73-4ba3-9ca9-7b829256af6a
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,13 +18,13 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-20T22:12","anzahl":31,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-20T22:27","anzahl":31,"fehler":0}}
 Alte Version: 200 https://preise.phriehk.workers.dev/alt <title>Preisvergleich (alte Version)
 Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
-Suche Fanta: 1 s, {"anzahl":1}
-Aktualisieren: 6 s, {"zeit":"2026-10-20T22:27","anzahl":31,"fehler":0,"alarm":[]}
+Suche Fanta: 0 s, {"anzahl":1}
+Aktualisieren: 4 s, {"zeit":"2026-10-20T22:30","anzahl":31,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":31,"gruppen":["Beckers Frikandellen","Capri Sun Säfte","Capri sun","K-Classic H-Vollmilch","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","coca cola"]}
 Verlauf: 219 Zeilen
 Korrekturen lesen: {}
@@ -32,7 +32,7 @@ Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
 Korrektur gespeichert und gelesen: true
 Test-Korrektur gelöscht: true
 Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
-Region 40210 ohne Code: 0 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
+Region 40210 ohne Code: 1 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
 Lebensmittel-Probe: 0 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl":3,"Nudeln":2}
   Probe: Butter | Netto Marken-Discount | Butter | art=kg liter=0.45 stueck=1 ml=450 preis=0.99 | 450 g versch. Sorten
@@ -75,31 +75,31 @@ Lebensmittel-Probe: 0 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | ALDI SÜD | Herzogin-Kartoffeln | art=kg liter=0.6 stueck=1 ml=600 preis=1.69 | 600-g-Packung
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | Je 125 g
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | 125 g
-  Erkunden: 200 /offers/search?as=web&limit=5&offset=0&q=&zipCode=47178 → Felder filters,totalResults,skippedResults,results
-  Erkunden: 200 /offers/search?as=web&limit=5&offset=0&q=*&zipCode=47178 → Felder filters,totalResults,skippedResults,results
-  Erkunden: 200 /offers/search?as=web&limit=5&offset=0&q=lidl&zipCode=47178 → Felder filters,totalResults,skippedResults,results · results 5 von 878 · erstes: {"brand":{"uniqueName":"lidl-backshop","indexOffer":false,"indexLeaflet":false,"id":114419,"name":"Lidl Backshop","industryId":1023},"advertisers":[{"uniqueName":"lidl","indexOffer":true,"indexLeaflet":true,"id":"retailers/126679","name":"Lidl","industryId":1023}],"categories":[{"uniqueName":null,"indexOffer":false,"indexLeaflet":false,"id":474,"name":"Brötchen","description":null,"parentId":191}]
-  Erkunden: 200 /offers?as=web&limit=5&offset=0&zipCode=47178 → Felder totalResults,skippedResults,results · results 5 von 5645 · erstes: {"id":25421952,"description":"Details im Prospekt","volume":1,"quantity":1,"isMultiProduct":true,"price":3.49,"oldPrice":null,"referencePrice":3.49,"requiresLoyalityMembership":false,"leafletFlightId":298537,"validityDates":[{"from":"2026-10-21T22:00:00Z","to":"2026-10-24T21:59:00Z"}],"externalId":null,"externalTrackingUrls":[],"externalTrackings":[],"externalUrl":"https://www.lidl.de/p/parkside-f
-  Erkunden: 404 /retailers/127153/offers?as=web&limit=5&offset=0&zipCode=47178 → 
-  Erkunden: 404 /retailers/aldi-sued/offers?as=web&limit=5&offset=0&zipCode=47178 → 
-  Erkunden: 404 /leaflets?as=web&limit=5&zipCode=47178 → 
-  Erkunden: 456 /leaflets/search?as=web&limit=5&zipCode=47178 → Felder code,field,message,errors
-  Erkunden: 404 /retailers?as=web&limit=5&zipCode=47178 → 
-  Erkunden: 404 /leaflet-flights/297182/offers?as=web&limit=5 → 
-  Erkunden: 404 /leaflet-flights/297182?as=web → 
-  Erkunden: 404 /leaflets/297182?as=web → 
-  Erkunden: 404 /leaflets/297182/offers?as=web&limit=5 → 
-  Erkunden: Seite: 94079 Zeichen, Skripte 1, Pfade im HTML: api/v1/retailers/127153/images/logos/0/small.png api/v1/retailers/127153/images/logos/0/small.webp api/v1/offers/25296987/images/default/0/medium.webp api/v1/offers/25176863/images/default/0/medium.webp api/v1/offers/25176883/images/default/0/medium.webp api/v1/offers/25176903/images/default/0/medium.webp api/v1/offers/25176943/images/default/0/medium.webp api/v1/offers/25297147/images/default/0/medium.webp api/v1/offers/25177003/images/default/0/medium.webp api/v1/offers/25177023/images/default/0/medium.webp api/v1/offers/25383192/images/default/0/medium.webp api/v1/offers/25297187/images/default/0/medium.webp api/v1/offers/25297227/images/default/0/medium.webp api/v1/offers/25295892/images/default/0/medium.webp api/v1/offers/25181368/images/default/0/medium.webp api/v1/offers/25181388/images/default/0/medium.webp api/v1/leaflets/2685621/i
-  Erkunden: Skript ailerOffers.d4424fffd3fe90bbd9e5.boot.js: "/offers/categories/images" "/offers/:offerId" "/leaflets/:leafletId/index" "/leaflets/:leafletId/page/:pageIndex" "/rl/:retailerName/:locationName" "/rb/:retailerName/:brandName" "/rc/:retailerName/:categoryName" "/offers/" "/bestleaflet" "/leaflets/" "/leaflets" "/offers" "/advertisers" "offers/publishers"
+  Erkunden: 200 /offers?as=web&limit=3&offset=0&zipCode=47178 → Felder totalResults,skippedResults,results · total 5645 · Märkte Lidl
+  Erkunden: 200 /offers?as=web&limit=3&offset=0&zipCode=47178&retailerIds=126679 → Felder totalResults,skippedResults,results · total 5645 · Märkte Lidl
+  Erkunden: 200 /offers?as=web&limit=3&offset=0&zipCode=47178&retailerId=126679 → Felder totalResults,skippedResults,results · total 5645 · Märkte Lidl
+  Erkunden: 200 /offers?as=web&limit=3&offset=0&zipCode=47178&advertiserIds=126679 → Felder totalResults,skippedResults,results · total 5645 · Märkte Lidl
+  Erkunden: 200 /offers?as=web&limit=3&offset=0&zipCode=47178&advertiserIds=retailers/126679 → Felder totalResults,skippedResults,results · total 5645 · Märkte Lidl
+  Erkunden: 200 /offers?as=web&limit=3&offset=0&zipCode=47178&retailers=lidl → Felder totalResults,skippedResults,results · total 5645 · Märkte Lidl
+  Erkunden: 200 /offers?as=web&limit=3&offset=0&zipCode=47178&advertisers=lidl → Felder totalResults,skippedResults,results · total 5645 · Märkte Lidl
+  Erkunden: 200 /offers?as=web&limit=3&offset=0&zipCode=47178&retailerUniqueNames=lidl → Felder totalResults,skippedResults,results · total 5645 · Märkte Lidl
+  Erkunden: 200 /offers?as=web&limit=3&offset=0&zipCode=47178&publisherIds=126679 → Felder totalResults,skippedResults,results · total 5645 · Märkte Lidl
+  Erkunden: 200 /offers?as=web&limit=3&offset=0&zipCode=47178&publishers=lidl → Felder totalResults,skippedResults,results · total 5645 · Märkte Lidl
+  Erkunden: 200 /offers/publishers?as=web&zipCode=47178 → Felder totalResults,skippedResults,results · total 23
+  Erkunden: 200 /offers/publishers?as=web&zipCode=47178&limit=50 → Felder totalResults,skippedResults,results · total 23 · Märkte 
+  Erkunden: 200 /advertisers?as=web&zipCode=47178 → Felder totalResults,skippedResults,results · total 473
+  Erkunden: 456 /offers/categories?as=web&zipCode=47178 → Felder code,field,message,errors · {"code":"Validation","field":"id","message":"The value 'categories' is not valid.","errors":[{"code":"Input.id","field":"id","message":"The value 'categories' is not valid."}]}
+  Erkunden: Suche filters: {"retailers":[{"id":126679,"name":"Lidl","resultsCount":60},{"id":126654,"name":"Kaufland","resultsCount":42},{"id":127153,"name":"ALDI SÜD","resultsCount":39},{"id":126735,"name":"Netto Marken-Discount","resultsCount":31},{"id":126590,"name":"Handelshof","resultsCount":19},{"id":126765,"name":"PENNY","resultsCount":17},{"id":127093,"name":"EDEKA","resultsCount":4},{"id":126811,"name":"ROSSMANN","resultsCount":2}],"brands":[{"id":118332,"name":"Milbona","resultsCount":24},{"id":125458,"name":"Milsani","resultsCount":15},{"id":105599,"name":"Danone","resultsCount":8},{"id":118816,"name":"Müller","resultsCount":8},{"id":109546,"name":"Gutes Land","resultsCount":7},{"id":118369,"name":"Milram","resultsCount":7},{"id":114401,"name":"Arla","resultsCount":6},{"id":114952,"name":"Kerrygold","resultsCount":6},{"id":120932,"name":"Rama","resultsCount":6},{"id":116286,"name":"Land
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792528100","token":true}
+Konto anlegen: {"name":"test1792528261","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792528100","daten":{}}
+Konto Daten: {"name":"test1792528261","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792528100"]
+Konto Anfragen mit Code: ["test1792528261"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792528100","token":true}
+Neues Passwort mit Code: {"name":"test1792528261","token":true}
 Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
 Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
