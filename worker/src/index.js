@@ -151,20 +151,20 @@ function kompakt(o) {   // ein Angebot im selben Format wie die übrigen Angebot
     art: mg ? mg[2] : null, liter: menge, stueck: st, ml: menge && st ? Math.round(menge * 1000 / st) : null, preis_pro_liter: o.price && menge ? Math.round(o.price / menge * 100) / 100 : null,
     gueltig_von: lokalDatum(v.from), gueltig_bis: lokalDatum(v.to), bild: bildUrl(o), link: link(o), kat: String(k.name || ""), kp: +k.parentId || 0 };
 }
-async function marktListe(env, plz, nur, ohne) {   // Märkte einer Postleitzahl mit der Zahl ihrer Angebote
+async function marktListe(env, plz, passt, ohne) {   // Märkte einer Postleitzahl mit der Zahl ihrer Angebote
   const j = await mgHole(env, PUBLISHERS + "?" + new URLSearchParams({ as: "web", zipCode: plz, limit: "60" }));
   const liste = (j.results || []).map(x => ({ id: String(x.id || "").replace(/\D/g, ""), name: String(x.name || "").trim(), plz }))
-    .filter(x => x.id && x.name && (!nur || nur.some(z => x.name.toLowerCase().includes(z))) && !(ohne || []).includes(x.id));
+    .filter(x => x.id && x.name && (!passt || passt(x.name.toLowerCase())) && !(ohne || []).includes(x.id));
   const n = await parallel(liste.map(x => () => mgHole(env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "1", offset: "0", q: x.name, retailers: x.id, zipCode: plz })).then(r => r.totalResults || 0).catch(() => null)), 6);
   liste.forEach((x, i) => { x.n = n[i]; });
   return liste;
 }
 async function maerkteRegion(env, plz) {   // für die eigene Gegend kommen wie bei den Favoriten einzelne Märkte aus den Nachbar-Postleitzahlen dazu
-  const key = "mkl:" + plz, alt = await env.PV.get(key, "json");
+  const key = "mkl2:" + plz, alt = await env.PV.get(key, "json");
   if (alt && Date.now() - alt.t < 12 * 3600e3) return alt.liste;
   let liste = await marktListe(env, plz);
-  if (plz === PLZ) for (const [p2, namen] of [[PLZ2, PLZ2_MAERKTE], [PLZ3, PLZ3_MAERKTE]]) {
-    try { liste = liste.concat(await marktListe(env, p2, namen, liste.map(x => x.id))); } catch (e) {}
+  if (plz === PLZ) for (const [p2, passt] of [[PLZ2, n => PLZ2_MAERKTE.some(z => n.includes(z))], [PLZ3, n => PLZ3_MAERKTE.includes(n)]]) {
+    try { liste = liste.concat(await marktListe(env, p2, passt, liste.map(x => x.id))); } catch (e) {}
   }
   liste = liste.filter(x => x.n !== 0);
   await env.PV.put(key, JSON.stringify({ t: Date.now(), liste }), { expirationTtl: 86400 });
@@ -173,17 +173,17 @@ async function maerkteRegion(env, plz) {   // für die eigene Gegend kommen wie 
 async function marktAngebote(env, ctx, sp, ip) {
   const plz = sp.get("plz") || PLZ, id = String(sp.get("id") || "").replace(/\D/g, "");
   if (!plzOk(plz) || !id) throw Object.assign(new Error("Ungültige Anfrage"), { status: 400 });
-  const key = "mk:" + plz + ":" + id, alt = await env.PV.get(key, "json");
+  const key = "mk2:" + plz + ":" + id, alt = await env.PV.get(key, "json");
   if (alt && Date.now() - alt.t < 6 * 3600e3) return alt;
   if (begrenzt("mk:" + ip, 30) || !(await tagesOk(env, "markt", 400))) { if (alt) return alt; throw zuViel(); }
   const m = (await maerkteRegion(env, plz)).find(x => x.id === id);
   if (!m) throw Object.assign(new Error("Diesen Markt gibt es hier gerade nicht"), { status: 404 });
   const teile = ctx.exports.Teil, erste = await teile.marktSeite(m.plz, m.name, id, 0);
   const seiten = Math.min(12, Math.ceil(erste.total / 100));   // höchstens 1200 Angebote
-  const rest = await parallel(Array.from({ length: Math.max(0, seiten - 1) }, (_, i) => () => teile.marktSeite(m.plz, m.name, id, (i + 1) * 100).catch(() => ({ liste: [] }))), GLEICHZEITIG);
-  const ids = new Set(), angebote = [];
-  for (const s of [erste, ...rest]) for (const o of s.liste) if (!ids.has(o.id)) { ids.add(o.id); angebote.push(o); }
-  const erg = { t: Date.now(), id, name: m.name, plz: m.plz, total: erste.total, angebote };
+  const rest = await parallel(Array.from({ length: Math.max(0, seiten - 1) }, (_, i) => () => teile.marktSeite(m.plz, m.name, id, (i + 1) * 100).catch(e => ({ liste: [], fehler: String(e.message || e).slice(0, 80) }))), GLEICHZEITIG);
+  const ids = new Set(), angebote = [], info = [];
+  for (const s of [erste, ...rest]) { let neu = 0; for (const o of s.liste) if (!ids.has(o.id)) { ids.add(o.id); angebote.push(o); neu++; } info.push(s.fehler ? "F:" + s.fehler : s.roh + "/" + s.liste.length + "/" + neu); }
+  const erg = { t: Date.now(), id, name: m.name, plz: m.plz, total: erste.total, seiten: info, angebote };
   await env.PV.put(key, JSON.stringify(erg), { expirationTtl: 86400 });
   return erg;
 }
@@ -195,7 +195,7 @@ export class Teil extends WorkerEntrypoint {
   async marktSeite(plz, name, id, offset) {   // eine Seite (100 Angebote) eines Marktes, schon verkleinert
     const j = await mgHole(this.env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "100", offset: String(offset), q: name, retailers: id, zipCode: plz }));
     const alle = j.results || [], passend = alle.filter(o => haendlerId(o) === id);
-    return { total: j.totalResults || 0, liste: (passend.length || !alle.length ? passend : alle).map(kompakt) };
+    return { total: j.totalResults || 0, roh: alle.length, liste: (passend.length || !alle.length ? passend : alle).map(kompakt) };
   }
   async holeStapel(plz, auftraege, ohneFilterFallback) {
     return Promise.all(auftraege.map(async a => {
