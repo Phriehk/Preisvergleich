@@ -23,12 +23,14 @@ jobs:
           curl -sf -m 60 "$URL/verlauf.csv" -o sicherung/verlauf.csv
           curl -sf -m 60 "$URL/favoriten.json" -o sicherung/favoriten.json
           curl -sf -m 60 "$URL/korrekturen.json" -o sicherung/korrekturen.json
+          curl -sf -m 60 "$URL/angebote.json" -o sicherung/angebote.json
           ZEILEN=$(wc -l < sicherung/verlauf.csv)
           echo "Verlauf: $ZEILEN Zeilen"
           # eine leere oder kaputte Antwort darf die vorhandene Sicherung nicht überschreiben
           [ "$ZEILEN" -gt 5 ] || { echo "Verlauf zu kurz, Sicherung abgebrochen"; git checkout -- sicherung 2>/dev/null; exit 1; }
           jq -e . sicherung/favoriten.json >/dev/null
           jq -e . sicherung/korrekturen.json >/dev/null
+          jq -e . sicherung/angebote.json >/dev/null
       - name: Speichern
         run: |
           git config user.name "preisvergleich-bot"
