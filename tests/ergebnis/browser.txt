@@ -2,51 +2,46 @@ TAP version 13
 # Subtest: Alle Tabs laden ohne Fehler
 ok 1 - Alle Tabs laden ohne Fehler
   ---
-  duration_ms: 3743.477746
+  duration_ms: 4110.113218
   type: 'test'
   ...
 # Subtest: Konto anlegen funktioniert (Dialog, Passwortprüfung)
 ok 2 - Konto anlegen funktioniert (Dialog, Passwortprüfung)
   ---
-  duration_ms: 3412.17211
+  duration_ms: 3417.837273
   type: 'test'
   ...
 # Subtest: Import: Liste einfügen, suchen, auf die Liste, Favorit, ohne Angebot; Tab und Scrollposition bleiben
 ok 3 - Import: Liste einfügen, suchen, auf die Liste, Favorit, ohne Angebot; Tab und Scrollposition bleiben
   ---
-  duration_ms: 8791.851693
+  duration_ms: 8800.575672
   type: 'test'
   ...
 # Subtest: Einkaufen: nach Markt, abhaken bleibt gespeichert; Export nur mit Namen
 not ok 4 - Einkaufen: nach Markt, abhaken bleibt gespeichert; Export nur mit Namen
   ---
-  duration_ms: 9675.675485
+  duration_ms: 23901.520598
   type: 'test'
   location: '/home/runner/work/Preisvergleich/Preisvergleich/tests/browser/seite.test.mjs:8:25'
   failureType: 'testCodeFailure'
-  error: 'Haken bleibt nach Neuladen'
-  code: 'ERR_ASSERTION'
-  name: 'AssertionError'
-  expected:
-  actual: '0 von 1 erledigt'
-  operator: 'match'
+  error: 'page.waitForFunction: Timeout 15000ms exceeded.'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
   stack: |-
-    file:///home/runner/work/Preisvergleich/Preisvergleich/tests/browser/seite.test.mjs:84:12
-    async mitSeite (file:///home/runner/work/Preisvergleich/Preisvergleich/tests/browser/seite.test.mjs:15:28)
-    async TestContext.<anonymous> (file:///home/runner/work/Preisvergleich/Preisvergleich/tests/browser/seite.test.mjs:70:3)
-    async Test.run (node:internal/test_runner/test:1054:7)
-    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+    /home/runner/work/Preisvergleich/Preisvergleich/tests/browser/seite.test.mjs:83:31
+    async mitSeite (/home/runner/work/Preisvergleich/Preisvergleich/tests/browser/seite.test.mjs:15:28)
+    async TestContext.<anonymous> (/home/runner/work/Preisvergleich/Preisvergleich/tests/browser/seite.test.mjs:70:3)
   ...
 # Subtest: Import per Link (\#import=) startet die Suche
 ok 5 - Import per Link (\#import=) startet die Suche
   ---
-  duration_ms: 4264.61042
+  duration_ms: 4233.684728
   type: 'test'
   ...
 # Subtest: Preisalarm: Lebensmittel-Alarm und Meldung für die Liste
 ok 6 - Preisalarm: Lebensmittel-Alarm und Meldung für die Liste
   ---
-  duration_ms: 9614.506643
+  duration_ms: 9608.462011
   type: 'test'
   ...
 1..6
@@ -57,4 +52,4 @@ ok 6 - Preisalarm: Lebensmittel-Alarm und Meldung für die Liste
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 39874.627918
+# duration_ms 54464.62141
