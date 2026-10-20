@@ -1,5 +1,8 @@
 name: Tests
 
+permissions:
+  contents: write
+
 on:
   push:
     paths: ["index.html", "worker/src/**", "tests/**", ".github/workflows/tests.yml"]
@@ -31,9 +34,14 @@ jobs:
         run: |
           set -o pipefail
           node --test tests/browser/seite.test.mjs 2>&1 | tee browser.log
-      - name: Testausgabe sichern
+      - name: Testausgabe ins Repository schreiben (die Logs sind von außen schwer lesbar)
         if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: browser-log
-          path: browser.log
+        run: |
+          git config user.name "preisvergleich-bot"
+          git config user.email "bot@users.noreply.github.com"
+          mkdir -p tests/ergebnis && tail -n 150 browser.log > tests/ergebnis/browser.txt
+          git add tests/ergebnis
+          git diff --cached --quiet && exit 0
+          git commit -m "Testausgabe Browser"
+          git pull --rebase origin main
+          git push
