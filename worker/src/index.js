@@ -165,7 +165,7 @@ async function maerkteRegion(env, plz) {   // für die eigene Gegend kommen wie 
 async function marktAngebote(env, ctx, sp, ip) {
   const plz = sp.get("plz") || PLZ, id = String(sp.get("id") || "").replace(/\D/g, "");
   if (!plzOk(plz) || !id) throw Object.assign(new Error("Ungültige Anfrage"), { status: 400 });
-  const key = "mk2:" + plz + ":" + id, alt = await env.PV.get(key, "json");
+  const key = "mk3:" + plz + ":" + id, alt = await env.PV.get(key, "json");
   if (alt && Date.now() - alt.t < 6 * 3600e3) return alt;
   if (begrenzt("mk:" + ip, 30) || !(await tagesOk(env, "markt", 400))) { if (alt) return alt; throw zuViel(); }
   const m = (await maerkteRegion(env, plz)).find(x => x.id === id);
