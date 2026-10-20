@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 45.45 KiB / gzip: 13.80 KiB
+Total Upload: 45.41 KiB / gzip: 13.78 KiB
 Worker Startup Time: 2 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (2.90 sec)
-Deployed preise triggers (1.37 sec)
+Uploaded preise (2.63 sec)
+Deployed preise triggers (0.82 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: 2907c627-e781-4b49-8153-14686ab5e6e5
+Current Version ID: c30d8db9-1125-47bc-8ae6-a0390728f0c5
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,20 +18,20 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-20T22:51","anzahl":31,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-20T22:53","anzahl":31,"fehler":0}}
 Alte Version: 200 https://preise.phriehk.workers.dev/alt <title>Preisvergleich (alte Version)
 Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
-Suche Fanta: 0 s, {"anzahl":1}
-Aktualisieren: 3 s, {"zeit":"2026-10-20T22:53","anzahl":31,"fehler":0,"alarm":[]}
+Suche Fanta: 1 s, {"anzahl":1}
+Aktualisieren: 3 s, {"zeit":"2026-10-20T22:56","anzahl":31,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":31,"gruppen":["Beckers Frikandellen","Capri Sun Säfte","Capri sun","K-Classic H-Vollmilch","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","coca cola"]}
 Verlauf: 219 Zeilen
 Korrekturen lesen: {}
 Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
 Korrektur gespeichert und gelesen: true
 Test-Korrektur gelöscht: true
-Entfernungen: 1 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
+Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
 Region 40210 ohne Code: 0 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
 Lebensmittel-Probe: 0 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl":3,"Nudeln":2}
@@ -75,22 +75,22 @@ Lebensmittel-Probe: 0 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | ALDI SÜD | Herzogin-Kartoffeln | art=kg liter=0.6 stueck=1 ml=600 preis=1.69 | 600-g-Packung
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | Je 125 g
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | 125 g
-  Erkunden: /offers/categories?as=web&zipCode=47178&limit=500: 456 /offers/categories?as=web&zipCode=47178&limit=500
-  Erkunden: /categories?as=web&limit=500: 500 von 543 · erste [{"id":1,"name":"Schreibwaren","parentId":null},{"id":2,"name":"Musikinstrumente","parentId":null}]
-  Erkunden: oben: 500 · 1=Schreibwaren(-); 2=Musikinstrumente(-); 7=Tabakzubehör(-); 24=Wassersport(6); 25=Outdoorausrüstung(6); 27=Gartenspielgeräte(15); 29=Radsport(6); 30=Wintersport(6); 31=Auto(14); 33=Foto-Video(12); 34=Speichermedien(12); 36=Fitnessartikel(10); 37=Sehhilfen(10); 38=Zahngesundheit(10); 39=Kontaktlinsen(10); 40=Reisen(4); 41=Baby-Spielzeug(5); 42=Badespielzeug(5); 43=Kinderwagen(14); 44=Leichtathletik(6); 45=Experimentierkasten(5); 46=Holzspielzeug(5); 47=Bogensport(6); 48=Sonstiger Tierbedarf(8); 49=Kinderfahrzeuge(5); 51=Kampfsport(6); 52=Internationale Spezialitäten(16); 54=Verkleidung(5); 55=Darts (6); 56=Präsentkörbe & Geschenksets(16); 57=Modelleisenbahn(5); 58=Motorräder(14); 59=Puppen(5); 60=Feuerwerk(5); 61=Kindermalbedarf(5); 62=Reise und Komfort(14); 63=Spielmöbel(5); 64=Essensgutscheine(16); 65=Spiele(5); 66=Traktor(14); 67=Superfoods(16); 68=Roller(14); 71=
-  Erkunden: Tiefen: {"0":500}
-  Erkunden: Pfad 189: Kuchen & Feinbackwaren
-  Erkunden: Ebene 1: 
+  Erkunden: Kategorien 543 · Tiefen: {"0":543} · fehlende Eltern 538
+  Erkunden: oben: 1=Schreibwaren[0]; 2=Musikinstrumente[0]; 7=Tabakzubehör[0]; 160=Sonnenschutzsystem[0]; 227=Babymöbel[0]
+  Erkunden: Pfad 189: Kuchen & Feinbackwaren#189
+  Erkunden: Pfad 23: 
+  Erkunden: Pfad 16: 
+  Erkunden: Ebene 1 (0): 
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792529682","token":true}
+Konto anlegen: {"name":"test1792529836","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792529682","daten":{}}
+Konto Daten: {"name":"test1792529836","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792529682"]
+Konto Anfragen mit Code: ["test1792529836"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792529682","token":true}
+Neues Passwort mit Code: {"name":"test1792529836","token":true}
 Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
 Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
