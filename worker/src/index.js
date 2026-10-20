@@ -681,7 +681,7 @@ export default {
         await env.PV.put("favoriten", JSON.stringify(liste, null, 2));
         return antwort(liste);
       }
-      if (p === "/rohfelder" && req.method === "GET") {
+      if (p === "/rohfelder" && req.method === "POST") {
         const q = (url.searchParams.get("q") || "").slice(0, 40), plz = (url.searchParams.get("plz") || PLZ).replace(/\D/g, "").slice(0, 5);
         if (!q) return fehler("q fehlt", 400);
         try { return antwort(await rohfelder(env, plz, q)); } catch (e) { return fehler("Marktguru: " + e.message, 502); }

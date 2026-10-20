@@ -84,7 +84,7 @@ jobs:
           log "Lebensmittel-Probe: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if type=="array" then (group_by(.gruppe) | map({(.[0].gruppe): length}) | add) else . end' 2>/dev/null || echo "$R" | head -c 300)"
           echo "$R" | jq -r 'if type=="array" then .[0:40][] | "  Probe: \(.gruppe) | \(.markt) | \(.produkt[0:28]) | art=\(.art) liter=\(.liter) stueck=\(.stueck) ml=\(.ml) preis=\(.preis) | \(.beschreibung[0:70])" else empty end' 2>/dev/null | while IFS= read -r z; do log "$z"; done
           for Q in Butter Cola; do
-            R=$(curl -s -m 60 -w '\nHTTP %{http_code}' -G -H "Authorization: Bearer $ZUG" --data-urlencode "plz=47178" --data-urlencode "q=$Q" "$URL/rohfelder"); S=$(echo "$R" | tail -n 1); R=$(echo "$R" | sed '$d')
+            R=$(curl -s -m 60 -w '\nHTTP %{http_code}' -X POST -G -H "Authorization: Bearer $ZUG" --data-urlencode "plz=47178" --data-urlencode "q=$Q" "$URL/rohfelder"); S=$(echo "$R" | tail -n 1); R=$(echo "$R" | sed '$d')
             log "Rohfelder $Q ($S): $(echo "$R" | jq -c '{anzahl, felder}' 2>/dev/null || echo "$R" | head -c 300)"
             echo "$R" | jq -c '.beispiele[]?' 2>/dev/null | head -n 4 | cut -c1-1800 | sed 's/^/  Beispiel: /' | tee -a $LOG
           done
