@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 44.73 KiB / gzip: 13.58 KiB
+Total Upload: 48.63 KiB / gzip: 14.32 KiB
 Worker Startup Time: 2 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (3.13 sec)
-Deployed preise triggers (0.50 sec)
+Uploaded preise (3.97 sec)
+Deployed preise triggers (0.69 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: 399521b6-4409-445f-8b1c-340892f7c2c2
+Current Version ID: a8ef96da-357c-44f1-a075-d30c281e6faa
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,13 +18,13 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-20T22:56","anzahl":31,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-20T22:58","anzahl":31,"fehler":0}}
 Alte Version: 200 https://preise.phriehk.workers.dev/alt <title>Preisvergleich (alte Version)
 Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
 Suche Fanta: 1 s, {"anzahl":1}
-Aktualisieren: 4 s, {"zeit":"2026-10-20T22:58","anzahl":31,"fehler":0,"alarm":[]}
+Aktualisieren: 4 s, {"zeit":"2026-10-20T23:03","anzahl":31,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":31,"gruppen":["Beckers Frikandellen","Capri Sun Säfte","Capri sun","K-Classic H-Vollmilch","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","coca cola"]}
 Verlauf: 219 Zeilen
 Korrekturen lesen: {}
@@ -75,103 +75,19 @@ Lebensmittel-Probe: 0 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | ALDI SÜD | Herzogin-Kartoffeln | art=kg liter=0.6 stueck=1 ml=600 preis=1.69 | 600-g-Packung
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | Je 125 g
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | 125 g
-  Erkunden: P3 (3): Teppiche | Lampen | Heimtextilien
-  Erkunden: P4 (2): Reisen | Tickets
-  Erkunden: P5 (17): Baby-Spielzeug | Badespielzeug | Experimentierkasten | Holzspielzeug | Kinderfahrzeuge | Verkleidung | Modelleisenbahn | Puppen | Feuerwerk | Kindermalbedarf | Spielmöbel | Spiele | Spielfiguren | Bausteine
-  Erkunden: P6 (9): Wassersport | Outdoorausrüstung | Radsport | Wintersport | Leichtathletik | Bogensport | Kampfsport | Darts  | Fitness
-  Erkunden: P8 (3): Sonstiger Tierbedarf | Aquaristik | Terraristik
-  Erkunden: P10 (5): Fitnessartikel | Sehhilfen | Zahngesundheit | Kontaktlinsen | Erotik
-  Erkunden: P11 (3): Bücher | Zeitschriften | Papierkarten
-  Erkunden: P12 (4): Foto-Video | Speichermedien | Spielkonsolen | Batterien
-  Erkunden: P14 (7): Auto | Kinderwagen | Motorräder | Reise und Komfort | Traktor | Roller | Wohnmobil
-  Erkunden: P15 (3): Gartenspielgeräte | Poolzubehör und -bau | Garagen
-  Erkunden: P16 (7): Internationale Spezialitäten | Präsentkörbe & Geschenksets | Essensgutscheine | Superfoods | Nudeln | Nahrungsergänzung | Veganes
-  Erkunden: P17 (18): Antiallergika | Alternativmedizin | Augen-, Nasen-, & Ohrenmedikamente | Bandagen | Schlafmittel | Dampfinhalatoren | Diabetes | Erste-Hilfe | Haut-, Haar- & Nagelpflegeartikel | Herz-, Kreislauf- & Gefäßmedikamente | Magen & Darm Medikamente | Medizinische Geräte & Verbrauchsmaterialien | Mobilitäts- & Alltagshilfen | Schmerz- & Fiebermittel
-  Erkunden: P19 (5): Gartenstühle | Auflagen | Gartenmöbel | Gartentische | Strandkörbe
-  Erkunden: P20 (3): Schokoladen | Fruchtgummi | Kekse
-  Erkunden: P22 (9): Tischtennis | Fußball | Handball | Golf | Tennis | Badminton | Volleyball | Basketball | Ballsportarten
-  Erkunden: P23 (1): Kuchen & Feinbackwaren
-  Erkunden: P26 (5): Gartenhäuser | Gerätehäuser | Mülltonnenbox | Pavillons | Gewächshäuser
-  Erkunden: P28 (10): Gartenbeleuchtung | Gartendekoration | Sichtschutz | Markisen | Randsteine | Terassendielen | Terassendächer | Terrassenheizung und Feuerstellen | Gartenbewässerung | Gartenpflege
-  Erkunden: P32 (5): Anrufbeantworter | Smartwatches | Handys | Telefone | Navis
-  Erkunden: P35 (5): Sportuhren | Rasierer | Haartrockner | Elektrische Zahnpflege | Gesundheitselektronik
-  Erkunden: P50 (5): Küchenzubehör | Küchentextilien | Reinigen | Spülmittel | Waschmittel
-  Erkunden: P53 (5): Dekopflanzen | Schnittblumen | Pflanzenzubehör | Pflanzen | Dünger Blumenerde
-  Erkunden: P69 (4): Softdrinks | Wasser | Alkoholfreies Bier | Kakao
-  Erkunden: P70 (2): Bier | Craft Beer
-  Erkunden: P83 (2): Hundefutter | Hundezubehör
-  Erkunden: P85 (2): Katzenzubehör | Katzenfutter
-  Erkunden: P90 (2): Kleintierfutter | Kleintierzubehör
-  Erkunden: P91 (2): Vogelfutter | Vogelzubehör
-  Erkunden: P93 (2): Pferdefutter | Pferdepflege
-  Erkunden: P94 (10): Sportbekleidung | Kopfbedeckung | Schals | Krawatten | Gürtel | Manschetten | Unterwäsche | Trachtenmode | Kinder- und Babybekleidung | Arbeitsbekleidung und -schuhe
-  Erkunden: P95 (5): Unisex Schuhe | Damen Schuhe | Herren Schuhe | Kinderschuhe | Schuhpflege
-  Erkunden: P97 (21): Büromöbel | Kindermöbel | Möbelserien | Möbel Zubehör | Kindersicherung | Küchen | Sofas | Sessel | TV Möbel | Wohnwände | Schränke | Betten | Regale | Kommoden
-  Erkunden: P101 (2): Pilze | Kräuter
-  Erkunden: P102 (5): Chips | Nüsse | Salzgebäck | Knabbereien | Popcorn
-  Erkunden: P103 (9): Kalbfleisch | Geflügel | Hackfleisch | Lammfleisch | mariniertes Fleisch | Rindfleisch | Schweinefleisch | Wildfleisch | gemischte Fleischwaren
-  Erkunden: P104 (5): Salami | Würste | Schinken | Wurstaufschnitt | Koch- und Streichwurst
-  Erkunden: P106 (4): Frischfisch | Räucherfisch | Meeresfrüchte | marinierter Fisch
-  Erkunden: P107 (6): Milch | Käse | Joghurt | Sahne, Schmand und Crème fraîche | Butter | Eier
-  Erkunden: P108 (9): Öle und Fette | Essig und Balsamico | Salatdressing | Dips | Dessertsoßen | Pesto | Hollandaise | Bratensossen | Fonds
-  Erkunden: P110 (8): Zucker und Süßungsmittel | Mehl | Tortendeko | Desserts | Stärke-Bindemittel | Suppeneinlagen | Paniermehl | Backzutaten & -mischungen
-  Erkunden: P112 (7): Fingerfood | Warme Speisen | Soßen | Kartoffelgerichte | Instantgerichte | Eier-Teigwaren | Snacks und Imbiss
-  Erkunden: P113 (5): Fischkonserven | Wurst- und Fleischkonserven | Gemüsekonserven | Obstkonserven | Dosengerichte
-  Erkunden: P115 (7): Feinkostsalate | Wurstsalate | Feinkostgemüse | Nudelsalate | Fischsalate | Eiersalate | Antipasti
-  Erkunden: P116 (4): Reis | Getreide | Linsen | Bohnen
-  Erkunden: P119 (2): Müslimischungen | Müsliriegel
-  Erkunden: P120 (9): Eis | Tiefkühlobst | Tiefkühlgemüse | Tiefkühlkartoffeln | Tiefkühlgerichte | Tiefkühlpizza & -flammkuchen | Tiefkühlbackwaren & -feingebäck | Tiefkühlfisch und Meeresfrüchte | Tiefkühlfleisch
-  Erkunden: P122 (10): Drucker-Scanner | Netzwerk | Multimedia | Software | Computerzubehör | Laptops | Computer | Monitore | eBook Reader | Bürozubehör
-  Erkunden: P124 (10): Abspielgeräte | Empfangstechnik | Heimkinosysteme | Mobileabspielgeräte | Kopfhörer | TV | HiFi | Audio | Car-HiFi | Radio
-  Erkunden: P125 (1): Musik
-  Erkunden: P126 (3): Duftsets | Damen Düfte | Herren Düfte
-  Erkunden: P129 (7): Schmuck | Accessoires | Brillen | Schirme | Fanartikel | Koffer | Armbanduhr
-  Erkunden: P136 (5): Babynahrung | Babypflege | Windeln | Schnuller | Schwangerschaft
-  Erkunden: P137 (5): Gesichtspflege | Sonnenschutz | Haarentfernung | Damenhygiene  | Haarpflege
-  Erkunden: P142 (8): Arbeitssicherheit | Wandbefestigung | Grills | Sanitär | Bodenbeläge | Farben | Heizkörper | Sauna
-  Erkunden: P143 (9): Wäschenständer | Backzubehör | Töpfe | Essgeschirr | Kochgeschirr | Besteck | Aufbewahrungsbehälter | Glasartikel | Müllentsorgung
-  Erkunden: P144 (8): Deko | Weihnachtsdeko | Osterdeko | Bilder | Wanddekoration | Spiegel | Kerzen | Wanduhren
-  Erkunden: P147 (13): Gurke | Hülsenfrüchte | Wurzelgemüse | Brokkoli und Kohl | Mais | Paprika | Tomaten | Zucchini & Kürbis | Zwiebeln und Knoblauch | Salate und Blattgemüse | Spargel | Exotisches Gemüse | Sonstiges Gemüse
-  Erkunden: P149 (9): Äpfel | Birnen | Steinobst | Beeren | Melonen | Exotische Früchte | Zitrusfrüchte | Trockenobst | Weintrauben
-  Erkunden: P174 (4): Gewürzmischungen | Pfeffer | Röstzwiebel | Salz
-  Erkunden: P187 (1): herzhafte Aufstriche
-  Erkunden: P191 (2): Brötchen | Brot
-  Erkunden: P193 (2): Kaffee | Tee
-  Erkunden: P204 (2): DVDs | BluRays
-  Erkunden: P218 (4): Waschmaschinen | Kühlgeräte | Küchengroßgeräte | Geschirrspüler
-  Erkunden: P363 (6): Wein | Rotweine | Weissweine | Roseweine | Likörweine | Weinmischgetränke
-  Erkunden: P364 (9): Liköre | Whiskey | Kornbrand | Weinbrand | Brände | Wodka | Gin | Tequila | Cocktails
-  Erkunden: P378 (10): Fliesen | Dachrinnen | Entwässerungszubehör | Füllstoffe | Kleber | Möbelplatten | Putze | Trockenbau | Paneele | Mörtel
-  Erkunden: P382 (14): Akkuschrauber | Bohrhämmer | Bohrmaschinen | Elektrowerkzeugzubehör | Erdbohrer | Sprühpistolen | Fräsen | Tacker | Klebepistolen | Lötkolben | Messgeräte | Sägen | Schleifer | Spezialwerkzeug
-  Erkunden: P383 (13): Feilen | Handwerkzeugzubehör | Hammer | Schleifpapier | Spachtel | Messer | Messwerkzeuge | Schraubendreher | Schraubenschlüssel | Schraubzwingen | Sonstiges Handwerkzeug | Werkzeugkoffer | Zangen
-  Erkunden: P384 (6): Heizstrahler | Kompressoren | Rüttelplatten | Schubkarren | Schweißgeräte | Stromerzeuger
-  Erkunden: P385 (5): Arbeitsleuchten | Hebeanlagen | Leitern | Werkstattmöbel | Werkzeugkästen
-  Erkunden: P386 (9): Gartenhandwerkzeug | Heckenscheren | Holzspalter | Kettensäge | Laubsauger | Motorhacken | Rasentrimmer | Rasenmäher | Vertikutierer
-  Erkunden: P387 (8): Fenster | Fliegengitter | Haustüren | Jalousien | Treppen | Türbeschläge | Vordächer | Zimmertüren
-  Erkunden: P390 (3): Beschläge | Dübel | Schrauben
-  Erkunden: P392 (5): Elektroinstallationszubehör | Kabel | Schalter | Sicherungen | Steckdosenleisten
-  Erkunden: P398 (8): Kaffeemaschinen | Reinigungsgeräte | Nähmaschinen | Küchengeräte | Leuchten | Haustechnik | Klimageräte | Uhren
-  Erkunden: P402 (5): Seife | Maniküre Pediküre | Duschgel | Cremes und Lotionen | Deo
-  Erkunden: P414 (5): Teints Tönungen | Augen Makeup | Nagellack | Lippenstifte | Makeup Zubehör
-  Erkunden: P415 (13): Brennstoffe | Staubsaugerbeutel | Lufterfrischer | Haushaltshandschuhe | Müllbeutel | Filtersysteme | Folienbeutel | Grillzubehör | Insektizide | Toilettenpapier | Küchenrolle | Taschentücher | Servietten
-  Erkunden: P427 (18): Damen Sport | Damen Gürtel | Damen Bademode | Damen Hosen | Damen Jacken | Damen Jumpsuits | Damen Kapuzenpullover | Kleider | Blazer | Leggins | Damen Nachtwäsche | Damen Pullover | Röcke | Damen Outdoorbekleidung
-  Erkunden: P428 (14): Herren Sport | Herren Gürtel | Herren Bademode | Herren Hosen | Herren Westen | Herren Outdoorbekleidung | Herren Socken | Herren Unterwäsche | Herren Schlafanzüge | Herren Pullover | Herren Shirts | Herren Hemden | Herren Jacken | Anzüge
-  Erkunden: P454 (2): Brauner Rum | Weißer Rum
-  Erkunden: P473 (3): Marmeladen | Schokoaufstrich | Honig
-  Erkunden: P497 (3): Sekt | Champagner | Cava
-  Erkunden: P630 (8): Halloween | Valentinstag | Muttertag | Vatertag | Black Friday | Xmas | Nikolaus | Silvester
-  Erkunden: Pnull (5): Schreibwaren | Musikinstrumente | Tabakzubehör | Sonnenschutzsystem | Babymöbel
-  Erkunden: Kategorie 23: 404 /categories/23?as=web
+Märkte 47178: 13 s, ["Lidl=878","Kaufland=497","HORNBACH=198","PENNY=299","Bosch Car Service=10","SCHAFFRATH=113","Kabs PolsterWelt=45","Fressnapf=106","KiK=50","Opti Wohnwelt=44","Opti-MegaStore=107","ALDI SÜD=485","Thomas Philipps=189","ROSSMANN=294","toom Baumarkt=275","OBI=25","SB-Möbel BOSS=197","Handelshof=272","XXXLutz=1027","Möbel Inhofer=21","trinkgut=71","Netto Marken-Discount=392","EDEKA=48","REWE=272 (47053)","REWE Dortmund=258 (47053)"]
+Markt 126679: 3 s, {"name":"Lidl","total":878,"geladen":588,"ohneMenge":0,"kategorien":67,"ohneKat":2,"beispiel":"Lidl Backshop Halloween Berliner 2.99 kg Kuchen & Feinbackwaren"}
+Markt 126735: 4 s, {"name":"Netto Marken-Discount","total":392,"geladen":293,"ohneMenge":0,"kategorien":57,"ohneKat":0,"beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792529963","token":true}
+Konto anlegen: {"name":"test1792530289","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792529963","daten":{}}
+Konto Daten: {"name":"test1792530289","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792529963"]
+Konto Anfragen mit Code: ["test1792530289"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792529963","token":true}
+Neues Passwort mit Code: {"name":"test1792530289","token":true}
 Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
 Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
