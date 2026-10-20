@@ -132,6 +132,50 @@ async function teilAbfrage(env, plz, suche) {
   return aus;
 }
 
+/* Vorübergehende Diagnose: welche Abfragen bietet Marktguru für alle Angebote eines Marktes? (nur mit Zugangscode) */
+async function erkunden(env) {
+  const k = await schluessel(env), H = { "x-apikey": k.api, "x-clientkey": k.client }, B = "https://api.marktguru.de/api/v1";
+  const urls = [
+    B + "/offers/search?as=web&limit=5&offset=0&q=&zipCode=47178",
+    B + "/offers/search?as=web&limit=5&offset=0&q=*&zipCode=47178",
+    B + "/offers/search?as=web&limit=5&offset=0&q=lidl&zipCode=47178",
+    B + "/offers?as=web&limit=5&offset=0&zipCode=47178",
+    B + "/retailers/127153/offers?as=web&limit=5&offset=0&zipCode=47178",
+    B + "/retailers/aldi-sued/offers?as=web&limit=5&offset=0&zipCode=47178",
+    B + "/leaflets?as=web&limit=5&zipCode=47178",
+    B + "/leaflets/search?as=web&limit=5&zipCode=47178",
+    B + "/retailers?as=web&limit=5&zipCode=47178",
+    B + "/leaflet-flights/297182/offers?as=web&limit=5",
+    B + "/leaflet-flights/297182?as=web",
+    B + "/leaflets/297182?as=web",
+    B + "/leaflets/297182/offers?as=web&limit=5",
+  ];
+  const out = [];
+  for (const u of urls) {
+    try {
+      const r = await fetch(u, { headers: { ...UA, ...H } }), t = await r.text();
+      let info = "";
+      try { const j = JSON.parse(t); info = Array.isArray(j) ? "Liste " + j.length + (j[0] ? " Felder " + Object.keys(j[0]).join(",") : "") : "Felder " + Object.keys(j).join(",") + (Array.isArray(j.results) ? " · results " + j.results.length + " von " + (j.totalResults ?? j.total ?? "?") + (j.results[0] ? " · erstes: " + JSON.stringify(j.results[0]).slice(0, 400) : "") : ""); } catch (e) { info = t.slice(0, 160).replace(/\s+/g, " "); }
+      out.push(r.status + " " + u.replace(B, "") + " → " + info);
+    } catch (e) { out.push("FEHLER " + u.replace(B, "") + " " + e.message); }
+  }
+  // Welche Pfade nutzt die Webseite selbst?
+  try {
+    const html = await (await fetch("https://www.marktguru.de/r/aldi-sued", { headers: UA })).text();
+    const pfade = new Set((html.match(/api\/v1\/[A-Za-z0-9_\-\/{}.$:]+/g) || []));
+    const skripte = [...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map(m => m[1]).slice(0, 12);
+    out.push("Seite: " + html.length + " Zeichen, Skripte " + skripte.length + ", Pfade im HTML: " + [...pfade].slice(0, 30).join(" "));
+    for (const s of skripte) {
+      try {
+        const u = s.startsWith("http") ? s : "https://www.marktguru.de" + (s.startsWith("/") ? "" : "/") + s, js = await (await fetch(u, { headers: UA })).text();
+        const p = [...new Set(js.match(/["'`][^"'`]{0,40}(?:offers|leaflet|retailer|advertiser)[^"'`]{0,60}["'`]/gi) || [])].filter(x => x.includes("/")).slice(0, 25);
+        if (p.length) out.push("Skript " + s.slice(-40) + ": " + p.join(" "));
+      } catch (e) { }
+    }
+  } catch (e) { out.push("Seite nicht geladen: " + e.message); }
+  return out;
+}
+
 // Eigener Einstiegspunkt, damit jede Teilabfrage als eigener Aufruf mit eigenen Grenzen läuft.
 // Ein Aufruf holt mehrere Artikel in einer Postleitzahl und sortiert unpassende Treffer gleich aus (spart Aufrufe und Rechenzeit im Hauptaufruf).
 export class Teil extends WorkerEntrypoint {
@@ -682,6 +726,7 @@ export default {
         await env.PV.put("favoriten", JSON.stringify(liste, null, 2));
         return antwort(liste);
       }
+      if (p === "/erkunden" && req.method === "POST") return antwort(await erkunden(env));
       if (p === "/korrekturen" && req.method === "POST") {
         // Korrekturen auffälliger Preise (Preis, Stückzahl, Größe, "passt so", "ausgeblendet"): geteilt zwischen allen Geräten mit Zugangscode
         const b = await req.json(), alt = (await env.PV.get("korrekturen", "json")) || {}, jetzt = Date.now();
