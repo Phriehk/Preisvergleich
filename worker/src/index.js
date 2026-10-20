@@ -136,27 +136,16 @@ async function teilAbfrage(env, plz, suche) {
 async function erkunden(env) {
   const k = await schluessel(env), H = { headers: { ...UA, "x-apikey": k.api, "x-clientkey": k.client } }, B = "https://api.marktguru.de/api/v1", out = [];
   const j = async u => { const r = await fetch(B + u, H); if (!r.ok) throw new Error(r.status + " " + u); return r.json(); };
-  try {
-    const pub = await j("/offers/publishers?as=web&zipCode=47178&limit=60");
-    out.push("Publisher: total " + pub.totalResults + ", geliefert " + (pub.results || []).length + ", Felder " + Object.keys((pub.results || [])[0] || {}).join(","));
-    const liste = (pub.results || []).map(x => ({ id: String(x.id).replace(/\D/g, ""), name: x.name, u: x.uniqueName, n: (x.offers || []).length }));
-    const tot = await Promise.all(liste.map(x => j(`/offers/search?as=web&limit=1&offset=0&zipCode=47178&q=${encodeURIComponent(x.name)}&retailers=${x.id}`).then(r => r.totalResults).catch(e => "F" + e.message.slice(0, 3))));
-    liste.forEach((x, i) => out.push(`Markt ${x.id} ${x.name} (${x.u}) Vorschau ${x.n} · Suche nach Name: ${tot[i]}`));
-    const u2 = await j(`/offers/search?as=web&limit=1&offset=0&zipCode=47178&q=netto&retailers=126735`).then(r => r.totalResults).catch(e => e.message);
-    out.push("Netto mit q=netto: " + u2);
-    const l1 = await j(`/offers/search?as=web&limit=100&offset=0&zipCode=47178&q=lidl&retailers=126679`);
-    const res = l1.results || [], mitWort = res.filter(o => JSON.stringify([o.product, o.brand, o.description]).toLowerCase().includes("lidl")).length;
-    const kat = {}; res.forEach(o => { const c = ((o.categories || [])[0] || {}).name || "?"; kat[c] = (kat[c] || 0) + 1; });
-    out.push(`Lidl Seite 1: ${res.length}, davon mit "lidl" im Text ${mitWort}; Kategorien ${JSON.stringify(kat).slice(0, 600)}`);
-    out.push("Kategorie-Felder: " + JSON.stringify((res[0] || {}).categories || []).slice(0, 300));
-    const gueltig = {}; res.forEach(o => { const v = ((o.validityDates || [])[0] || {}); const kk = (v.from || "").slice(0, 10) + ">" + (v.to || "").slice(0, 10); gueltig[kk] = (gueltig[kk] || 0) + 1; });
-    out.push("Gültigkeit: " + JSON.stringify(gueltig).slice(0, 400));
-    const l9 = await j(`/offers/search?as=web&limit=100&offset=800&zipCode=47178&q=lidl&retailers=126679`);
-    out.push("Lidl offset 800: " + (l9.results || []).length);
-    const ka = await j(`/offers/search?as=web&limit=100&offset=0&zipCode=47178&q=kaufland&retailers=126654`);
-    out.push("Kaufland: total " + ka.totalResults + ", Seite 1 mit Wort " + (ka.results || []).filter(o => JSON.stringify([o.product, o.brand, o.description]).toLowerCase().includes("kaufland")).length);
-    const t = JSON.stringify(l1).length; out.push("Größe einer Seite: " + t + " Zeichen");
-  } catch (e) { out.push("Fehler: " + e.message); }
+  for (const u of ["/offers/categories?as=web&zipCode=47178&limit=500", "/categories?as=web&limit=500"]) try {
+    const c = await j(u), l = Array.isArray(c) ? c : (c.results || []);
+    out.push(u + ": " + l.length + (c.totalResults != null ? " von " + c.totalResults : "") + " · erste " + JSON.stringify(l.slice(0, 2)).slice(0, 400));
+    const byId = new Map(l.map(x => [x.id, x])), top = l.filter(x => !x.parentId || !byId.has(x.parentId));
+    out.push("oben: " + top.length + " · " + top.map(x => x.id + "=" + x.name + "(" + (x.parentId ?? "-") + ")").join("; ").slice(0, 1500));
+    const tiefe = x => { let d = 0; while (x && x.parentId && byId.has(x.parentId) && d < 9) { x = byId.get(x.parentId); d++; } return d; };
+    const td = {}; l.forEach(x => { const d = tiefe(x); td[d] = (td[d] || 0) + 1; }); out.push("Tiefen: " + JSON.stringify(td));
+    const z = l.find(x => x.id === 189); if (z) { let x = z, w = []; while (x) { w.push(x.name); x = byId.get(x.parentId); } out.push("Pfad 189: " + w.join(" < ")); }
+    const zw = l.filter(x => tiefe(x) === 1).slice(0, 40).map(x => x.name + "<" + (byId.get(x.parentId) || {}).name).join("; "); out.push("Ebene 1: " + zw.slice(0, 1200));
+  } catch (e) { out.push(u + ": " + e.message); }
   return out;
 }
 
