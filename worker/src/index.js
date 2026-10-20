@@ -132,23 +132,71 @@ async function teilAbfrage(env, plz, suche) {
   return aus;
 }
 
-/* Vorübergehende Diagnose: welche Abfragen bietet Marktguru für alle Angebote eines Marktes? (nur mit Zugangscode) */
-async function erkunden(env) {
-  const k = await schluessel(env), H = { headers: { ...UA, "x-apikey": k.api, "x-clientkey": k.client } }, B = "https://api.marktguru.de/api/v1", out = [];
-  const j = async u => { const r = await fetch(B + u, H); if (!r.ok) throw new Error(r.status + " " + u); return r.json(); };
-  try {
-    const l = [...((await j("/categories?as=web&limit=500&offset=0")).results || []), ...((await j("/categories?as=web&limit=500&offset=500")).results || [])];
-    const g = {}; l.forEach(x => { (g[x.parentId] = g[x.parentId] || []).push(x.name); });
-    for (const [pid, n] of Object.entries(g).sort((x, y) => +x[0] - +y[0])) out.push("P" + pid + " (" + n.length + "): " + n.slice(0, 14).join(" | "));
-    try { const c = await j("/categories/23?as=web"); out.push("Kategorie 23: " + JSON.stringify(c).slice(0, 300)); } catch (e) { out.push("Kategorie 23: " + e.message); }
-  } catch (e) { out.push("Kategorien: " + e.message); }
-  return out;
+/* ---------- Alle Angebote eines Marktes (zum Durchstöbern) ----------
+   Marktguru nennt die Märkte einer Postleitzahl (/offers/publishers). Alle Angebote eines Marktes liefert die Suche nach seinem Namen,
+   eingeschränkt auf ihn (retailers=ID); ohne Suchwort gibt es nichts. */
+const PUBLISHERS = "https://api.marktguru.de/api/v1/offers/publishers";
+async function mgHole(env, url) {   // eine Abfrage mit den Schlüsseln der Seite, bei abgelaufenen Schlüsseln einmal neu holen
+  let k = await schluessel(env), r;
+  try { r = await http(url, { "x-apikey": k.api, "x-clientkey": k.client }); }
+  catch (e) { if (e.status === 401 || e.status === 403) { k = await schluessel(env, true); r = await http(url, { "x-apikey": k.api, "x-clientkey": k.client }); } else throw e; }
+  return r.json();
+}
+const haendlerId = o => String((((o.advertisers || [])[0]) || {}).id || "").replace(/\D/g, "");
+function kompakt(o) {   // ein Angebot im selben Format wie die übrigen Angebote, dazu die Kategorie
+  const v = (o.validityDates || [{}])[0] || {}, k = (o.categories || [])[0] || {};
+  const x = { name: (o.product || {}).name || "?", brand: (o.brand || {}).name || "", desc: o.description || "", einheit: (((o.unit || {}).shortName) || "").toLowerCase(), volume: o.volume, quantity: o.quantity };
+  const mg = mengenangabe(x), menge = mg ? mg[1] : null, st = mg ? mg[0] : null;
+  return { id: o.id, marke: x.brand, produkt: x.name, beschreibung: x.desc.slice(0, 220), preis: o.price, preis_alt: +o.oldPrice > +o.price ? +o.oldPrice : null,
+    art: mg ? mg[2] : null, liter: menge, stueck: st, ml: menge && st ? Math.round(menge * 1000 / st) : null, preis_pro_liter: o.price && menge ? Math.round(o.price / menge * 100) / 100 : null,
+    gueltig_von: lokalDatum(v.from), gueltig_bis: lokalDatum(v.to), bild: bildUrl(o), link: link(o), kat: String(k.name || ""), kp: +k.parentId || 0 };
+}
+async function marktListe(env, plz, nur, ohne) {   // Märkte einer Postleitzahl mit der Zahl ihrer Angebote
+  const j = await mgHole(env, PUBLISHERS + "?" + new URLSearchParams({ as: "web", zipCode: plz, limit: "60" }));
+  const liste = (j.results || []).map(x => ({ id: String(x.id || "").replace(/\D/g, ""), name: String(x.name || "").trim(), plz }))
+    .filter(x => x.id && x.name && (!nur || nur.some(z => x.name.toLowerCase().includes(z))) && !(ohne || []).includes(x.id));
+  const n = await parallel(liste.map(x => () => mgHole(env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "1", offset: "0", q: x.name, retailers: x.id, zipCode: plz })).then(r => r.totalResults || 0).catch(() => null)), 6);
+  liste.forEach((x, i) => { x.n = n[i]; });
+  return liste;
+}
+async function maerkteRegion(env, plz) {   // für die eigene Gegend kommen wie bei den Favoriten einzelne Märkte aus den Nachbar-Postleitzahlen dazu
+  const key = "mkl:" + plz, alt = await env.PV.get(key, "json");
+  if (alt && Date.now() - alt.t < 12 * 3600e3) return alt.liste;
+  let liste = await marktListe(env, plz);
+  if (plz === PLZ) for (const [p2, namen] of [[PLZ2, PLZ2_MAERKTE], [PLZ3, PLZ3_MAERKTE]]) {
+    try { liste = liste.concat(await marktListe(env, p2, namen, liste.map(x => x.id))); } catch (e) {}
+  }
+  liste = liste.filter(x => x.n !== 0);
+  await env.PV.put(key, JSON.stringify({ t: Date.now(), liste }), { expirationTtl: 86400 });
+  return liste;
+}
+async function marktAngebote(env, ctx, sp, ip) {
+  const plz = sp.get("plz") || PLZ, id = String(sp.get("id") || "").replace(/\D/g, "");
+  if (!plzOk(plz) || !id) throw Object.assign(new Error("Ungültige Anfrage"), { status: 400 });
+  const key = "mk:" + plz + ":" + id, alt = await env.PV.get(key, "json");
+  if (alt && Date.now() - alt.t < 6 * 3600e3) return alt;
+  if (begrenzt("mk:" + ip, 30) || !(await tagesOk(env, "markt", 400))) { if (alt) return alt; throw zuViel(); }
+  const m = (await maerkteRegion(env, plz)).find(x => x.id === id);
+  if (!m) throw Object.assign(new Error("Diesen Markt gibt es hier gerade nicht"), { status: 404 });
+  const teile = ctx.exports.Teil, erste = await teile.marktSeite(m.plz, m.name, id, 0);
+  const seiten = Math.min(12, Math.ceil(erste.total / 100));   // höchstens 1200 Angebote
+  const rest = await parallel(Array.from({ length: Math.max(0, seiten - 1) }, (_, i) => () => teile.marktSeite(m.plz, m.name, id, (i + 1) * 100).catch(() => ({ liste: [] }))), GLEICHZEITIG);
+  const ids = new Set(), angebote = [];
+  for (const s of [erste, ...rest]) for (const o of s.liste) if (!ids.has(o.id)) { ids.add(o.id); angebote.push(o); }
+  const erg = { t: Date.now(), id, name: m.name, plz: m.plz, total: erste.total, angebote };
+  await env.PV.put(key, JSON.stringify(erg), { expirationTtl: 86400 });
+  return erg;
 }
 
 // Eigener Einstiegspunkt, damit jede Teilabfrage als eigener Aufruf mit eigenen Grenzen läuft.
 // Ein Aufruf holt mehrere Artikel in einer Postleitzahl und sortiert unpassende Treffer gleich aus (spart Aufrufe und Rechenzeit im Hauptaufruf).
 export class Teil extends WorkerEntrypoint {
   async hole(plz, suche) { return teilAbfrage(this.env, plz, suche); }
+  async marktSeite(plz, name, id, offset) {   // eine Seite (100 Angebote) eines Marktes, schon verkleinert
+    const j = await mgHole(this.env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "100", offset: String(offset), q: name, retailers: id, zipCode: plz }));
+    const alle = j.results || [], passend = alle.filter(o => haendlerId(o) === id);
+    return { total: j.totalResults || 0, liste: (passend.length || !alle.length ? passend : alle).map(kompakt) };
+  }
   async holeStapel(plz, auftraege, ohneFilterFallback) {
     return Promise.all(auftraege.map(async a => {
       const ids = new Set(), alle = [];
@@ -683,6 +731,8 @@ export default {
           }
           return antwort(stand);
         }
+        if (p === "/maerkte") { const plz = url.searchParams.get("plz") || PLZ; if (!plzOk(plz)) return fehler("Ungültige Postleitzahl", 400); return antwort(await maerkteRegion(env, plz)); }
+        if (p === "/markt") return antwort(await marktAngebote(env, ctx, url.searchParams, req.headers.get("CF-Connecting-IP") || "?"));
         if (p === "/region") return antwort(await regionAngebote(env, ctx, url.searchParams, req.headers.get("CF-Connecting-IP") || "?"));
         if (p === "/korrekturen.json") return antwort((await env.PV.get("korrekturen", "json")) || {});
         if (p === "/status") return antwort({ ok: true, dienst: "preisvergleich", stand: await env.PV.get("stand", "json") });
@@ -695,7 +745,6 @@ export default {
         await env.PV.put("favoriten", JSON.stringify(liste, null, 2));
         return antwort(liste);
       }
-      if (p === "/erkunden" && req.method === "POST") return antwort(await erkunden(env));
       if (p === "/korrekturen" && req.method === "POST") {
         // Korrekturen auffälliger Preise (Preis, Stückzahl, Größe, "passt so", "ausgeblendet"): geteilt zwischen allen Geräten mit Zugangscode
         const b = await req.json(), alt = (await env.PV.get("korrekturen", "json")) || {}, jetzt = Date.now();
