@@ -80,7 +80,7 @@ t("Einkaufen: nach Markt, abhaken bleibt gespeichert; Export nur mit Namen", asy
     await p.click("#hakenseite .hk >> nth=0"); await p.waitForTimeout(300);
     assert.match(await p.textContent("#hakenseite .ek-s"), /1 von 3/);
     await u.A("/aktualisieren", "POST");   // der Server kennt die neuen Favoriten (sonst erst nach ein paar Sekunden)
-    await p.reload(); await p.waitForFunction(() => offers.length > 0 && favs && favs.length > 0, null, { timeout: 15000 }); await p.waitForTimeout(500); await p.click("#tabEinkaufen");
+    await p.reload(); await p.waitForFunction(() => offers.some(o => o.gruppe === "Milch") && favs && favs.some(f => f.name === "Milch"), null, { timeout: 15000 }); await p.waitForTimeout(500); await p.click("#tabEinkaufen");
     assert.match(await p.textContent("#hakenseite .ek-s"), /1 von 3/, "Haken bleibt nach Neuladen");
     await p.click("#tabEinkauf"); await p.waitForTimeout(400);
     const text = await p.$eval("#expText", e => e.value);
