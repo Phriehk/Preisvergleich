@@ -134,29 +134,29 @@ async function teilAbfrage(env, plz, suche) {
 
 /* Vorübergehende Diagnose: welche Abfragen bietet Marktguru für alle Angebote eines Marktes? (nur mit Zugangscode) */
 async function erkunden(env) {
-  const k = await schluessel(env), H = { "x-apikey": k.api, "x-clientkey": k.client }, B = "https://api.marktguru.de/api/v1";
-  const Q = B + "/offers/search?as=web&limit=3&offset=0&zipCode=47178";
-  const urls = [Q + "&q=milch", Q + "&q=milch&retailerIds=126679", Q + "&q=milch&retailerId=126679", Q + "&q=milch&retailers=126679", Q + "&q=milch&retailerIds[]=126679", Q + "&q=milch&filters.retailers=126679",
-    Q + "&q=&retailerIds=126679", Q + "&q=*&retailerIds=126679", Q + "&q=lidl&retailerIds=126679",
-    B + "/offers/publishers?as=web&zipCode=47178&limit=3", B + "/advertisers?as=web&zipCode=47178&limit=3"];
-  const out = [];
-  for (const u of urls) {
-    try {
-      const r = await fetch(u, { headers: { ...UA, ...H } }), t = await r.text();
-      let info = "";
-      try { const j = JSON.parse(t); info = Array.isArray(j) ? "Liste " + j.length + (j[0] ? " erstes: " + JSON.stringify(j[0]).slice(0, 300) : "") : "Felder " + Object.keys(j).join(",") + (j.totalResults != null ? " · total " + j.totalResults : "") + (Array.isArray(j.results) && j.results[0] ? " · Märkte " + [...new Set(j.results.map(o => ((o.advertisers || [])[0] || {}).name))].join("/") : "") + (j.filters && j.filters.retailers ? " · Filter-Märkte " + j.filters.retailers.length : "") + (Array.isArray(j.results) && j.results[0] && !j.results[0].price ? " · erstes: " + JSON.stringify(j.results[0]).slice(0, 500) : "") + (!Array.isArray(j.results) ? " · " + JSON.stringify(j).slice(0, 400) : ""); } catch (e) { info = t.slice(0, 160).replace(/\s+/g, " "); }
-      out.push(r.status + " " + u.replace(B, "") + " → " + info);
-    } catch (e) { out.push("FEHLER " + u.replace(B, "") + " " + e.message); }
-  }
-  try {   // Was steht in der Seite eines Marktes?
-    const html = await (await fetch("https://www.marktguru.de/r/lidl", { headers: UA })).text();
-    const ids = new Set([...html.matchAll(/api\/v1\/offers\/(\d+)\/images/g)].map(m => m[1]));
-    const marker = ["__NEXT_DATA__", "__INITIAL_STATE__", "__NUXT__", "application/ld+json", "window.__", "data-offer", "offerId"].map(m => m + ":" + html.split(m).length);
-    out.push("Seite /r/lidl: " + html.length + " Zeichen, Angebots-IDs " + ids.size + ", " + marker.join(" "));
-    const m = html.match(/<script[^>]*>\s*(?:window\.[A-Za-z_]+\s*=|var [A-Za-z_]+\s*=)([\s\S]{0,300})/);
-    if (m) out.push("Skript-Daten: " + m[1].slice(0, 300));
-    const ld = html.match(/application\/ld\+json[^>]*>([\s\S]{0,500})/); if (ld) out.push("LD: " + ld[1].slice(0, 400));
-  } catch (e) { out.push("Seite: " + e.message); }
+  const k = await schluessel(env), H = { headers: { ...UA, "x-apikey": k.api, "x-clientkey": k.client } }, B = "https://api.marktguru.de/api/v1", out = [];
+  const j = async u => { const r = await fetch(B + u, H); if (!r.ok) throw new Error(r.status + " " + u); return r.json(); };
+  try {
+    const pub = await j("/offers/publishers?as=web&zipCode=47178&limit=60");
+    out.push("Publisher: total " + pub.totalResults + ", geliefert " + (pub.results || []).length + ", Felder " + Object.keys((pub.results || [])[0] || {}).join(","));
+    const liste = (pub.results || []).map(x => ({ id: String(x.id).replace(/\D/g, ""), name: x.name, u: x.uniqueName, n: (x.offers || []).length }));
+    const tot = await Promise.all(liste.map(x => j(`/offers/search?as=web&limit=1&offset=0&zipCode=47178&q=${encodeURIComponent(x.name)}&retailers=${x.id}`).then(r => r.totalResults).catch(e => "F" + e.message.slice(0, 3))));
+    liste.forEach((x, i) => out.push(`Markt ${x.id} ${x.name} (${x.u}) Vorschau ${x.n} · Suche nach Name: ${tot[i]}`));
+    const u2 = await j(`/offers/search?as=web&limit=1&offset=0&zipCode=47178&q=netto&retailers=126735`).then(r => r.totalResults).catch(e => e.message);
+    out.push("Netto mit q=netto: " + u2);
+    const l1 = await j(`/offers/search?as=web&limit=100&offset=0&zipCode=47178&q=lidl&retailers=126679`);
+    const res = l1.results || [], mitWort = res.filter(o => JSON.stringify([o.product, o.brand, o.description]).toLowerCase().includes("lidl")).length;
+    const kat = {}; res.forEach(o => { const c = ((o.categories || [])[0] || {}).name || "?"; kat[c] = (kat[c] || 0) + 1; });
+    out.push(`Lidl Seite 1: ${res.length}, davon mit "lidl" im Text ${mitWort}; Kategorien ${JSON.stringify(kat).slice(0, 600)}`);
+    out.push("Kategorie-Felder: " + JSON.stringify((res[0] || {}).categories || []).slice(0, 300));
+    const gueltig = {}; res.forEach(o => { const v = ((o.validityDates || [])[0] || {}); const kk = (v.from || "").slice(0, 10) + ">" + (v.to || "").slice(0, 10); gueltig[kk] = (gueltig[kk] || 0) + 1; });
+    out.push("Gültigkeit: " + JSON.stringify(gueltig).slice(0, 400));
+    const l9 = await j(`/offers/search?as=web&limit=100&offset=800&zipCode=47178&q=lidl&retailers=126679`);
+    out.push("Lidl offset 800: " + (l9.results || []).length);
+    const ka = await j(`/offers/search?as=web&limit=100&offset=0&zipCode=47178&q=kaufland&retailers=126654`);
+    out.push("Kaufland: total " + ka.totalResults + ", Seite 1 mit Wort " + (ka.results || []).filter(o => JSON.stringify([o.product, o.brand, o.description]).toLowerCase().includes("kaufland")).length);
+    const t = JSON.stringify(l1).length; out.push("Größe einer Seite: " + t + " Zeichen");
+  } catch (e) { out.push("Fehler: " + e.message); }
   return out;
 }
 
