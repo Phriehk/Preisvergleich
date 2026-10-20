@@ -1,0 +1,74 @@
+// Gemeinsame Helfer für die Browser-Tests: echter Worker-Code (Speicher im Arbeitsspeicher, Marktguru nachgebaut) und die echte Seite.
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { createRequire } from "node:module";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+const hier = path.dirname(fileURLToPath(import.meta.url));
+export const wurzel = path.resolve(hier, "../..");
+const require = createRequire(import.meta.url);
+
+export async function ladeWorker() {
+  const q = fs.readFileSync(path.join(wurzel, "worker/src/index.js"), "utf8")
+    .replace(/^import \{ WorkerEntrypoint \} from "cloudflare:workers";/m, "class WorkerEntrypoint{constructor(ctx,env){this.ctx=ctx;this.env=env}}");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "pv-worker-"));
+  const datei = path.join(dir, "w.mjs");
+  fs.writeFileSync(datei, q);
+  return await import(pathToFileURL(datei).href);
+}
+
+export function playwright() {
+  try { return require("playwright"); } catch (e) { return null; }
+}
+
+const V = [{ from: "2026-10-19T00:00:00Z", to: "2099-10-25T21:59:00Z" }];
+let nr = 100;
+const O = (adv, name, brand, desc, price, unit, volume, quantity) => ({ id: ++nr, url: "https://www.marktguru.de/offers/" + nr, advertisers: [{ name: adv }], product: { name }, brand: { name: brand }, description: desc, price, unit: unit ? { shortName: unit } : undefined, volume, quantity, validityDates: V });
+export const DATEN = {
+  butter: [O("ALDI SÜD", "Butter", "Kerrygold", "250-g-Packung", 1.99), O("PENNY", "Butter", "Weihenstephan", "250 g", 1.79, "g", 250, 1), O("REWE", "Butter", "Milram", "2 x 250 g", 3.49), O("Lidl", "Erdnussbutter", "Skippy", "350 g", 3.99)],
+  eier: [O("Kaufland", "Freilandeier", "", "10 Stück", 2.39), O("ALDI SÜD", "Freiland-Eier", "", "10 Stück, Größe M", 2.29), O("PENNY", "Eier", "", "6er Packung", 1.49)],
+  milch: [O("PENNY", "Milch", "Weihenstephan", "1 l", 0.95, "l", 1, 1), O("Lidl", "Milch", "Milbona", "1 l", 0.89, "l", 1, 1), O("Kaufland", "Milch", "K-Classic", "1 l", 1.05, "l", 1, 1)],
+  "äpfel": [O("PENNY", "Äpfel", "", "lose", 1.99, "kg"), O("ALDI SÜD", "Äpfel", "", "1,5-kg-Beutel", 2.49)],
+  reis: [O("Lidl", "Basmati Reis", "Tilda", "1 kg", 1.99), O("ALDI SÜD", "Reis", "", "500 g", 0.89)],
+};
+
+/** Umgebung: Speicher, Marktguru-Nachbau, ntfy-Protokoll */
+export async function umgebung(opts = {}) {
+  const W = await ladeWorker(), H = W.default;
+  const store = new Map();
+  const KV = { async get(k, t) { const v = store.get(k); return v == null ? null : t === "json" ? JSON.parse(v) : v; }, async put(k, v) { store.set(k, v); }, async delete(k) { store.delete(k); } };
+  const html = fs.readFileSync(path.join(wurzel, "index.html"));
+  const env = { PV: KV, ZUGANG: "betreiber", NTFY_TOPIC: opts.ntfy ? "test" : undefined, ASSETS: { fetch: async () => new Response(html, { headers: { "content-type": "text/html" } }) } };
+  const ctx = { exports: { Teil: new W.Teil({}, env) }, waitUntil() {} };
+  const ntfy = [];
+  globalThis.fetch = async (u, o) => {
+    u = String(u);
+    if (u === "https://www.marktguru.de") return new Response('..."apiKey":"k","clientKey":"c"...');
+    if (u === "https://ntfy.sh") { ntfy.push(JSON.parse(o.body)); return new Response("{}"); }
+    if (u.startsWith("https://api.marktguru.de")) { const q = new URL(u).searchParams; return new Response(JSON.stringify({ results: q.get("offset") === "0" ? (opts.daten || DATEN)[q.get("q").toLowerCase()] || [] : [] })); }
+    return new Response("nf", { status: 404 });
+  };
+  const A = (p, m = "GET", b) => H.fetch(new Request("https://preise.phriehk.workers.dev" + p, { method: m, headers: { Authorization: "Bearer betreiber", "Content-Type": "application/json" }, body: b }), env, ctx);
+  return { H, env, ctx, KV, store, A, ntfy };
+}
+
+/** Browser mit der echten Seite; alle Anfragen an die Worker-Adresse gehen an den echten Worker-Code */
+export async function browserStarten(u, { breite = 390, hoehe = 844, code = "betreiber" } = {}) {
+  const pw = playwright();
+  const b = await pw.chromium.launch();
+  const c = await b.newContext({ viewport: { width: breite, height: hoehe } });
+  await c.addInitScript(([cd]) => { localStorage.setItem("pv-ort", JSON.stringify({ lat: 51.40, lon: 6.70, name: "Test 1, Duisburg", plz: "47178", angebote: true })); if (cd) localStorage.setItem("pv-code", cd); }, [code]);
+  const p = await c.newPage();
+  const fehler = [];
+  p.on("pageerror", e => fehler.push(e.message));
+  await p.route("https://fonts.googleapis.com/**", r => r.fulfill({ body: "" }));
+  await p.route("https://nominatim.openstreetmap.org/**", r => r.fulfill({ body: "[]", headers: { "access-control-allow-origin": "*", "content-type": "application/json" } }));
+  await p.route("https://router.project-osrm.org/**", r => r.abort());
+  await p.route("https://preise.phriehk.workers.dev/**", async r => {
+    const q = r.request();
+    const resp = await u.H.fetch(new Request(q.url(), { method: q.method(), headers: q.headers(), body: q.postData() || undefined }), u.env, u.ctx);
+    await r.fulfill({ status: resp.status, headers: Object.fromEntries(resp.headers), body: Buffer.from(await resp.arrayBuffer()) });
+  });
+  return { b, c, p, fehler, oeffnen: async (hash = "") => { await p.goto("https://preise.phriehk.workers.dev/" + hash); await p.waitForTimeout(1500); } };
+}

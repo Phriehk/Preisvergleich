@@ -14,3 +14,18 @@ jobs:
         with:
           node-version: 22
       - run: node --test tests/erkennung.test.mjs
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test tests/alarm.test.mjs
+      - name: Playwright und Chromium installieren
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Browser-Tests (echte Seite gegen den Worker-Code)
+        run: node --test tests/browser/seite.test.mjs

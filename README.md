@@ -24,3 +24,10 @@ Per Link (z. B. aus einem iPhone-Kurzbefehl): `https://preise.phriehk.workers.de
 
 Einkaufsliste → „Liste exportieren“: Text nach Markt gegliedert (Beste Wahl oder alles bei einem Markt), kopieren, teilen oder per Kurzbefehl (`shortcuts://run-shortcut?name=…&input=text&text=…`) an Erinnerungen übergeben.
 Mengen werden in Stück angegeben. 1 Stück ist die häufigste Packungsgröße aus den Angeboten (z. B. 250 g Butter); intern wird weiter in kg bzw. Liter gerechnet. Artikel ohne Angebot sind standardmäßig Stück.
+
+## Einkaufen (Abhaken), Alarm, Tests
+
+- Tab „Einkaufen“: die Liste nach Markt gegliedert zum Abhaken (Haken bleiben auf dem Gerät gespeichert). „Demnächst“ liegt jetzt unter „Mehr“.
+- Neue Artikel suchst du nur noch im Tab „Import“ (auch einzelne); die Favoriten-Seite zeigt nur die Kacheln.
+- Preisalarm gibt es auch für Gewicht (€/kg) und Stück (€/Stück). In der Einkaufsliste schaltet „Melden, wenn Artikel meiner Liste im Angebot sind“ einen Alarm für alle Favoriten der Liste (unter dem Richtwert, sonst bei jedem Angebot).
+- Tests: `node --test tests/erkennung.test.mjs tests/alarm.test.mjs` und mit installiertem Playwright `node --test tests/browser/seite.test.mjs` (echte Seite im Browser gegen den echten Worker-Code). Beides läuft bei jedem Push (Workflow „Tests“).

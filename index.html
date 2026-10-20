@@ -101,7 +101,7 @@ button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);fon
 .lb.an{background:var(--bestbg);border-color:var(--best)}
 .hk{display:flex;gap:2px;margin-left:auto}
 .hk .icon-btn{margin-left:0}
-#einkauf,#favseite,#impseite{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
+#einkauf,#favseite,#impseite,#hakenseite{display:flex;flex-direction:column;gap:12px;margin-bottom:12px}
 .fv-grp{padding:4px 0 8px;border-bottom:1px solid var(--line)}.fv-grp:last-child{border-bottom:0}
 .fv-gk{font:700 1.1rem "Barlow Condensed",sans-serif;margin-top:6px}
 .fv-gitter{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:6px}
@@ -110,6 +110,11 @@ button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);fon
 .kachel .kb{position:relative;height:84px;border-radius:8px;background:#fff;overflow:hidden;display:grid;place-items:center;border:1px solid var(--line);margin-bottom:4px}
 .kachel .kb img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
 .kachel b{font-weight:600}.kachel small{color:var(--mute);line-height:1.3;min-height:2.6em}
+.hk-g{margin:6px 0 10px}.hk-k{display:flex;justify-content:space-between;align-items:baseline;padding:6px 2px;border-bottom:1px solid var(--line)}.hk-k small{color:var(--mute)}
+.hk{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line);font-size:1.1rem;cursor:pointer}
+.hk input{appearance:none;-webkit-appearance:none;width:26px;height:26px;border:2px solid var(--mute);border-radius:50%;flex:none;margin:0;display:grid;place-content:center;background:transparent}
+.hk input:checked{background:var(--best);border-color:var(--best)}.hk input:checked::after{content:"✓";color:#fff;font-size:16px;line-height:1}
+.hk.an span{text-decoration:line-through;color:var(--mute)}
 .kachel b a.kl{color:inherit;text-decoration:underline dotted;text-underline-offset:2px}.kachel b a.kl:hover{color:var(--best)}
 .kachel .lb{margin:4px 0 0;align-self:stretch;text-align:center}
 .kachel .fv-l{margin-top:4px}
@@ -157,7 +162,7 @@ button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);fon
   .fz{display:flex}
   #filters:not(.offen)>:not(.fz){display:none}
 }
-#einkauf,#favseite,#impseite{order:5}
+#einkauf,#favseite,#impseite,#hakenseite{order:5}
 .icon-btn svg{width:20px;height:20px;display:block;margin:auto}
 .ampel{grid-column:1/-1;border-top:1px solid color-mix(in srgb,var(--best) 35%,transparent);padding-top:8px;font-size:.92rem}
 .tablewrap{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow-x:auto;box-shadow:var(--shadow)}
@@ -341,7 +346,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
     </div>
   </div>
   <div class="main">
-    <div class="tabs" role="tablist"><button id="tabJetzt" type="button" role="tab" class="on">Aktuell</button><button id="tabSpaeter" type="button" role="tab">Demnächst</button><button id="tabFav" type="button" role="tab">Favoriten</button><button id="tabEinkauf" type="button" role="tab">Einkaufsliste</button><button id="tabImport" type="button" role="tab">Import</button><button id="tabMehr" type="button" aria-haspopup="true" aria-expanded="false">Mehr ▾</button><div id="mehrMenu" class="mehr" hidden><button id="tabUebersicht" type="button" role="tab">Übersicht</button><button id="tabVerlauf" type="button" role="tab">Preisverlauf</button></div></div>
+    <div class="tabs" role="tablist"><button id="tabJetzt" type="button" role="tab" class="on">Aktuell</button><button id="tabFav" type="button" role="tab">Favoriten</button><button id="tabEinkauf" type="button" role="tab">Einkaufsliste</button><button id="tabEinkaufen" type="button" role="tab">Einkaufen</button><button id="tabImport" type="button" role="tab">Import</button><button id="tabMehr" type="button" aria-haspopup="true" aria-expanded="false">Mehr ▾</button><div id="mehrMenu" class="mehr" hidden><button id="tabSpaeter" type="button" role="tab">Demnächst</button><button id="tabUebersicht" type="button" role="tab">Übersicht</button><button id="tabVerlauf" type="button" role="tab">Preisverlauf</button></div></div>
 
     <div id="vergleich" class="hinweis" hidden></div>
     <div id="korrInfo" class="hinweis" hidden><span id="korrText"></span><button id="korrReset" type="button">Korrekturen zurücksetzen</button></div>
@@ -349,6 +354,7 @@ code{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;background:var(
     <div id="einkauf" hidden></div>
     <div id="favseite" hidden></div>
     <div id="impseite" hidden></div>
+    <div id="hakenseite" hidden></div>
 
     <div id="verlaufBox" hidden>
       <div class="filters"><label class="chip"><input type="checkbox" id="proMarkt"> Linien pro Markt</label><select id="vPack" aria-label="Packungsgröße im Verlauf"></select><input id="vfile" type="file" accept=".csv,text/csv,text/plain" hidden></div>
@@ -595,24 +601,72 @@ function fahrtZeile(b,liste){
 }
 /* ---- Einkaufsliste ---- */
 try{localStorage.removeItem("pv-eink")}catch(e){}   // alte Einzelangebots-Liste gibt es nicht mehr
+/* ---- Einkaufen: Liste zum Abhaken, nach Markt gegliedert (wie in Erinnerungen) ---- */
+var haken={};try{haken=JSON.parse(localStorage.getItem("pv-haken")||"{}")||{}}catch(e){}
+const hakenSpeichern=()=>{try{localStorage.setItem("pv-haken",JSON.stringify(haken))}catch(e){}};
+function zeichneHaken(){
+  const zn=zettelNamen();
+  if(!zn.length){hakenseite.innerHTML='<div class="empty">Die Einkaufsliste ist leer. Setze Artikel im Tab „Import“ oder bei den Favoriten auf die Liste.</div>';return}
+  fvVergleich(zn);
+  if(!expPlaene.length){hakenseite.innerHTML='<div class="empty">Keine Liste vorhanden.</div>';return}
+  const i=Math.min(expSel,expPlaene.length-1),grp=expGruppen(expPlaene[i]);
+  let alle=0,fertig=0;grp.forEach(g=>g.namen.forEach(x=>{alle++;if(haken[x.k])fertig++}));
+  let h=`<section class="ek"><div class="ek-h"><b>Einkaufen</b><span class="ek-s" style="font-size:1rem">${fertig} von ${alle} erledigt</span></div>`;
+  if(expPlaene.length>1)h+=`<div class="fv-add"><select data-exp="plan" aria-label="Welcher Plan">${expPlaene.map((q,j)=>`<option value="${j}"${j===i?" selected":""}>${esc(q.label)}</option>`).join("")}</select></div>`;
+  h+=grp.map(g=>{
+    const f=g.namen.filter(x=>haken[x.k]).length,sortiert=g.namen.slice().sort((a,b)=>(!!haken[a.k]-!!haken[b.k]));
+    return `<div class="hk-g"><div class="hk-k"><b>${esc(g.kopf)}</b><small>${f}/${g.namen.length}</small></div>`+sortiert.map(x=>`<label class="hk${haken[x.k]?" an":""}"><input type="checkbox" data-hk="${esc(x.k)}"${haken[x.k]?" checked":""}><span>${esc(x.name)}</span></label>`).join("")+`</div>`;
+  }).join("");
+  h+=`<div class="fv-add"><button type="button" class="lb" id="hakenNull"${fertig?"":" disabled"}>Alle Haken entfernen</button></div></section>`;
+  hakenseite.innerHTML=h;
+}
+hakenseite.onchange=e=>{
+  if(expAender(e))return;
+  const c=e.target.closest("input[data-hk]");if(c){if(c.checked)haken[c.dataset.hk]=1;else delete haken[c.dataset.hk];hakenSpeichern();render()}
+};
+hakenseite.onclick=e=>{if(e.target.closest("#hakenNull")){haken={};hakenSpeichern();render()}};
+tabEinkaufen.onclick=()=>{tab="einkaufen";tabGewaehlt=true;render()};
+/* ---- Meldung bei Angeboten für die Einkaufsliste: Alarm für alle Favoriten, die auf der Liste stehen ---- */
+const listeFavNamen=()=>[...new Set(Object.keys(zettel).filter(k=>zettel[k]>0).map(k=>zk(k).g))].filter(n=>(favs||[]).some(f=>f.name===n));
+const listeAlarmAn=()=>{const n=listeFavNamen();return n.length>0&&n.every(x=>{const f=(favs||[]).find(q=>q.name===x);return f&&f.alarm&&f.alarm.liste})};
+function alarmListeHtml(){
+  if(!cf||regionPlz())return"";
+  const n=listeFavNamen(),an=listeAlarmAn();
+  if(!n.length)return"";
+  return `<section class="ek"><div class="ek-h"><b>Meldung bei Angeboten</b></div><div class="fv-add"><button type="button" class="lb${an?" an":""}" id="listeAlarm">${an?"🔔 An: Meldung für "+n.length+" Artikel":"🔔 Melden, wenn Artikel meiner Liste im Angebot sind"}</button></div><p class="lbl" style="margin:6px 0 0">Der tägliche Lauf schickt dir eine Nachricht aufs Handy, sobald ein Artikel deiner Liste (mit Favorit) im Angebot ist, bei Richtwert nur unter dem Richtwert. Artikel ohne Angebot werden nicht beobachtet.</p></section>`;
+}
+async function listeAlarmUmschalten(){
+  const an=listeAlarmAn(),namen=listeFavNamen();
+  try{
+    const liste=(favs||[]).map(f=>{
+      if(!namen.includes(f.name))return f;
+      if(an){if(f.alarm&&f.alarm.liste){const {alarm,...r}=f;return r}return f}
+      if(f.alarm&&!f.alarm.liste)return f;   // eigener Alarm bleibt
+      const k=Object.keys(zettel).find(q=>zettel[q]>0&&zk(q).g===f.name),r=k?rwPreis(k):null,ar=artG(f.name);
+      return {...f,alarm:{wert:r>0?r:9999,einheit:ar,ml:null,liste:true}};
+    });
+    await favSpeichern(liste);favs=liste;
+    hinweis=an?"Meldung für die Liste ausgeschaltet.":"Meldung für die Liste an. Beim nächsten Lauf (täglich, oder „Preise aktualisieren“) bekommst du eine Nachricht, wenn etwas im Angebot ist.";
+  }catch(e){hinweis=netzFehler(e)}
+  render();
+}
 /* ---- Export der Einkaufsliste (nach Markt gegliedert), z. B. für Erinnerungen ---- */
-var expPlaene=[],expSel=0,expFmt="kopf",kurzName="Einkaufsliste in Erinnerungen";try{kurzName=localStorage.getItem("pv-kurz")||kurzName}catch(e){}
-const expMenge=g=>zMengeText(g);
+var expPlaene=[],expSel=0,expFmt="zeile",kurzName="Einkaufsliste in Erinnerungen";try{kurzName=localStorage.getItem("pv-kurz")||kurzName}catch(e){}
 function expPack(t){const o=t.o,a=artO(o);return t.packs+" × "+(a==="l"?(o.stueck>1?o.stueck+"er-Pack":groesseText(o.ml)):mengeText(o))}
-function expZeile(g,w){
-  const gr=zMitglieder(g).length>1,t0=w.teile[0];
-  return (gr?(t0.o.gruppe||zLabel(g)):zLabel(g))+": "+w.teile.map(expPack).join(" + ");
+function expName(g,w){const gr=zMitglieder(g).length>1;return (gr&&w?(w.teile[0].o.gruppe||zLabel(g)):zLabel(g)).replace(/ \(ohne Angebot\)$/,"")}
+function expGruppen(p){   // [{kopf, namen:[{k,name}]}] nach Markt (nächster zuerst), zuletzt "Egal wo"
+  const ms=Object.keys(p.wo).sort((a,b)=>(dkm(a)??99)-(dkm(b)??99)),out=ms.map(m=>({kopf:m,namen:p.wo[m].map(([g,w])=>({k:m+"|"+expName(g,w),name:expName(g,w)}))}));
+  const ohne=[...p.rw,...p.fehl].map(g=>({k:"*|"+expName(g),name:expName(g)}));
+  if(ohne.length)out.push({kopf:"Egal wo (kein Angebot)",namen:ohne});
+  return out;
 }
 function expPlan(label,p,fehl){const wo={};Object.entries(p.zu).forEach(([g,x])=>{(wo[x.m]=wo[x.m]||[]).push([g,x.w])});return {label,wo,rw:p.rw.slice(),fehl:fehl.slice()}}
 function expBauen(p,fmt){
-  const z=[],ms=Object.keys(p.wo).sort((a,b)=>(dkm(a)??99)-(dkm(b)??99)),ohne=[...p.rw,...p.fehl].map(g=>zLabel(g)+": "+expMenge(g));
-  if(fmt==="kopf"){
-    ms.forEach(m=>{z.push("— "+m+" —");p.wo[m].forEach(([g,w])=>z.push(expZeile(g,w)))});
-    if(ohne.length){z.push("— Egal wo (kein Angebot) —");z.push(...ohne)}
-  }else{
-    ms.forEach(m=>p.wo[m].forEach(([g,w])=>z.push(expZeile(g,w)+" ("+m+")")));
-    ohne.forEach(x=>z.push(x));
-  }
+  const z=[];
+  expGruppen(p).forEach(gr=>{
+    if(fmt==="kopf"){z.push("— "+gr.kopf+" —");gr.namen.forEach(x=>z.push(x.name))}
+    else gr.namen.forEach(x=>z.push(gr.kopf.startsWith("Egal wo")?x.name:x.name+" ("+gr.kopf+")"));
+  });
   return z.join("\n");
 }
 function exportHtml(){
@@ -628,6 +682,7 @@ function exportHtml(){
 function expText1(){const i=Math.min(expSel,expPlaene.length-1);return expPlaene.length?expBauen(expPlaene[i],expFmt):""}
 function expKlick(e){
   const g=id=>e.target.closest(id);
+  if(g("#listeAlarm")){listeAlarmUmschalten();return true}
   if(g("#expKopie")){
     const t=expText1(),ta=document.getElementById("expText");
     const fertig=()=>{hinweis="Liste kopiert.";render()};
@@ -648,7 +703,7 @@ function expAender(e){
 }
 function zeichneEinkauf(){
   const zn=zettelNamen();
-  einkauf.innerHTML=zn.length?fvZettelHtml(zn)+fvVergleich(zn)+exportHtml():'<div class="empty">Die Einkaufsliste ist leer. Wähle auf der Seite „Favoriten“ aus, was du kaufen willst.</div>';
+  einkauf.innerHTML=zn.length?fvZettelHtml(zn)+fvVergleich(zn)+exportHtml()+alarmListeHtml():'<div class="empty">Die Einkaufsliste ist leer. Wähle auf der Seite „Favoriten“ aus, was du kaufen willst.</div>';
 }
 /* ---- Favoriten-Seite: Zettel (Favorit -> Liter) und Marktvergleich ---- */
 var zettel={};try{zettel=JSON.parse(localStorage.getItem("pv-zettel")||"{}")||{}}catch(e){}
@@ -797,10 +852,8 @@ function zeichneFavoriten(){
     return `<div class="fv-sg"><div class="fv-sk"><b>${esc(su[0].toUpperCase()+su.slice(1))}</b><small>Im Vergleich zählt nur das günstigste Produkt dieser Gruppe, die Menge gilt für die ganze Gruppe.</small></div>${l.map(block).join("")}</div>`;
   }).join("");
   let html=`<section class="ek"><div class="ek-h"><b>Favoriten</b><span class="ek-s" style="font-size:1rem">${namen.length} auf der Liste</span></div>`
-    +`<div class="fv-add"><input id="neuArt" type="text" maxlength="40" autocomplete="off" placeholder="Produkt suchen, z. B. Butter oder Eier" value="${esc(neuText)}" aria-label="Produkt suchen"><button type="button" class="primary" id="neuBtn"${neuLaeuft?" disabled":""}>${neuLaeuft?"Suche läuft …":"Suchen"}</button></div>`
-    +`<p class="lbl" style="margin:4px 0 8px">Suche ein Produkt und wähle aus den Ergebnissen eines als Favorit. Die Favoriten erscheinen darunter als Kacheln.</p>`
-    +ergHtml()
-    +`${gr.length?zeilen:'<div class="empty">Noch keine Favoriten. Füge oben einen Artikel hinzu oder suche ein Getränk und speichere es als Favorit.</div>'}<p class="lbl" style="margin:8px 0 0">Hake an, was auf die Einkaufsliste soll. Die Menge (Liter, kg oder Stück) stellst du dort ein.</p></section>`;
+    +`<div class="fv-add"><button type="button" class="primary" id="zumImport">Neue Artikel suchen / Liste importieren</button></div>`
+    +`${gr.length?zeilen:'<div class="empty">Noch keine Favoriten. Suche im Tab „Import“ nach Artikeln (auch einzelnen) und speichere sie als Favorit.</div>'}<p class="lbl" style="margin:8px 0 0">Hake an, was auf die Einkaufsliste soll. Die Menge (Liter, kg oder Stück) stellst du dort ein.</p></section>`;
   html+=`<button type="button" class="lb an" id="zurListe" style="align-self:flex-start;padding:8px 14px">${namen.length?"Zur Einkaufsliste mit Vergleich ("+namen.length+")":"Zur Einkaufsliste"}</button>`;
   favseite.innerHTML=html;
 }
@@ -894,7 +947,7 @@ function fvKlick(e){
   const x=e.target.closest("[data-zx]");if(x){zMitglieder(x.dataset.zx).forEach(m=>delete zettel[m]);zettelSpeichern();render();return true}
   return false;
 }
-favseite.onclick=e=>{if(e.target.closest("#zurListe")){tab="einkauf";render();window.scrollTo(0,0);return}if(e.target.closest("#neuBtn")){artikelSuchen();return}if(e.target.closest("#ohneBtn")){artikelOhne();return}const ef=e.target.closest("[data-ef]");if(ef){favHinzu(+ef.dataset.ef);return}if(impKlick(e))return;fvKlick(e)};
+favseite.onclick=e=>{if(e.target.closest("#zurListe")){tab="einkauf";render();window.scrollTo(0,0);return}if(e.target.closest("#zumImport")){tab="import";tabGewaehlt=true;render();window.scrollTo(0,0);return}fvKlick(e)};
 function fvAender(e){
   const c=e.target.closest("input[type=checkbox][data-g]");
   if(c){if(c.checked)zettel[c.dataset.g]=zettel[c.dataset.g]||zStd(c.dataset.g);else delete zettel[c.dataset.g];zettelSpeichern();render();return}
@@ -907,7 +960,7 @@ function fvAender(e){
 }
 favseite.onchange=fvAender;einkauf.onchange=e=>{if(expAender(e))return;fvAender(e)};
 favseite.oninput=e=>{if(e.target.id==="neuArt")neuText=e.target.value;if(e.target.id==="impText")imp.text=e.target.value};
-favseite.onkeydown=e=>{if(e.key==="Enter"&&e.target.id==="neuArt"){e.preventDefault();artikelSuchen()}};
+
 einkauf.onclick=e=>{if(expKlick(e))return;fvKlick(e)};
 /* ---- Darstellung (automatisch / hell / dunkel) und Filter-Knopf am Handy ---- */
 var theme="auto";try{theme=localStorage.getItem("pv-theme")||"auto"}catch(e){}
@@ -949,19 +1002,20 @@ function fillFilters(){
   g.value=art!=="st"&&groessen.map(String).includes(gv)?gv:"";g.hidden=art==="st";
 }
 function render(){
-  medC={};updateNote();chips();titel.textContent=tab==="uebersicht"?"Preisübersicht":tab==="einkauf"?"Einkaufsliste":tab==="favoriten"?"Favoriten und Einkauf":tab==="import"?"Liste importieren":fProdukt.value+": günstigster Preis pro "+ARTEN[artG(fProdukt.value)].wort;fzText();favKnopf();trefferZeichnen();
+  medC={};updateNote();chips();titel.textContent=tab==="uebersicht"?"Preisübersicht":tab==="einkauf"?"Einkaufsliste":tab==="favoriten"?"Favoriten und Einkauf":tab==="import"?"Liste importieren":tab==="einkaufen"?"Einkaufen":fProdukt.value+": günstigster Preis pro "+ARTEN[artG(fProdukt.value)].wort;fzText();favKnopf();trefferZeichnen();
   const m=fMarkt.value,f=fForm.value,g=fMl.value,s=fSorte.value;
   let list=offers.filter(o=>(o.gruppe||"Coca-Cola")===fProdukt.value&&gewaehlt(o)&&(!m||o.markt===m)&&(!f||o.form===f)&&(!g||o.ml==g)&&(!s||(o.sorte||"Classic")===s)&&!aus.has(o.markt)&&!o.ausb).sort((a,b)=>gp(a)-gp(b));
   const jetztL=list.filter(o=>!abgelaufen(o)&&!kommt(o)),spaeterL=list.filter(kommt);
   tabInfo(jetztL,spaeterL);
   const gv=offers.filter(o=>(o.gruppe||"Coca-Cola")===fProdukt.value),nk=gv.filter(o=>o.korr).length,na=gv.filter(o=>o.ausb).length;
-  korrInfo.hidden=tab==="verlauf"||tab==="uebersicht"||tab==="einkauf"||tab==="favoriten"||tab==="import"||!(nk||na);
+  korrInfo.hidden=tab==="verlauf"||tab==="uebersicht"||tab==="einkauf"||tab==="favoriten"||tab==="import"||tab==="einkaufen"||!(nk||na);
   korrText.textContent="✎ "+[nk?nk+" Angebot"+(nk>1?"e":"")+" von dir korrigiert":"",na?na+" ausgeblendet":""].filter(Boolean).join(", ")+".";
-  const vm=tab==="verlauf",ue=tab==="uebersicht",ek=tab==="einkauf",fv=tab==="favoriten",im=tab==="import";liste.hidden=vm||ue||ek||fv||im;filters.hidden=vm||ue||ek||fv||im;seiteZeigen();verlaufBox.hidden=!vm;uebersicht.hidden=!ue;einkauf.hidden=!ek;favseite.hidden=!fv;impseite.hidden=!im;
+  const vm=tab==="verlauf",ue=tab==="uebersicht",ek=tab==="einkauf",fv=tab==="favoriten",im=tab==="import",ha=tab==="einkaufen";liste.hidden=vm||ue||ek||fv||im||ha;filters.hidden=vm||ue||ek||fv||im||ha;hakenseite.hidden=!ha;seiteZeigen();verlaufBox.hidden=!vm;uebersicht.hidden=!ue;einkauf.hidden=!ek;favseite.hidden=!fv;impseite.hidden=!im;
   if(ue){vergleich.hidden=true;zeichneUebersicht();return}
   if(ek){vergleich.hidden=true;zeichneEinkauf();return}
   if(fv){vergleich.hidden=true;zeichneFavoriten();return}
   if(im){vergleich.hidden=true;zeichneImport();return}
+  if(ha){vergleich.hidden=true;zeichneHaken();return}
   if(vm){vergleich.hidden=true;malVerlauf();return}
   list=tab==="jetzt"?jetztL:spaeterL;
   {const sb=document.querySelector('th button[data-s="liter"]'),ea=artG(fProdukt.value);if(sb&&sb.firstChild)sb.firstChild.nodeValue="Preis/"+(ea==="l"?"Liter":unitK(ea))}
@@ -1131,7 +1185,7 @@ function limitVon(t){const m=(t||"").match(/max\.?\s*(\d+\s*[a-zäöüß]+)/i);r
 let tab="jetzt";var stumm=false,stummCb=null;   // stumm: Angebote still einmischen, ohne Tab-Wechsel und Neuzeichnen (Import)
 function tabInfo(j,k){
   tabJetzt.textContent="Aktuell ("+j.length+")";tabSpaeter.textContent="Demnächst ("+k.length+")";
-  tabJetzt.classList.toggle("on",tab==="jetzt");tabSpaeter.classList.toggle("on",tab==="spaeter");tabVerlauf.classList.toggle("on",tab==="verlauf");tabUebersicht.classList.toggle("on",tab==="uebersicht");tabEinkauf.classList.toggle("on",tab==="einkauf");tabFav.classList.toggle("on",tab==="favoriten");tabImport.classList.toggle("on",tab==="import");mehrMenu.hidden=true;tabMehr.setAttribute("aria-expanded","false");{const mt=tab==="uebersicht"?"Übersicht":tab==="verlauf"?"Preisverlauf":"Mehr";tabMehr.textContent=mt+" ▾";tabMehr.classList.toggle("on",tab==="uebersicht"||tab==="verlauf")}
+  tabJetzt.classList.toggle("on",tab==="jetzt");tabSpaeter.classList.toggle("on",tab==="spaeter");tabVerlauf.classList.toggle("on",tab==="verlauf");tabUebersicht.classList.toggle("on",tab==="uebersicht");tabEinkauf.classList.toggle("on",tab==="einkauf");tabFav.classList.toggle("on",tab==="favoriten");tabEinkaufen.classList.toggle("on",tab==="einkaufen");tabImport.classList.toggle("on",tab==="import");mehrMenu.hidden=true;tabMehr.setAttribute("aria-expanded","false");{const mt=tab==="uebersicht"?"Übersicht":tab==="verlauf"?"Preisverlauf":tab==="spaeter"?"Demnächst":"Mehr";tabMehr.textContent=mt+" ▾";tabMehr.classList.toggle("on",tab==="uebersicht"||tab==="verlauf"||tab==="spaeter")}
   tabEinkauf.textContent="Einkaufsliste"+(zettelNamen().length?" ("+zettelNamen().length+")":"");
   const v=document.getElementById("vergleich"),bj=j[0],bk=k[0];
   if(!bk){v.hidden=true;return}
@@ -1421,7 +1475,7 @@ function zeichneImport(){
           const an=impAuf(f.name),os=fvAngebote1(f.name).sort((a,b)=>gp(a)-gp(b)),o=os[0];
           kach+=impKachel(f.name,impBild(os),f.name,`Dein Favorit<br>${o?"ab "+eur(gp(o))+"/"+unitK(artO(o)):"gerade kein Angebot"}`,`<button type="button" class="lb${an?" an":""}" data-if="${esc(f.name)}|${i}">${an?"✓ Auf der Liste":"＋ Auf die Liste"}</button>`,an,f.name,o);
         });
-        kach+=it.karten.slice(0,8).map((c,j)=>{
+        kach+=it.karten.map((c,j)=>[c,j]).filter(([c])=>!(it.roh.length&&c.label.toLowerCase()===it.name.toLowerCase())).slice(0,8).map(([c,j])=>{
           const fav=impIstFav(c.label),an=fav&&impAuf(c.label);
           return impKachel(c.label,c.bild,c.label,`${c.os.length} Angebot${c.os.length>1?"e":""} · ab ${eur(c.min.preis_pro_liter)}/${unitK(c.art)}<br>${esc(c.groessen.join(", "))}<br>${esc(c.maerkte.join(", "))}`,
             `<button type="button" class="lb${fav?" an":""}" data-ik="${i}|${j}"${dis}>${fav?"★ Favorit":"☆ Als Favorit"}</button><button type="button" class="lb${an?" an":""}" data-il="${i}|${j}"${dis}>${an?"✓ Auf der Liste":"＋ Auf die Liste"}</button>`,an,c.label,c.min);
@@ -1564,7 +1618,7 @@ function trefferZeichnen(){
     const k=kKey(o),e=map.get(k)||{label:o.marke||o.produkt||"?",bild:"",n:0,min:Infinity};
     e.n++;e.min=Math.min(e.min,gp(o));if(!e.bild&&o.bild)e.bild=o.bild;map.set(k,e);
   });
-  const zeigen=tab!=="verlauf"&&tab!=="uebersicht"&&tab!=="einkauf"&&tab!=="favoriten"&&tab!=="import"&&map.size>=2;
+  const zeigen=tab!=="verlauf"&&tab!=="uebersicht"&&tab!=="einkauf"&&tab!=="favoriten"&&tab!=="import"&&tab!=="einkaufen"&&map.size>=2;
   treffer.hidden=!zeigen;layout.classList.toggle("rechts",zeigen);
   if(!zeigen)return;
   const a=(auswahl||{})[g]||"",werte=[...map.values()],gesamt=werte.reduce((x,e)=>x+e.n,0),bestMin=Math.min(...werte.map(e=>e.min));
@@ -1625,23 +1679,25 @@ function groesseText(ml,art){
   return ml>=1000?String(ml/1000).replace(".",",")+" l":ml+" ml"}
 function alarmZeigen(){
   const g=fProdukt.value,f=(favs||[]).find(x=>x.name===g),kann=cf;
-  alarmRow.hidden=!(f&&kann)||!!regionPlz()||tab==="favoriten"||tab==="import"||tab==="einkauf"||artG(g)!=="l";
-  if(!f||!kann||regionPlz()||tab==="favoriten"||tab==="import"||tab==="einkauf"||artG(g)!=="l")return;
+  alarmRow.hidden=!(f&&kann)||!!regionPlz()||tab==="favoriten"||tab==="import"||tab==="einkaufen"||tab==="einkauf";
+  if(!f||!kann||regionPlz()||tab==="favoriten"||tab==="import"||tab==="einkaufen"||tab==="einkauf")return;
   const al=f.alarm;
   alarmWert.value=al?al.wert.toFixed(2).replace(".",","):"";
-  alarmEinheit.value=al?al.einheit:"l";
-  const groessen=[...new Set(offers.filter(o=>(o.gruppe||"Coca-Cola")===g).map(o=>o.ml))];
+  const ar=artG(g),opt=ar==="kg"?[["kg","€ pro kg"]]:ar==="st"?[["st","€ pro Stück"]]:[["l","€ pro Liter"],["stueck","€ pro Stück"]];
+  alarmEinheit.innerHTML=opt.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join("");
+  alarmEinheit.value=al&&opt.some(o=>o[0]===al.einheit)?al.einheit:opt[0][0];
+  const groessen=ar==="st"?[]:[...new Set(offers.filter(o=>(o.gruppe||"Coca-Cola")===g&&artO(o)===ar).map(o=>o.ml))];
   if(al&&al.ml&&!groessen.includes(al.ml))groessen.push(al.ml);
   groessen.sort((a,b)=>a-b);
-  alarmMl.innerHTML='<option value="">Alle Größen</option>'+groessen.map(x=>`<option value="${x}">${groesseText(x)}</option>`).join("");
+  alarmMl.innerHTML='<option value="">Alle Größen</option>'+groessen.map(x=>`<option value="${x}">${groesseText(x,ar)}</option>`).join("");alarmMl.hidden=ar==="st";
   alarmMl.value=al&&al.ml?String(al.ml):"";
   alarmAus.hidden=!al;
 }
 async function alarmSetzen(g,alarm,alle){
   try{
-    const namen=alle?(favs||[]).map(f=>f.name):[g];
+    const namen=alle?(favs||[]).filter(f=>artG(f.name)===artG(g)).map(f=>f.name):[g];
     const liste=(favs||[]).map(f=>namen.includes(f.name)?{...f,alarm:alarm||undefined}:f);await favSpeichern(liste);favs=liste;
-    hinweis=alarm?"Preisalarm gespeichert: unter "+alarm.wert.toFixed(2).replace(".",",")+(alarm.einheit==="l"?" €/l":" €/Stück")+(alarm.ml?" bei "+groesseText(alarm.ml):"")+(alle?", für alle Favoriten":"")+". Du bekommst eine Nachricht, sobald ein Lauf ein passendes Angebot findet.":"Preisalarm ausgeschaltet.";
+    hinweis=alarm?"Preisalarm gespeichert: unter "+alarm.wert.toFixed(2).replace(".",",")+({l:" €/l",kg:" €/kg"}[alarm.einheit]||" €/Stück")+(alarm.ml?" bei "+groesseText(alarm.ml,artG(g)):"")+(alle?", für alle Favoriten":"")+". Du bekommst eine Nachricht, sobald ein Lauf ein passendes Angebot findet.":"Preisalarm ausgeschaltet.";
   }catch(e){hinweis=netzFehler(e)}
   favKnopf();render();
 }

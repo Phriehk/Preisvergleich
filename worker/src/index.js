@@ -252,7 +252,7 @@ function favAuswerten(favs) {
     if (!f || !f.name) continue;
     info[f.name] = { aus: String(f.aus || "").split(",").map(w => w.trim().toLowerCase()).filter(Boolean), nur: new Set((f.nur || []).map(k => String(k).trim().toLowerCase())), suche: String(f.suche || "").replace(/[,|]/g, " ").trim().slice(0, 40) };
     const al = f.alarm;
-    if (al && ["l", "stueck"].includes(al.einheit) && +al.wert > 0) alarm[f.name] = { wert: +al.wert, einheit: al.einheit, ml: al.ml ? +al.ml : null };
+    if (al && ["l", "stueck", "kg", "st"].includes(al.einheit) && +al.wert > 0) alarm[f.name] = { wert: +al.wert, einheit: al.einheit, ml: al.ml ? +al.ml : null };
   }
   return { info, alarm };
 }
@@ -274,7 +274,10 @@ async function benachrichtige(env, liste, alarm) {
     for (const x of liste) {
       if (x.gruppe !== gruppe || !x.preis || abgelaufen(x)) continue;
       if (al.ml && x.ml !== al.ml) continue;
-      const wert = al.einheit === "l" ? x.preis_pro_liter : (x.stueck ? x.preis / x.stueck : null);
+      const art = x.art || "l";
+      // l / kg / st: Preis je Liter, kg bzw. Stück (nur Angebote der passenden Art); stueck: Preis je Flasche/Dose (Getränke, alte Alarme)
+      if (["l", "kg", "st"].includes(al.einheit) && art !== al.einheit) continue;
+      const wert = al.einheit === "stueck" ? (x.stueck ? x.preis / x.stueck : null) : x.preis_pro_liter;
       if (wert != null && wert <= al.wert) treffer.push([wert, x]);
     }
     if (!treffer.length) continue;
@@ -282,9 +285,10 @@ async function benachrichtige(env, liste, alarm) {
     const [wert, x] = treffer[0];
     const sch = [gruppe, x.markt, x.preis, x.liter, x.gueltig_bis].join("|");
     if (gemeldet[sch]) continue;
-    const einheit = al.einheit === "l" ? "€/l" : "€/Stück";
+    const einheit = { l: "€/l", kg: "€/kg" }[al.einheit] || "€/Stück";
+    const gr = al.einheit === "kg" ? (x.ml ? ", " + x.ml + " g" : "") : al.einheit === "st" ? "" : (x.ml ? ", " + x.ml + " ml" : "");
     const wann = nochNicht(x) ? `Ab ${kurz(x.gueltig_von)}` : x.gueltig_bis ? `Bis ${kurz(x.gueltig_bis)}` : "";
-    const text = `${x.markt}: ${de(wert)} ${einheit} (${x.stueck > 1 ? x.stueck + " × " : ""}${x.produkt}${x.ml ? ", " + x.ml + " ml" : ""} für ${de(x.preis)} €). ${wann}`.trim();
+    const text = `${x.markt}: ${de(wert)} ${einheit} (${x.stueck > 1 ? x.stueck + " × " : ""}${x.produkt}${gr} für ${de(x.preis)} €). ${wann}`.trim();
     try {
       const r = await fetch("https://ntfy.sh", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic: thema, title: `Preisalarm ${gruppe}: ${de(wert)} ${einheit}`, message: text, tags: ["moneybag"], priority: 3, click: APP_URL }) });
