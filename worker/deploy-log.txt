@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 50.51 KiB / gzip: 14.87 KiB
-Worker Startup Time: 2 ms
+Total Upload: 48.33 KiB / gzip: 14.33 KiB
+Worker Startup Time: 1 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (11.12 sec)
-Deployed preise triggers (0.86 sec)
+Uploaded preise (4.23 sec)
+Deployed preise triggers (0.78 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: b802d993-41f8-42d0-bf5c-735c6f90f16a
+Current Version ID: 81fcca6c-ed83-4a1b-a83e-10cb7c1a9cb8
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,13 +18,13 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-20T23:06","anzahl":31,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-20T23:10","anzahl":31,"fehler":0}}
 Alte Version: 200 https://preise.phriehk.workers.dev/alt <title>Preisvergleich (alte Version)
 Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
-Suche Fanta: 0 s, {"anzahl":1}
-Aktualisieren: 3 s, {"zeit":"2026-10-20T23:10","anzahl":31,"fehler":0,"alarm":[]}
+Suche Fanta: 1 s, {"anzahl":1}
+Aktualisieren: 5 s, {"zeit":"2026-10-20T23:15","anzahl":31,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":31,"gruppen":["Beckers Frikandellen","Capri Sun Säfte","Capri sun","K-Classic H-Vollmilch","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","coca cola"]}
 Verlauf: 219 Zeilen
 Korrekturen lesen: {}
@@ -32,7 +32,7 @@ Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
 Korrektur gespeichert und gelesen: true
 Test-Korrektur gelöscht: true
 Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
-Region 40210 ohne Code: 1 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
+Region 40210 ohne Code: 0 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
 Lebensmittel-Probe: 0 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl":3,"Nudeln":2}
   Probe: Butter | Netto Marken-Discount | Butter | art=kg liter=0.45 stueck=1 ml=450 preis=0.99 | 450 g versch. Sorten
@@ -75,28 +75,19 @@ Lebensmittel-Probe: 0 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | ALDI SÜD | Herzogin-Kartoffeln | art=kg liter=0.6 stueck=1 ml=600 preis=1.69 | 600-g-Packung
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | Je 125 g
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | 125 g
-  Erkunden: Variante '': 392 geliefert, 293 verschieden, erste Preise 49.9,1,0.35,0.79,0.49
-  Erkunden: Variante '&sortBy=price': HTTP 456 bei https://api.marktguru.de/api/v1/offers/search
-  Erkunden: Variante '&sort=price': 392 geliefert, 327 verschieden, erste Preise 49.9,1,0.35,0.79,0.49
-  Erkunden: Variante '&orderBy=price': 392 geliefert, 293 verschieden, erste Preise 49.9,1,0.35,0.79,0.49
-  Erkunden: Variante '&sortBy=price&sortOrder=asc': HTTP 456 bei https://api.marktguru.de/api/v1/offers/search
-  Erkunden: Variante '&sort=validFrom': 392 geliefert, 360 verschieden, erste Preise 49.9,1,0.35,0.79,0.49
-  Erkunden: Variante '&sortBy=id': HTTP 456 bei https://api.marktguru.de/api/v1/offers/search
-  Erkunden: Lidl limit 400: HTTP 200, 400 geliefert, 400 verschieden, 650897 Zeichen, 728 ms
-  Erkunden: Lidl limit 1000: HTTP 200, 878 geliefert, 878 verschieden, 1397604 Zeichen, 1792 ms
 Märkte 47178: 0 s, ["Lidl=878","Kaufland=497","HORNBACH=198","PENNY=299","Bosch Car Service=10","SCHAFFRATH=113","Kabs PolsterWelt=45","Fressnapf=106","KiK=50","Opti Wohnwelt=44","Opti-MegaStore=107","ALDI SÜD=485","Thomas Philipps=189","ROSSMANN=294","toom Baumarkt=275","OBI=25","SB-Möbel BOSS=197","Handelshof=272","XXXLutz=1027","Möbel Inhofer=21","trinkgut=71","Netto Marken-Discount=392","EDEKA=48","REWE=272 (47053)"]
-Markt 126679: 1 s, {"name":"Lidl","total":878,"seiten":"100/100/100 100/100/100 100/100/0 100/100/100 100/100/74 100/100/47 100/100/79 100/100/52 78/78/36","geladen":588,"ohneMenge":0,"kategorien":67,"ohneKat":2,"beispiel":"Lidl Backshop Halloween Berliner 2.99 kg Kuchen & Feinbackwaren"}
-Markt 126735: 0 s, {"name":"Netto Marken-Discount","total":392,"seiten":"100/100/100 100/100/68 100/100/89 92/92/36","geladen":293,"ohneMenge":0,"kategorien":57,"ohneKat":0,"beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
+Markt 126679: 0 s, {"name":"Lidl","total":878,"seiten":"100/100/100 100/100/100 100/100/0 100/100/100 100/100/74 100/100/47 100/100/79 100/100/52 78/78/36","geladen":588,"ohneMenge":0,"kategorien":67,"ohneKat":2,"beispiel":"Lidl Backshop Halloween Berliner 2.99 kg Kuchen & Feinbackwaren"}
+Markt 126735: 1 s, {"name":"Netto Marken-Discount","total":392,"seiten":"100/100/100 100/100/68 100/100/89 92/92/36","geladen":293,"ohneMenge":0,"kategorien":57,"ohneKat":0,"beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792530686","token":true}
+Konto anlegen: {"name":"test1792530947","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792530686","daten":{}}
+Konto Daten: {"name":"test1792530947","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792530686"]
+Konto Anfragen mit Code: ["test1792530947"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792530686","token":true}
+Neues Passwort mit Code: {"name":"test1792530947","token":true}
 Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
 Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
