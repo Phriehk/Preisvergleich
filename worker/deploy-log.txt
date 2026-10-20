@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 46.32 KiB / gzip: 14.06 KiB
-Worker Startup Time: 1 ms
+Total Upload: 46.55 KiB / gzip: 14.08 KiB
+Worker Startup Time: 2 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (3.90 sec)
-Deployed preise triggers (0.85 sec)
+Uploaded preise (3.46 sec)
+Deployed preise triggers (0.68 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: 78e1b0f6-d2a7-44b8-bce2-5a3047223c74
+Current Version ID: acd286b6-13e3-413d-a46f-e959e26b15eb
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,13 +18,13 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-20T22:30","anzahl":31,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-20T22:48","anzahl":31,"fehler":0}}
 Alte Version: 200 https://preise.phriehk.workers.dev/alt <title>Preisvergleich (alte Version)
 Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
 Suche Fanta: 1 s, {"anzahl":1}
-Aktualisieren: 6 s, {"zeit":"2026-10-20T22:48","anzahl":31,"fehler":0,"alarm":[]}
+Aktualisieren: 3 s, {"zeit":"2026-10-20T22:51","anzahl":31,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":31,"gruppen":["Beckers Frikandellen","Capri Sun Säfte","Capri sun","K-Classic H-Vollmilch","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","coca cola"]}
 Verlauf: 219 Zeilen
 Korrekturen lesen: {}
@@ -32,9 +32,9 @@ Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
 Korrektur gespeichert und gelesen: true
 Test-Korrektur gelöscht: true
 Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
-Region 40210 ohne Code: 0 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
+Region 40210 ohne Code: 1 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
-Lebensmittel-Probe: 1 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl":3,"Nudeln":2}
+Lebensmittel-Probe: 0 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl":3,"Nudeln":2}
   Probe: Butter | Netto Marken-Discount | Butter | art=kg liter=0.45 stueck=1 ml=450 preis=0.99 | 450 g versch. Sorten
   Probe: Butter | Netto Marken-Discount | Butter | art=kg liter=0.25 stueck=1 ml=250 preis=0.99 | oder Streichzart gekühlt, versch. Sorten 250 g
   Probe: Butter | EDEKA | Beste Butter | art=kg liter=0.25 stueck=1 ml=250 preis=1.19 | 250 g Packung
@@ -75,40 +75,47 @@ Lebensmittel-Probe: 1 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | ALDI SÜD | Herzogin-Kartoffeln | art=kg liter=0.6 stueck=1 ml=600 preis=1.69 | 600-g-Packung
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | Je 125 g
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | 125 g
-  Erkunden: 200 /offers/search?as=web&limit=3&offset=0&zipCode=47178&q=milch → Felder filters,totalResults,skippedResults,results · total 214 · Märkte Lidl/Kaufland · Filter-Märkte 8
-  Erkunden: 200 /offers/search?as=web&limit=3&offset=0&zipCode=47178&q=milch&retailerIds=126679 → Felder filters,totalResults,skippedResults,results · total 214 · Märkte Lidl/Kaufland · Filter-Märkte 8
-  Erkunden: 200 /offers/search?as=web&limit=3&offset=0&zipCode=47178&q=milch&retailerId=126679 → Felder filters,totalResults,skippedResults,results · total 214 · Märkte Lidl/Kaufland · Filter-Märkte 8
-  Erkunden: 200 /offers/search?as=web&limit=3&offset=0&zipCode=47178&q=milch&retailers=126679 → Felder filters,totalResults,skippedResults,results · total 60 · Märkte Lidl · Filter-Märkte 8
-  Erkunden: 200 /offers/search?as=web&limit=3&offset=0&zipCode=47178&q=milch&retailerIds[]=126679 → Felder filters,totalResults,skippedResults,results · total 214 · Märkte Lidl/Kaufland · Filter-Märkte 8
-  Erkunden: 200 /offers/search?as=web&limit=3&offset=0&zipCode=47178&q=milch&filters.retailers=126679 → Felder filters,totalResults,skippedResults,results · total 214 · Märkte Lidl/Kaufland · Filter-Märkte 8
-  Erkunden: 200 /offers/search?as=web&limit=3&offset=0&zipCode=47178&q=&retailerIds=126679 → Felder filters,totalResults,skippedResults,results · total 0 · {"filters":null,"totalResults":0,"skippedResults":0,"results":null}
-  Erkunden: 200 /offers/search?as=web&limit=3&offset=0&zipCode=47178&q=*&retailerIds=126679 → Felder filters,totalResults,skippedResults,results · total 0 · {"filters":null,"totalResults":0,"skippedResults":0,"results":null}
-  Erkunden: 200 /offers/search?as=web&limit=3&offset=0&zipCode=47178&q=lidl&retailerIds=126679 → Felder filters,totalResults,skippedResults,results · total 878 · Märkte Lidl · Filter-Märkte 1
-  Erkunden: 200 /offers/publishers?as=web&zipCode=47178&limit=3 → Felder totalResults,skippedResults,results · total 23 · Märkte  · erstes: {"id":"retailers/126679","uniqueName":"lidl","name":"Lidl","indexOffer":true,"offers":[{"id":25421952,"description":"Details im Prospekt","volume":1,"quantity":1,"isMultiProduct":true,"price":3.49,"oldPrice":null,"referencePrice":3.49,"requiresLoyalityMembership":false,"leafletFlightId":298537,"validityDates":[{"from":"2026-10-21T22:00:00Z","to":"2026-10-24T21:59:00Z"}],"externalTrackingUrls":[""],"externalTrackings":[{"type":"click","url":"","ugpctfet":60}],"externalUrl":"https://www.lidl.de/p/
-  Erkunden: 200 /advertisers?as=web&zipCode=47178&limit=3 → Felder totalResults,skippedResults,results · total 473 · Märkte  · erstes: {"id":"retailers/126802","type":"retailer","data":{"id":126802,"name":"REWE","industryId":1009,"loyaltyProgram":{"name":"PAYBACK","url":"https://www.rewe.de/payback/"},"indexContent":false,"promotionLevel":101,"majorPlayer":true}}
-  Erkunden: Seite /r/lidl: 106128 Zeichen, Angebots-IDs 14, __NEXT_DATA__:1 __INITIAL_STATE__:1 __NUXT__:1 application/ld+json:3 window.__:1 data-offer:1 offerId:1
-  Erkunden: LD: 
-  Erkunden: {
-  Erkunden:   "@context": "https://schema.org/",
-  Erkunden:   "@type": "SoftwareApplication",
-  Erkunden:   "name": "marktguru Prospekte &amp; Angebote",
-  Erkunden:   "applicationCategory":"Shopping",
-  Erkunden:   "operatingSystem": "Android 4.1, iOS 9.0",
-  Erkunden:   "aggregateRating": {"@type":"AggregateRating","ratingValue":4.5,"reviewCount":24873 },
-  Erkunden:   "offers":{"@type":"Offer","category":"free","price":0,"priceCurrency":"EUR"}
-  Erkunden: }
-  Erkunden: </script>
-  Erkunden: <script type="app
+  Erkunden: Publisher: total 23, geliefert 23, Felder id,uniqueName,name,indexOffer,offers
+  Erkunden: Markt 126679 Lidl (lidl) Vorschau 32 · Suche nach Name: 878
+  Erkunden: Markt 126654 Kaufland (kaufland) Vorschau 32 · Suche nach Name: 497
+  Erkunden: Markt 126608 HORNBACH (hornbach) Vorschau 32 · Suche nach Name: 198
+  Erkunden: Markt 126765 PENNY (penny) Vorschau 32 · Suche nach Name: 299
+  Erkunden: Markt 126814 Bosch Car Service (bosch-car-service) Vorschau 10 · Suche nach Name: 10
+  Erkunden: Markt 126823 SCHAFFRATH (schaffrath) Vorschau 32 · Suche nach Name: 113
+  Erkunden: Markt 126641 Kabs PolsterWelt (kabs-polsterwelt) Vorschau 32 · Suche nach Name: 45
+  Erkunden: Markt 127151 Fressnapf (fressnapf) Vorschau 32 · Suche nach Name: 106
+  Erkunden: Markt 126660 KiK (kik) Vorschau 32 · Suche nach Name: 50
+  Erkunden: Markt 126753 Opti Wohnwelt (opti-wohnwelt) Vorschau 32 · Suche nach Name: 44
+  Erkunden: Markt 136786 Opti-MegaStore (opti-megastore) Vorschau 32 · Suche nach Name: 107
+  Erkunden: Markt 127153 ALDI SÜD (aldi-sued) Vorschau 32 · Suche nach Name: 485
+  Erkunden: Markt 126876 Thomas Philipps (thomas-philipps) Vorschau 32 · Suche nach Name: 189
+  Erkunden: Markt 126811 ROSSMANN (rossmann) Vorschau 32 · Suche nach Name: 294
+  Erkunden: Markt 126879 toom Baumarkt (toom-baumarkt) Vorschau 32 · Suche nach Name: 275
+  Erkunden: Markt 126750 OBI (obi) Vorschau 25 · Suche nach Name: 25
+  Erkunden: Markt 126817 SB-Möbel BOSS (sb-moebel-boss) Vorschau 32 · Suche nach Name: 197
+  Erkunden: Markt 126590 Handelshof (handelshof) Vorschau 32 · Suche nach Name: 272
+  Erkunden: Markt 126927 XXXLutz (xxxl) Vorschau 32 · Suche nach Name: 1027
+  Erkunden: Markt 126708 Möbel Inhofer (moebel-inhofer) Vorschau 21 · Suche nach Name: 21
+  Erkunden: Markt 126887 trinkgut (trinkgut) Vorschau 32 · Suche nach Name: 71
+  Erkunden: Markt 126735 Netto Marken-Discount (netto-marken-discount) Vorschau 32 · Suche nach Name: 392
+  Erkunden: Markt 127093 EDEKA (edeka) Vorschau 32 · Suche nach Name: 48
+  Erkunden: Netto mit q=netto: 392
+  Erkunden: Lidl Seite 1: 100, davon mit "lidl" im Text 25; Kategorien {"Kuchen & Feinbackwaren":7,"Brötchen":2,"Warme Speisen":1,"Brot":1,"Snacks und Imbiss":1,"Akkuschrauber":1,"Reinigen":1,"Badmöbel":1,"Sanitär":2,"Rasierer":1,"Haarentfernung":1,"Kaffee":3,"Schokoaufstrich":1,"Kekse":2,"Desserts":1,"Butter":1,"Wurzelgemüse":3,"Veganes":5,"Matratzen":2,"Paprika":2,"Nüsse":4,"Zwiebeln und Knoblauch":1,"Sahne, Schmand und Crème fraîche":1,"Tiefkühlgerichte":1,"Milch":1,"Chips":1,"Liköre":2,"Exotische Früchte":2,"Fischkonserven":1,"Muttertag":1,"Tiefkühlbackwaren & -feingebäck":1,"Eis":1,"Tiefkühlpizza & -flammkuchen":1,"Herren Schuhe":1,"Herren Pullover":1,"Damen
+  Erkunden: Kategorie-Felder: [{"uniqueName":null,"indexOffer":false,"indexLeaflet":false,"id":189,"name":"Kuchen & Feinbackwaren","description":null,"parentId":23}]
+  Erkunden: Gültigkeit: {"2026-10-18>2026-10-24":30,"2026-10-25>2026-10-31":51,"2026-10-21>2026-10-24":3,"2026-10-28>2026-10-31":11,"2026-10-17>2026-10-31":3,"2026-10-22>2026-10-24":2}
+  Erkunden: Lidl offset 800: 78
+  Erkunden: Kaufland: total 497, Seite 1 mit Wort 29
+  Erkunden: Größe einer Seite: 175477 Zeichen
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792529345","token":true}
+Konto anlegen: {"name":"test1792529537","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792529345","daten":{}}
+Konto Daten: {"name":"test1792529537","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792529345"]
+Konto Anfragen mit Code: ["test1792529537"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792529345","token":true}
+Neues Passwort mit Code: {"name":"test1792529537","token":true}
 Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
 Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
