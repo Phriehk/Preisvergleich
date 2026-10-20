@@ -138,12 +138,9 @@ async function erkunden(env) {
   const j = async u => { const r = await fetch(B + u, H); if (!r.ok) throw new Error(r.status + " " + u); return r.json(); };
   try {
     const l = [...((await j("/categories?as=web&limit=500&offset=0")).results || []), ...((await j("/categories?as=web&limit=500&offset=500")).results || [])];
-    const byId = new Map(l.map(x => [x.id, x])), top = l.filter(x => !x.parentId);
-    const tiefe = x => { let d = 0; while (x && x.parentId && byId.has(x.parentId) && d < 9) { x = byId.get(x.parentId); d++; } return d; };
-    const td = {}; l.forEach(x => { const d = tiefe(x); td[d] = (td[d] || 0) + 1; }); out.push("Kategorien " + l.length + " · Tiefen: " + JSON.stringify(td) + " · fehlende Eltern " + l.filter(x => x.parentId && !byId.has(x.parentId)).length);
-    out.push("oben: " + top.map(x => x.id + "=" + x.name + "[" + l.filter(y => y.parentId === x.id).length + "]").join("; ").slice(0, 1800));
-    for (const id of [189, 23, 16]) { let x = byId.get(id), w = []; while (x) { w.push(x.name + "#" + x.id); x = byId.get(x.parentId); } out.push("Pfad " + id + ": " + w.join(" < ")); }
-    const mitte = l.filter(x => tiefe(x) === 1).map(x => x.name + "<" + (byId.get(x.parentId) || {}).name); out.push("Ebene 1 (" + mitte.length + "): " + mitte.join("; ").slice(0, 1800));
+    const g = {}; l.forEach(x => { (g[x.parentId] = g[x.parentId] || []).push(x.name); });
+    for (const [pid, n] of Object.entries(g).sort((x, y) => +x[0] - +y[0])) out.push("P" + pid + " (" + n.length + "): " + n.slice(0, 14).join(" | "));
+    try { const c = await j("/categories/23?as=web"); out.push("Kategorie 23: " + JSON.stringify(c).slice(0, 300)); } catch (e) { out.push("Kategorie 23: " + e.message); }
   } catch (e) { out.push("Kategorien: " + e.message); }
   return out;
 }
