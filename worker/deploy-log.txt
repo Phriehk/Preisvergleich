@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 43.51 KiB / gzip: 13.24 KiB
+Total Upload: 43.58 KiB / gzip: 13.27 KiB
 Worker Startup Time: 2 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (3.15 sec)
-Deployed preise triggers (0.82 sec)
+Uploaded preise (5.17 sec)
+Deployed preise triggers (0.85 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: 64703b99-4f30-4430-bce1-30cb2dd29bfd
+Current Version ID: 24948e41-54b9-4090-8b50-b47675236b19
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,23 +18,23 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-20T21:49","anzahl":37,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-20T21:59","anzahl":37,"fehler":0}}
 Alte Version: 200 https://preise.phriehk.workers.dev/alt <title>Preisvergleich (alte Version)
 Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
 Suche Fanta: 1 s, {"anzahl":1}
-Aktualisieren: 4 s, {"zeit":"2026-10-20T21:51","anzahl":37,"fehler":0,"alarm":[]}
-Angebote: {"anzahl":37,"gruppen":["Beckers Frikandellen","Capri Sun Säfte","Capri sun","K-Classic H-Vollmilch","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","coca cola"]}
-Verlauf: 225 Zeilen
+Aktualisieren: 5 s, {"zeit":"2026-10-20T22:12","anzahl":31,"fehler":0,"alarm":[]}
+Angebote: {"anzahl":31,"gruppen":["Beckers Frikandellen","Capri Sun Säfte","Capri sun","K-Classic H-Vollmilch","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","coca cola"]}
+Verlauf: 219 Zeilen
 Korrekturen lesen: {}
 Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
-Korrektur gespeichert und gelesen: true
-Test-Korrektur gelöscht: false
+Korrektur gespeichert und gelesen: false
+Test-Korrektur gelöscht: true
 Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
 Region 40210 ohne Code: 0 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
-Lebensmittel-Probe: 1 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl":3,"Nudeln":2}
+Lebensmittel-Probe: 0 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl":3,"Nudeln":2}
   Probe: Butter | Netto Marken-Discount | Butter | art=kg liter=0.45 stueck=1 ml=450 preis=0.99 | 450 g versch. Sorten
   Probe: Butter | Netto Marken-Discount | Butter | art=kg liter=0.25 stueck=1 ml=250 preis=0.99 | oder Streichzart gekühlt, versch. Sorten 250 g
   Probe: Butter | EDEKA | Beste Butter | art=kg liter=0.25 stueck=1 ml=250 preis=1.19 | 250 g Packung
@@ -77,14 +77,14 @@ Lebensmittel-Probe: 1 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | 125 g
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792525951","token":true}
+Konto anlegen: {"name":"test1792527164","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792525951","daten":{}}
+Konto Daten: {"name":"test1792527164","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792525951"]
+Konto Anfragen mit Code: ["test1792527164"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792525951","token":true}
-Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
+Neues Passwort mit Code: {"name":"test1792527164","token":true}
+Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 200
 Code ein zweites Mal (erwartet Fehler): HTTP 401
-Konto löschen: HTTP 200
+Konto löschen: HTTP 401
