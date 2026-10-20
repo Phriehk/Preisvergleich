@@ -88,7 +88,7 @@ jobs:
           log "Märkte 47178: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if type=="array" then [.[] | "\(.name)=\(.n)\(if .plz != "47178" then " (" + .plz + ")" else "" end)"] else . end' 2>/dev/null || echo "$R" | head -c 300)"
           for M in 126679 126735; do
             T0=$(date +%s); R=$(curl -s -m 120 "$URL/markt?plz=47178&id=$M")
-            log "Markt $M: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if .angebote then {name, total, seiten: (.seiten | join(" ")), geladen: (.angebote | length), ohneMenge: ([.angebote[] | select(.liter == null)] | length), kategorien: ([.angebote[].kp] | unique | length), ohneKat: ([.angebote[] | select(.kp == 0)] | length), beispiel: (.angebote[0] | "\(.marke) \(.produkt) \(.preis) \(.art) \(.kat)")} else . end' 2>/dev/null || echo "$R" | head -c 300)"
+            log "Markt $M: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if .angebote then {name, total, seiten: (.seiten | join(" ")), geladen: (.angebote | length), ohneMenge: ([.angebote[] | select(.liter == null)] | length), kategorien: ([.angebote[].kp] | unique | length), ohneKat: ([.angebote[] | select(.kp == 0)] | length), kp: ([.angebote[].kp] | group_by(.) | map("\(.[0])=\(length)") | join(" ")), beispiel: (.angebote[0] | "\(.marke) \(.produkt) \(.preis) \(.art) \(.kat)")} else . end' 2>/dev/null || echo "$R" | head -c 300)"
           done
           R=$(curl -s -m 60 -G --data-urlencode "plz=40210" --data-urlencode "m=Lidl|REWE|ALDI SÜD" "$URL/entfernungen")
           log "Entfernungen 40210, erste Antwort: $(echo "$R" | head -c 200)"
