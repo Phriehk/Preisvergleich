@@ -80,7 +80,11 @@ t("Einkaufen: nach Markt, abhaken bleibt gespeichert; Export nur mit Namen", asy
     await p.click("#hakenseite .hk >> nth=0"); await p.waitForTimeout(300);
     assert.match(await p.textContent("#hakenseite .ek-s"), /1 von 3/);
     await u.A("/aktualisieren", "POST");   // der Server kennt die neuen Favoriten (sonst erst nach ein paar Sekunden)
-    await p.reload(); await p.waitForFunction(() => offers.some(o => o.gruppe === "Milch") && favs && favs.some(f => f.name === "Milch"), null, { timeout: 15000 }); await p.waitForTimeout(500); await p.click("#tabEinkaufen");
+    const vorher = await p.evaluate(() => ({ zettel, frei, favs: favs.map(f => f.name), hinweis, tab }));
+    await p.reload();
+    try { await p.waitForFunction(() => offers.some(o => o.gruppe === "Milch") && favs && favs.some(f => f.name === "Milch"), null, { timeout: 15000 }); }
+    catch (e) { throw new Error("nach Neuladen fehlt Milch: " + JSON.stringify({ vorher, server: JSON.parse(u.store.get("favoriten")).map(f => f.name), serverOffers: JSON.parse(u.store.get("angebote")).map(o => o.gruppe).filter((x, i, a) => a.indexOf(x) === i), jetzt: await p.evaluate(() => ({ favs: favs.map(f => f.name), gruppen: [...new Set(offers.map(o => o.gruppe))], hinweis })) })); }
+    await p.waitForTimeout(500); await p.click("#tabEinkaufen");
     assert.match(await p.textContent("#hakenseite .ek-s"), /1 von 3/, "Haken bleibt nach Neuladen");
     await p.click("#tabEinkauf"); await p.waitForTimeout(400);
     const text = await p.$eval("#expText", e => e.value);
