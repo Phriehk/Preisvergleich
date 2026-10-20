@@ -8,7 +8,7 @@ const UA = { "User-Agent": "Mozilla/5.0 (privates Testprojekt)" };
 const SEARCH = "https://api.marktguru.de/api/v1/offers/search";
 const PLZ = "47178", PLZ2 = "46535", PLZ2_MAERKTE = ["penny", "thomas philipps"], PLZ3 = "47053", PLZ3_MAERKTE = ["rewe"];
 const SUCHEN = { "Coca-Cola": ["Coca-Cola", "Coca Cola", "Cola"], "Red Bull": ["Red Bull"], "Monster Energy": ["Monster Energy", "Monster"] };
-const KW = { "Coca-Cola": ["coca"], "Red Bull": ["red bull", "redbull"], "Monster Energy": ["monster"] };
+const KW = { "Coca-Cola": ["coca"], "Red Bull": ["red bull", "redbull"], "Monster Energy": ["monster energy"] };
 const AUSSCHLUSS = ["munch", "mash"];
 const START_FAVS = [{ name: "Coca-Cola", aus: "" }, { name: "Red Bull", aus: "" }, { name: "Monster Energy", aus: "" }];
 const GLEICHZEITIG = 4;
@@ -140,8 +140,10 @@ export class Teil extends WorkerEntrypoint {
     return Promise.all(auftraege.map(async a => {
       const ids = new Set(), alle = [];
       for (const seite of await Promise.all(a.suchen.map(s => teilAbfrage(this.env, plz, s)))) for (const o of seite) if (!ids.has(o.id)) { ids.add(o.id); alle.push(o); }
-      // Ist ein bestimmtes Produkt als Favorit gewählt (nur), zählt allein dessen Marke bzw. Name, sonst die Zuordnung nach dem Artikelwort
-      const t = a.nur && a.nur.length ? alle.filter(o => a.nur.includes((o.brand || o.name).trim().toLowerCase())) : alle.filter(o => istProdukt(a.p, o, a.aus));
+      // Das Angebot muss zum Suchwort passen (z. B. "Milch"); ist zusätzlich ein bestimmtes Produkt gewählt (nur), zählt nur dessen Marke bzw. Name.
+      // Ohne die Prüfung des Suchworts kämen bei "K-Classic" + "Milch" auch K-Classic-Käse und -Sahne mit.
+      const wort = a.wort || a.p;
+      const t = alle.filter(o => istProdukt(wort, o, a.aus) && (!a.nur || !a.nur.length || a.nur.includes((o.brand || o.name).trim().toLowerCase())));
       return !t.length && ohneFilterFallback ? alle : t;
     }));
   }
@@ -179,7 +181,7 @@ async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2,
   const auftraege = [];
   for (const p of produkte) {
     const info = favInfo[p] || { aus: extraAus }, aus = info.aus && info.aus.length ? info.aus : extraAus;
-    for (const plz of plzListe) auftraege.push({ p, plz, suchen: info.suche ? [info.suche] : (SUCHEN[p] || [p]), aus, nur: info.nur && info.nur.size ? [...info.nur] : [], roh: null });
+    for (const plz of plzListe) auftraege.push({ p, plz, wort: info.suche || p, suchen: info.suche ? [info.suche] : (SUCHEN[p] || [p]), aus, nur: info.nur && info.nur.size ? [...info.nur] : [], roh: null });
   }
   const stapel = [];
   for (const plz of plzListe) {
@@ -194,7 +196,7 @@ async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2,
   const einzeln = produkte.length === 1 && !streng;   // bei einer einzelnen Suche notfalls auch ungefilterte Treffer zeigen (außer "streng")
   const ergebnis = await parallel(stapel.map(st => async () => {
     try {
-      const r = await teile.holeStapel(st.plz, st.liste.map(a => ({ p: a.p, suchen: a.suchen, aus: a.aus, nur: a.nur })), einzeln);
+      const r = await teile.holeStapel(st.plz, st.liste.map(a => ({ p: a.p, wort: a.wort, suchen: a.suchen, aus: a.aus, nur: a.nur })), einzeln);
       st.liste.forEach((a, i) => { a.roh = r[i]; });
       return true;
     } catch (e) { fehlerListe.push(`${st.liste.map(a => a.p).join("+")}/${st.plz}: ${e.message}`); return false; }

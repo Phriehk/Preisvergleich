@@ -122,21 +122,44 @@ t("Import per Link (#import=) öffnet die Suche und startet sie", async () => {
   });
 });
 
-t("Preisalarm für Lebensmittel und Meldung für die Liste", async () => {
+t("Preisalarm: eigener Bereich, je Artikel ein- und ausschalten, Wunschpreis oder jedes Angebot", async () => {
   await mitSeite({}, async ({ p, fehler }, u) => {
-    await p.click('.produkt[data-p="Äpfel"]'); await p.waitForTimeout(300);
-    assert.deepEqual(await p.$$eval("#aEinheit option", e => e.map(x => x.value)), ["kg"]);
-    await p.fill("#aWert", "1,50"); await p.click('[data-aktion="alarmSpeichern"]'); await p.waitForTimeout(900);
-    assert.deepEqual(JSON.parse(u.store.get("favoriten")).find(f => f.name === "Äpfel").alarm, { wert: 1.5, einheit: "kg", ml: null });
-    await p.click('[data-aktion="pListe"]'); await p.waitForTimeout(200);
-    await bereich(p, "liste");
-    await p.click('[data-aktion="listeAlarm"]'); await p.waitForTimeout(900);
-    const fav = JSON.parse(u.store.get("favoriten")).find(f => f.name === "Äpfel");
-    assert.equal(fav.alarm.wert, 1.5, "eigener Wunschpreis bleibt");
-    await bereich(p, "angebote");
-    await p.click('.produkt[data-p="Eier"] .p-plus'); await bereich(p, "liste");
-    await p.click('[data-aktion="listeAlarm"]'); await p.waitForTimeout(900);
-    assert.equal(JSON.parse(u.store.get("favoriten")).find(f => f.name === "Eier").alarm.liste, true);
+    const fav = n => JSON.parse(u.store.get("favoriten")).find(f => f.name === n);
+    await bereich(p, "alarm");
+    assert.match(await p.textContent(".box-kopf h2"), /0 von 3 an/);
+    await p.click('[data-al-an="Äpfel"]'); await p.waitForTimeout(1100);
+    assert.deepEqual(fav("Äpfel").alarm, { wert: 9999, einheit: "kg", ml: null });
+    await p.click('[data-al-modus="Äpfel"][data-wert="preis"]'); await p.waitForTimeout(200);
+    const w = p.locator('[data-al-wert="Äpfel"]'); await w.fill("1,50"); await w.press("Enter"); await p.waitForTimeout(1100);
+    assert.equal(fav("Äpfel").alarm.wert, 1.5);
+    assert.deepEqual(await p.$$eval('[data-al-einheit="Äpfel"] option', e => e.map(x => x.value)), ["kg"]);
+    await p.click('[data-al-an="Eier"]'); await p.waitForTimeout(1100);
+    assert.match(await p.textContent(".box-kopf h2"), /2 von 3 an/);
+    await p.click('[data-al-an="Äpfel"]'); await p.waitForTimeout(1100);
+    assert.equal(fav("Äpfel").alarm, undefined, "ausgeschaltet");
+    // Alle Artikel der Liste auf einmal
+    await bereich(p, "angebote"); await p.click('.produkt[data-p="Reis"] .p-plus');
+    await bereich(p, "alarm"); await p.click('[data-aktion="alarmListe"]'); await p.waitForTimeout(1100);
+    assert.equal(fav("Reis").alarm.wert, 9999);
+    // auch auf der Produktseite
+    await bereich(p, "angebote"); await p.click('.produkt[data-p="Eier"]'); await p.waitForTimeout(300);
+    assert.ok(await p.$('[data-al-an="Eier"]:checked'));
+    assert.deepEqual(fehler, []);
+  });
+});
+
+t("Liste: alte Mengen werden ganze Stück, Vergleich auch ohne Markt mit allen Artikeln", async () => {
+  await mitSeite({ favs: [{ name: "Butter", aus: "" }, { name: "Eier", aus: "" }, { name: "Äpfel", aus: "" }] }, async ({ p, fehler }) => {
+    await p.evaluate(() => { localStorage.setItem("pv-zettel", JSON.stringify({ Butter: 0.6, Eier: 10, "Äpfel": 1, "Alt|1250": 2 })); });
+    await p.reload(); await p.waitForTimeout(1500); await bereich(p, "liste");
+    assert.equal(await p.evaluate(() => zettel.Butter), 0.5, "0,6 kg werden 2 Stück à 250 g");
+    assert.match(await p.textContent("#ansicht"), /alter Eintrag ohne Favorit \(Alt\)/);
+    const bon = (await p.textContent(".bon")).replace(/\s+/g, " ");
+    assert.match(bon, /Beste Wahl/); assert.match(bon, /von 3 Artikeln im Angebot/);
+    const zeilen = await p.$$eval(".zeile .posten-info", e => e.map(x => x.textContent.replace(/\s+/g, " ")));
+    assert.ok(zeilen.length === 3 && zeilen.every(z => /€/.test(z)), JSON.stringify(zeilen));
+    await p.click('[data-aktion="alteWeg"]'); await p.waitForTimeout(200);
+    assert.equal(await p.evaluate(() => "Alt|1250" in zettel), false);
     assert.deepEqual(fehler, []);
   });
 });
