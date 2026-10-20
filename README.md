@@ -15,7 +15,7 @@ Grenzen: Normalpreise gibt es nicht automatisch (Marktguru liefert nur Angebote)
 
 ## Einkaufsliste importieren (z. B. aus Erinnerungen)
 
-Auf der Favoriten-Seite: Zeilen einfügen (eine pro Artikel, Mengen wie „2 kg Äpfel“ oder „6 Eier“ werden erkannt) und „Angebote suchen“.
-Pro Artikel: vorhandene Favoriten antippen, „Günstigstes aller Marken“ auf die Liste legen, ein Produkt als Favorit speichern („☆ Favorit“) oder direkt mit auf die Liste („＋ Liste“), oder ohne Angebot mit Richtwert.
+Eigener Tab „Import“: Zeilen einfügen (oder „Aus Zwischenablage einfügen“) (eine pro Artikel, Mengen wie „2 kg Äpfel“ oder „6 Eier“ werden erkannt) und „Angebote suchen“.
+Pro Artikel gibt es Kacheln: vorhandene Favoriten, „Alle Marken“ (günstigstes aller Marken) auf die Liste legen, ein Produkt als Favorit speichern („☆ Favorit“) oder direkt mit auf die Liste („＋ Liste“), oder ohne Angebot mit Richtwert.
 Per Link (z. B. aus einem iPhone-Kurzbefehl): `https://preise.phriehk.workers.dev/#import=<URL-codierte Zeilen>`. Der Text bleibt im Browser und geht nicht an den Server (nur die Suchbegriffe).
 `/suche` (POST) nimmt bis zu 8 Suchbegriffe, getrennt mit `|`.
