@@ -128,3 +128,21 @@ t("Preisalarm: Lebensmittel-Alarm und Meldung für die Liste", async () => {
     assert.deepEqual(fehler, []);
   });
 });
+
+t("Einkaufen: eigene Artikel von Hand hinzufügen, abhaken, entfernen, im Export", async () => {
+  await mitSeite({}, async ({ p, fehler }) => {
+    await p.click("#tabEinkaufen");
+    await p.fill("#extraName", "Zahnpasta"); await p.press("#extraName", "Enter"); await p.waitForTimeout(300);
+    await p.fill("#extraName", "Batterien"); await p.click("#extraBtn"); await p.waitForTimeout(300);
+    await p.fill("#extraName", "zahnpasta"); await p.press("#extraName", "Enter"); await p.waitForTimeout(300);   // Doppeltes wird ignoriert
+    const namen = await p.$$eval("#hakenseite .hk span", e => e.map(x => x.textContent));
+    assert.deepEqual(namen.sort(), ["Batterien", "Zahnpasta"]);
+    await p.click("#hakenseite .hk >> nth=0"); await p.waitForTimeout(300);
+    assert.match(await p.textContent("#hakenseite .ek-s"), /1 von 2/);
+    await p.reload(); await p.waitForTimeout(1500); await p.click("#tabEinkaufen");
+    assert.deepEqual((await p.$$eval("#hakenseite .hk span", e => e.map(x => x.textContent))).sort(), ["Batterien", "Zahnpasta"], "bleibt nach Neuladen");
+    await p.click('[data-xdel="Zahnpasta"]'); await p.waitForTimeout(300);
+    assert.deepEqual(await p.$$eval("#hakenseite .hk span", e => e.map(x => x.textContent)), ["Batterien"]);
+    assert.deepEqual(fehler, []);
+  });
+});

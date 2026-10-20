@@ -111,7 +111,8 @@ button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);fon
 .kachel .kb img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
 .kachel b{font-weight:600}.kachel small{color:var(--mute);line-height:1.3;min-height:2.6em}
 .hk-g{margin:6px 0 10px}.hk-k{display:flex;justify-content:space-between;align-items:baseline;padding:6px 2px;border-bottom:1px solid var(--line)}.hk-k small{color:var(--mute)}
-.hk{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line);font-size:1.1rem;cursor:pointer}
+.hk-r{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}.hk-r .lb{flex:none;margin:0}
+.hk{flex:1;display:flex;align-items:center;gap:12px;padding:12px 4px;font-size:1.1rem;cursor:pointer}
 .hk input{appearance:none;-webkit-appearance:none;width:26px;height:26px;border:2px solid var(--mute);border-radius:50%;flex:none;margin:0;display:grid;place-content:center;background:transparent}
 .hk input:checked{background:var(--best);border-color:var(--best)}.hk input:checked::after{content:"✓";color:#fff;font-size:16px;line-height:1}
 .hk.an span{text-decoration:line-through;color:var(--mute)}
@@ -606,16 +607,17 @@ var haken={};try{haken=JSON.parse(localStorage.getItem("pv-haken")||"{}")||{}}ca
 const hakenSpeichern=()=>{try{localStorage.setItem("pv-haken",JSON.stringify(haken))}catch(e){}};
 function zeichneHaken(){
   const zn=zettelNamen();
-  if(!zn.length){hakenseite.innerHTML='<div class="empty">Die Einkaufsliste ist leer. Setze Artikel im Tab „Import“ oder bei den Favoriten auf die Liste.</div>';return}
-  fvVergleich(zn);
-  if(!expPlaene.length){hakenseite.innerHTML='<div class="empty">Keine Liste vorhanden.</div>';return}
+  if(zn.length)fvVergleich(zn);else expPlaene=[{label:"Liste",wo:{},rw:[],fehl:[]}];
+  if(!expPlaene.length)expPlaene=[{label:"Liste",wo:{},rw:[],fehl:[]}];
   const i=Math.min(expSel,expPlaene.length-1),grp=expGruppen(expPlaene[i]);
   let alle=0,fertig=0;grp.forEach(g=>g.namen.forEach(x=>{alle++;if(haken[x.k])fertig++}));
-  let h=`<section class="ek"><div class="ek-h"><b>Einkaufen</b><span class="ek-s" style="font-size:1rem">${fertig} von ${alle} erledigt</span></div>`;
+  let h=`<section class="ek"><div class="ek-h"><b>Einkaufen</b><span class="ek-s" style="font-size:1rem">${fertig} von ${alle} erledigt</span></div>`
+    +`<div class="fv-add"><input id="extraName" type="text" maxlength="40" autocomplete="off" placeholder="Eigenen Artikel hinzufügen" value="${esc(extraText)}" aria-label="Eigenen Artikel hinzufügen"><button type="button" class="primary" id="extraBtn">Hinzufügen</button></div>`
+    +(alle?"":'<p class="lbl" style="margin:8px 0">Noch nichts auf der Liste. Trage oben Artikel ein oder setze sie im Tab „Import“ auf die Liste.</p>');
   if(expPlaene.length>1)h+=`<div class="fv-add"><select data-exp="plan" aria-label="Welcher Plan">${expPlaene.map((q,j)=>`<option value="${j}"${j===i?" selected":""}>${esc(q.label)}</option>`).join("")}</select></div>`;
   h+=grp.map(g=>{
     const f=g.namen.filter(x=>haken[x.k]).length,sortiert=g.namen.slice().sort((a,b)=>(!!haken[a.k]-!!haken[b.k]));
-    return `<div class="hk-g"><div class="hk-k"><b>${esc(g.kopf)}</b><small>${f}/${g.namen.length}</small></div>`+sortiert.map(x=>`<label class="hk${haken[x.k]?" an":""}"><input type="checkbox" data-hk="${esc(x.k)}"${haken[x.k]?" checked":""}><span>${esc(x.name)}</span></label>`).join("")+`</div>`;
+    return `<div class="hk-g"><div class="hk-k"><b>${esc(g.kopf)}</b><small>${f}/${g.namen.length}</small></div>`+sortiert.map(x=>`<div class="hk-r"><label class="hk${haken[x.k]?" an":""}"><input type="checkbox" data-hk="${esc(x.k)}"${haken[x.k]?" checked":""}><span>${esc(x.name)}</span></label>${x.eigen?`<button type="button" class="lb" data-xdel="${esc(x.name)}" aria-label="${esc(x.name)} entfernen">✕</button>`:""}</div>`).join("")+`</div>`;
   }).join("");
   h+=`<div class="fv-add"><button type="button" class="lb" id="hakenNull"${fertig?"":" disabled"}>Alle Haken entfernen</button></div></section>`;
   hakenseite.innerHTML=h;
@@ -624,7 +626,19 @@ hakenseite.onchange=e=>{
   if(expAender(e))return;
   const c=e.target.closest("input[data-hk]");if(c){if(c.checked)haken[c.dataset.hk]=1;else delete haken[c.dataset.hk];hakenSpeichern();render()}
 };
-hakenseite.onclick=e=>{if(e.target.closest("#hakenNull")){haken={};hakenSpeichern();render()}};
+function extraHinzu(){
+  const n=extraText.replace(/\s+/g," ").trim().slice(0,40);
+  if(!n)return;
+  if(!extra.some(x=>x.toLowerCase()===n.toLowerCase())&&extra.length<100){extra.push(n);extraSpeichern()}
+  extraText="";render();const f=document.getElementById("extraName");if(f)f.focus();
+}
+hakenseite.onclick=e=>{
+  if(e.target.closest("#hakenNull")){haken={};hakenSpeichern();render();return}
+  if(e.target.closest("#extraBtn")){extraHinzu();return}
+  const d=e.target.closest("[data-xdel]");if(d){const n=d.dataset.xdel;extra=extra.filter(x=>x!==n);delete haken["+|"+n];extraSpeichern();hakenSpeichern();render()}
+};
+hakenseite.oninput=e=>{if(e.target.id==="extraName")extraText=e.target.value};
+hakenseite.onkeydown=e=>{if(e.key==="Enter"&&e.target.id==="extraName"){e.preventDefault();extraHinzu()}};
 tabEinkaufen.onclick=()=>{tab="einkaufen";tabGewaehlt=true;render()};
 /* ---- Meldung bei Angeboten für die Einkaufsliste: Alarm für alle Favoriten, die auf der Liste stehen ---- */
 const listeFavNamen=()=>[...new Set(Object.keys(zettel).filter(k=>zettel[k]>0).map(k=>zk(k).g))].filter(n=>(favs||[]).some(f=>f.name===n));
@@ -654,10 +668,13 @@ async function listeAlarmUmschalten(){
 var expPlaene=[],expSel=0,expFmt="zeile",kurzName="Einkaufsliste in Erinnerungen";try{kurzName=localStorage.getItem("pv-kurz")||kurzName}catch(e){}
 function expPack(t){const o=t.o,a=artO(o);return t.packs+" × "+(a==="l"?(o.stueck>1?o.stueck+"er-Pack":groesseText(o.ml)):mengeText(o))}
 function expName(g,w){const gr=zMitglieder(g).length>1;return (gr&&w?(w.teile[0].o.gruppe||zLabel(g)):zLabel(g)).replace(/ \(ohne Angebot\)$/,"")}
+var extra=[],extraText="";try{extra=(JSON.parse(localStorage.getItem("pv-extra")||"[]")||[]).filter(x=>typeof x==="string")}catch(e){}   // von Hand eingetragene Artikel (nur auf diesem Gerät)
+const extraSpeichern=()=>{try{localStorage.setItem("pv-extra",JSON.stringify(extra))}catch(e){}};
 function expGruppen(p){   // [{kopf, namen:[{k,name}]}] nach Markt (nächster zuerst), zuletzt "Egal wo"
   const ms=Object.keys(p.wo).sort((a,b)=>(dkm(a)??99)-(dkm(b)??99)),out=ms.map(m=>({kopf:m,namen:p.wo[m].map(([g,w])=>({k:m+"|"+expName(g,w),name:expName(g,w)}))}));
   const ohne=[...p.rw,...p.fehl].map(g=>({k:"*|"+expName(g),name:expName(g)}));
   if(ohne.length)out.push({kopf:"Egal wo (kein Angebot)",namen:ohne});
+  if(extra.length)out.push({kopf:"Sonstiges",namen:extra.map(n=>({k:"+|"+n,name:n,eigen:true}))});
   return out;
 }
 function expPlan(label,p,fehl){const wo={};Object.entries(p.zu).forEach(([g,x])=>{(wo[x.m]=wo[x.m]||[]).push([g,x.w])});return {label,wo,rw:p.rw.slice(),fehl:fehl.slice()}}
@@ -665,7 +682,7 @@ function expBauen(p,fmt){
   const z=[];
   expGruppen(p).forEach(gr=>{
     if(fmt==="kopf"){z.push("— "+gr.kopf+" —");gr.namen.forEach(x=>z.push(x.name))}
-    else gr.namen.forEach(x=>z.push(gr.kopf.startsWith("Egal wo")?x.name:x.name+" ("+gr.kopf+")"));
+    else gr.namen.forEach(x=>z.push(gr.kopf.startsWith("Egal wo")||gr.kopf==="Sonstiges"?x.name:x.name+" ("+gr.kopf+")"));
   });
   return z.join("\n");
 }
