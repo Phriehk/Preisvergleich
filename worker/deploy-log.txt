@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 48.49 KiB / gzip: 14.36 KiB
-Worker Startup Time: 1 ms
+Total Upload: 50.06 KiB / gzip: 14.75 KiB
+Worker Startup Time: 2 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (5.55 sec)
-Deployed preise triggers (1.58 sec)
+Uploaded preise (4.15 sec)
+Deployed preise triggers (3.50 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: 30e3af5a-8e1b-4841-b070-1c65d1a4c86e
+Current Version ID: 8277622d-6814-4d05-ad4c-0d901d2092bf
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,21 +18,21 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-21T12:02","anzahl":33,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-21T15:16","anzahl":40,"fehler":0}}
 Alte Version: 200 https://preise.phriehk.workers.dev/alt <title>Preisvergleich (alte Version)
 Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
-Suche Fanta: 0 s, {"anzahl":1}
-Aktualisieren: 5 s, {"zeit":"2026-10-21T12:21","anzahl":33,"fehler":0,"alarm":[]}
-Angebote: {"anzahl":33,"gruppen":["Beckers Frikandellen","Capri Sun Säfte","Capri sun","Gut Ponholz Gemischt-Hackfleisch","K-Classic H-Vollmilch","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","coca cola"]}
-Verlauf: 252 Zeilen
+Suche Fanta: 1 s, {"anzahl":1}
+Aktualisieren: 3 s, {"zeit":"2026-10-21T15:19","anzahl":40,"fehler":0,"alarm":[]}
+Angebote: {"anzahl":40,"gruppen":["Beckers Frikandellen","Capri Sun Säfte","Capri sun","Gut Ponholz Gemischt-Hackfleisch","Hidrofugal Deodorant-Spray","K-Classic H-Vollmilch","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","Zewa Toilettenpapier Ultra Soft","coca cola"]}
+Verlauf: 259 Zeilen
 Korrekturen lesen: {}
 Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
 Korrektur gespeichert und gelesen: true
 Test-Korrektur gelöscht: true
 Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
-Region 40210 ohne Code: 1 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
+Region 40210 ohne Code: 0 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
 Lebensmittel-Probe: 1 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl":3,"Nudeln":2}
   Probe: Butter | Netto Marken-Discount | Butter | art=kg liter=0.45 stueck=1 ml=450 preis=0.99 | 450 g versch. Sorten
@@ -75,19 +75,19 @@ Lebensmittel-Probe: 1 s, {"Butter":12,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | ALDI SÜD | Herzogin-Kartoffeln | art=kg liter=0.6 stueck=1 ml=600 preis=1.69 | 600-g-Packung
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | Je 125 g
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | 125 g
-Märkte 47178: 1 s, ["Lidl=876","Kaufland=497","HORNBACH=198","PENNY=299","Bosch Car Service=10","SCHAFFRATH=113","Kabs PolsterWelt=45","Fressnapf=106","KiK=50","Opti Wohnwelt=44","Opti-MegaStore=107","ALDI SÜD=485","Thomas Philipps=189","ROSSMANN=294","toom Baumarkt=275","OBI=25","SB-Möbel BOSS=197","Handelshof=456","XXXLutz=1027","Möbel Inhofer=21","trinkgut=71","Netto Marken-Discount=392","EDEKA=48","REWE=272 (47053)"]
-Markt 126679: 0 s, {"name":"Lidl","total":878,"seiten":"878/878/878","geladen":878,"ohneMenge":0,"kategorien":69,"ohneKat":2,"kp":"0=2 3=19 5=30 6=7 10=7 11=3 12=3 14=11 16=42 17=1 20=85 23=12 28=4 35=6 50=28 53=14 69=15 70=5 83=7 85=12 94=10 95=5 97=23 101=2 102=22 103=33 104=19 106=8 107=54 108=9 110=10 112=18 113=10 115=1 116=2 119=5 120=45 122=3 126=1 129=4 137=4 142=2 143=21 144=25 147=10 149=11 174=2 187=1 191=6 193=10 218=1 363=14 364=21 382=13 383=3 384=3 385=2 386=3 392=1 398=47 402=3 414=1 415=6 427=26 428=16 454=4 473=9 497=7 630=9","beispiel":"Lidl Backshop Alm-Striezel Mohn 1.79 kg Kuchen & Feinbackwaren"}
+Märkte 47178: 0 s, ["Lidl=876","Kaufland=497","HORNBACH=198","PENNY=299","Bosch Car Service=10","SCHAFFRATH=113","Kabs PolsterWelt=45","Fressnapf=106","KiK=50","Opti Wohnwelt=44","Opti-MegaStore=107","ALDI SÜD=485","Thomas Philipps=189","ROSSMANN=294","toom Baumarkt=275","OBI=25","SB-Möbel BOSS=197","Handelshof=456","XXXLutz=1027","Möbel Inhofer=21","trinkgut=71","Netto Marken-Discount=392","EDEKA=48","REWE=272 (47053)"]
+Markt 126679: 4 s, {"name":"Lidl","total":876,"seiten":"876/876/876","geladen":876,"ohneMenge":0,"kategorien":69,"ohneKat":2,"kp":"0=2 3=19 5=30 6=7 10=7 11=3 12=3 14=11 16=42 17=1 20=85 23=12 28=4 35=6 50=28 53=14 69=15 70=5 83=7 85=12 94=10 95=5 97=23 101=2 102=22 103=33 104=19 106=8 107=54 108=9 110=10 112=18 113=10 115=1 116=2 119=5 120=45 122=3 126=1 129=4 137=4 142=2 143=21 144=25 147=10 149=11 174=2 187=1 191=6 193=10 218=1 363=14 364=21 382=13 383=3 384=3 385=2 386=3 392=1 398=47 402=3 414=1 415=6 427=25 428=15 454=4 473=9 497=7 630=9","beispiel":"Lidl Backshop Halloween Berliner 2.99 kg Kuchen & Feinbackwaren"}
 Markt 126735: 0 s, {"name":"Netto Marken-Discount","total":392,"seiten":"392/392/392","geladen":392,"ohneMenge":0,"kategorien":60,"ohneKat":0,"kp":"3=4 5=2 10=1 11=1 12=2 14=4 15=4 16=11 17=3 20=39 23=7 28=11 32=1 50=12 53=1 69=13 70=12 83=1 85=2 95=1 97=5 101=1 102=22 103=18 104=19 106=1 107=28 108=4 110=4 112=7 113=3 115=4 119=1 120=13 124=1 137=13 142=5 143=19 144=2 147=13 149=11 174=2 191=6 193=4 218=2 363=6 364=3 378=1 382=1 385=1 387=1 398=12 402=9 414=1 415=6 427=1 428=4 454=1 497=1 630=4","beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792578133","token":true}
+Konto anlegen: {"name":"test1792588801","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792578133","daten":{}}
+Konto Daten: {"name":"test1792588801","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792578133"]
+Konto Anfragen mit Code: ["test1792588801"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792578133","token":true}
+Neues Passwort mit Code: {"name":"test1792588801","token":true}
 Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
 Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
