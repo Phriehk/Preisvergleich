@@ -100,3 +100,21 @@ test("Server: passt das Angebot zum Artikel?", () => {
   ja("Fanta", { name: "Cola", brand: "Coca-Cola", desc: "oder Fanta Versch. Sorten; 18 x 0,33 l" });
   ja("Coca-Cola", { name: "Cola", brand: "Coca-Cola", desc: "6 x 0,5 l" });
 });
+
+test("Server: lockere Suche (Wortanfang, zusammengeschrieben)", () => {
+  const code = grab(w, "const KW =", "\n") + grab(w, "const AUSSCHLUSS", "\n") + grab(w, "/* ---------- Mengen ---------- */", "/* ---------- Eine Teilabfrage") + grab(w, "// Wörter, die bei Lebensmitteln", "async function parallel") + ";({istProdukt,passtLocker,varianten})";
+  const { istProdukt, passtLocker, varianten } = vm.runInNewContext(code);
+  const o = (x) => ({ brand: "", desc: "", ...x });
+  const deo = o({ brand: "Hidrofugal", name: "Deo Roll-on", desc: "versch. Sorten je 50-ml-Roller" });
+  assert.equal(istProdukt("hidro", deo, []), false);   // die strenge Prüfung bleibt wie sie ist
+  assert.equal(passtLocker("hidro", deo, []), true);
+  assert.equal(passtLocker("hidro fugal", deo, []), true);
+  assert.equal(passtLocker("Hidrofugal", deo, []), true);
+  assert.equal(passtLocker("coca cola", o({ brand: "Coca-Cola", name: "Cola", desc: "6 x 0,5 l" }), []), true);
+  assert.equal(passtLocker("Mueller", o({ brand: "Müller", name: "Joghurt", desc: "500 g" }), []), true);
+  assert.equal(passtLocker("fugal", deo, []), false);   // nur Wortanfänge, nicht mitten im Wort
+  assert.equal(passtLocker("hidro", o({ name: "Duschgel", desc: "250 ml" }), []), false);
+  assert.equal(passtLocker("Butter", o({ name: "Butter-Mandel-Stollen", desc: "750-g-Packung" }), []), false);   // Saisonware bleibt draußen
+  assert.deepEqual([...varianten("hidro fugal")], ["hidro fugal", "hidrofugal"]);
+  assert.deepEqual([...varianten("Milch")], ["Milch"]);
+});

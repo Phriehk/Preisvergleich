@@ -195,8 +195,11 @@ export class Teil extends WorkerEntrypoint {
       for (const seite of await Promise.all(a.suchen.map(s => teilAbfrage(this.env, plz, s)))) for (const o of seite) if (!ids.has(o.id)) { ids.add(o.id); alle.push(o); }
       // Das Angebot muss zum Suchwort passen (z. B. "Milch"); ist zusätzlich ein bestimmtes Produkt gewählt (nur), zählt nur dessen Marke bzw. Name.
       // Ohne die Prüfung des Suchworts kämen bei "K-Classic" + "Milch" auch K-Classic-Käse und -Sahne mit.
-      const wort = a.wort || a.p;
-      const t = alle.filter(o => istProdukt(wort, o, a.aus) && (!a.nur || !a.nur.length || a.nur.includes((o.brand || o.name).trim().toLowerCase())));
+      const wort = a.wort || a.p, nurOk = o => !a.nur || !a.nur.length || a.nur.includes((o.brand || o.name).trim().toLowerCase());
+      let t = alle.filter(o => istProdukt(wort, o, a.aus) && nurOk(o));
+      // Nichts Passendes: bei der Suche (locker) oder einem fest gewählten Produkt (nur) auch Wortanfänge und Schreibweisen
+      // ohne Leerzeichen gelten lassen ("hidro" -> "Hidrofugal", "hidro fugal" -> "Hidrofugal", "coca cola" -> "Coca-Cola").
+      if (!t.length && (a.locker || (a.nur && a.nur.length))) t = alle.filter(o => passtLocker(wort, o, a.aus) && nurOk(o));
       return !t.length && ohneFilterFallback ? alle : t;
     }));
   }
@@ -221,20 +224,36 @@ function istProdukt(gruppe, o, extra) {
   return gefunden && ![...AUSSCHLUSS, ...extra, ...essen].some(x => alles.includes(x));
 }
 
+/* Lockere Prüfung (zweite Stufe, nur wenn die strenge nichts findet): jedes Wort des Suchbegriffs steht als Wortanfang im Angebot,
+   oder ein Begriff aus mehreren Wörtern ohne Leerzeichen und Striche steckt zusammenhängend darin. Umlaute und Akzente zählen wie ihre Grundbuchstaben. */
+const flach = t => String(t || "").toLowerCase().replace(/ß/g, "ss").replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+function passtLocker(gruppe, o, extra) {
+  const name = `${o.brand} ${o.name}`, alles = `${name} ${o.desc}`;
+  const mg = mengenangabe(o), fluessig = !mg || mg[2] === "l", text = flach(fluessig ? alles : name);
+  const woerter = flach(gruppe).split(/[^a-z0-9]+/).filter(w => w.length >= 2), kompakt = woerter.join("");
+  const gefunden = (woerter.length && woerter.every(w => new RegExp("(?:^|[^a-z0-9])" + w).test(text))) || (woerter.length > 1 && kompakt.length >= 4 && text.replace(/[^a-z0-9]/g, "").includes(kompakt));
+  const essen = fluessig ? [] : ESSEN_AUS.filter(x => !gruppe.toLowerCase().includes(x));
+  return !!gefunden && ![...AUSSCHLUSS, ...extra, ...essen].some(x => alles.toLowerCase().includes(x));
+}
+// Suchbegriffe für Marktguru: aus mehreren Wörtern zusätzlich die zusammengeschriebene Form ("hidro fugal" -> "hidrofugal")
+const varianten = s => { const z = s.replace(/[\s-]+/g, ""); return /[\s-]/.test(s.trim()) && z.length >= 4 ? [s, z] : [s]; };
+
 async function parallel(aufgaben, n) {
   const erg = new Array(aufgaben.length); let i = 0;
   await Promise.all(Array.from({ length: Math.min(n, aufgaben.length) }, async () => { while (i < aufgaben.length) { const j = i++; erg[j] = await aufgaben[j](); } }));
   return erg;
 }
 
-async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2, PLZ3], streng = false) {   // erste Postleitzahl = Hauptgebiet, die weiteren liefern nur ausgewählte Märkte dazu
+async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2, PLZ3], streng = false, locker = false) {   // erste Postleitzahl = Hauptgebiet, die weiteren liefern nur ausgewählte Märkte dazu
   const HAUPT = plzListe[0];
   // produkte: Liste von Gruppennamen; favInfo: {name: {aus:[...], nur:Set}}
   // Je Postleitzahl werden die Artikel in Stapeln von höchstens 4 Suchbegriffen abgefragt (ein Aufruf je Stapel, wegen der Grenzen bei Cloudflare)
   const auftraege = [];
   for (const p of produkte) {
     const info = favInfo[p] || { aus: extraAus }, aus = info.aus && info.aus.length ? info.aus : extraAus;
-    for (const plz of plzListe) auftraege.push({ p, plz, wort: info.suche || p, suchen: info.suche ? [info.suche] : (SUCHEN[p] || [p]), aus, nur: info.nur && info.nur.size ? [...info.nur] : [], roh: null });
+    const nur = info.nur && info.nur.size ? [...info.nur] : [], basis = info.suche ? [info.suche] : (SUCHEN[p] || [p]);
+    const suchen = (locker || nur.length) && !SUCHEN[p] ? [...new Set(basis.flatMap(varianten))] : basis;
+    for (const plz of plzListe) auftraege.push({ p, plz, wort: info.suche || p, suchen, aus, nur, locker, roh: null });
   }
   const stapel = [];
   for (const plz of plzListe) {
@@ -249,7 +268,7 @@ async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2,
   const einzeln = produkte.length === 1 && !streng;   // bei einer einzelnen Suche notfalls auch ungefilterte Treffer zeigen (außer "streng")
   const ergebnis = await parallel(stapel.map(st => async () => {
     try {
-      const r = await teile.holeStapel(st.plz, st.liste.map(a => ({ p: a.p, wort: a.wort, suchen: a.suchen, aus: a.aus, nur: a.nur })), einzeln);
+      const r = await teile.holeStapel(st.plz, st.liste.map(a => ({ p: a.p, wort: a.wort, suchen: a.suchen, aus: a.aus, nur: a.nur, locker: a.locker })), einzeln);
       st.liste.forEach((a, i) => { a.roh = r[i]; });
       return true;
     } catch (e) { fehlerListe.push(`${st.liste.map(a => a.p).join("+")}/${st.plz}: ${e.message}`); return false; }
@@ -514,12 +533,12 @@ async function regionAngebote(env, ctx, sp, ip) {
   if (!begriffe.length) throw Object.assign(new Error("Bitte einen Suchbegriff angeben"), { status: 400 });
   const roh = new TextEncoder().encode(begriffe.map(x => x.toLowerCase()).sort().join("|"));
   const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", roh))].slice(0, 8).map(b => b.toString(16).padStart(2, "0")).join("");
-  const streng = sp.get("streng") === "1", key = "reg:" + plz + ":" + hash + (streng ? ":s" : ""), frisch = sp.get("neu") === "1";
+  const streng = sp.get("streng") === "1", locker = sp.get("locker") === "1", key = "reg:" + plz + ":" + hash + (streng ? ":s" : "") + (locker ? ":l" : ""), frisch = sp.get("neu") === "1";
   const alt = await env.PV.get(key, "json");
   if (alt && Date.now() - alt.t < (frisch ? 15 * 60e3 : 3 * 3600e3)) return alt.liste;
   if (!besucherOk(ip) || !(await tagesOk(env, "region", 300))) throw zuViel();
   const { info } = favAuswerten(await lade(env, "favoriten", "json"));
-  const { liste } = await abfragen(ctx, begriffe, info, [], [plz], streng);
+  const { liste } = await abfragen(ctx, begriffe, info, [], [plz], streng, locker);
   await env.PV.put(key, JSON.stringify({ t: Date.now(), liste }), { expirationTtl: 86400 });
   return liste;
 }
@@ -764,7 +783,7 @@ export default {
         if (!qs.length || qs.some(x => x.length > 60)) return fehler("Bitte einen Suchbegriff angeben", 400);
         if (qs.length > 8) return fehler("Höchstens 8 Suchbegriffe auf einmal", 400);
         const aus = (url.searchParams.get("aus") || "").split(",").map(w => w.trim().toLowerCase()).filter(Boolean);
-        const { liste } = await abfragen(ctx, qs, {}, aus, undefined, url.searchParams.get("streng") === "1");
+        const { liste } = await abfragen(ctx, qs, {}, aus, undefined, url.searchParams.get("streng") === "1", url.searchParams.get("locker") === "1");
         return antwort(liste);
       }
       if (p === "/entfernungen" && req.method === "POST") {

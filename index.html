@@ -1731,8 +1731,8 @@ function ergKarten(l){   // Suchergebnisse je Produkt (Marke bzw. Name)
   }).sort((a,b)=>b.os.length-a.os.length||a.min.preis_pro_liter-b.min.preis_pro_liter).slice(0,40);
 }
 async function serverSuche(begriffe){
-  if(!lokalModus())return await (await wf("/suche?streng=1&q="+encodeURIComponent(begriffe.join("|")),{method:"POST"})).json();
-  return await (await wf("/region?plz="+quellPlz()+"&streng=1&q="+encodeURIComponent(begriffe.join("|")))).json();
+  if(!lokalModus())return await (await wf("/suche?streng=1&locker=1&q="+encodeURIComponent(begriffe.join("|")),{method:"POST"})).json();
+  return await (await wf("/region?plz="+quellPlz()+"&streng=1&locker=1&q="+encodeURIComponent(begriffe.join("|")))).json();
 }
 async function sucheStarten(){
   const I=S.suche,items=sucheParsen(I.text);
