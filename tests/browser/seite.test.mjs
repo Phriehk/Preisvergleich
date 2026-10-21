@@ -85,6 +85,51 @@ t("Suchen: Liste einfügen, auf die Liste, Favorit, ohne Angebot; Ansicht und Sc
   });
 });
 
+t("Suche: Name führt zu allen Angeboten nach Markt, dort im Markt kaufen; Markt in der Liste wählbar", async () => {
+  await mitSeite({ favs: [{ name: "Eier", aus: "" }] }, async ({ p, fehler }, u) => {
+    await suche(p, "Butter");
+    await p.click('.kachel a[data-tz="0|*"]'); await p.waitForTimeout(300);
+    assert.equal(await p.evaluate(() => S.v), "treffer");
+    assert.equal(await p.textContent("#titel"), "Butter"); assert.match(await p.textContent("#untertitel"), /Alle Marken/);
+    assert.equal(await p.locator("#zurueck").isVisible(), true);
+    assert.equal(await p.locator('#leiste [data-v="suchen"].an').count(), 1);
+    const maerkte = await p.$$eval(".t-markt h2", e => e.map(x => x.textContent.trim()));
+    assert.deepEqual(maerkte, ["REWE", "PENNY", "ALDI SÜD"], "günstigster Preis je kg zuerst");
+    assert.match(await p.textContent(".t-markt >> nth=0"), /am günstigsten[\s\S]*Milram Butter[\s\S]*6,98\s€\/kg[\s\S]*3,49\s€/);
+    assert.equal(await p.locator('.t-markt a.t-link[href^="https://www.marktguru.de/offers/"]').count(), await p.locator('.t-z').count(), await p.$$eval('.t-z', e => e.map(x => x.innerHTML).join('\n')));
+    await p.click('#zurueck'); await p.waitForTimeout(300);
+    assert.equal(await p.evaluate(() => S.v), "suchen");
+    // Kachel einer Marke: nur ihre Angebote, „Hier kaufen“ setzt sie mit diesem Markt auf die Liste
+    const j = await p.evaluate(() => S.suche.items[0].karten.findIndex(c => c.label === "Weihenstephan Butter"));
+    await p.click(`.kachel a[data-tz="0|${j}"]`); await p.waitForTimeout(300);
+    assert.equal(await p.textContent("#titel"), "Weihenstephan Butter");
+    assert.deepEqual(await p.$$eval(".t-markt h2", e => e.map(x => x.textContent.trim())), ["PENNY"]);
+    await p.click('.t-markt [data-tw]');
+    await p.waitForFunction(() => !S.suche.busy && wahlName("Weihenstephan Butter") === "PENNY", null, { timeout: 10000 });
+    assert.match(await p.textContent('.t-markt [data-tw]'), /Hier gekauft/);
+    assert.match(await p.textContent("#ansicht"), /du kaufst es bei PENNY/);
+    // Liste: Markt selbst wählen
+    await p.click('#leiste [data-v="angebote"]'); await p.waitForTimeout(300);
+    await p.click('.produkt[data-p="Eier"] .p-plus');
+    await p.click('#leiste [data-v="liste"]'); await p.waitForTimeout(300);
+    const eier = p.locator(".zeile", { hasText: "Eier" }).first();
+    assert.match(await eier.locator(".posten-info").textContent(), /ALDI SÜD|PENNY/);
+    await eier.locator("select[data-wahl]").selectOption("Kaufland"); await p.waitForTimeout(300);
+    assert.equal(await p.evaluate(() => wahl.Eier), "Kaufland");
+    assert.match(await p.locator(".zeile", { hasText: "Eier" }).first().locator(".posten-info").textContent(), /📌[\s\S]*Kaufland/);
+    assert.match(await p.textContent(".bon"), /Selbst gewählt: Eier bei Kaufland, Weihenstephan Butter bei PENNY/);
+    assert.match(await p.textContent(".bon-kopf"), /Kaufland/);
+    await p.click('#leiste [data-v="einkaufen"]'); await p.waitForTimeout(300);
+    const gr = await p.evaluate(() => expGruppen().map(g => g.kopf + ":" + g.namen.map(x => x.name).join(",")));
+    assert.ok(gr.includes("Kaufland:Eier") && gr.includes("PENNY:Weihenstephan Butter"), JSON.stringify(gr));
+    await p.click('#leiste [data-v="liste"]'); await p.waitForTimeout(300);
+    await p.locator(".zeile", { hasText: "Eier" }).first().locator("select[data-wahl]").selectOption(""); await p.waitForTimeout(300);
+    assert.equal(await p.evaluate(() => wahl.Eier), undefined);
+    assert.equal(JSON.parse(await p.evaluate(() => localStorage.getItem("pv-wahl")))["Weihenstephan Butter"], "PENNY");
+    assert.deepEqual(fehler, []);
+  });
+});
+
 t("Einkaufen: nach Markt, abhaken bleibt nach Neuladen, eigene Artikel, Abgehakte entfernen; Export nur mit Namen", async () => {
   await mitSeite({}, async ({ p, fehler }, u) => {
     await suche(p, "Milch\nÄpfel\nSalz");

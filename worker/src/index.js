@@ -554,7 +554,7 @@ async function sitzungPruefen(env, req) {
   if (!u || u.gen !== s.gen) throw konto(401, "Bitte neu anmelden");
   return { name: s.name, u, token };
 }
-const FELDER = ["ort", "km", "zettel", "richt", "frei", "extra", "haken", "aus", "favs"];
+const FELDER = ["ort", "km", "zettel", "richt", "frei", "extra", "haken", "wahl", "aus", "favs"];
 function datenPruefen(d) {   // nur erwartete Felder und Größen werden gespeichert
   const o = {}, obj = x => x && typeof x === "object" && !Array.isArray(x), text = (x, n) => typeof x === "string" && x.length > 0 && x.length <= n;
   if (!obj(d)) return o;
@@ -571,6 +571,10 @@ function datenPruefen(d) {   // nur erwartete Felder und Größen werden gespeic
   if (obj(d.frei)) {   // Artikel ohne Angebot: Name -> Einheit
     o.frei = {};
     for (const [k, v] of Object.entries(d.frei).slice(0, 150)) if (k.length <= 60 && ["l", "kg", "st"].includes(v)) o.frei[k] = v;
+  }
+  if (obj(d.wahl)) {   // Einkaufsliste: Artikel -> selbst gewählter Markt
+    o.wahl = {};
+    for (const [k, v] of Object.entries(d.wahl).slice(0, 150)) if (k.length <= 60 && text(v, 60)) o.wahl[k] = v;
   }
   if (Array.isArray(d.extra)) o.extra = d.extra.filter(x => text(x, 40)).slice(0, 100);   // von Hand notierte Artikel
   if (obj(d.haken)) {   // beim Einkaufen abgehakt

@@ -311,6 +311,16 @@ textarea.export{font-size:.92rem;min-height:120px}
 .rund{width:36px;height:36px;border-radius:50%;border:1px solid var(--linie);background:var(--flaeche);color:var(--tinte);font-size:1.1rem;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0}
 .rund.an{background:var(--gruen);border-color:var(--gruen);color:#fff}
 .mk-werkzeug .feld{flex:1 1 220px}
+.t-kopf{display:flex;gap:12px;align-items:center}
+.t-kopf .bild{width:64px;height:64px}
+.t-markt{gap:0;padding:12px 14px}
+.t-markt .box-kopf{margin-bottom:4px}
+.t-markt h2{display:flex;align-items:center}
+.t-z{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 12px;align-items:center;padding:8px 0;border-top:1px solid var(--linie)}
+.t-info{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.t-link{font-size:.8rem;color:var(--grau);text-underline-offset:2px;align-self:flex-start}
+@media (max-width:480px){.t-z{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"t p" "t k"}.t-z .mk-t{grid-area:t}.t-z .mk-p{grid-area:p}.t-z .t-k{grid-area:k}}
+.wahl select{max-width:220px}
 .mk-werkzeug .segment{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
 .mk-werkzeug .segment button{flex:none}
 @media (max-width:480px){.mk-z{grid-template-columns:40px minmax(0,1fr) auto;grid-template-areas:"b t p" "b t k";row-gap:4px}.mk-z .bild{grid-area:b;width:40px;height:40px;align-self:start}.mk-t{grid-area:t}.mk-p{grid-area:p}.mk-k{grid-area:k;justify-content:flex-end}.mk-k .rund{width:32px;height:32px;font-size:1rem}}
@@ -421,6 +431,7 @@ let frei=objekt(ls.get("pv-frei",{}));        // Artikel ohne Angebot: Name -> E
 let richt=objekt(ls.get("pv-richt",{}));      // Richtwert (Normalpreis): Name -> € je Einheit
 let haken=objekt(ls.get("pv-haken",{}));      // abgehakt beim Einkaufen
 let extra=(ls.get("pv-extra",[])||[]).filter(x=>typeof x==="string");   // von Hand notierte Artikel
+let wahl=objekt(ls.get("pv-wahl",{}));         // Einkaufsliste: Artikel -> fest gewählter Markt (sonst rechnet die App den günstigsten aus)
 let aus=new Set(ls.get("pv-aus",[])||[]);     // ausgeblendete Märkte
 let korr=objekt(ls.get("pv-korr",{}));        // eigene Preiskorrekturen
 let ort=ls.get("pv-ort",null);                // eigener Standort
@@ -432,7 +443,7 @@ let konto=ls.get("pv-konto",null);
 let favsLokal=(ls.get("pv-favs",[])||[]).filter(f=>f&&typeof f.name==="string");   // eigene Favoriten ohne Zugangscode
 let vd=ls.get("pv-verlauf",[])||[];           // Preisverlauf: [datum, markt, preis je Einheit, bis, von, gruppe, menge]
 let kurzName=ls.raw("pv-kurz")||"Einkaufsliste in Erinnerungen";
-function listeSpeichern(ohneSync){ls.set("pv-zettel",zettel);ls.set("pv-frei",frei);ls.set("pv-richt",richt);ls.set("pv-extra",extra);ls.set("pv-haken",haken);if(!ohneSync)kontoSync()}
+function listeSpeichern(ohneSync){Object.keys(wahl).forEach(k=>{if(!(zettel[k]>0))delete wahl[k]});ls.set("pv-wahl",wahl);ls.set("pv-zettel",zettel);ls.set("pv-frei",frei);ls.set("pv-richt",richt);ls.set("pv-extra",extra);ls.set("pv-haken",haken);if(!ohneSync)kontoSync()}
 
 /* ---------- Server ---------- */
 const SERVER="https://preise.phriehk.workers.dev";
@@ -747,7 +758,7 @@ async function kFetch(pfad,methode,body,token){
   return j;
 }
 function kontoMerken(k){konto=k;k?ls.set("pv-konto",k):ls.setRaw("pv-konto",null)}
-const kontoDaten=()=>({ort,km:kmSatz,zettel,richt,frei,extra,haken,aus:[...aus],...(betreiber()?{}:{favs:favsLokal})});
+const kontoDaten=()=>({ort,km:kmSatz,zettel,richt,frei,extra,haken,wahl,aus:[...aus],...(betreiber()?{}:{favs:favsLokal})});
 function kontoSync(){
   if(!konto)return;
   clearTimeout(kPush);
@@ -768,6 +779,7 @@ async function kontoLaden(start,erstmals){
     if(d.richt)richt=nimm(objekt(d.richt),richt);
     if(d.frei)frei=nimm(objekt(d.frei),frei);
     if(d.haken)haken=nimm(objekt(d.haken),haken);
+    if(d.wahl){wahl=nimm(objekt(d.wahl),wahl);ls.set("pv-wahl",wahl)}
     if(Array.isArray(d.extra))extra=(start&&!erstmals)?d.extra:[...new Set([...d.extra,...extra])];
     if(Array.isArray(d.aus)){aus=new Set((start&&!erstmals)?d.aus:[...d.aus,...aus]);ls.set("pv-aus",[...aus])}
     if(Array.isArray(d.favs)&&!betreiber()){
@@ -846,7 +858,10 @@ function aufListeSetzen(k,menge){   // Artikel auf die Liste; in einer Gruppe gi
   const gl=Object.keys(zettel).filter(q=>zettel[q]>0&&q!==k&&gidVon(q)===gidVon(k));
   zettel[k]=menge>0?menge:(gl.length?zettel[gl[0]]:zStd(k));
 }
-function vonListe(g){Object.keys(zettel).filter(k=>zk(k).g===g).forEach(k=>delete zettel[k])}
+function vonListe(g){Object.keys(zettel).filter(k=>zk(k).g===g).forEach(k=>{delete zettel[k];delete wahl[k]})}
+// fest gewählter Markt eines Artikels (auch über die Mitglieder einer Gruppe) und eines Favoriten auf der Liste
+const wahlVon=k=>[k,...zMitglieder(k)].map(x=>wahl[x]).find(Boolean)||"";
+const wahlName=g=>{const k=Object.keys(zettel).find(q=>zettel[q]>0&&zk(q).g===g);return k?wahl[k]||"":""};
 
 /* ---------- Angebote je Artikel und Markt ---------- */
 function fvAngebote1(k){const {g,ml}=zk(k);return offers.filter(o=>grp(o)===g&&(!ml||o.ml===ml)&&!o.ausb&&!abgelaufen(o)&&!aus.has(o.markt)&&(S.lzeit==="jetzt"?!kommt(o):kommt(o)))}
@@ -907,9 +922,10 @@ function tourFahrt(ms){
 /* Ein Plan für eine Auswahl von Märkten (einer oder zwei): jeder Artikel in den günstigsten dieser Märkte.
    Gibt es ihn dort nicht im Angebot, zählt dein Normalpreis (ca.), sonst bleibt er "offen" (kaufst du ohne Angebot).
    Zum Vergleichen der Pläne zählt ein offener Artikel mit seinem teuersten Angebotspreis, damit ein Plan nicht nur deshalb billig wirkt, weil er weniger abdeckt. */
-function planVon(ms,namen,t,ersatz,ohneR){
+function planVon(ms,namen,t,ersatz,ohneR,fest){
   const zu={},rw=[],offen=[];let ware=0,rwSumme=0,strafe=0;
   for(const g of namen){
+    if(fest&&fest[g]){zu[g]=fest[g];ware+=fest[g].w.kosten;continue}   // Markt selbst gewählt
     let b=null;
     for(const m of ms){const w=t[m]&&t[m][g];if(w&&(!b||w.kosten<b.w.kosten))b={m,o:w.o,w}}
     const r=rwKosten(g);
@@ -942,12 +958,16 @@ function vergleich(){
   }
   const ordnung=(a,b)=>a.wert-b.wert||b.anzahl-a.anzahl;
   ein.sort(ordnung);
-  const plaene=[...ein,...paare].sort(ordnung),beste=plaene[0]||null;
+  // Selbst gewählte Märkte: diese Artikel kaufst du dort, die übrigen im günstigsten Plan aus diesen Märkten und höchstens einem weiteren
+  const fest={};
+  mit.forEach(g=>{const m=wahlVon(g);if(m&&t[m]&&t[m][g])fest[g]={m,o:t[m][g].o,w:t[m][g],fest:true}});
+  const P=[...new Set(Object.values(fest).map(x=>x.m))];
+  const plaene=P.length?[P,...ms.filter(m=>!P.includes(m)).map(m=>[...P,m])].map(c=>planVon(c,mit,t,ersatz,ohneR,fest)).sort(ordnung):[...ein,...paare].sort(ordnung),beste=plaene[0]||null;
   const nah=ein.slice().sort((x,y)=>(dkm(x.ms[0])??99)-(dkm(y.ms[0])??99))[0],vgl=nah&&nah!==beste?nah:null;
   let plaeneExp;
   if(!mit.length)plaeneExp=[{label:"Einkaufsliste",wo:{},rw:ohneR.slice(),fehl:fehlend.slice()}];
   else plaeneExp=[expPlan("Beste Wahl: "+beste.ms.join(" + "),beste,fehlend),...ein.filter(p=>p!==beste).map(p=>expPlan("Alles bei "+p.ms[0],p,fehlend))];
-  return vCache={namen,t,mit,ohneR,fehlend,ersatz,plaene,beste,ein,vgl,plaeneExp};
+  return vCache={namen,t,mit,ohneR,fehlend,ersatz,plaene,beste,ein,vgl,plaeneExp,fest};
 }
 /* Gruppen zum Einkaufen und für den Export: [{kopf, namen:[{k, name, z (Listen-Schlüssel) | eigen}]}], nächster Markt zuerst */
 function expGruppen(){
@@ -1005,6 +1025,7 @@ function gruppenInfo(g){
 /* ======================================================================
    Ansichten
    ====================================================================== */
+const DETAIL=v=>v==="produkt"||v==="treffer";   // Unterseiten mit Zurück-Taste
 const TITEL={angebote:"Angebote",markt:"Angebote",suchen:"Suchen",liste:"Einkaufsliste",einkaufen:"Einkaufen",alarm:"Preisalarm",mehr:"Mehr"};
 let toastT=null,online=false,demo=false;
 function melde(text,fehler){
@@ -1018,6 +1039,7 @@ const fv=k=>esc(S.form[k]??"");   // Wert eines Formularfelds
 
 function untertitel(){
   if(S.v==="produkt"){const a=artG(S.p);return "Preis pro "+ARTEN[a].wort}
+  if(S.v==="treffer"){const d=trefferDaten();return d?(d.alle?"Alle Marken · ":"")+"Suche: "+d.it.name:""}
   if(S.v==="liste"){const n=zettelNamen().length+extra.length;return n?n+" Artikel":""}
   if(S.v==="einkaufen")return "";
   if(S.v==="markt"){const m=mkAktuell(),d=m&&mkDaten(m);return demo?"Vorschau mit Beispieldaten":d&&d.t?"Stand "+new Date(d.t).toLocaleString("de-DE",{weekday:"short",hour:"2-digit",minute:"2-digit"})+" Uhr":"PLZ "+quellPlz()}
@@ -1033,14 +1055,15 @@ function render(){
   vCache=null;medC={};
   const ae=document.activeElement,fokus=ae&&ae.id&&$("ansicht").contains(ae)?{id:ae.id,s:ae.selectionStart,e:ae.selectionEnd}:null;
   const schluessel=S.v+"|"+(S.p||""),gleich=render.letzte===schluessel,y=window.scrollY;
-  $("titel").textContent=S.v==="produkt"?S.p:TITEL[S.v];
+  const titel=S.v==="produkt"?S.p:S.v==="treffer"?trefferTitel():TITEL[S.v];
+  $("titel").textContent=titel;
   $("untertitel").textContent=untertitel();
-  $("zurueck").hidden=S.v!=="produkt";
+  $("zurueck").hidden=!DETAIL(S.v);
   const akt=$("aktBtn");akt.hidden=!online||S.v==="mehr";akt.classList.toggle("dreht",laeuft);akt.disabled=laeuft;
-  document.querySelectorAll("#leiste button").forEach(b=>b.classList.toggle("an",b.dataset.v===S.v||((S.v==="markt"||S.v==="produkt"&&S.von==="markt")&&b.dataset.v==="angebote")||(S.v==="produkt"&&b.dataset.v===(S.von||"angebote"))));
+  document.querySelectorAll("#leiste button").forEach(b=>b.classList.toggle("an",b.dataset.v===S.v||((S.v==="markt"||DETAIL(S.v)&&S.von==="markt")&&b.dataset.v==="angebote")||(DETAIL(S.v)&&b.dataset.v===(S.von||"angebote"))));
   document.querySelector('#leiste [data-v="alarm"]').hidden=!betreiber();
   const n=zettelNamen().length+extra.length,z=$("listeZahl");z.hidden=!n;z.textContent=n;
-  document.title=(S.v==="produkt"?S.p:TITEL[S.v])+" · Preisvergleich";
+  document.title=titel+" · Preisvergleich";
   $("ansicht").innerHTML=(ANSICHT[S.v]||ANSICHT.angebote)();
   if(gleich)window.scrollTo(0,y);
   render.letzte=schluessel;
@@ -1223,7 +1246,8 @@ function vProdukt(){
 }
 
 /* ---------------- Suchen: einzelne Artikel oder eine ganze Liste ---------------- */
-const kachelName=(t,o)=>o&&o.link&&/^https?:\/\//.test(o.link)?`<b><a href="${esc(o.link)}" target="_blank" rel="noopener noreferrer" title="Angebot bei Marktguru ansehen">${esc(t)}</a></b>`:`<b>${esc(t)}</b>`;
+// Name einer Kachel: führt zu den Angeboten (Treffer der Suche nach Markt bzw. Produktseite des Favoriten), von dort weiter zu Marktguru
+const kachelName=(t,z)=>z&&z.tz?`<b><a href="#suchen" class="plink" data-tz="${esc(z.tz)}" title="Alle Angebote ansehen">${esc(t)}</a></b>`:z&&z.fav?`<b>${pLink(z.fav,t)}</b>`:`<b>${esc(t)}</b>`;
 const kachel=(bild,titel,info,knoepfe,an,k,lk)=>`<div class="kachel${an?" an":""}">${bildHtml(bild,titel)}${kachelName(titel,lk)}<small>${info}</small>${knoepfe}${an&&k?mengeHtml(k,true):""}</div>`;
 const sucheBild=os=>((os||[]).find(q=>q.bild&&/^https?:\/\//.test(q.bild))||{}).bild||"";
 const istFav=n=>favs().some(f=>f.name.toLowerCase()===String(n).toLowerCase());
@@ -1238,23 +1262,24 @@ function vSuchen(){
   const neu=I.items.filter(it=>it.status==="fertig"&&it.roh.length&&!aufListe(it.name));
   h+=`<div class="box-kopf"><h2>${n} Artikel</h2>${neu.length>1?`<button type="button" class="knopf klein an" data-aktion="alleAufListe"${I.busy?" disabled":""}>Alle ${neu.length}: günstigstes aller Marken auf die Liste</button>`:""}</div><section class="karte-box">`;
   h+=I.items.map((it,i)=>{
-    const stat=it.status==="laeuft"?"Suche …":it.status==="wartet"?"wartet":it.status==="fehler"?"Fehler: "+(it.fehler||""):it.roh.length?it.roh.length+" Angebote":"kein Angebot";
+    const stat=it.status==="laeuft"?"Suche …":it.status==="wartet"?"wartet":it.status==="fehler"?"Fehler: "+(it.fehler||""):it.roh.length?(it.karten||[]).reduce((s,c)=>s+c.os.length,0)+" Angebote":"kein Angebot";
     const dis=I.busy?" disabled":"";
     let k="";
     if(it.status==="fertig"){
       const labels=new Set(it.karten.map(c=>c.label.toLowerCase()));
       if(it.roh.length){
         const m=it.roh.slice().sort((a,b)=>a.preis_pro_liter-b.preis_pro_liter)[0],an=istFav(it.name)&&aufListe(it.name);
-        k+=kachel(sucheBild(it.roh),"Alle Marken",`ab ${eur(m.preis_pro_liter)}/${unitK(it.art)} · günstigstes aller Marken`,`<button type="button" class="knopf klein${an?" an":""}" data-ia="${i}"${dis}>${an?"✓ Auf der Liste":"＋ Auf die Liste"}</button>`,an,it.name,m);
+        const nm=new Set(it.karten.flatMap(c=>c.maerkte)).size;
+        k+=kachel(sucheBild(it.roh),"Alle Marken",`ab ${eur(m.preis_pro_liter)}/${unitK(it.art)} bei ${esc(mbase(m.markt))} · ${nm} Markt${nm===1?"":"e"} · günstigstes aller Marken`,`<button type="button" class="knopf klein${an?" an":""}" data-ia="${i}"${dis}>${an?"✓ Auf der Liste":"＋ Auf die Liste"}</button>`,an,it.name,{tz:i+"|*"});
       }
       sucheFavs(it.name).filter(f=>!(it.roh.length&&f.name.toLowerCase()===it.name.toLowerCase())&&!labels.has(f.name.toLowerCase())).forEach(f=>{
         const an=aufListe(f.name),gi=gruppenInfo(f.name),o=gi.b;
-        k+=kachel(o&&o.bild,f.name,`Dein Favorit · ${o?"ab "+eur(gp(o))+"/"+unitK(o.art):"gerade kein Angebot"}`,`<button type="button" class="knopf klein${an?" an":""}" data-if="${esc(f.name)}" data-i="${i}">${an?"✓ Auf der Liste":"＋ Auf die Liste"}</button>`,an,f.name,o);
+        k+=kachel(o&&o.bild,f.name,`Dein Favorit · ${o?"ab "+eur(gp(o))+"/"+unitK(o.art):"gerade kein Angebot"}`,`<button type="button" class="knopf klein${an?" an":""}" data-if="${esc(f.name)}" data-i="${i}">${an?"✓ Auf der Liste":"＋ Auf die Liste"}</button>`,an,f.name,{fav:f.name});
       });
       k+=it.karten.map((c,j)=>[c,j]).filter(([c])=>!(it.roh.length&&c.label.toLowerCase()===it.name.toLowerCase())).slice(0,8).map(([c,j])=>{
         const fav=istFav(c.label),an=fav&&aufListe(c.label);
-        return kachel(c.bild,c.label,`${c.os.length} Angebot${c.os.length>1?"e":""} · ab ${eur(c.min.preis_pro_liter)}/${unitK(c.art)}${c.min.preis_alt>c.min.preis?` (statt ${eur(c.min.preis_alt)})`:""}<br>${esc(c.groessen.join(", "))}<br>${esc(c.maerkte.join(", "))}`,
-          `<button type="button" class="knopf klein${fav?" an":""}" data-ik="${i}|${j}"${dis}>${fav?"★ Favorit":"☆ Als Favorit"}</button><button type="button" class="knopf klein${an?" an":""}" data-il="${i}|${j}"${dis}>${an?"✓ Auf der Liste":"＋ Auf die Liste"}</button>`,an,c.label,c.min);
+        return kachel(c.bild,c.label,`${c.os.length} Angebot${c.os.length>1?"e":""} · ab ${eur(c.min.preis_pro_liter)}/${unitK(c.art)}${c.min.preis_alt>c.min.preis?` (statt ${eur(c.min.preis_alt)})`:""}<br>${esc(c.groessen.join(", "))}<br>${c.jeMarkt.slice(0,3).map(o=>esc(mbase(o.markt))+" "+eur(o.preis)).join(" · ")}${c.jeMarkt.length>3?` · +${c.jeMarkt.length-3}`:""}`,
+          `<button type="button" class="knopf klein${fav?" an":""}" data-ik="${i}|${j}"${dis}>${fav?"★ Favorit":"☆ Als Favorit"}</button><button type="button" class="knopf klein${an?" an":""}" data-il="${i}|${j}"${dis}>${an?"✓ Auf der Liste":"＋ Auf die Liste"}</button>`,an,c.label,{tz:i+"|"+j});
       }).join("");
       if(it.roh.length||!istFav(it.name)){
         const fn=freiName(it),fa=aufListe(fn)&&!!frei[fn];
@@ -1265,6 +1290,53 @@ function vSuchen(){
   }).join("")+`</section>`;
   const nl=zettelNamen().length;
   if(nl)h+=`<button type="button" class="knopf an" data-go="liste" style="align-self:flex-start">Zur Einkaufsliste (${nl})</button>`;
+  return h;
+}
+
+/* ---------------- Suche: alle Angebote eines Treffers, nach Markt ---------------- */
+let trefferZeilen=[];
+const nurMenge=t=>String(t).length<=24&&/^[\s\d.,x×-]*(?:g|kg|ml|l|liter|stück|stk|er)?(?:[- ]?(?:packung|beutel|flasche|dose|glas|becher|schale|netz))?\s*$/i.test(String(t).trim());
+function trefferDaten(){
+  const [a,b]=String(S.p||"").split("|"),i=+a,it=S.suche.items[i];
+  if(!it||it.status!=="fertig"||!it.karten)return null;
+  if(b==="*")return {it,i,alle:true,label:it.name,os:it.karten.flatMap(c=>c.os)};
+  const c=it.karten[+b];return c?{it,i,j:+b,c,label:c.label,os:c.os}:null;
+}
+const trefferTitel=()=>{const d=trefferDaten();return d?(d.alle?d.it.name:d.label):"Angebote"};
+function vTreffer(){
+  const d=trefferDaten();
+  if(!d)return leerHtml("Die Suche ist nicht mehr da","Starte die Suche noch einmal, dann siehst du hier wieder alle Angebote eines Produkts.",`<button type="button" class="knopf haupt" data-go="suchen">Zur Suche</button>`);
+  const {it,i}=d,u=unitK(it.art),dis=S.suche.busy?" disabled":"";
+  const kartIdx=new Map(it.karten.map((c,j)=>[c.key,j]));
+  const sichtbar=d.os.filter(o=>!aus.has(o.markt)),versteckt=d.os.length-sichtbar.length;
+  const nachM=new Map();sichtbar.forEach(o=>{const m=mbase(o.markt);if(!nachM.has(m))nachM.set(m,[]);nachM.get(m).push(o)});
+  const maerkte=[...nachM].map(([m,os])=>({m,os:os.sort((x,y)=>x.preis_pro_liter-y.preis_pro_liter)})).sort((x,y)=>x.os[0].preis_pro_liter-y.os[0].preis_pro_liter);
+  const min=sichtbar.reduce((a,o)=>!a||o.preis_pro_liter<a.preis_pro_liter?o:a,null);
+  const groessen=[...new Set(sichtbar.map(o=>o.art==="st"?o.stueck+" Stück":groesseText(o.ml,o.art)))];
+  // Kopf: Zusammenfassung, Favorit und Liste wie auf der Kachel
+  let knoepfe,hinweis="";
+  if(d.alle){const an=istFav(it.name)&&aufListe(it.name);knoepfe=`<button type="button" class="knopf klein${an?" an":""}" data-ia="${i}"${dis}>${an?"✓ Auf der Liste":"＋ Alle Marken auf die Liste"}</button>`}
+  else{
+    const fav=istFav(d.label),an=fav&&aufListe(d.label),w=an?wahlName(d.label):"";
+    knoepfe=`<button type="button" class="knopf klein${fav?" an":""}" data-ik="${i}|${d.j}"${dis}>${fav?"★ Favorit":"☆ Als Favorit"}</button><button type="button" class="knopf klein${an?" an":""}" data-il="${i}|${d.j}"${dis}>${an?"✓ Auf der Liste":"＋ Auf die Liste"}</button>`;
+    if(an)hinweis=`<p class="klein-text" style="margin:0">${w?`Steht auf der Liste, du kaufst es bei <b>${esc(w)}</b>. <button type="button" class="knopf klein" data-wahlweg="${esc(d.label)}">Markt wieder automatisch</button>`:"Steht auf der Liste, die App wählt den günstigsten Markt. Unten kannst du einen Markt festlegen."}</p>`;
+  }
+  let h=`<section class="karte-box"><div class="t-kopf">${bildHtml(sucheBild(sichtbar),d.label)}<div class="mk-t"><b>${esc(d.alle?"Alle Marken":d.label)}</b><small>${sichtbar.length} Angebot${sichtbar.length===1?"":"e"} in ${maerkte.length} Markt${maerkte.length===1?"":"en"}${min?` · ab ${eur(min.preis_pro_liter)}/${u}`:""}</small>${groessen.length?`<small>${esc(groessen.join(", "))}</small>`:""}</div></div>
+    <div class="reihe">${knoepfe}</div>${hinweis}</section>`;
+  if(!maerkte.length)return h+`<p class="leise-text">Alle Angebote dazu sind in ausgeblendeten Märkten.</p>`;
+  h+=`<p class="klein-text" style="margin:0">Günstigster Markt zuerst. Mit „Hier kaufen“ kommt der Artikel auf die Liste und wird dort in diesem Markt eingeplant.</p>`;
+  trefferZeilen=[];
+  h+=maerkte.map(({m,os},n)=>`<section class="karte-box t-markt"><div class="box-kopf"><h2>${mlogo(m)}${esc(m)}</h2>${n===0&&maerkte.length>1?`<span class="tag gruen">am günstigsten</span>`:""}${kmText(m)?`<span class="rechts km">${kmText(m)}</span>`:""}</div>
+    ${os.map(o=>{
+      const j=d.alle?kartIdx.get(kKey(o)):d.j;if(j==null)return "";
+      const lab=it.karten[j].label,hier=istFav(lab)&&aufListe(lab)&&wahlName(lab)===m;
+      trefferZeilen.push({i,j,m});const z=trefferZeilen.length-1;
+      const link=o.link&&/^https?:\/\//.test(o.link)?`<a class="t-link" href="${esc(o.link)}" target="_blank" rel="noopener noreferrer">Bei Marktguru ansehen ↗</a>`:"";
+      return `<div class="t-z"><div class="mk-t"><b>${esc(d.alle?lab:(o.produkt||lab))}</b><small>${esc(mengeText(o))} · ${eur(o.preis_pro_liter)}/${u} · ${esc(gueltig({von:o.gueltig_von,bis:o.gueltig_bis}))}</small>${o.beschreibung&&!nurMenge(o.beschreibung)?`<small class="t-info">${esc(String(o.beschreibung).slice(0,160))}</small>`:""}${link}</div>
+        <div class="mk-p"><b>${eur(o.preis)}</b>${o.preis_alt>o.preis?`<small class="statt">statt ${eur(o.preis_alt)}</small>`:""}</div>
+        <button type="button" class="knopf klein t-k${hier?" an":""}" data-tw="${z}"${dis}>${hier?"✓ Hier gekauft":"＋ Hier kaufen"}</button></div>`;
+    }).join("")}</section>`).join("");
+  if(versteckt)h+=`<p class="klein-text">${versteckt} weitere${versteckt===1?"s":""} Angebot${versteckt===1?"":"e"} in ausgeblendeten Märkten (unter „Mehr“).</p>`;
   return h;
 }
 
@@ -1281,7 +1353,7 @@ function postenHtml(k,V){
   if(b&&b.zu[k]){
     const {m,w}=b.zu[k],gr=zMitglieder(k).length>1;
     const pk=w.teile.map(t=>(gr?esc(t.o.gruppe)+": ":"")+t.packs+" × "+mengeText(t.o)).join(" + ");
-    return `<div class="posten-info">${mlogo(m)}<b>${esc(m)}</b> · ${pk} für <b>${eur(w.kosten)}</b> · ${esc(gueltig(w.o))}${w.o.alt?` · statt ${eur(w.o.alt*w.packs)}`:""}</div>`;
+    return `<div class="posten-info">${b.zu[k].fest?`<span title="Markt selbst gewählt" aria-label="selbst gewählt">📌</span> `:""}${mlogo(m)}<b>${esc(m)}</b> · ${pk} für <b>${eur(w.kosten)}</b> · ${esc(gueltig(w.o))}${w.o.alt?` · statt ${eur(w.o.alt*w.packs)}`:""}</div>`;
   }
   if(b&&b.rw.includes(k))return `<div class="posten-info">Ohne Angebot: ca. ${eur(rwKosten(k))} (dein Normalpreis)</div>`;
   const os=fvAngebote(k).slice().sort((x,y)=>gp(x)-gp(y));
@@ -1292,6 +1364,13 @@ function postenHtml(k,V){
 }
 // Name eines Listenartikels: führt zur Produktseite mit allen Angeboten (von dort weiter zu Marktguru)
 const pLink=(x,t)=>istFav(zk(x).g)?`<a href="${esc(hashVon("produkt",zk(x).g))}" class="plink" data-zp="${esc(x)}" title="Alle Angebote für ${esc(zLabel0(x))} ansehen">${esc(t)}</a>`:esc(t);
+function wahlHtml(k,V){   // Markt für einen Artikel selbst festlegen (sonst der günstigste im besten Plan)
+  const mk=Object.keys(V.t).filter(m=>V.t[m][k]).map(m=>({m,w:V.t[m][k]})).sort((a,b)=>a.w.kosten-b.w.kosten),wv=wahlVon(k);
+  if(mk.length<2&&!wv)return "";
+  const id="w"+[...k].reduce((s,c)=>(s*31+c.charCodeAt(0))>>>0,7).toString(36);
+  const opt=[["","Günstigster (automatisch)"],...mk.map(x=>[x.m,x.m+" · "+eur(x.w.kosten)]),...(wv&&!mk.some(x=>x.m===wv)?[[wv,wv+" · gerade kein Angebot"]]:[])];
+  return `<label class="rw wahl">Markt ${sel(id,`data-wahl="${esc(k)}"`,opt,wv,"Markt für "+zLabel(k))}</label>${wv&&!V.fest[k]?`<div class="klein-text">Bei ${esc(wv)} gibt es das ${S.lzeit==="jetzt"?"gerade":"demnächst"} nicht im Angebot, deshalb zählt der günstigste Markt.</div>`:""}`;
+}
 function zeileHtml(k,V){
   const mit=zMitglieder(k),a=ARTEN[artG(zk(k).g)],rw=rwPreis(k),ref=zRef(k);   // Normalpreis bei Packungsware je Stück, gespeichert je kg bzw. Liter
   const rwId="r"+[...k].reduce((s,c)=>(s*31+c.charCodeAt(0))>>>0,7).toString(36);
@@ -1301,7 +1380,7 @@ function zeileHtml(k,V){
   return `<div class="zeile"><div class="name"><b>${pLink(ziel,zLabel(k))}</b>${mit.length>1?`<small>günstigstes von: ${mit.map(x=>pLink(x,zLabel0(x))).join(", ")}</small>`:""}</div>
     <button type="button" class="x" data-zx="${esc(k)}" aria-label="${esc(zLabel(k))} von der Liste nehmen">✕</button>
     ${postenHtml(k,V)}
-    <div class="mengen">${mengeHtml(k)}<label class="rw" title="Was der Artikel normalerweise kostet. Gilt, wenn es kein günstigeres Angebot gibt.">Normalpreis <input id="${rwId}" inputmode="decimal" placeholder="–" value="${rw!=null?(ref?(Math.round(rw*ref*100)/100).toFixed(2).replace(".",","):zt(rw)):""}" data-r="${esc(k)}"${ref?` data-ref="${ref}"`:""} aria-label="Normalpreis in Euro je ${ref?"Stück":a.u}"> € je ${ref?"Stück":a.u}</label></div></div>`;
+    <div class="mengen">${mengeHtml(k)}<label class="rw" title="Was der Artikel normalerweise kostet. Gilt, wenn es kein günstigeres Angebot gibt.">Normalpreis <input id="${rwId}" inputmode="decimal" placeholder="–" value="${rw!=null?(ref?(Math.round(rw*ref*100)/100).toFixed(2).replace(".",","):zt(rw)):""}" data-r="${esc(k)}"${ref?` data-ref="${ref}"`:""} aria-label="Normalpreis in Euro je ${ref?"Stück":a.u}"> € je ${ref?"Stück":a.u}</label>${wahlHtml(k,V)}</div></div>`;
 }
 const listeText=l=>l.map(x=>esc(zLabel(x))).join(", ");
 function bonHtml(V){
@@ -1326,9 +1405,9 @@ function bonHtml(V){
   return `<div class="bon"><div class="bon-kopf"><small>Beste Wahl ${S.lzeit==="jetzt"?"jetzt":"demnächst"}</small><b>${b.ms.map(m=>mlogo(m)+esc(m)).join(" + ")}</b><span class="km">${b.anzahl} von ${n} Artikeln im Angebot${b.ms.length===1&&kmText(b.ms[0])?" · "+kmText(b.ms[0]):""}</span></div>
     <div class="bon-zeilen"><div class="bon-z"><span>Angebote</span><span>${eur(b.ware)}</span></div>
     ${b.rwSumme>0?`<div class="bon-z"><span>Ohne Angebot, zu deinen Normalpreisen (ca.)</span><span>${eur(b.rwSumme)}</span></div>`:""}
-    <div class="bon-z"><span>${b.tour?`Fahrt als Tour (${b.tour.reihe.map(esc).join(" → ")}, ${f1(b.tour.km)} km)`:`Fahrt${b.ms.length>1?" (beide Märkte, hin und zurück)":" (hin und zurück)"}`}</span><span>${b.unbekannt?"unbekannt":eur(b.fahrt)}</span></div>
+    <div class="bon-z"><span>${b.tour?`Fahrt als Tour (${b.tour.reihe.map(esc).join(" → ")}, ${f1(b.tour.km)} km)`:`Fahrt${b.ms.length>2?" (alle Märkte, hin und zurück)":b.ms.length>1?" (beide Märkte, hin und zurück)":" (hin und zurück)"}`}</span><span>${b.unbekannt?"unbekannt":eur(b.fahrt)}</span></div>
     <div class="bon-z summe"><span>Zusammen${b.offen.length+V.fehlend.length?" (ohne "+(b.offen.length+V.fehlend.length)+" Artikel)":""}</span><span>${eur(b.gesamt)}</span></div></div>
-    <div class="bon-fuss">${b.offen.length?`<div>Ohne Angebot in diesen Märkten: ${listeText(b.offen)}. Die kaufst du dort zum normalen Preis.</div>`:""}${V.fehlend.length?`<div class="klein-text">Gerade nirgends im Angebot: ${listeText(V.fehlend)}.</div>`:""}${vglText}${frist}${tourText}${b.unbekannt?`<div class="klein-text">Für Märkte ohne bekannte Entfernung ist keine Fahrt eingerechnet. Trage unter „Mehr“ deinen Standort ein.</div>`:""}</div></div>`;
+    <div class="bon-fuss">${Object.keys(V.fest).length?`<div>📌 Selbst gewählt: ${Object.entries(V.fest).map(([g,x])=>esc(zLabel(g))+" bei "+esc(x.m)).join(", ")}.</div>`:""}${b.offen.length?`<div>Ohne Angebot in diesen Märkten: ${listeText(b.offen)}. Die kaufst du dort zum normalen Preis.</div>`:""}${V.fehlend.length?`<div class="klein-text">Gerade nirgends im Angebot: ${listeText(V.fehlend)}.</div>`:""}${vglText}${frist}${tourText}${b.unbekannt?`<div class="klein-text">Für Märkte ohne bekannte Entfernung ist keine Fahrt eingerechnet. Trage unter „Mehr“ deinen Standort ein.</div>`:""}</div></div>`;
 }
 function vListe(){
   const namen=zettelNamen(),alt=Object.keys(zettel).filter(k=>zettel[k]>0&&veraltet(k));
@@ -1569,14 +1648,14 @@ function vMarkt(){
   return h;
 }
 
-const ANSICHT={angebote:vAngebote,markt:vMarkt,produkt:vProdukt,suchen:vSuchen,liste:vListe,einkaufen:vEinkaufen,alarm:vAlarm,mehr:vMehr};
+const ANSICHT={angebote:vAngebote,markt:vMarkt,treffer:vTreffer,produkt:vProdukt,suchen:vSuchen,liste:vListe,einkaufen:vEinkaufen,alarm:vAlarm,mehr:vMehr};
 </script>
 <script>
 /* ======================================================================
    Aktionen, Suche, Navigation und Start
    ====================================================================== */
 /* ---------- Navigation (Zurück-Taste des Handys funktioniert) ---------- */
-function hashVon(v,p){return v==="produkt"?"#produkt/"+encodeURIComponent(p):v==="angebote"?"#angebote":"#"+v}
+function hashVon(v,p){return v==="treffer"?"#suchen":v==="produkt"?"#produkt/"+encodeURIComponent(p):v==="angebote"?"#angebote":"#"+v}
 function ausHash(){
   const h=location.hash.slice(1);
   if(h.startsWith("produkt/"))return {v:"produkt",p:decodeURIComponent(h.slice(8))};
@@ -1586,20 +1665,20 @@ const scrollPos={};   // Scrollposition je Bereich, damit „Zurück“ an diese
 try{history.scrollRestoration="manual"}catch(e){}
 function zeige(v,p,ersetzen){
   if(v==="produkt"&&p!==S.p){S.d={zeit:"jetzt",sort:"liter",dir:1};["pGroesse","aWert","aEinheit","aMl","aAlle"].forEach(k=>delete S.form[k])}
-  if(S.v!=="produkt")scrollPos[S.v]=window.scrollY;
-  if(v==="produkt"&&S.v!=="produkt")S.von=S.v;
-  S.v=v;S.p=v==="produkt"?p:null;
+  if(!DETAIL(S.v))scrollPos[S.v]=window.scrollY;
+  if(DETAIL(v)&&!DETAIL(S.v))S.von=S.v;
+  S.v=v;S.p=DETAIL(v)?p:null;
   try{history[ersetzen?"replaceState":"pushState"]({v,p:S.p,von:S.von},"",hashVon(v,S.p))}catch(e){}
   render();window.scrollTo(0,0);
   if(v==="mehr"&&betreiber())anfragenLaden();
 }
 window.addEventListener("popstate",e=>{
-  if(S.v!=="produkt")scrollPos[S.v]=window.scrollY;
-  const s=e.state||ausHash();S.v=s.v;S.p=s.p;if(s.von)S.von=s.von;if(S.v==="produkt"&&!S.p)S.v="angebote";
-  render();window.scrollTo(0,S.v==="produkt"?0:scrollPos[S.v]||0);
+  if(!DETAIL(S.v))scrollPos[S.v]=window.scrollY;
+  const s=e.state||ausHash();S.v=s.v;S.p=s.p;if(s.von)S.von=s.von;if(DETAIL(S.v)&&!S.p)S.v=S.v==="treffer"?"suchen":"angebote";
+  render();window.scrollTo(0,DETAIL(S.v)?0:scrollPos[S.v]||0);
 });
 $("leiste").onclick=e=>{const b=e.target.closest("button[data-v]");if(b)zeige(b.dataset.v)};
-$("zurueck").onclick=()=>{if(history.state&&history.state.v==="produkt"&&history.length>1)history.back();else zeige(S.von||"angebote")};
+$("zurueck").onclick=()=>{if(history.state&&DETAIL(history.state.v)&&history.length>1)history.back();else zeige(S.von||"angebote")};
 $("aktBtn").onclick=()=>serverAktualisieren(false);
 $("toastZu").onclick=()=>{$("toast").hidden=true};
 
@@ -1632,8 +1711,10 @@ function mengeUmrechnen(m,art){   // gewünschte Menge in kg, Liter oder Stück;
 const mengeAnzeige=m=>m?zt(m.wert)+(m.einheit&&m.einheit!=="x"?" "+m.einheit:"×"):"";
 function favLabel(c){const m=(c.marke||"").trim(),p=(c.produkt||"").trim();return (!m?p:!p?m:p.toLowerCase().includes(m.toLowerCase())?p:m+" "+p).replace(/[,|]/g," ").replace(/\s+/g," ").trim().slice(0,40)||"?"}
 function ergKarten(l){   // Suchergebnisse je Produkt (Marke bzw. Name)
-  const heute=new Date().toISOString().slice(0,10),map=new Map();
+  const heute=new Date().toISOString().slice(0,10),map=new Map(),schon=new Set();
   (l||[]).filter(x=>x&&x.preis>0&&x.liter>0&&!(x.gueltig_bis&&x.gueltig_bis<heute)).forEach(x=>{
+    // dasselbe Angebot kann aus zwei Postleitzahlen kommen (z. B. PENNY), es zählt einmal
+    const d=[mbase(x.markt),x.marke,x.produkt,x.preis,x.stueck,x.ml,x.gueltig_von,x.gueltig_bis].join("|");if(schon.has(d))return;schon.add(d);
     const k=(x.marke||x.produkt||"").trim().toLowerCase();if(!k)return;
     const c=map.get(k)||{key:k,marke:x.marke||"",produkt:x.produkt||"",bild:"",os:[]};
     if(!c.bild&&x.bild&&/^https?:\/\//.test(x.bild))c.bild=x.bild;
@@ -1645,6 +1726,7 @@ function ergKarten(l){   // Suchergebnisse je Produkt (Marke bzw. Name)
     c.art=art;c.os=os;c.label=favLabel(c);c.min=os[0];
     c.groessen=[...new Set(os.map(o=>art==="st"?o.stueck+" Stück":groesseText(o.ml,art)))];
     c.maerkte=[...new Set(os.map(o=>mbase(o.markt)))];
+    c.jeMarkt=c.maerkte.map(m=>os.find(o=>mbase(o.markt)===m));   // günstigstes Angebot je Markt (os ist nach Preis je Einheit sortiert)
     return c;
   }).sort((a,b)=>b.os.length-a.os.length||a.min.preis_pro_liter-b.min.preis_pro_liter).slice(0,40);
 }
@@ -1845,6 +1927,18 @@ const AKTION={
 };
 $("ansicht").addEventListener("click",e=>{
   const t=e.target;let b;
+  if(b=t.closest("a[data-tz]")){e.preventDefault();zeige("treffer",b.dataset.tz);return}
+  if(b=t.closest("[data-tw]")){   // Treffer der Suche: in diesem Markt kaufen
+    const z=trefferZeilen[+b.dataset.tw],a=z&&karteAkt(z.i,z.j,true);if(!a)return;
+    const setzen=()=>{Object.keys(zettel).filter(k=>zettel[k]>0&&zk(k).g===a.name).forEach(k=>{wahl[k]=z.m});listeSpeichern();render()};
+    if(istFav(a.name)&&aufListe(a.name)){
+      if(wahlName(a.name)===z.m){vonListe(a.name);listeSpeichern();render();return}
+      setzen();melde("„"+a.name+"“ kaufst du jetzt bei "+z.m+".");return;
+    }
+    sucheHinzu([a]).then(()=>{if(aufListe(a.name)){setzen();melde("„"+a.name+"“ steht auf der Liste, gekauft bei "+z.m+".")}});
+    return;
+  }
+  if(b=t.closest("[data-wahlweg]")){const g=b.dataset.wahlweg;Object.keys(wahl).filter(k=>zk(k).g===g).forEach(k=>delete wahl[k]);listeSpeichern();render();return}
   if(b=t.closest("a[data-zp]")){e.preventDefault();const x=zk(b.dataset.zp);zeige("produkt",x.g);if(x.ml){S.d.ml=String(x.ml);render()}return}
   if(b=t.closest("[data-go]")){zeige(b.dataset.go);return}
   if(b=t.closest("[data-liste]")){e.stopPropagation();listeUmschalten(b.dataset.liste);return}
@@ -1932,6 +2026,10 @@ $("ansicht").addEventListener("change",e=>{
   const t=e.target;
   if(t.dataset.d){S.d[t.dataset.d]=t.type==="checkbox"?t.checked:t.value;render();return}
   if(t.dataset.f){S.form[t.dataset.f]=t.type==="checkbox"?t.checked:t.value;if(t.tagName==="SELECT"||t.type==="checkbox")render();return}
+  if(t.dataset.wahl!==undefined&&t.matches("[data-wahl]")){
+    const k=t.dataset.wahl;zMitglieder(k).forEach(m=>delete wahl[m]);if(t.value)wahl[k]=t.value;else delete wahl[k];
+    listeSpeichern();render();return;
+  }
   if(t.dataset.segSel){const n=t.dataset.segSel;if(n==="plan")S.plan=+t.value||0;else S[n]=t.value;render();return}
   if(t.dataset.alAn){const g=t.dataset.alAn;alarmSetzen([g],f=>t.checked?(f.alarm||{wert:JEDES,einheit:alarmEinheiten(artG(g))[0][0],ml:null}):null);render();return}
   if(t.dataset.alWert){const g=t.dataset.alWert,v=parseFloat(String(t.value).replace(",","."));if(v>0&&v<JEDES)alarmSetzen([g],f=>({...f.alarm,wert:Math.round(v*100)/100}));else melde("Bitte einen Wunschpreis über 0 eingeben, zum Beispiel 0,80.",true);render();return}
