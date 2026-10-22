@@ -189,13 +189,19 @@ export class Teil extends WorkerEntrypoint {
     const alle = j.results || [], passend = alle.filter(o => haendlerId(o) === id);
     return { total: j.totalResults || 0, roh: alle.length, liste: (passend.length || !alle.length ? passend : alle).map(kompakt) };
   }
+  async marktNamen(plz, name, id) {   // nur Marken und Produktnamen eines Marktes (für „Meintest du …?“)
+    const j = await mgHole(this.env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "1000", offset: "0", q: name, retailers: id, zipCode: plz }));
+    const n = new Set();
+    for (const o of j.results || []) if (haendlerId(o) === id) for (const x of [(o.brand || {}).name, (o.product || {}).name]) { const t = String(x || "").replace(/\s+/g, " ").trim(); if (t.length >= 3 && t.length <= 40) n.add(t); }
+    return [...n];
+  }
   async holeStapel(plz, auftraege, ohneFilterFallback) {
     return Promise.all(auftraege.map(async a => {
       const ids = new Set(), alle = [];
       for (const seite of await Promise.all(a.suchen.map(s => teilAbfrage(this.env, plz, s)))) for (const o of seite) if (!ids.has(o.id)) { ids.add(o.id); alle.push(o); }
       // Das Angebot muss zum Suchwort passen (z. B. "Milch"); ist zusätzlich ein bestimmtes Produkt gewählt (nur), zählt nur dessen Marke bzw. Name.
       // Ohne die Prüfung des Suchworts kämen bei "K-Classic" + "Milch" auch K-Classic-Käse und -Sahne mit.
-      const wort = a.wort || a.p, nurOk = o => !a.nur || !a.nur.length || a.nur.includes((o.brand || o.name).trim().toLowerCase());
+      const wort = a.wort || a.p, nurL = (a.nur || []).map(nurK), nurOk = o => !nurL.length || nurL.includes(nurK(o.brand || o.name));
       let t = alle.filter(o => istProdukt(wort, o, a.aus) && nurOk(o));
       // Nichts Passendes: bei der Suche (locker) oder einem fest gewählten Produkt (nur) auch Wortanfänge und Schreibweisen
       // ohne Leerzeichen gelten lassen ("hidro" -> "Hidrofugal", "hidro fugal" -> "Hidrofugal", "coca cola" -> "Coca-Cola").
@@ -235,6 +241,8 @@ function passtLocker(gruppe, o, extra) {
   const essen = fluessig ? [] : ESSEN_AUS.filter(x => !gruppe.toLowerCase().includes(x));
   return !!gefunden && ![...AUSSCHLUSS, ...extra, ...essen].some(x => alles.toLowerCase().includes(x));
 }
+// Marke eines gewählten Produkts vergleichen, ohne dass Groß-/Kleinschreibung, Striche oder Umlaute stören ("Coca Cola" = "Coca-Cola")
+const nurK = t => flach(t).replace(/[^a-z0-9]/g, "");
 // Suchbegriffe für Marktguru: aus mehreren Wörtern zusätzlich die zusammengeschriebene Form ("hidro fugal" -> "hidrofugal")
 const varianten = s => { const z = s.replace(/[\s-]+/g, ""); return /[\s-]/.test(s.trim()) && z.length >= 4 ? [s, z] : [s]; };
 
@@ -296,7 +304,7 @@ async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2,
       const mg = mengenangabe(o), l = mg ? mg[1] : null, st = mg ? mg[0] : 1, art = mg ? mg[2] : "l";
       const kandidat = (o.brand || o.name).trim().toLowerCase();
       let coke = true;   // passende Treffer sind schon im Teilaufruf ausgewählt
-      if (info.nur && info.nur.size && !info.nur.has(kandidat)) coke = false;
+      if (info.nur && info.nur.size && ![...info.nur].map(nurK).includes(nurK(kandidat))) coke = false;
       ausgabe.push({ abgefragt: jetzt, gruppe: p, bild: o.bild, marke: o.brand, coke, link: o.link, markt: o.adv + (o.plz ? ` (${o.plz})` : ""), produkt: o.name,
         beschreibung: o.desc, preis: o.price, preis_alt: o.alt || null, art, liter: l, stueck: st, ml: l && st ? Math.round(l * 1000 / st) : null,
         preis_pro_liter: o.price && l ? Math.round(o.price / l * 100) / 100 : null, gueltig_von: o.von, gueltig_bis: o.bis });
@@ -543,6 +551,21 @@ async function regionAngebote(env, ctx, sp, ip) {
   return liste;
 }
 
+/* ---------- Namen aller Angebote einer Gegend (für „Meintest du …?“ bei Tippfehlern), einen Tag gespeichert ---------- */
+async function namenRegion(env, ctx, plz, ip, neu) {
+  const key = "namen:" + plz, alt = await env.PV.get(key, "json");
+  if (!neu && alt && Date.now() - alt.t < 24 * 3600e3) return alt;
+  if (ip && (begrenzt("nm:" + ip, 6) || !(await tagesOk(env, "namen", 40)))) { if (alt) return alt; throw zuViel(); }
+  const maerkte = (await maerkteRegion(env, plz)).slice(0, 30), teile = ctx.exports.Teil;
+  const listen = await parallel(maerkte.map(m => () => teile.marktNamen(m.plz, m.name, m.id).catch(() => [])), 4);
+  const z = new Map();
+  for (const l of listen) for (const n of l) { const k = n.toLowerCase(); const e = z.get(k); if (e) e[1]++; else z.set(k, [n, 1]); }
+  const erg = { t: Date.now(), plz, namen: [...z.values()].sort((a, b) => b[1] - a[1]).slice(0, 5000).map(x => x[0]) };
+  if (!erg.namen.length && alt) return alt;
+  await env.PV.put(key, JSON.stringify(erg), { expirationTtl: 3 * 86400 });
+  return erg;
+}
+
 /* ---------- Benutzerkonten (ohne E-Mail) ----------
    Der Browser rechnet aus Passwort und Benutzername mit PBKDF2 einen Schlüssel aus (dk); der Server speichert nur eine Prüfsumme davon.
    Vergisst jemand das Passwort, bekommt der Betreiber eine Nachricht (ntfy) und erzeugt in der Seite einen Einmal-Code. */
@@ -749,6 +772,11 @@ export default {
         if (p === "/maerkte") { const plz = url.searchParams.get("plz") || PLZ; if (!plzOk(plz)) return fehler("Ungültige Postleitzahl", 400); return antwort(await maerkteRegion(env, plz)); }
         if (p === "/markt") return antwort(await marktAngebote(env, ctx, url.searchParams, req.headers.get("CF-Connecting-IP") || "?"));
         if (p === "/region") return antwort(await regionAngebote(env, ctx, url.searchParams, req.headers.get("CF-Connecting-IP") || "?"));
+        if (p === "/namen") {
+          const plz = url.searchParams.get("plz") || PLZ;
+          if (!plzOk(plz)) return fehler("Ungültige Postleitzahl", 400);
+          return antwort(await namenRegion(env, ctx, plz, req.headers.get("CF-Connecting-IP") || "?"));
+        }
         if (p === "/korrekturen.json") return antwort((await env.PV.get("korrekturen", "json")) || {});
         if (p === "/status") return antwort({ ok: true, dienst: "preisvergleich", stand: await env.PV.get("stand", "json") });
         return env.ASSETS.fetch(req);  // die Seite selbst (index.html, Symbole, ...)
@@ -799,5 +827,6 @@ export default {
   async scheduled(event, env, ctx) {
     try { await aktualisieren(env, ctx); }
     catch (e) { await meldeFehler(env, "Die tägliche Aktualisierung bei Cloudflare ist fehlgeschlagen: " + (e.message || e)); throw e; }
+    finally { try { await namenRegion(env, ctx, PLZ, "", true); } catch (e) { /* nur eine Zugabe */ } }
   },
 };

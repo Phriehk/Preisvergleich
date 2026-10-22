@@ -118,3 +118,22 @@ test("Server: lockere Suche (Wortanfang, zusammengeschrieben)", () => {
   assert.deepEqual([...varianten("hidro fugal")], ["hidro fugal", "hidrofugal"]);
   assert.deepEqual([...varianten("Milch")], ["Milch"]);
 });
+
+test("App: „Meintest du …?“ und Strichcode-Prüfziffer", () => {
+  const code = grab(html, "// Text ohne Umlaute", "\n/* Korrekturen") + grab(html, "/* ---------- Meintest du", "/* Ende Meintest du */") + grab(html, "function eanOk(c){", "\nasync function scanEngine") + grab(html, "function scanWoerter(", "\nasync function eanSuchen") + ";({aehnlich,eanOk,scanWoerter})";
+  const { aehnlich, eanOk, scanWoerter } = vm.runInNewContext(code);
+  const namen = ["Kerrygold", "Hidrofugal", "Deo Roll-on", "Coca-Cola", "Müller Milchreis", "Milbona", "Weihenstephan"];
+  assert.deepEqual([...aehnlich("hydrofugal", namen)], ["Hidrofugal"]);
+  assert.deepEqual([...aehnlich("Kerygold", namen)], ["Kerrygold"]);
+  assert.deepEqual([...aehnlich("hydro", namen)], ["Hidrofugal"]);           // Wortanfang mit Tippfehler
+  assert.deepEqual([...aehnlich("Mueller", namen)], []);                    // gleiche Schreibweise ist kein Vorschlag
+  assert.deepEqual([...aehnlich("Milchreiss", namen)], ["Milchreis"]);      // ein Wort aus einem längeren Namen
+  assert.deepEqual([...aehnlich("Weihenstefan", namen)], ["Weihenstephan"]);
+  assert.deepEqual([...aehnlich("Brot", namen)], []);
+  assert.equal(eanOk("4006381333931"), true);
+  assert.equal(eanOk("4006381333932"), false);
+  assert.equal(eanOk("96385074"), true);   // EAN-8
+  assert.deepEqual([...scanWoerter("Irische Butter 250 g", "Kerrygold")], ["Butter", "Irische"]);
+  assert.deepEqual([...scanWoerter("Coca-Cola Zero Sugar 1,5 l", "Coca-Cola")], ["Zero", "Sugar"]);
+  assert.deepEqual([...scanWoerter("H-Milch 1,5%", "Milbona")], ["H-Milch"]);
+});

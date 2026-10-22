@@ -11,6 +11,7 @@ async function mitSeite(opts, fn) {
   const u = await umgebung(opts);
   await u.KV.put("favoriten", JSON.stringify(opts.favs || [{ name: "Eier", aus: "" }, { name: "Reis", aus: "" }, { name: "Äpfel", aus: "" }]));
   await u.A("/aktualisieren", "POST");
+  if (opts.vorbereiten) await opts.vorbereiten(u);
   const s = await browserStarten(u, opts);
   try { await s.oeffnen(opts.hash || ""); await fn(s, u); }
   finally { await s.b.close(); }
@@ -302,6 +303,92 @@ t("Ohne Zugangscode: eigene Favoriten im Browser, Angebote über die öffentlich
     const karten = await p.$$eval(".produkt h3", e => e.map(x => x.textContent));
     assert.deepEqual(karten, [lokal[0].name]);
     assert.match(await p.textContent(".produkt .preisschild"), /€/);
+    assert.deepEqual(fehler, []);
+  });
+});
+
+t("Suche: „Meintest du …?“ bei Tippfehlern, ein Tipp sucht neu", async () => {
+  await mitSeite({}, async ({ p, fehler }) => {
+    await suche(p, "Kerygold");
+    await p.waitForSelector("[data-mein]", { timeout: 15000 });
+    const vor = await p.$$eval("[data-mein]", e => e.map(x => x.dataset.wort));
+    assert.ok(vor.includes("Kerrygold"), JSON.stringify(vor));
+    await p.click('[data-mein][data-wort="Kerrygold"]');
+    await p.waitForFunction(() => S.suche.items[0].name === "Kerrygold" && S.suche.items[0].status === "fertig", null, { timeout: 15000 });
+    assert.equal(await p.inputValue("#sucheText"), "Kerrygold");
+    assert.deepEqual(fehler, []);
+  });
+});
+
+t("Scannen: Nummer eingeben, Produkt aus Open Food Facts, Angebote prüfen, als Favorit speichern", async () => {
+  await mitSeite({}, async ({ p, fehler }, u) => {
+    let gefragt = "";
+    await p.route("https://world.openfoodfacts.org/**", r => { gefragt = r.request().url(); r.fulfill({ headers: { "access-control-allow-origin": "*", "content-type": "application/json" }, body: JSON.stringify({ status: 1, product: { product_name: "Irische Butter", brands: "Kerrygold, Ornua", quantity: "250 g" } }) }); });
+    await bereich(p, "suchen");
+    await p.click('[data-aktion="scannen"]');
+    assert.equal(await p.isVisible("#scanDlg"), true);
+    await p.fill("#sEan", "4006381333932");   // falsche Prüfziffer
+    await p.click("#sEanLos");
+    assert.match(await p.textContent("#sStatus"), /stimmt nicht/);
+    await p.fill("#sEan", "4006381333931");
+    await p.click("#sEanLos");
+    await p.waitForFunction(() => document.getElementById("sMarke"), null, { timeout: 10000 });
+    assert.match(gefragt, /\/api\/v2\/product\/4006381333931\.json/);
+    assert.equal(await p.inputValue("#sMarke"), "Kerrygold");
+    assert.equal(await p.inputValue("#sArtikel"), "Butter");   // „Irische“ ist nur eine Eigenschaft
+    await p.waitForFunction(() => /Gerade 1 Angebot/.test(document.getElementById("sAngebote").textContent), null, { timeout: 15000 });
+    await p.click("#sSpeichern");
+    await p.waitForFunction(() => document.getElementById("sSpeichern").textContent.includes("Gespeichert"), null, { timeout: 15000 });
+    const f = JSON.parse(await u.KV.get("favoriten")).find(x => x.name === "Kerrygold Butter");
+    assert.ok(f, "Favorit fehlt");
+    assert.deepEqual([f.nur, f.suche], [["kerrygold"], "Butter"]);
+    await p.click("#sZu");
+    await bereich(p, "angebote");
+    assert.ok((await p.$$eval(".produkt h3", e => e.map(x => x.textContent))).includes("Kerrygold Butter"));
+    assert.deepEqual(fehler, []);
+  });
+});
+
+t("Vorrat: Tiefstpreis seit Beginn der Aufzeichnung bekommt einen Hinweis", async () => {
+  const vorbereiten = async u => {
+    const monate = new Map(), heute = Date.now();
+    for (let i = 60; i >= 1; i--) {
+      const d = new Date(heute - i * 864e5).toISOString().slice(0, 10), m = d.slice(0, 7);
+      (monate.get(m) || monate.set(m, []).get(m)).push([d, "ALDI SÜD", "Reis", 1, 2.5, 2.5, "", "", "Reis"].join(";"));
+    }
+    const alt = JSON.parse((await u.KV.get("verlauf:monate")) || "[]");
+    for (const [m, z] of monate) { const v = (await u.KV.get("verlauf:" + m)) || ""; await u.KV.put("verlauf:" + m, [...z, v].filter(Boolean).join("\n")); if (!alt.includes(m)) alt.push(m); }
+    await u.KV.put("verlauf:monate", JSON.stringify(alt.sort()));
+  };
+  await mitSeite({ vorbereiten }, async ({ p, fehler }) => {
+    await p.waitForTimeout(800);
+    const reis = await p.textContent('.produkt[data-p="Reis"]');
+    assert.match(reis, /📦 Tiefstpreis seit Beginn/);
+    assert.doesNotMatch(await p.textContent('.produkt[data-p="Eier"]'), /Tiefstpreis|Bestpreis/);
+    await p.click('.produkt[data-p="Reis"]'); await p.waitForTimeout(300);
+    assert.match(await p.textContent("#ansicht"), /auf Vorrat/);
+    assert.deepEqual(fehler, []);
+  });
+});
+
+t("Einkaufen ohne Netz: Haken bleiben auf dem Gerät und gehen später ins Konto", async () => {
+  await mitSeite({ code: "" }, async ({ p, fehler }, u) => {
+    await bereich(p, "mehr");
+    await p.click('[data-seg="kMode"][data-wert="neu"]');
+    await p.fill("#kName", "ben"); await p.fill("#kPw", "geheim123"); await p.fill("#kPw2", "geheim123"); await p.click("#kGo");
+    await p.waitForSelector("#kWer", { timeout: 15000 });
+    await bereich(p, "einkaufen");
+    await p.fill("#extraName", "Zahnpasta"); await p.press("#extraName", "Enter"); await p.waitForTimeout(2200);
+    await p.route("https://preise.phriehk.workers.dev/konto/**", r => r.abort());   // Funkloch
+    await p.check('#ansicht input[data-hk]'); await p.waitForTimeout(2200);
+    assert.match(await p.textContent("#ansicht"), /auf diesem Gerät gespeichert/);
+    assert.deepEqual(JSON.parse(u.store.get("u:ben")).daten.haken || {}, {});
+    await p.unroute("https://preise.phriehk.workers.dev/konto/**");
+    await p.reload(); await p.waitForTimeout(2500);   // beim nächsten Öffnen gewinnt dieses Gerät, nicht der alte Stand im Konto
+    assert.equal(Object.keys(JSON.parse(u.store.get("u:ben")).daten.haken || {}).length, 1);
+    await bereich(p, "einkaufen");
+    assert.equal(await p.isChecked('#ansicht input[data-hk]'), true);
+    assert.doesNotMatch(await p.textContent("#ansicht"), /auf diesem Gerät gespeichert/);
     assert.deepEqual(fehler, []);
   });
 });
