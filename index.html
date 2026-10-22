@@ -225,6 +225,8 @@ tr.bald td{background:color-mix(in srgb,var(--gelb) 22%,transparent)}
 .einheit{font-size:.85rem;color:var(--grau)}
 .rw{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;color:var(--grau)}
 .rw input{width:5.2rem;min-height:34px;padding:4px 8px;border:1px solid var(--linie);border-radius:8px;background:var(--flaeche)}
+.rw input.vorschlag{color:var(--grau);font-style:italic;border-style:dashed}
+.vorschlag-text{flex-basis:100%;margin-top:-4px;font-size:.75rem;color:var(--grau)}
 .bon{background:var(--flaeche);border:1px solid var(--gruen);border-radius:var(--r);box-shadow:var(--schatten);overflow:hidden}
 .bon-kopf{background:var(--gruen-weich);padding:12px 16px;display:flex;flex-direction:column;gap:2px}
 .bon-kopf small{color:var(--grau);font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
@@ -880,7 +882,17 @@ function mengenRunden(){
   });
   if(neu)listeSpeichern();
 }
-const rwPreis=k=>{const n=zMitglieder(k).map(x=>zk(x).g).find(n=>richt[n]>0);return n?richt[n]:null};
+/* Normalpreis je Einheit: dein eigener; sonst ein Vorschlag aus dem früheren Preis („statt …“), den Marktguru manchmal mitliefert
+   (der niedrigste je Einheit, damit die Ersparnis nicht zu groß wirkt); gibt es beides nicht, bleibt das Feld leer */
+const rwEigen=k=>{const n=zMitglieder(k).map(x=>zk(x).g).find(n=>richt[n]>0);return n?richt[n]:null};
+let rwC={};
+function rwVorschlag(k){
+  if(k in rwC)return rwC[k];
+  let b=null;
+  for(const x of zMitglieder(k)){const {g,ml}=zk(x);for(const o of offers)if(grp(o)===g&&(!ml||o.ml===ml)&&o.alt>o.preis&&!o.ausb){const v=o.alt/liter(o);if(v>0&&(!b||v<b.v))b={v:Math.round(v*1e4)/1e4,o}}}
+  return rwC[k]=b;
+}
+const rwPreis=k=>{const e=rwEigen(k);if(e!=null)return e;const v=rwVorschlag(k);return v?v.v:null};
 const rwKosten=k=>{const r=rwPreis(k);return r==null?null:Math.round(zettel[k]*r*100)/100};
 function aufListeSetzen(k,menge){   // Artikel auf die Liste; in einer Gruppe gilt deren Menge
   const gl=Object.keys(zettel).filter(q=>zettel[q]>0&&q!==k&&gidVon(q)===gidVon(k));
@@ -1089,7 +1101,7 @@ function untertitel(){
   return "";
 }
 function render(){
-  vCache=null;medC={};
+  vCache=null;medC={};rwC={};
   const ae=document.activeElement,fokus=ae&&ae.id&&$("ansicht").contains(ae)?{id:ae.id,s:ae.selectionStart,e:ae.selectionEnd}:null;
   const schluessel=S.v+"|"+(S.p||""),gleich=render.letzte===schluessel,y=window.scrollY;
   const titel=S.v==="produkt"?S.p:S.v==="treffer"?trefferTitel():TITEL[S.v];
@@ -1394,7 +1406,7 @@ function postenHtml(k,V){
     const pk=w.teile.map(t=>(gr?esc(t.o.gruppe)+": ":"")+t.packs+" × "+mengeText(t.o)).join(" + ");
     return `<div class="posten-info">${b.zu[k].fest?`<span title="Markt selbst gewählt" aria-label="selbst gewählt">📌</span> `:""}${mlogo(m)}<b>${esc(m)}</b> · ${pk} für <b>${eur(w.kosten)}</b> · ${esc(gueltig(w.o))}${w.o.alt?` · statt ${eur(w.o.alt*w.packs)}`:""}</div>`;
   }
-  if(b&&b.rw.includes(k))return `<div class="posten-info">Ohne Angebot: ca. ${eur(rwKosten(k))} (dein Normalpreis)</div>`;
+  if(b&&b.rw.includes(k))return `<div class="posten-info">Ohne Angebot: ca. ${eur(rwKosten(k))} (${rwEigen(k)!=null?"dein Normalpreis":"Normalpreis-Vorschlag"})</div>`;
   const os=fvAngebote(k).slice().sort((x,y)=>gp(x)-gp(y));
   if(os.length){const o=os[0];return `<div class="posten-info">Im Angebot bei ${mlogo(o.markt)}${esc(mbase(o.markt))} (ab ${eur(gp(o))}/${unitK(o.art)}), aber nicht in den gewählten Märkten</div>`}
   // nur demnächst im Angebot?
@@ -1412,6 +1424,7 @@ function wahlHtml(k,V){   // Markt für einen Artikel selbst festlegen (sonst de
 }
 function zeileHtml(k,V){
   const mit=zMitglieder(k),a=ARTEN[artG(zk(k).g)],rw=rwPreis(k),ref=zRef(k);   // Normalpreis bei Packungsware je Stück, gespeichert je kg bzw. Liter
+  const vor=rwEigen(k)==null?rwVorschlag(k):null;   // Vorschlag aus „statt …“, solange du keinen eigenen Preis einträgst
   const rwId="r"+[...k].reduce((s,c)=>(s*31+c.charCodeAt(0))>>>0,7).toString(36);
   // bei zusammengelegten Artikeln führt der Name zu dem, dessen Angebot gewählt ist (sonst zum günstigsten)
   let ziel=k;
@@ -1419,7 +1432,7 @@ function zeileHtml(k,V){
   return `<div class="zeile"><div class="name"><b>${pLink(ziel,zLabel(k))}</b>${mit.length>1?`<small>günstigstes von: ${mit.map(x=>pLink(x,zLabel0(x))).join(", ")}</small>`:""}</div>
     <button type="button" class="x" data-zx="${esc(k)}" aria-label="${esc(zLabel(k))} von der Liste nehmen">✕</button>
     ${postenHtml(k,V)}
-    <div class="mengen">${mengeHtml(k)}<label class="rw" title="Was der Artikel normalerweise kostet. Gilt, wenn es kein günstigeres Angebot gibt.">Normalpreis <input id="${rwId}" inputmode="decimal" placeholder="–" value="${rw!=null?(ref?(Math.round(rw*ref*100)/100).toFixed(2).replace(".",","):zt(rw)):""}" data-r="${esc(k)}"${ref?` data-ref="${ref}"`:""} aria-label="Normalpreis in Euro je ${ref?"Stück":a.u}"> € je ${ref?"Stück":a.u}</label>${wahlHtml(k,V)}</div></div>`;
+    <div class="mengen">${mengeHtml(k)}<label class="rw" title="${vor?`Vorschlag: früherer Preis bei ${esc(mbase(vor.o.markt))} (statt ${eur(vor.o.alt)}). Trag einen eigenen Preis ein, um ihn zu ersetzen.`:"Was der Artikel normalerweise kostet. Gilt, wenn es kein günstigeres Angebot gibt."}">Normalpreis <input id="${rwId}"${vor?` class="vorschlag"`:""} inputmode="decimal" placeholder="–" value="${rw!=null?(ref?(Math.round(rw*ref*100)/100).toFixed(2).replace(".",","):zt(rw)):""}" data-r="${esc(k)}"${ref?` data-ref="${ref}"`:""} aria-label="Normalpreis in Euro je ${ref?"Stück":a.u}${vor?", Vorschlag":""}"> € je ${ref?"Stück":a.u}</label>${vor?`<small class="vorschlag-text">Vorschlag aus dem früheren Preis („statt“) bei ${esc(mbase(vor.o.markt))}</small>`:""}${wahlHtml(k,V)}</div></div>`;
 }
 const listeText=l=>l.map(x=>esc(zLabel(x))).join(", ");
 function bonHtml(V){

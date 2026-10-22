@@ -291,6 +291,27 @@ t("Alter Preis (oldPrice) wird als „statt …“ angezeigt", async () => {
   });
 });
 
+t("Normalpreis: Vorschlag aus „statt …“, eigener Preis ersetzt ihn, sonst bleibt das Feld leer", async () => {
+  await mitSeite({ favs: [{ name: "Milch", aus: "" }, { name: "Butter", aus: "" }] }, async ({ p, fehler }) => {
+    await p.click('.produkt[data-p="Milch"] .p-plus'); await p.click('.produkt[data-p="Butter"] .p-plus');
+    await bereich(p, "liste");
+    const feld = n => p.locator(".zeile", { hasText: n }).first().locator("input[data-r]");
+    assert.equal(await feld("Milch").inputValue(), "1,09");
+    assert.equal(await feld("Milch").getAttribute("class"), "vorschlag");
+    assert.match(await p.locator(".zeile", { hasText: "Milch" }).first().textContent(), /Vorschlag aus dem früheren Preis \(„statt“\) bei Lidl/);
+    assert.equal(await feld("Butter").inputValue(), "", "ohne „statt“-Preis und ohne eigenen Preis leer");
+    assert.equal(await p.evaluate(() => richt.Milch), undefined, "der Vorschlag wird nicht gespeichert");
+    await feld("Milch").fill("1,19"); await feld("Milch").press("Tab"); await p.waitForTimeout(200);
+    assert.equal(await p.evaluate(() => richt.Milch), 1.19);
+    assert.equal(await feld("Milch").getAttribute("class"), null);
+    assert.equal(await feld("Milch").inputValue(), "1,19");
+    await feld("Milch").fill(""); await feld("Milch").press("Tab"); await p.waitForTimeout(200);
+    assert.equal(await p.evaluate(() => richt.Milch), undefined);
+    assert.equal(await feld("Milch").inputValue(), "1,09", "ohne eigenen Preis wieder der Vorschlag");
+    assert.deepEqual(fehler, []);
+  });
+});
+
 t("Ohne Zugangscode: eigene Favoriten im Browser, Angebote über die öffentliche Abfrage", async () => {
   await mitSeite({ code: "" }, async ({ p, fehler }, u) => {
     assert.match(await p.textContent("#ansicht"), /Noch keine Favoriten/);
