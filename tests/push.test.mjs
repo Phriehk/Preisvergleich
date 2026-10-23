@@ -138,3 +138,36 @@ test("„Passwort vergessen“ meldet sich beim Betreiber, nur nicht beim automa
   await R("/konto/vergessen", { name: "anna" });
   assert.equal(u.ntfy.length, 1); assert.match(u.ntfy[0].message, /anna/);
 });
+
+test("Wochenüberblick: montags einmal die guten Angebote (unter dem Durchschnitt oder mit „statt“-Preis), abschaltbar", async () => {
+  const u = await umgebung(), g = await geraet();
+  await u.A("/push/abo", "POST", JSON.stringify(g.abo));
+  await u.KV.put("favoriten", JSON.stringify([{ name: "Butter", aus: "" }, { name: "Milch", aus: "" }, { name: "Eier", aus: "" }]));
+  // Verlauf: Butter kostete zuletzt etwa 9 €/kg, Eier wie jetzt
+  const zeilen = {};
+  for (let k = 2; k <= 12; k++) {
+    const d = new Date(Date.now() - k * 864e5).toISOString().slice(0, 10);
+    (zeilen[d.slice(0, 7)] = zeilen[d.slice(0, 7)] || []).push(`${d};PENNY;Butter;0.25;2.25;9;;;Butter`, `${d};ALDI SÜD;Freiland-Eier;10;2.29;0.229;;;Eier`);
+  }
+  for (const [m, z] of Object.entries(zeilen)) await u.KV.put("verlauf:" + m, z.join("\n"));
+  await u.KV.put("verlauf:monate", JSON.stringify(Object.keys(zeilen).sort()));
+  const lauf = () => u.H.scheduled({}, u.env, u.ctx);   // der tägliche Lauf
+  u.env.WOCHENTAG_TEST = 3;   // Mittwoch: kein Überblick
+  await lauf();
+  assert.equal(u.push.length, 0);
+  u.env.WOCHENTAG_TEST = 1;   // Montag
+  await lauf();
+  assert.equal(u.push.length, 1);
+  const n = await entschluesseln(g, u.push[0].body);
+  assert.equal(n.titel, "Diese Woche günstig: 2 Favoriten"); assert.equal(n.url, "./#angebote");
+  assert.match(n.text, /Butter 3,49 € bei REWE \(−22 %\)/); assert.match(n.text, /Milch 0,89 € bei Lidl \(statt 1,09 €\)/); assert.doesNotMatch(n.text, /Eier/);
+  await lauf();
+  assert.equal(u.push.length, 1, "nur einmal am Montag");
+  // abschalten; „jetzt senden“ geht trotzdem
+  assert.equal((await (await u.A("/push/woche", "POST", JSON.stringify({ an: false }))).json()).wocheAn, false);
+  assert.equal((await (await u.A("/push/status")).json()).wocheAn, false);
+  await u.KV.delete("woche:gesendet"); await lauf();
+  assert.equal(u.push.length, 1, "aus");
+  assert.equal((await u.A("/push/woche", "POST", JSON.stringify({ jetzt: true }))).status, 200);
+  assert.equal(u.push.length, 2);
+});

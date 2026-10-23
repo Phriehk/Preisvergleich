@@ -120,7 +120,7 @@ async function teilAbfrage(env, plz, suche) {
     const v = (o.validityDates || [{}])[0] || {};
     return { id: o.id, adv: (((o.advertisers || [{}])[0]) || {}).name || "?", name: (o.product || {}).name || "?", brand: markeVon(o),
       desc: o.description || "", price: o.price, alt: +o.oldPrice > +o.price ? +o.oldPrice : null, einheit: (((o.unit || {}).shortName) || "").toLowerCase(), volume: o.volume, quantity: o.quantity,
-      von: lokalDatum(v.from), bis: lokalDatum(v.to), bild: bildUrl(o), link: link(o) };
+      von: lokalDatum(v.from), bis: lokalDatum(v.to), bild: bildUrl(o), link: link(o), kp: +(((o.categories || [])[0] || {}).parentId) || 0 };
   });
 }
 
@@ -203,7 +203,7 @@ export class Teil extends WorkerEntrypoint {
       // Das Angebot muss zum Suchwort passen (z. B. "Milch"); ist zusätzlich ein bestimmtes Produkt gewählt (nur), zählt nur dessen Marke bzw. Name.
       // Ohne die Prüfung des Suchworts kämen bei "K-Classic" + "Milch" auch K-Classic-Käse und -Sahne mit.
       // "nur" nennt die Marke (alte Favoriten) oder ein bestimmtes Produkt aus Marke und Name ("Nivea Pflegedusche" statt aller Nivea-Produkte)
-      const wort = a.wort || a.p, nurL = (a.nur || []).map(nurK), nurOk = o => !nurL.length || nurL.includes(nurK(o.brand || o.name)) || nurL.map(prodK).includes(prodK((o.brand || "") + (o.name || "")));
+      const wort = a.wort || a.p, nurOk = nurPruefer(a.nur);
       let t = alle.filter(o => istProdukt(wort, o, a.aus) && nurOk(o));
       // Nichts Passendes: bei der Suche (locker) oder einem fest gewählten Produkt (nur) auch Wortanfänge und Schreibweisen
       // ohne Leerzeichen gelten lassen ("hidro" -> "Hidrofugal", "hidro fugal" -> "Hidrofugal", "coca cola" -> "Coca-Cola").
@@ -247,6 +247,22 @@ function passtLocker(gruppe, o, extra) {
 const nurK = t => flach(t).replace(/[^a-z0-9]/g, "");
 // ein bestimmtes Produkt (Marke und Name): "Deodorant" = "Deo", Zusätze wie XXL oder Vorteilspackung zählen nicht (nur die Größe ist anders)
 const prodK = t => nurK(t).replace(/deodorant/g, "deo").replace(/xxl|familienpackung|vorteilspackung|vorteilspack|grosspackung/g, "");
+/* Sorte über alle Marken ("XXL Rinderhackfleisch" = "Rinder-Hackfleisch"): Produktname ohne Marke, Größe und Füllwörter.
+   Muss genau wie sorteK in der Seite rechnen (Test: tests/sorte.test.mjs). */
+const SORTE_WEG = /(?<= )(?:xxl|xl|maxi|familienpackung|vorteilspack|vorteilspackung|grosspackung|premium|original|klassisch|classic|frisch|frische|frischer|gekuehlt|neu|je|ca|zum|braten|vom|von|aus|mit|und|oder|in|der|die|das|ein|eine)(?= )/g;
+function sorteK(name, marke) {
+  const ohne = s => s.replace(/ \d+(?: \d+)?(?: (?:x|g|kg|ml|l|cl|stk|stueck|er))?(?= )/g, " ").replace(SORTE_WEG, " ").replace(SORTE_WEG, " ");
+  const voll = " " + flach(name).replace(/[^a-z0-9]+/g, " ").trim() + " ";
+  let s = voll; for (const w of flach(marke).split(/[^a-z0-9]+/)) if (w.length >= 3) s = s.split(" " + w + " ").join(" ");
+  let k = nurK(ohne(s)).replace(/deodorant/g, "deo");
+  if (k.length < 5) k = nurK(ohne(voll)).replace(/deodorant/g, "deo");   // "Coca-Cola Zero": ohne Marke bliebe nur "zero", dann gehört die Marke dazu
+  return k;
+}
+// "nur" eines Favoriten: Marke (alte Favoriten), Produkt (Marke und Name) oder "sorte:…" (eine Sorte über alle Marken)
+function nurPruefer(nur) {
+  const l = [...(nur || [])].map(String), sorten = l.filter(x => /^sorte:/i.test(x)).map(x => x.slice(6).toLowerCase()), rest = l.filter(x => !/^sorte:/i.test(x)).map(nurK);
+  return o => !l.length || rest.includes(nurK(o.brand || o.name)) || rest.map(prodK).includes(prodK((o.brand || "") + (o.name || ""))) || sorten.includes(sorteK(o.name, o.brand));
+}
 // Suchbegriffe für Marktguru: aus mehreren Wörtern zusätzlich die zusammengeschriebene Form ("hidro fugal" -> "hidrofugal")
 const varianten = s => { const z = s.replace(/[\s-]+/g, ""); return /[\s-]/.test(s.trim()) && z.length >= 4 ? [s, z] : [s]; };
 
@@ -308,10 +324,10 @@ async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2,
       const mg = mengenangabe(o), l = mg ? mg[1] : null, st = mg ? mg[0] : 1, art = mg ? mg[2] : "l";
       const kandidat = (o.brand || o.name).trim().toLowerCase();
       let coke = true;   // passende Treffer sind schon im Teilaufruf ausgewählt
-      if (info.nur && info.nur.size) { const l = [...info.nur].map(nurK); if (!l.includes(nurK(kandidat)) && !l.map(prodK).includes(prodK((o.brand || "") + (o.name || "")))) coke = false; }
+      if (info.nur && info.nur.size && !nurPruefer(info.nur)(o)) coke = false;
       ausgabe.push({ abgefragt: jetzt, gruppe: p, bild: o.bild, marke: o.brand, coke, link: o.link, markt: o.adv + (o.plz ? ` (${o.plz})` : ""), produkt: o.name,
         beschreibung: o.desc, preis: o.price, preis_alt: o.alt || null, art, liter: l, stueck: st, ml: l && st ? Math.round(l * 1000 / st) : null,
-        preis_pro_liter: o.price && l ? Math.round(o.price / l * 100) / 100 : null, gueltig_von: o.von, gueltig_bis: o.bis });
+        preis_pro_liter: o.price && l ? Math.round(o.price / l * 100) / 100 : null, gueltig_von: o.von, gueltig_bis: o.bis, ...(o.kp ? { kp: o.kp } : {}) });
     }
   }
   let liste = ausgabe.some(x => x.coke) ? ausgabe.filter(x => x.coke) : ausgabe;
@@ -335,7 +351,7 @@ async function lade(env, name, typ) {
 function favAuswerten(favs) {
   const info = {}, alarm = {};
   for (const f of favs || []) {
-    if (!f || !f.name) continue;
+    if (!f || !f.name || f.pause) continue;   // pausierte Favoriten werden nicht abgefragt
     info[f.name] = { aus: String(f.aus || "").split(",").map(w => w.trim().toLowerCase()).filter(Boolean), nur: new Set((f.nur || []).map(k => String(k).trim().toLowerCase())), suche: String(f.suche || "").replace(/[,|]/g, " ").trim().slice(0, 40) };
     const al = f.alarm;
     if (al && ["l", "stueck", "kg", "st"].includes(al.einheit) && +al.wert > 0) alarm[f.name] = { wert: +al.wert, einheit: al.einheit, ml: al.ml ? +al.ml : null };
@@ -379,6 +395,48 @@ async function benachrichtige(env, liste, alarm) {
   }
   await env.PV.put("benachrichtigt", JSON.stringify(gemeldet));
   return gesendet;
+}
+
+/* ---------- Wochenüberblick: montags nach dem Lauf eine Mitteilung mit den guten Angeboten der Favoriten ----------
+   Gut heißt: mindestens 8 % unter dem eigenen Durchschnitt der letzten 8 Wochen (günstigstes Angebot je Tag) oder ein Angebot mit früherem Preis ("statt"). */
+const ohneQ = x => String(x || "").replace(/^"|"$/g, "").replace(/""/g, '"');
+async function wochenGut(env, liste) {
+  const monate = (await verlaufMonate(env)).slice(-3), tag = heute(), grenze = berlin(new Date(Date.now() - 56 * 864e5));
+  const text = (await Promise.all(monate.map(m => env.PV.get("verlauf:" + m)))).filter(Boolean).join("\n");
+  const proTag = {};   // gruppe -> tag -> günstigster Preis je Einheit
+  for (const z of text.split(/\r?\n/)) {
+    const f = z.split(";"); if (f.length < 9) continue;
+    const d = f[0], ppl = +f[5], bis = ohneQ(f[6]), von = ohneQ(f[7]), g = ohneQ(f.slice(8).join(";")) || "Coca-Cola";
+    if (!(ppl > 0) || d < grenze || d >= tag || (bis && bis < d) || (von && von > d)) continue;
+    const t = proTag[g] = proTag[g] || {}; if (!(t[d] <= ppl)) t[d] = ppl;
+  }
+  const beste = {};
+  for (const x of liste) {
+    if (!x.preis || !x.preis_pro_liter || abgelaufen(x) || nochNicht(x) || x.coke === false) continue;
+    if (!beste[x.gruppe] || x.preis_pro_liter < beste[x.gruppe].preis_pro_liter) beste[x.gruppe] = x;
+  }
+  const gut = [];
+  for (const [g, x] of Object.entries(beste)) {
+    const tage = Object.values(proTag[g] || {}), avg = tage.length >= 3 ? tage.reduce((s, v) => s + v, 0) / tage.length : null;
+    const r = avg ? x.preis_pro_liter / avg - 1 : null, statt = x.preis_alt > x.preis ? x.preis_alt : null;
+    if ((r != null && r <= -0.08) || statt) gut.push({ g, x, r, statt, wert: r != null ? r : -(statt - x.preis) / statt });
+  }
+  return gut.sort((a, b) => a.wert - b.wert);
+}
+async function wochenUeberblick(env, liste, jetzt) {
+  if (!jetzt) {
+    if ((await env.PV.get("push:woche")) === "aus") return null;
+    const wt = env.WOCHENTAG_TEST != null ? +env.WOCHENTAG_TEST : new Date(heute() + "T12:00:00Z").getUTCDay();
+    if (wt !== 1 || (await env.PV.get("woche:gesendet")) === heute()) return null;   // montags, einmal
+  }
+  const gut = await wochenGut(env, liste);
+  if (!gut.length && !jetzt) return null;
+  const teil = ({ g, x, r, statt }) => `${g} ${de(x.preis)} € bei ${markenKern(x.markt)}` + (r != null && r <= -0.08 ? ` (−${Math.round(-r * 100)} %)` : statt ? ` (statt ${de(statt)} €)` : "");
+  const text = gut.length ? gut.slice(0, 6).map(teil).join(" · ") + (gut.length > 6 ? ` · und ${gut.length - 6} weitere` : "") : "Diese Woche ist bei deinen Favoriten nichts besonders günstig.";
+  const titel = gut.length ? `Diese Woche günstig: ${gut.length} ${gut.length === 1 ? "Favorit" : "Favoriten"}` : "Wochenüberblick";
+  const ok = await melden(env, { titel, text, tag: "woche", url: "./#angebote", ntfyTag: "shopping_cart" });
+  if (ok && !jetzt) await env.PV.put("woche:gesendet", heute(), { expirationTtl: 8 * 864e5 });
+  return ok ? text : null;
 }
 
 function csvFeld(v) { const s = v == null ? "" : String(v); return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; }
@@ -596,7 +654,7 @@ async function sitzungPruefen(env, req) {
   if (!u || u.gen !== s.gen) throw konto(401, "Bitte neu anmelden");
   return { name: s.name, u, token };
 }
-const FELDER = ["ort", "km", "zettel", "richt", "frei", "extra", "haken", "wahl", "aus", "favs"];
+const FELDER = ["ort", "km", "zettel", "richt", "frei", "extra", "haken", "wahl", "kaeufe", "aus", "favs"];
 function datenPruefen(d) {   // nur erwartete Felder und Größen werden gespeichert
   const o = {}, obj = x => x && typeof x === "object" && !Array.isArray(x), text = (x, n) => typeof x === "string" && x.length > 0 && x.length <= n;
   if (!obj(d)) return o;
@@ -618,13 +676,18 @@ function datenPruefen(d) {   // nur erwartete Felder und Größen werden gespeic
     o.wahl = {};
     for (const [k, v] of Object.entries(d.wahl).slice(0, 150)) if (k.length <= 60 && text(v, 60)) o.wahl[k] = v;
   }
+  if (Array.isArray(d.kaeufe)) {   // abgehakte Einkäufe für die Ersparnis (höchstens 1000)
+    const geld = x => Number.isFinite(+x) && +x >= 0 && +x < 10000 ? Math.round(+x * 100) / 100 : null;
+    o.kaeufe = d.kaeufe.filter(x => x && text(x.k, 140) && /^\d{4}-\d\d-\d\d$/.test(x.d) && geld(x.p) != null).slice(-1000)
+      .map(x => ({ k: x.k, d: x.d, n: String(x.n || "").slice(0, 60), m: String(x.m || "").slice(0, 60), p: geld(x.p), r: x.r == null ? null : geld(x.r) }));
+  }
   if (Array.isArray(d.extra)) o.extra = d.extra.filter(x => text(x, 40)).slice(0, 100);   // von Hand notierte Artikel
   if (obj(d.haken)) {   // beim Einkaufen abgehakt
     o.haken = {};
     for (const k of Object.keys(d.haken).slice(0, 300)) if (k.length <= 130 && d.haken[k]) o.haken[k] = 1;
   }
   if (Array.isArray(d.aus)) o.aus = d.aus.filter(x => text(x, 60)).slice(0, 80);   // ausgeblendete Märkte
-  if (Array.isArray(d.favs)) o.favs = d.favs.filter(f => f && text(f.name, 40)).slice(0, 80).map(f => ({ name: f.name, aus: "", nur: (Array.isArray(f.nur) ? f.nur : []).filter(x => text(x, 60)).slice(0, 10), ...(text(f.suche, 40) ? { suche: f.suche } : {}), ...(text(f.bild, 400) && /^https:\/\//.test(f.bild) ? { bild: f.bild } : {}) }));   // eigene Favoriten (ohne Zugangscode)
+  if (Array.isArray(d.favs)) o.favs = d.favs.filter(f => f && text(f.name, 40)).slice(0, 80).map(f => ({ name: f.name, aus: "", nur: (Array.isArray(f.nur) ? f.nur : []).filter(x => text(x, 60)).slice(0, 10), ...(text(f.suche, 40) ? { suche: f.suche } : {}), ...(text(f.bild, 400) && /^https:\/\//.test(f.bild) ? { bild: f.bild } : {}), ...(f.pause === true ? { pause: true } : {}) }));   // eigene Favoriten (ohne Zugangscode)
   return o;
 }
 async function kontoRoute(req, env, p) {
@@ -651,7 +714,7 @@ async function kontoRoute(req, env, p) {
   if (p === "/konto/daten" && req.method === "PUT") {
     const { name, u } = await sitzungPruefen(env, req), b = await koerper();
     if (begrenzt("daten:" + name, 60)) throw zuViel();
-    // Nur die mitgeschickten Felder ändern sich; ein Feld mit ungültigem Wert (z. B. null) wird gelöscht. So überschreibt die alte Seite (alt.html) nichts, was sie nicht kennt.
+    // Nur die mitgeschickten Felder ändern sich; ein Feld mit ungültigem Wert (z. B. null) wird gelöscht. So überschreibt eine ältere, noch zwischengespeicherte Fassung der Seite nichts, was sie nicht kennt.
     const neu = datenPruefen(b.daten), d = { ...(u.daten || {}) };
     delete d.eink;
     for (const k of FELDER) if (b.daten && typeof b.daten === "object" && k in b.daten) { if (k in neu) d[k] = neu[k]; else delete d[k]; }
@@ -804,7 +867,7 @@ async function pushRoute(req, env, p) {
   if (p === "/push/schluessel") return { key: (await vapid(env)).pub };
   if (p === "/push/status") {
     const abos = await pushAbos(env);
-    return { geraete: abos.length, namen: abos.map(a => a.geraet || "Gerät"), ntfy: !!(env.NTFY_TOPIC || "").trim(), ntfyAn: await ntfyAn(env) };
+    return { geraete: abos.length, namen: abos.map(a => a.geraet || "Gerät"), ntfy: !!(env.NTFY_TOPIC || "").trim(), ntfyAn: await ntfyAn(env), wocheAn: (await env.PV.get("push:woche")) !== "aus" };
   }
   if (p === "/push/abo" && req.method === "POST") {
     const b = await req.json().catch(() => null);
@@ -825,6 +888,16 @@ async function pushRoute(req, env, p) {
     const st = await pushEins(env, abo, { titel: "Preisvergleich", text: "So sehen die Mitteilungen aus. Preisalarme kommen jetzt auf dieses Gerät.", tag: "test", url: "./#alarm" });
     if (st < 200 || st >= 300) throw konto(400, "Der Push-Dienst hat die Mitteilung abgelehnt (" + st + ").");
     return { ok: true };
+  }
+  if (p === "/push/woche" && req.method === "POST") {   // Wochenüberblick an/aus, oder mit {jetzt:true} gleich senden
+    const b = await req.json().catch(() => ({}));
+    if (b && b.jetzt) {
+      const t = await wochenUeberblick(env, (await lade(env, "angebote", "json")) || [], true);
+      if (!t) throw konto(400, "Es ist kein Weg für Mitteilungen eingerichtet.");
+      return { ok: true, text: t };
+    }
+    await env.PV.put("push:woche", b && b.an === false ? "aus" : "an");
+    return { wocheAn: b && b.an !== false };
   }
   if (p === "/push/ntfy" && req.method === "POST") {
     const b = await req.json().catch(() => ({}));
@@ -924,7 +997,11 @@ export default {
     }
   },
   async scheduled(event, env, ctx) {
-    try { await aktualisieren(env, ctx); }
+    try {
+      await aktualisieren(env, ctx);
+      // Wochenüberblick nur beim täglichen Lauf (nicht beim Neu-Holen von Hand oder beim Test nach dem Hochladen)
+      try { await wochenUeberblick(env, (await lade(env, "angebote", "json")) || []); } catch (e) { /* nur eine Zugabe */ }
+    }
     catch (e) { await meldeFehler(env, "Die tägliche Aktualisierung bei Cloudflare ist fehlgeschlagen: " + (e.message || e)); throw e; }
     finally { try { await namenRegion(env, ctx, PLZ, "", true); } catch (e) { /* nur eine Zugabe */ } }
   },

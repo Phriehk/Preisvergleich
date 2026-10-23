@@ -20,7 +20,7 @@ const klick = async (p, sel) => { await p.evaluate(s => document.querySelector(s
 const bereich = async (p, v) => { await p.click(`#leiste [data-v="${v}"]`); await p.waitForTimeout(300); };
 const suche = async (p, text) => { await bereich(p, "suchen"); await p.fill("#sucheText", text); await p.click('[data-aktion="suchen"]'); await p.waitForFunction(() => !S.suche.laeuft, null, { timeout: 15000 }); await p.waitForTimeout(200); };
 
-t("Alle Bereiche laden ohne Fehler, auch die Produktseite und die alte Version", async () => {
+t("Alle Bereiche laden ohne Fehler, auch die Produktseite", async () => {
   await mitSeite({}, async ({ p, fehler }) => {
     assert.deepEqual(await p.$$eval(".produkt h3", e => e.map(x => x.textContent)), ["Äpfel", "Eier", "Reis"]);
     for (const v of ["suchen", "liste", "einkaufen", "mehr", "angebote"]) await bereich(p, v);
@@ -30,13 +30,11 @@ t("Alle Bereiche laden ohne Fehler, auch die Produktseite und die alte Version",
     await p.click('[data-seg="sort2"][data-wert="preis"]');
     await p.goBack(); await p.waitForTimeout(300);
     assert.equal(await p.textContent("#titel"), "Angebote");
-    await p.goto("https://preise.phriehk.workers.dev/alt.html"); await p.waitForTimeout(1500);
-    assert.match(await p.textContent("body"), /alte Version/);
     assert.deepEqual(fehler, []);
   });
 });
 
-t("Konto anlegen: Passwortprüfung, Anmeldung, Abgleich ohne Datenverlust für die alte Version", async () => {
+t("Konto anlegen: Passwortprüfung, Anmeldung, Abgleich ohne Datenverlust (auch wenn ein Gerät nur einen Teil schickt)", async () => {
   await mitSeite({ code: "" }, async ({ p, fehler }, u) => {
     await bereich(p, "mehr");
     await p.click('[data-seg="kMode"][data-wert="neu"]');
@@ -50,7 +48,7 @@ t("Konto anlegen: Passwortprüfung, Anmeldung, Abgleich ohne Datenverlust für d
     await p.fill("#extraName", "Zahnpasta"); await p.press("#extraName", "Enter"); await p.waitForTimeout(2200);
     let d = JSON.parse(u.store.get("u:anna")).daten;
     assert.deepEqual(d.extra, ["Zahnpasta"]);
-    // ... und bleibt, wenn die alte Seite nur ihre Felder schickt
+    // ... und bleibt, wenn eine ältere Fassung der Seite nur ihre Felder schickt
     const tok = await p.evaluate(() => konto.token);
     await u.H.fetch(new Request("https://preise.phriehk.workers.dev/konto/daten", { method: "PUT", headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" }, body: JSON.stringify({ daten: { ort: null, km: 0.3, zettel: { Eier: 6 }, richt: {}, frei: {} } }) }), u.env, u.ctx);
     d = JSON.parse(u.store.get("u:anna")).daten;
@@ -445,6 +443,10 @@ t("Mitteilungen: im Preisalarm einschalten, Test senden, ntfy abschalten, aussch
     assert.equal(u.push.length, 1); assert.equal(u.push[0].url, "https://push.example/geraet");
     await p.uncheck("[data-push-ntfy]"); await p.waitForTimeout(300);
     assert.equal(u.store.get("push:ntfy"), "aus");
+    await p.uncheck("[data-push-woche]"); await p.waitForTimeout(300);
+    assert.equal(u.store.get("push:woche"), "aus");
+    await p.click('[data-aktion="wocheJetzt"]'); await p.waitForTimeout(500);
+    assert.equal(u.push.length, 2, "Wochenüberblick auf Knopfdruck");
     await p.click('[data-aktion="pushAus"]'); await p.waitForFunction(() => S.push.stand === "aus" && !S.push.busy);
     assert.deepEqual(JSON.parse(u.store.get("push:abos")), []);
     assert.deepEqual(s.fehler, []);
@@ -538,4 +540,111 @@ t("Favoriten ohne Angebot behalten ihr Vorschaubild, früher gescannte holen es 
     assert.equal(JSON.parse(u.store.get("favoriten")).find(f => f.name === "Fa Duschgel").bild, "https://images.openfoodfacts.org/fa.200.jpg", "auf dem Server gespeichert");
     assert.deepEqual(s.fehler, []);
   } finally { await s.b.close(); }
+});
+
+t("Sorten über alle Marken: „Rinder-Hackfleisch“ von mehreren Marken, Favorit holt nur diese Sorte", async () => {
+  const hack = [O("Kaufland", "Schweinehackfleisch", "K-Purland", "zum Braten, gekühlt je 500-g-Packg.", 1.89), O("PENNY", "Hackfleisch", "Mühlenhof", "Gemischt, vom Schwein und Rind, je 800-g-Packung", 4.99),
+    O("ALDI SÜD", "Gemischt-Hackfleisch", "Gut Ponholz", "500 g aus 50% Schwein und 50% Rind", 3.33), O("REWE", "Hackfleisch", "thisisnobrand123", "vom Schwein, 500-g-Packung", 3.45),
+    O("ALDI SÜD", "Rinder-Hackfleisch", "Meine Metzgerei", "500-g-Packung", 4.59), O("ALDI SÜD", "Rinderhackfleisch XXL", "Meine Metzgerei", "1-kg-Packung", 9.49), O("Lidl", "XXL Rinderhackfleisch", "Metzgerfrisch", "1-kg-Packung", 9.49),
+    O("PENNY", "Rinder-Hackfleisch", "Gut Ponholz", "zum Braten 500 g", 4.79), O("REWE", "Rinder-Hackfleisch", "Metzgerei Wilhelm Brandenburg", "je 250-g-Pckg.", 3.49)];
+  await mitSeite({ daten: { ...DATEN, hackfleisch: hack }, favs: [{ name: "Eier", aus: "" }] }, async ({ p, fehler }, u) => {
+    await suche(p, "Hackfleisch");
+    const sorten = await p.evaluate(() => S.suche.items[0].sorten.map(x => x.label + ":" + x.marken + ":" + x.os.length));
+    assert.deepEqual(sorten, ["Rinder-Hackfleisch:4:5"], JSON.stringify(await p.evaluate(() => S.suche.items[0].roh.map(o => o.marke + "|" + o.produkt + "|" + o.markt))));
+    assert.match(await p.textContent(".kachel:has(a[data-tz='0|s:rinderhackfleisch'])"), /alle Marken[\s\S]*4 Marken · 5 Angebote/);
+    await p.click("a[data-tz='0|s:rinderhackfleisch']"); await p.waitForTimeout(300);
+    assert.equal(await p.textContent("#titel"), "Rinder-Hackfleisch");
+    const zeilen = await p.$$eval(".t-z .mk-t b", e => e.map(x => x.textContent));
+    assert.equal(zeilen.length, 5); assert.ok(zeilen.every(z => /Rinder/i.test(z)), JSON.stringify(zeilen));
+    await p.click("[data-isl='0|rinderhackfleisch']"); await p.waitForFunction(() => !S.suche.busy && aufListe("Rinder-Hackfleisch (alle Marken)"), null, { timeout: 10000 });
+    const fav = JSON.parse(u.store.get("favoriten")).find(f => f.name === "Rinder-Hackfleisch (alle Marken)");
+    assert.deepEqual([fav.nur, fav.suche], [["sorte:rinderhackfleisch"], "Hackfleisch"]);
+    await p.click('#leiste [data-v="angebote"]'); await p.waitForTimeout(300);
+    assert.equal(await p.locator('.produkt[data-p="Rinder-Hackfleisch (alle Marken)"]').count(), 1);
+    assert.equal(await p.locator('.produkt[data-p="Rinder-Hackfleisch (alle Marken)"] .tag.neu').count(), 0, "ein gerade angelegter Favorit ist nicht „neu“");
+    await u.A("/aktualisieren", "POST");
+    const ang = JSON.parse(u.store.get("angebote")).filter(x => x.gruppe === "Rinder-Hackfleisch (alle Marken)").map(x => x.produkt);
+    assert.ok(ang.length >= 5 && ang.every(z => /Rinder/i.test(z)), JSON.stringify(ang));
+    assert.deepEqual(fehler, []);
+  });
+});
+
+t("„Neu“: beim ersten Öffnen nichts, ein später dazugekommenes bestes Angebot bekommt den Hinweis", async () => {
+  const daten = { ...DATEN };
+  await mitSeite({ daten, favs: [{ name: "Milch", aus: "" }, { name: "Eier", aus: "" }] }, async ({ p, fehler }, u) => {
+    assert.equal(await p.locator(".tag.neu").count(), 0, "beim ersten Mal ist nichts neu");
+    daten.milch = [...DATEN.milch, O("Kaufland", "Milch", "Weihenstephan", "1 l", 0.79, "l", 1, 1)];
+    await u.A("/aktualisieren", "POST");
+    await p.reload(); await p.waitForTimeout(1500);
+    assert.equal(await p.locator('.produkt[data-p="Milch"] .tag.neu').count(), 1);
+    assert.equal(await p.locator('.produkt[data-p="Eier"] .tag.neu').count(), 0);
+    assert.match(await p.textContent("#ansicht"), /1 Favorit hat ein neues bestes Angebot/);
+    await p.reload(); await p.waitForTimeout(1500);
+    assert.equal(await p.locator('.produkt[data-p="Milch"] .tag.neu').count(), 1, "bleibt nach erneutem Öffnen");
+    assert.deepEqual(fehler, []);
+  });
+});
+
+t("Ersparnis: Abhaken merkt Preis und Normalpreis, Übersicht beim Einkaufen und unter „Mehr“, Haken weg nimmt es zurück", async () => {
+  await mitSeite({ favs: [{ name: "Milch", aus: "" }, { name: "Butter", aus: "" }] }, async ({ p, fehler }) => {
+    await p.click('.produkt[data-p="Milch"] .p-plus'); await p.click('.produkt[data-p="Butter"] .p-plus');
+    await p.click('#leiste [data-v="liste"]'); await p.waitForTimeout(300);
+    const rw = p.locator(".zeile", { hasText: "Butter" }).first().locator("input[data-r]"); await rw.fill("2,29"); await rw.press("Tab"); await p.waitForTimeout(200);
+    await p.click('#leiste [data-v="einkaufen"]'); await p.waitForTimeout(300);
+    const haken = n => p.locator(".haken", { hasText: n }).first().locator("input[type=checkbox]");
+    await haken("Milch").check(); await p.waitForTimeout(150); await haken("Butter").check(); await p.waitForTimeout(200);
+    const k = await p.evaluate(() => kaeufe.map(e => [e.n, e.m, e.p, e.r]));
+    assert.deepEqual(k.sort(), [["Butter", "PENNY", 1.79, 2.29], ["Milch", "Lidl", 0.89, 1.09]].sort(), JSON.stringify(k));
+    assert.match(await p.textContent("#ansicht"), /2 Artikel für 2,68\s€, 0,70\s€ gespart/);
+    await haken("Butter").uncheck(); await p.waitForTimeout(200);
+    assert.equal(await p.evaluate(() => kaeufe.length), 1, "Haken weg: zählt nicht mehr");
+    await p.click('#leiste [data-v="mehr"]'); await p.waitForTimeout(300);
+    assert.match(await p.textContent("#ansicht"), /Ersparnis[\s\S]*0,20\s€ insgesamt[\s\S]*1 Artikel für 0,89\s€ · meist bei Lidl/);
+    await p.click('[data-aktion="ersparnisWeg"]'); await p.click('[data-aktion="ersparnisWeg"]'); await p.waitForTimeout(200);
+    assert.equal(await p.evaluate(() => JSON.parse(localStorage.getItem("pv-kaeufe")).length), 0);
+    assert.deepEqual(fehler, []);
+  });
+});
+
+t("Angebote nach Abteilungen (abschaltbar) und Favorit pausieren: nicht abgefragt, eigener Abschnitt, fortsetzen", async () => {
+  await mitSeite({ favs: ["Milch", "Butter", "Äpfel", "Reis"].map(name => ({ name, aus: "" })) }, async ({ p, fehler }, u) => {
+    const koepfe = () => p.$$eval(".abt-kopf h2", e => e.map(x => x.textContent));
+    assert.deepEqual(await koepfe(), ["Obst & Gemüse", "Milch, Käse & Eier", "Vorrat"]);
+    await p.click('[data-aktion="gruppenUm"]'); await p.waitForTimeout(200);
+    assert.deepEqual(await koepfe(), [], "ohne Gruppen");
+    await p.click('[data-aktion="gruppenUm"]'); await p.waitForTimeout(200);
+    // pausieren
+    await p.click('[data-aktion="favEdit"]'); await p.waitForTimeout(200);
+    await p.click('[data-favpause="Reis"]'); await p.waitForTimeout(500);
+    assert.equal(JSON.parse(u.store.get("favoriten")).find(f => f.name === "Reis").pause, true);
+    assert.equal(await p.locator('.produkt[data-p="Reis"]').count(), 0, "nicht mehr bei den Angeboten");
+    assert.match(await p.textContent(".pause-box"), /Pausiert\s*1[\s\S]*Reis/);
+    await u.A("/aktualisieren", "POST");
+    assert.ok(!JSON.parse(u.store.get("angebote")).some(x => x.gruppe === "Reis"), "pausiert: nicht abgefragt");
+    await p.click('[data-favweiter="Reis"]'); await p.waitForTimeout(500);
+    assert.equal(JSON.parse(u.store.get("favoriten")).find(f => f.name === "Reis").pause, undefined);
+    assert.deepEqual(fehler, []);
+  });
+});
+
+t("Nach Markt: nach Rabatt sortieren (größter Nachlass zuerst) und „Neu“ seit dem letzten Besuch", async () => {
+  const daten = { ...DATEN };
+  await mitSeite({ daten, favs: [{ name: "Eier", aus: "" }] }, async ({ p, fehler }, u) => {
+    const lidl = async () => { await p.click('[data-seg="aTab"][data-wert="markt"]'); await p.waitForSelector(".mk-chips .chip", { timeout: 10000 }); await p.click('.mk-chips [data-mk="126679"]'); await p.waitForSelector("#mkSuche", { timeout: 10000 }); };
+    await lidl();
+    await p.click('[data-seg="mkSort"][data-wert="rabatt"]'); await p.waitForTimeout(200);
+    const r = await p.$$eval(".mk-z", e => e.map(x => x.innerText.replace(/\s+/g, " ")));
+    assert.equal(r.length, 1); assert.match(r[0], /Milbona Milch.*−18 %/);
+    await p.click('[data-seg="mkSort"][data-wert="neu"]'); await p.waitForTimeout(200);
+    assert.equal(await p.locator(".mk-z .tag.neu").count(), 0, "beim ersten Besuch ist nichts neu");
+    // ein neues Angebot bei Lidl
+    daten.butter = [...DATEN.butter, O("Lidl", "Butter", "Milsani", "250 g", 1.69)];
+    for (const k of [...u.store.keys()]) if (k.startsWith("mk3:")) u.store.delete(k);
+    await p.reload(); await p.waitForTimeout(1500); await lidl();
+    await p.click('[data-seg="mkSort"][data-wert="neu"]'); await p.waitForTimeout(200);
+    const n = await p.$$eval(".mk-z", e => e.map(x => x.innerText.replace(/\s+/g, " ")));
+    assert.match(n[0], /Milsani Butter.*neu/, JSON.stringify(n));
+    assert.equal(await p.locator(".mk-z .tag.neu").count(), 1);
+    assert.deepEqual(fehler, []);
+  });
 });
