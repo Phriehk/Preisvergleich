@@ -3,7 +3,7 @@
 Private Web-App: Supermarkt-Angebote von Marktguru vergleichen, eine Einkaufsliste planen (welcher Markt lohnt sich, mit Fahrtkosten) und beim Einkaufen abhaken.
 
 - **Seite:** `index.html` (eine Datei, keine Bibliotheken). Die bisherige Version liegt als Sicherung in `alt.html` und ist unter `/alt.html` erreichbar. Beide nutzen dieselben Daten im Browser und auf dem Server.
-- **Server:** Cloudflare Worker in `worker/` (Marktguru-Abfragen, alle Angebote je Markt über `/maerkte` und `/markt` mit Zwischenspeicher, täglicher Lauf um 7 Uhr, Preisalarm per ntfy, Konten ohne E-Mail, Entfernungen über OpenStreetMap). Hochgeladen wird automatisch über `.github/workflows/worker.yml`.
+- **Server:** Cloudflare Worker in `worker/` (Marktguru-Abfragen, alle Angebote je Markt über `/maerkte` und `/markt` mit Zwischenspeicher, täglicher Lauf um 7 Uhr, Preisalarm per Web-Push und ntfy, Konten ohne E-Mail, Entfernungen über OpenStreetMap). Hochgeladen wird automatisch über `.github/workflows/worker.yml`.
 - **Daten:** im Cloudflare-Speicher (KV). `sicherung.yml` kopiert Verlauf, Favoriten und Korrekturen einmal pro Woche nach `sicherung/`.
 - **Geheimnisse (GitHub, Settings, Secrets):** `CLOUDFLARE_API_TOKEN`, `NTFY_TOPIC`, optional `ZUGANGSCODE`.
 
@@ -15,14 +15,18 @@ Private Web-App: Supermarkt-Angebote von Marktguru vergleichen, eine Einkaufslis
 | Suchen | Findet eine Suche nichts, schlägt „Meintest du …?“ ähnliche Namen aus allen Angeboten der Gegend vor (`/namen`, täglich erneuert). **📷 Scannen** (auch unter Einkaufen): Strichcode per Kamera oder Nummer eingeben, das Produkt kommt aus Open Food Facts (bzw. Open Beauty Facts), Marke und Artikel lassen sich anpassen, gespeichert wird es als Favorit. Ein Artikel oder eine ganze Liste (z. B. aus Erinnerungen, auch per Link `#import=`). Pro Artikel Kacheln: alle Marken, einzelne Produkte als Favorit, ohne Angebot; auf jeder Kachel die Märkte mit Preis. Der Name einer Kachel öffnet alle Angebote nach Markt (günstigster zuerst, mit Link zu Marktguru); „Hier kaufen“ setzt den Artikel mit diesem Markt auf die Liste. |
 | Liste | Der Name eines Artikels führt zu seiner Produktseite. Menge in Stück (übliche Packungsgröße), Normalpreis für Artikel ohne Angebot (ohne eigenen Eintrag ein Vorschlag aus dem früheren Preis „statt …“, falls Marktguru einen liefert, sonst leer), beste Wahl mit Ware und Fahrt (auch zwei Märkte als Tour), je Artikel wahlweise ein selbst gewählter Markt (📌), alle Märkte im Vergleich, zu jedem Artikel das gewählte Angebot, Weitergeben als Text oder Kurzbefehl. |
 | Einkaufen | Liste zum Abhaken, nach Markt gegliedert, eigene Artikel, Abgehakte entfernen. Funktioniert auch ohne Netz: die Seite kommt aus dem Speicher (`sw.js`), Haken werden nachgereicht. |
-| Alarm | Preisalarm je Favorit ein- und ausschalten: bei jedem Angebot oder unter einem Wunschpreis (je Liter, kg, Stück oder Flasche, wahlweise nur eine Größe). Mit einem Knopf für alle Artikel der Einkaufsliste. Nur mit Zugangscode. |
+| Alarm | Mitteilungen auf diesem Gerät einschalten (Web-Push; auf dem iPhone in der App vom Home-Bildschirm, ab iOS 16.4), Test senden, ntfy zusätzlich an oder aus. Preisalarm je Favorit ein- und ausschalten: bei jedem Angebot oder unter einem Wunschpreis (je Liter, kg, Stück oder Flasche, wahlweise nur eine Größe). Mit einem Knopf für alle Artikel der Einkaufsliste. Nur mit Zugangscode. |
 | Mehr | Standort und Fahrtkosten, Märkte ausblenden, App-Preise, Darstellung, Konto, Betreiber (Zugangscode, Preise neu holen, Passwort-Anfragen). |
 
 **Mit Zugangscode** (Betreiber) liegen die Favoriten auf dem Server, werden täglich abgefragt und haben Preisverlauf und Preisalarm. **Ohne Zugangscode** hat jede Person eigene Favoriten im Browser (mit Konto auf allen Geräten), die Angebote kommen dann über die öffentliche Abfrage `/region` für die eigene Postleitzahl.
 
+## Auf dem iPhone
+
+In Safari die Seite öffnen, Teilen, „Zum Home-Bildschirm“. Die App startet dann ohne Safari-Leiste, zeigt ohne Netz den letzten Stand und kann Mitteilungen empfangen (unter „Alarm“ einschalten). Die Schlüssel für Web-Push (VAPID) erzeugt der Worker beim ersten Mal selbst und legt sie im KV ab.
+
 ## Tests
 
-`node --test tests/erkennung.test.mjs tests/alarm.test.mjs tests/zuordnung.test.mjs` und mit installiertem Playwright `node --test tests/browser/seite.test.mjs` (die echte Seite im Browser gegen den echten Worker-Code, Marktguru nachgebaut). Alles läuft bei jedem Push (Workflow „Tests“); bei Fehlern schreibt die Pipeline die Ausgabe nach `tests/ergebnis/browser.txt`.
+`node --test tests/erkennung.test.mjs tests/alarm.test.mjs tests/zuordnung.test.mjs tests/push.test.mjs` und mit installiertem Playwright `node --test tests/browser/seite.test.mjs` (die echte Seite im Browser gegen den echten Worker-Code, Marktguru nachgebaut). Alles läuft bei jedem Push (Workflow „Tests“); bei Fehlern schreibt die Pipeline die Ausgabe nach `tests/ergebnis/browser.txt`.
 
 ## Grenzen
 

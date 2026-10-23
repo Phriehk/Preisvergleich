@@ -413,3 +413,39 @@ t("Einkaufen ohne Netz: Haken bleiben auf dem Gerät und gehen später ins Konto
     assert.deepEqual(fehler, []);
   });
 });
+
+t("Mitteilungen: im Preisalarm einschalten, Test senden, ntfy abschalten, ausschalten", async () => {
+  const u = await umgebung({ ntfy: true });
+  await u.KV.put("favoriten", JSON.stringify([{ name: "Milch", aus: "" }]));
+  await u.A("/aktualisieren", "POST");
+  const k = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
+  const p256dh = Buffer.from(await crypto.subtle.exportKey("raw", k.publicKey)).toString("base64url"), auth = Buffer.from(crypto.getRandomValues(new Uint8Array(16))).toString("base64url");
+  const s = await browserStarten(u, {});
+  try {
+    // so wie die App auf dem Home-Bildschirm: Hintergrunddienst mit Push, Erlaubnis wird beim Tippen erteilt
+    await s.c.addInitScript(([p256dh, auth]) => {
+      const abo = { endpoint: "https://push.example/geraet", options: { applicationServerKey: null }, toJSON() { return { endpoint: this.endpoint, keys: { p256dh, auth } }; }, unsubscribe: async () => { window.__abo = null; return true; } };
+      window.__abo = null;
+      const reg = { pushManager: { getSubscription: async () => window.__abo, subscribe: async o => { abo.options.applicationServerKey = o.applicationServerKey.buffer; window.__abo = abo; return abo; } } };
+      Object.defineProperty(navigator, "serviceWorker", { configurable: true, value: { register: async () => reg, getRegistration: async () => reg, ready: Promise.resolve(reg), addEventListener() {} } });
+      let erlaubt = "default";
+      window.Notification = { get permission() { return erlaubt; }, requestPermission: async () => (erlaubt = "granted") };
+    }, [p256dh, auth]);
+    await s.oeffnen("#alarm");
+    const p = s.p;
+    await p.waitForSelector('[data-aktion="pushAn"]', { timeout: 5000 });
+    assert.match(await p.textContent("#ansicht"), /Mitteilungen[\s\S]*direkt auf dieses Gerät/);
+    await p.click('[data-aktion="pushAn"]');
+    await p.waitForFunction(() => S.push.stand === "an" && !S.push.busy, null, { timeout: 5000 });
+    const abos = JSON.parse(u.store.get("push:abos"));
+    assert.equal(abos.length, 1); assert.equal(abos[0].endpoint, "https://push.example/geraet"); assert.equal(abos[0].keys.auth, auth);
+    assert.match(await p.textContent("#ansicht"), /An auf diesem Gerät/);
+    await p.click('[data-aktion="pushTest"]'); await p.waitForFunction(() => !S.push.busy);
+    assert.equal(u.push.length, 1); assert.equal(u.push[0].url, "https://push.example/geraet");
+    await p.uncheck("[data-push-ntfy]"); await p.waitForTimeout(300);
+    assert.equal(u.store.get("push:ntfy"), "aus");
+    await p.click('[data-aktion="pushAus"]'); await p.waitForFunction(() => S.push.stand === "aus" && !S.push.busy);
+    assert.deepEqual(JSON.parse(u.store.get("push:abos")), []);
+    assert.deepEqual(s.fehler, []);
+  } finally { await s.b.close(); }
+});

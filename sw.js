@@ -25,3 +25,21 @@ self.addEventListener("fetch", e => {
       .catch(() => caches.match(e.request).then(r => r || Response.error()))
   );
 });
+
+// Mitteilungen (Web-Push): der Server schickt Titel, Text, Kennung (gleiche Kennung ersetzt die alte Mitteilung) und Ziel in der App
+self.addEventListener("push", e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (x) { try { d = { text: e.data.text() }; } catch (y) { /* leer */ } }
+  e.waitUntil(self.registration.showNotification(d.titel || "Preisvergleich", {
+    body: d.text || "", tag: d.tag || undefined, icon: "icon-192.png", badge: "icon-192.png", data: { url: d.url || "./" } }));
+});
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  const ziel = new URL((e.notification.data && e.notification.data.url) || "./", self.registration.scope).href;
+  e.waitUntil((async () => {
+    const l = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const c = l.find(x => x.url.startsWith(self.registration.scope)) || l[0];
+    if (c) { try { await c.focus(); } catch (x) { /* weiter */ } c.postMessage({ typ: "oeffnen", url: ziel }); return; }
+    await self.clients.openWindow(ziel);
+  })());
+});

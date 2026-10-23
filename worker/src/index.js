@@ -1,4 +1,4 @@
-// Preisvergleich-Server bei Cloudflare: fragt Marktguru direkt ab (Suche, tägliche Aktualisierung, Preisalarm per ntfy).
+// Preisvergleich-Server bei Cloudflare: fragt Marktguru direkt ab (Suche, tägliche Aktualisierung, Preisalarm per Web-Push und ntfy).
 // Gleiche Logik wie test_marktguru.py. Jede Teilabfrage (ein Suchbegriff in einer Postleitzahl) läuft als eigener
 // Aufruf, damit die Grenzen des kostenlosen Tarifs (10 ms Rechenzeit, 50 Abrufe je Aufruf) eingehalten werden.
 import { WorkerEntrypoint } from "cloudflare:workers";
@@ -14,7 +14,7 @@ const START_FAVS = [{ name: "Coca-Cola", aus: "" }, { name: "Red Bull", aus: "" 
 const GLEICHZEITIG = 4;
 
 /* ---------- Hilfen ---------- */
-const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS", "Access-Control-Allow-Headers": "Authorization,Content-Type,X-Wartung", "Access-Control-Max-Age": "86400" };
+const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS", "Access-Control-Allow-Headers": "Authorization,Content-Type,X-Wartung", "Access-Control-Max-Age": "86400" };
 const antwort = (body, typ = "application/json; charset=utf-8", status = 200) =>
   new Response(typeof body === "string" ? body : JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": typ, "Cache-Control": "no-store" } });
 const fehler = (text, status = 500) => antwort({ fehler: text }, undefined, status);
@@ -345,8 +345,8 @@ const nochNicht = x => x.gueltig_von && tageBis(x.gueltig_von) > 0;
 const abgelaufen = x => x.gueltig_bis && tageBis(x.gueltig_bis) < 0;
 
 async function benachrichtige(env, liste, alarm) {
-  const thema = (env.NTFY_TOPIC || "").trim();
-  if (!thema || !Object.keys(alarm).length) return [];
+  if (!Object.keys(alarm).length) return [];
+  if (!(env.NTFY_TOPIC || "").trim() && !(await pushAbos(env)).length) return [];   // kein Weg für Mitteilungen eingerichtet
   let gemeldet = await lade(env, "benachrichtigt", "json");
   const grenze = berlin(new Date(Date.now() - 60 * 864e5));
   gemeldet = Object.fromEntries(Object.entries(gemeldet || {}).filter(([, d]) => d >= grenze));
@@ -371,11 +371,7 @@ async function benachrichtige(env, liste, alarm) {
     const gr = al.einheit === "kg" ? (x.ml ? ", " + x.ml + " g" : "") : al.einheit === "st" ? "" : (x.ml ? ", " + x.ml + " ml" : "");
     const wann = nochNicht(x) ? `Ab ${kurz(x.gueltig_von)}` : x.gueltig_bis ? `Bis ${kurz(x.gueltig_bis)}` : "";
     const text = `${x.markt}: ${de(wert)} ${einheit} (${x.stueck > 1 ? x.stueck + " × " : ""}${x.produkt}${gr} für ${de(x.preis)} €). ${wann}`.trim();
-    try {
-      const r = await fetch("https://ntfy.sh", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: thema, title: `Preisalarm ${gruppe}: ${de(wert)} ${einheit}`, message: text, tags: ["moneybag"], priority: 3, click: APP_URL }) });
-      if (r.ok) { gemeldet[sch] = heute(); gesendet.push(text); }
-    } catch (e) { /* nächster Lauf versucht es erneut */ }
+    if (await melden(env, { titel: `Preisalarm ${gruppe}: ${de(wert)} ${einheit}`, text, tag: "alarm:" + gruppe, url: "./#produkt/" + encodeURIComponent(gruppe), ntfyTag: "moneybag" })) { gemeldet[sch] = heute(); gesendet.push(text); }
   }
   await env.PV.put("benachrichtigt", JSON.stringify(gemeldet));
   return gesendet;
@@ -728,21 +724,114 @@ async function berechtigt(req, env) {
   return d === 0;
 }
 
-async function ntfy(env, titel, text, tag) {
+/* ---------- Mitteilungen: Web-Push (App auf dem Home-Bildschirm, iPhone ab iOS 16.4) und ntfy ----------
+   Web-Push nach RFC 8291 (Inhalt verschlüsselt, aes128gcm) und RFC 8292 (VAPID). Das Schlüsselpaar entsteht beim ersten Mal und liegt im Speicher (KV). */
+const b64u = b => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const vonB64u = t => Uint8Array.from(atob(String(t).replace(/-/g, "+").replace(/_/g, "/") + "===".slice((String(t).length + 3) % 4)), c => c.charCodeAt(0));
+const verbinde = (...l) => { const n = l.reduce((s, x) => s + x.length, 0), r = new Uint8Array(n); let i = 0; for (const x of l) { r.set(x, i); i += x.length; } return r; };
+const txt = t => new TextEncoder().encode(t);
+async function vapid(env) {
+  const alt = await env.PV.get("push:vapid", "json");
+  if (alt && alt.pub && alt.jwk) return alt;
+  const k = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+  const neu = { pub: b64u(await crypto.subtle.exportKey("raw", k.publicKey)), jwk: await crypto.subtle.exportKey("jwk", k.privateKey) };
+  await env.PV.put("push:vapid", JSON.stringify(neu));
+  return neu;
+}
+async function hkdf(salt, ikm, info, laenge) {
+  const k = await crypto.subtle.importKey("raw", ikm, "HKDF", false, ["deriveBits"]);
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt, info }, k, laenge * 8));
+}
+async function verschluesseln(abo, inhalt, fest) {   // RFC 8291: ein Datensatz, Kopf mit Salz, Satzgröße und öffentlichem Schlüssel des Servers (fest: nur für den Test mit den Werten aus dem RFC)
+  const ua = vonB64u(abo.keys.p256dh), auth = vonB64u(abo.keys.auth);
+  const ich = fest ? fest.ich : await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
+  const meinPub = new Uint8Array(await crypto.subtle.exportKey("raw", ich.publicKey));
+  const uaKey = await crypto.subtle.importKey("raw", ua, { name: "ECDH", namedCurve: "P-256" }, false, []);
+  const geheim = new Uint8Array(await crypto.subtle.deriveBits({ name: "ECDH", public: uaKey }, ich.privateKey, 256));
+  const ikm = await hkdf(auth, geheim, verbinde(txt("WebPush: info\0"), ua, meinPub), 32);
+  const salz = fest ? fest.salz : crypto.getRandomValues(new Uint8Array(16));
+  const cek = await hkdf(salz, ikm, txt("Content-Encoding: aes128gcm\0"), 16), nonce = await hkdf(salz, ikm, txt("Content-Encoding: nonce\0"), 12);
+  const k = await crypto.subtle.importKey("raw", cek, "AES-GCM", false, ["encrypt"]);
+  const chiffre = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: nonce }, k, verbinde(txt(inhalt), new Uint8Array([2]))));
+  const kopf = new Uint8Array(21); kopf.set(salz, 0); new DataView(kopf.buffer).setUint32(16, 4096); kopf[20] = 65;
+  return verbinde(kopf, meinPub, chiffre);
+}
+async function vapidKopf(env, endpoint) {   // RFC 8292: signierter Token für den Push-Dienst (Apple, Google, Mozilla)
+  const v = await vapid(env), aud = new URL(endpoint).origin;
+  const teil = x => b64u(txt(JSON.stringify(x)));
+  const daten = teil({ typ: "JWT", alg: "ES256" }) + "." + teil({ aud, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: APP_URL.replace(/\/$/, "") });
+  const key = await crypto.subtle.importKey("jwk", v.jwk, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, key, txt(daten));
+  return `vapid t=${daten}.${b64u(sig)}, k=${v.pub}`;
+}
+async function pushEins(env, abo, nachricht) {
+  const r = await fetch(abo.endpoint, { method: "POST", body: await verschluesseln(abo, JSON.stringify(nachricht)),
+    headers: { Authorization: await vapidKopf(env, abo.endpoint), TTL: "86400", Urgency: "normal", "Content-Encoding": "aes128gcm", "Content-Type": "application/octet-stream" } });
+  return r.status;
+}
+const pushAbos = async env => (await env.PV.get("push:abos", "json")) || [];
+async function pushAlle(env, nachricht) {   // an alle Geräte; abgemeldete (404, 410) fliegen raus
+  const abos = await pushAbos(env);
+  if (!abos.length) return false;
+  const st = await Promise.all(abos.map(a => pushEins(env, a, nachricht).catch(() => 0)));
+  const weg = abos.filter((a, i) => st[i] === 404 || st[i] === 410);
+  if (weg.length) await env.PV.put("push:abos", JSON.stringify(abos.filter(a => !weg.includes(a))));
+  return st.some(x => x >= 200 && x < 300);
+}
+async function ntfyAn(env) { return (await env.PV.get("push:ntfy")) !== "aus"; }
+// eine Mitteilung über alle eingerichteten Wege; true, wenn mindestens einer sie angenommen hat
+async function melden(env, { titel, text, tag, prio, url, ntfyTag }) {
+  let ok = false;
+  try { ok = await pushAlle(env, { titel, text: text.slice(0, 300), tag, url: url || "./" }); } catch (e) { /* ntfy versucht es trotzdem */ }
   const thema = (env.NTFY_TOPIC || "").trim();
-  if (!thema) return;
-  try {
-    await fetch("https://ntfy.sh", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topic: thema, title: titel, message: text.slice(0, 300), tags: [tag || "bell"], priority: 3, click: APP_URL }) });
-  } catch (e) { /* die Anfrage bleibt trotzdem in der Liste */ }
+  if (thema && await ntfyAn(env)) {
+    try {
+      const r = await fetch("https://ntfy.sh", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: thema, title: titel, message: text.slice(0, 300), tags: [ntfyTag || "bell"], priority: prio || 3, click: new URL(url || "./", APP_URL).href }) });
+      ok = ok || r.ok;
+    } catch (e) { /* nächster Versuch beim nächsten Lauf */ }
+  }
+  return ok;
+}
+async function pushRoute(req, env, p) {
+  const ohne = x => x && typeof x.endpoint === "string" && /^https:\/\//.test(x.endpoint) && x.endpoint.length < 1000;
+  if (p === "/push/schluessel") return { key: (await vapid(env)).pub };
+  if (p === "/push/status") {
+    const abos = await pushAbos(env);
+    return { geraete: abos.length, namen: abos.map(a => a.geraet || "Gerät"), ntfy: !!(env.NTFY_TOPIC || "").trim(), ntfyAn: await ntfyAn(env) };
+  }
+  if (p === "/push/abo" && req.method === "POST") {
+    const b = await req.json().catch(() => null);
+    if (!ohne(b) || !b.keys || typeof b.keys.p256dh !== "string" || typeof b.keys.auth !== "string" || b.keys.p256dh.length > 200 || b.keys.auth.length > 60) throw konto(400, "Ungültige Anmeldung für Mitteilungen");
+    const abos = (await pushAbos(env)).filter(a => a.endpoint !== b.endpoint);
+    abos.push({ endpoint: b.endpoint, keys: { p256dh: b.keys.p256dh, auth: b.keys.auth }, geraet: String(b.geraet || "Gerät").slice(0, 40), t: Date.now() });
+    await env.PV.put("push:abos", JSON.stringify(abos.slice(-10)));
+    return { ok: true, geraete: Math.min(abos.length, 10) };
+  }
+  if (p === "/push/abo" && req.method === "DELETE") {
+    const b = await req.json().catch(() => null), abos = await pushAbos(env);
+    await env.PV.put("push:abos", JSON.stringify(abos.filter(a => !b || a.endpoint !== b.endpoint)));
+    return { ok: true };
+  }
+  if (p === "/push/test" && req.method === "POST") {
+    const b = await req.json().catch(() => null), abo = (await pushAbos(env)).find(a => b && a.endpoint === b.endpoint);
+    if (!abo) throw konto(404, "Dieses Gerät ist nicht angemeldet. Schalte die Mitteilungen aus und wieder ein.");
+    const st = await pushEins(env, abo, { titel: "Preisvergleich", text: "So sehen die Mitteilungen aus. Preisalarme kommen jetzt auf dieses Gerät.", tag: "test", url: "./#alarm" });
+    if (st < 200 || st >= 300) throw konto(400, "Der Push-Dienst hat die Mitteilung abgelehnt (" + st + ").");
+    return { ok: true };
+  }
+  if (p === "/push/ntfy" && req.method === "POST") {
+    const b = await req.json().catch(() => ({}));
+    await env.PV.put("push:ntfy", b && b.an === false ? "aus" : "an");
+    return { ntfyAn: await ntfyAn(env) };
+  }
+  throw konto(404, "Unbekannte Adresse");
+}
+async function ntfy(env, titel, text, tag) {   // Hinweise an den Betreiber (z. B. Passwort vergessen): über alle Wege
+  await melden(env, { titel, text, tag: "hinweis", ntfyTag: tag || "bell", url: "./#mehr" });
 }
 async function meldeFehler(env, text) {
-  const thema = (env.NTFY_TOPIC || "").trim();
-  if (!thema) return;
-  try {
-    await fetch("https://ntfy.sh", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topic: thema, title: "Preislauf fehlgeschlagen", message: text.slice(0, 300), tags: ["warning"], priority: 4, click: APP_URL }) });
-  } catch (e) { /* mehr kann nicht getan werden */ }
+  await melden(env, { titel: "Preislauf fehlgeschlagen", text, tag: "fehler", prio: 4, ntfyTag: "warning" });
 }
 
 export default {
@@ -751,6 +840,10 @@ export default {
     const url = new URL(req.url), p = url.pathname.replace(/\/+$/, "") || "/";
     try {
       if (p.startsWith("/konto/")) return antwort(await kontoRoute(req, env, p));
+      if (p.startsWith("/push/")) {
+        if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401);
+        return antwort(await pushRoute(req, env, p));
+      }
       if (req.method === "GET") {
         if (p === "/angebote.json") return antwort(JSON.stringify(await lade(env, "angebote", "json")));
         if (p === "/favoriten.json") return antwort(JSON.stringify(await lade(env, "favoriten", "json")));

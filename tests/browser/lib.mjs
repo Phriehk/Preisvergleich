@@ -51,11 +51,12 @@ export async function umgebung(opts = {}) {
   } };
   const env = { PV: KV, ZUGANG: "betreiber", NTFY_TOPIC: opts.ntfy ? "test" : undefined, ASSETS };
   const ctx = { exports: { Teil: new W.Teil({}, env) }, waitUntil() {} };
-  const ntfy = [];
+  const ntfy = [], push = []; push.status = 201;
   globalThis.fetch = async (u, o) => {
     u = String(u);
     if (u === "https://www.marktguru.de") return new Response('..."apiKey":"k","clientKey":"c"...');
     if (u === "https://ntfy.sh") { ntfy.push(JSON.parse(o.body)); return new Response("{}"); }
+    if (u.startsWith("https://push.example/")) { push.push({ url: u, headers: o.headers, body: o.body }); return new Response("", { status: push.status }); }   // Push-Dienst (Web-Push)
     if (u.startsWith("https://api.marktguru.de/api/v1/offers/publishers")) {   // Märkte der Gegend
       const m = new Map(); Object.values(opts.daten || DATEN).flat().forEach(o => m.set(o.advertisers[0].id, o.advertisers[0].name));
       return new Response(JSON.stringify({ totalResults: m.size, results: [...m].map(([id, name]) => ({ id, name, uniqueName: name.toLowerCase(), offers: [] })) }));
@@ -68,7 +69,7 @@ export async function umgebung(opts = {}) {
     return new Response("nf", { status: 404 });
   };
   const A = (p, m = "GET", b) => H.fetch(new Request("https://preise.phriehk.workers.dev" + p, { method: m, headers: { Authorization: "Bearer betreiber", "Content-Type": "application/json" }, body: b }), env, ctx);
-  return { H, env, ctx, KV, store, A, ntfy };
+  return { H, env, ctx, KV, store, A, ntfy, push };
 }
 
 /** Browser mit der echten Seite; alle Anfragen an die Worker-Adresse gehen an den echten Worker-Code */

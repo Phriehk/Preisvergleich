@@ -584,6 +584,60 @@ function auftraege(){
   Object.keys(zettel).forEach(k=>{const g=zk(k).g;if(!namen.has(g)&&!frei[g]){namen.add(g);l.push({name:g,term:g,nur:[]})}});
   return l;
 }
+/* ---------- Mitteilungen (Web-Push) auf diesem Gerät: auf dem iPhone nur in der App vom Home-Bildschirm (ab iOS 16.4) ---------- */
+const pushGeht=()=>"serviceWorker" in navigator&&"PushManager" in window&&"Notification" in window;
+const istIOS=()=>/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const alsApp=()=>navigator.standalone===true||!!(window.matchMedia&&matchMedia("(display-mode: standalone)").matches);
+const geraetName=()=>{const u=navigator.userAgent;return /iPhone/.test(u)?"iPhone":/iPad/.test(u)||istIOS()?"iPad":/Android/.test(u)?"Android":/Mac/.test(u)?"Mac":/Windows/.test(u)?"Windows":"Browser"};
+const b64uBytes=t=>Uint8Array.from(atob(t.replace(/-/g,"+").replace(/_/g,"/")+"===".slice((t.length+3)%4)),c=>c.charCodeAt(0));
+const gleicheBytes=(a,b)=>{if(!a||!b)return false;a=new Uint8Array(a);return a.length===b.length&&a.every((x,i)=>x===b[i])};
+const swBereit=()=>Promise.race([navigator.serviceWorker.ready,new Promise((_,f)=>setTimeout(()=>f(new Error("Der Hintergrunddienst der App startet nicht. Schließe die App einmal ganz und öffne sie neu.")),8000))]);
+async function pushStandLaden(){
+  const P=S.push;
+  if(!cf||!pushGeht()){P.stand="nicht";return}
+  if(Notification.permission==="denied"){P.stand="verweigert";return}
+  try{const reg=await navigator.serviceWorker.getRegistration();const sub=reg&&await reg.pushManager.getSubscription();P.stand=sub&&Notification.permission==="granted"?"an":"aus";P.ep=sub?sub.endpoint:""}catch(e){P.stand="aus"}
+  try{P.server=await (await wf("/push/status")).json()}catch(e){}
+}
+async function pushAn(){
+  const P=S.push;if(P.busy)return;P.busy=true;render();
+  try{
+    const erlaubt=await Notification.requestPermission();   // direkt nach dem Tippen fragen, sonst zeigt iOS die Abfrage nicht
+    if(erlaubt!=="granted"){P.stand=erlaubt==="denied"?"verweigert":"aus";throw Object.assign(new Error(erlaubt==="denied"?"Mitteilungen sind für die App nicht erlaubt.":"Ohne deine Erlaubnis kann ich keine Mitteilungen schicken."),{status:1})}
+    const schl=b64uBytes((await (await wf("/push/schluessel")).json()).key);
+    const reg=await swBereit();
+    let sub=await reg.pushManager.getSubscription();
+    if(sub&&!gleicheBytes(sub.options&&sub.options.applicationServerKey,schl)){await sub.unsubscribe().catch(()=>{});sub=null}
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:schl});
+    await wf("/push/abo",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...sub.toJSON(),geraet:geraetName()})});
+    P.stand="an";P.ep=sub.endpoint;melde("Mitteilungen sind auf diesem Gerät an. Probier „Test senden“.");
+    try{P.server=await (await wf("/push/status")).json()}catch(e){}
+  }catch(e){melde(netzFehler(e),true)}
+  P.busy=false;render();
+}
+async function pushAus(){
+  const P=S.push;if(P.busy)return;P.busy=true;render();
+  try{
+    const reg=await navigator.serviceWorker.getRegistration(),sub=reg&&await reg.pushManager.getSubscription();
+    const ep=sub?sub.endpoint:P.ep;if(sub)await sub.unsubscribe().catch(()=>{});
+    if(ep)await wf("/push/abo",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({endpoint:ep})});
+    P.stand="aus";P.ep="";melde("Mitteilungen sind auf diesem Gerät aus.");
+    try{P.server=await (await wf("/push/status")).json()}catch(e){}
+  }catch(e){melde(netzFehler(e),true)}
+  P.busy=false;render();
+}
+async function pushTest(){
+  const P=S.push;if(P.busy)return;P.busy=true;render();
+  try{await wf("/push/test",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({endpoint:P.ep})});melde("Die Testmitteilung ist unterwegs und kommt in ein paar Sekunden.")}
+  catch(e){melde(netzFehler(e),true)}
+  P.busy=false;render();
+}
+async function pushNtfy(an){
+  try{const j=await (await wf("/push/ntfy",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({an})})).json();if(S.push.server)S.push.server.ntfyAn=j.ntfyAn}
+  catch(e){melde(netzFehler(e),true)}
+  render();
+}
+
 /* ---------- Angebote je Markt: erst die Märkte der Gegend, dann alle Angebote des gewählten Marktes ---------- */
 function mkAuto(){
   if(demo||!online||S.v!=="markt")return;
@@ -835,6 +889,7 @@ const S={
   form:{},                   // Eingaben in Formularen (bleiben beim Neuzeichnen erhalten)
   kMode:"login",kInfo:"",kBusy:false,anfragen:null,
   filter:"",sort:"name",
+  push:{stand:"?",busy:false,ep:"",server:null},   // Mitteilungen auf diesem Gerät: ? | laedt | nicht | aus | an | verweigert
   mk:{id:ls.raw("pv-markt")||"",liste:null,plz:"",laedt:false,lade:{},versucht:{},fehler:{},daten:{},q:"",zeit:"jetzt",bereich:"L"},   // Angebote je Markt
   erledigtAus:ls.raw("pv-erledigt")==="aus"
 };
@@ -1602,15 +1657,31 @@ function alarmHtml(g){   // auf der Produktseite
   if(!f||!betreiber())return"";
   return `<section class="karte-box"><div class="box-kopf"><h2>Preisalarm</h2><span class="rechts"><button type="button" class="knopf klein leise" data-go="alarm">Alle Preisalarme</button></span></div>${alarmZeile(f)}</section>`;
 }
+function pushHtml(){   // Mitteilungen auf diesem Gerät (nur mit Zugangscode, wie der Preisalarm)
+  const P=S.push,dis=P.busy?" disabled":"";
+  if(P.stand==="?"){P.stand="laedt";pushStandLaden().then(()=>{if(S.v==="alarm")render()})}
+  let t="",k="";
+  if(P.stand==="laedt")t="…";
+  else if(P.stand==="nicht")t=istIOS()?(alsApp()?"Dieses iPhone kann noch keine Mitteilungen für Apps vom Home-Bildschirm empfangen. Das geht ab iOS 16.4.":"Auf dem iPhone gibt es Mitteilungen nur in der App auf dem Home-Bildschirm: in Safari auf Teilen tippen, „Zum Home-Bildschirm“ wählen, die App von dort öffnen und hier einschalten."):"Dieser Browser kann keine Mitteilungen empfangen.";
+  else if(P.stand==="verweigert")t=istIOS()?"Mitteilungen sind für die App nicht erlaubt. Erlaube sie in den iPhone-Einstellungen unter Mitteilungen → Preise und tippe dann hier auf „Einschalten“.":"Mitteilungen sind im Browser blockiert. Erlaube sie in den Einstellungen der Seite.";
+  else if(P.stand==="aus")t="Preisalarme kommen als Mitteilung direkt auf dieses Gerät, auch wenn die App geschlossen ist.";
+  else t="An auf diesem Gerät. Preisalarme kommen als Mitteilung, ein Tipp darauf öffnet den Artikel.";
+  if(P.stand==="aus"||P.stand==="verweigert")k=`<button type="button" class="knopf haupt" data-aktion="pushAn"${dis}>${P.busy?"Einen Moment …":"Mitteilungen einschalten"}</button>`;
+  if(P.stand==="an")k=`<button type="button" class="knopf" data-aktion="pushTest"${dis}>Test senden</button><button type="button" class="knopf leise" data-aktion="pushAus"${dis}>Ausschalten</button>`;
+  const sv=P.server;
+  const geraete=sv&&sv.geraete?`<p class="klein-text" style="margin:0">Angemeldet: ${sv.namen.map(esc).join(", ")}.</p>`:"";
+  const ntfy=sv&&sv.ntfy?`<label class="schalter klein-text"><input type="checkbox" data-push-ntfy${sv.ntfyAn?" checked":""}> Zusätzlich über die ntfy-App schicken</label>`:"";
+  return `<section class="karte-box"><div class="box-kopf"><h2>🔔 Mitteilungen</h2>${P.stand==="an"?`<span class="tag gruen">an</span>`:""}</div><p class="leise-text" style="margin:0">${t}</p>${k?`<div class="reihe">${k}</div>`:""}${geraete}${ntfy}</section>`;
+}
 function vAlarm(){
   const sperre=alarmSperre();if(sperre)return sperre;
   const l=favs().slice().sort((a,b)=>a.name.localeCompare(b.name,"de")),an=l.filter(f=>f.alarm);
   if(!l.length)return leerHtml("Noch keine Favoriten","Preisalarme gibt es für deine Favoriten. Suche Artikel und markiere sie mit ☆.",`<button type="button" class="knopf haupt" data-go="suchen">Artikel suchen</button>`);
   const naL=listeFavNamen().filter(n=>!(favVon(n)||{}).alarm);
   let h=`<section class="karte-box"><div class="box-kopf"><h2>${an.length} von ${l.length} an</h2></div>
-    <p class="leise-text" style="margin:0">Jeden Morgen prüft der Server die Angebote und schickt dir eine Nachricht aufs Handy (ntfy), wenn ein Artikel im Angebot ist oder unter deinem Wunschpreis liegt. Jedes Angebot meldet er nur einmal.${regionPlz()?" Der Alarm gilt für das Gebiet der Seite (PLZ 47178), nicht für deine eingestellte Postleitzahl.":""}</p>
+    <p class="leise-text" style="margin:0">Jeden Morgen prüft der Server die Angebote und schickt dir eine Mitteilung aufs Handy, wenn ein Artikel im Angebot ist oder unter deinem Wunschpreis liegt. Jedes Angebot meldet er nur einmal.${regionPlz()?" Der Alarm gilt für das Gebiet der Seite (PLZ 47178), nicht für deine eingestellte Postleitzahl.":""}</p>
     <div class="reihe">${naL.length?`<button type="button" class="knopf" data-aktion="alarmListe">Alle ${naL.length} Artikel der Einkaufsliste einschalten</button>`:""}${an.length?`<button type="button" class="knopf leise" data-aktion="alarmAlleAus">Alle ausschalten</button>`:""}</div></section>`;
-  h+=`<section class="karte-box alarme">${l.map(alarmZeile).join("")}</section>`;
+  h+=pushHtml()+`<section class="karte-box alarme">${l.map(alarmZeile).join("")}</section>`;
   return h;
 }
 const listeFavNamen=()=>[...new Set(Object.keys(zettel).filter(k=>zettel[k]>0).map(k=>zk(k).g))].filter(n=>favs().some(f=>f.name===n));
@@ -2189,6 +2260,7 @@ const AKTION={
   },
   codeWeg:async()=>{zugang="";ls.setRaw("pv-code",null);S.anfragen=null;try{await angeboteLaden()}catch(e){}render()},
   aktualisieren:()=>serverAktualisieren(false),
+  pushAn:()=>pushAn(),pushAus:()=>pushAus(),pushTest:()=>pushTest(),
   mkNeu:()=>{const m=mkAktuell();delete S.mk.versucht["liste:"+quellPlz()];if(m){delete S.mk.versucht[mkKey(m)];delete S.mk.daten[mkKey(m)]}render()}
 };
 $("ansicht").addEventListener("click",e=>{
@@ -2297,6 +2369,7 @@ $("ansicht").addEventListener("change",e=>{
     const k=t.dataset.wahl;zMitglieder(k).forEach(m=>delete wahl[m]);if(t.value)wahl[k]=t.value;else delete wahl[k];
     listeSpeichern();render();return;
   }
+  if(t.matches("[data-push-ntfy]")){pushNtfy(t.checked);return}
   if(t.dataset.segSel){const n=t.dataset.segSel;if(n==="plan")S.plan=+t.value||0;else S[n]=t.value;render();return}
   if(t.dataset.alAn){const g=t.dataset.alAn;alarmSetzen([g],f=>t.checked?(f.alarm||{wert:JEDES,einheit:alarmEinheiten(artG(g))[0][0],ml:null}):null);render();return}
   if(t.dataset.alWert){const g=t.dataset.alWert,v=parseFloat(String(t.value).replace(",","."));if(v>0&&v<JEDES)alarmSetzen([g],f=>({...f.alarm,wert:Math.round(v*100)/100}));else melde("Bitte einen Wunschpreis über 0 eingeben, zum Beispiel 0,80.",true);render();return}
@@ -2355,7 +2428,11 @@ themeSetzen();
   mengenRunden();render();
   if(impText)sucheStarten();
   if(online){verlaufLaden().then(render);distLaden();if(S.v==="mehr"&&betreiber())anfragenLaden()}
-  if(cf&&"serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+  if(cf&&"serviceWorker" in navigator){
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+    // Tipp auf eine Mitteilung bei offener App: dorthin wechseln (z. B. zum Artikel)
+    navigator.serviceWorker.addEventListener("message",e=>{const d=e.data||{};if(d.typ==="oeffnen"&&d.url){try{const u=new URL(d.url);if(u.hash&&u.hash!==location.hash)location.hash=u.hash}catch(x){}}});
+  }
 })();
 </script>
 </body>

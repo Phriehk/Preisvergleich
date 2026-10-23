@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --test tests/alarm.test.mjs tests/zuordnung.test.mjs
+      - run: node --test tests/alarm.test.mjs tests/zuordnung.test.mjs tests/push.test.mjs
       - name: Playwright und Chromium installieren
         run: |
           npm install --no-save --no-package-lock playwright
