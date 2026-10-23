@@ -6,11 +6,11 @@ Binding                                            Resource
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (6.70 sec)
-Deployed preise triggers (1.33 sec)
+Uploaded preise (3.47 sec)
+Deployed preise triggers (0.64 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: 41537243-3bd3-42b2-acde-1bd1a3d94472
+Current Version ID: 365fa322-f39a-48d9-b01d-c68043aeb2d4
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,7 +18,7 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-23T21:53","anzahl":51,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-23T22:05","anzahl":51,"fehler":0}}
 Alte Version: 200 https://preise.phriehk.workers.dev/alt <title>Preisvergleich (alte Version)
 Push ohne Code (erwartet 401): HTTP 401
 Push: Schlüssel 87 Zeichen, {"geraete":1,"ntfy":true,"ntfyAn":false}
@@ -27,9 +27,9 @@ Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
 Suche Fanta: 1 s, {"anzahl":1}
-Aktualisieren: 5 s, {"zeit":"2026-10-23T22:05","anzahl":51,"fehler":0,"alarm":[]}
-Angebote: {"anzahl":51,"gruppen":["Beckers Frikandellen","Capri Sun Säfte","Capri sun","Ferrero Nutella Brotaufstrich","Gut Ponholz Gemischt-Hackfleisch","Hidrofugal Deodorant-Spray","K-Classic H-Vollmilch","Lenor Wäscheparfüm XL","Monster Energy","Nivea Dusche","Red Bull","Zewa Toilettenpapier Ultra Soft","coca cola"]}
-Verlauf: 368 Zeilen
+Aktualisieren: 61 s, 
+Angebote: {"anzahl":53,"gruppen":["Beckers Frikandellen","Capri Sun Säfte","Capri sun","Ferrero Nutella Brotaufstrich","Gut Ponholz Gemischt-Hackfleisch","Hidrofugal Deo Roll-on","Hidrofugal Deodorant-Spray","K-Classic H-Vollmilch","Lenor Wäscheparfüm XL","Monster Energy","Nivea Dusche","Red Bull","Zewa Toilettenpapier Ultra Soft","coca cola"]}
+Verlauf: 370 Zeilen
 Korrekturen lesen: {}
 Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
 Korrektur gespeichert und gelesen: true
@@ -78,19 +78,43 @@ Lebensmittel-Probe: 0 s, {"Butter":13,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | Thomas Philipps | Bratkartoffeln | art=kg liter=0.4 stueck=1 ml=400 preis=1.11 | mit Zwiebeln oder Schinken und Zwiebeln oder Rösti bratfertig 400 g
   Probe: Kartoffeln | ALDI SÜD | Herzogin-Kartoffeln | art=kg liter=0.6 stueck=1 ml=600 preis=1.69 | 600-g-Packung
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | Je 125 g
+  Namen: Hackfleisch | Kaufland | marke=K-Purland | produkt=Schweinehackfleisch | zum Braten, gekühlt je 500-g-Packg. | 1.89 kg ml=500 st=1
+  Namen: Hackfleisch | PENNY | marke=Mühlenhof | produkt=Hackfleisch | Gemischt, vom Schwein und Rind, je 800-g-Packung | 4.99 kg ml=800 st=1
+  Namen: Hackfleisch | PENNY (46535) | marke=Mühlenhof | produkt=Hackfleisch | Gemischt, vom Schwein und Rind, je 800-g-Packung | 4.99 kg ml=800 st=1
+  Namen: Hackfleisch | Netto Marken-Discount | marke=Gut Ponholz | produkt=Gemischt-Hackfleisch | 500 g aus 50% Schwein und 50% Rind | 3.33 kg ml=500 st=1
+  Namen: Hackfleisch | REWE (47053) | marke=thisisnobrand123 | produkt=Hackfleisch | vom Schwein, je 100 g | 0.69 kg ml=100 st=1
+  Namen: Hackfleisch | ALDI SÜD | marke=Meine Metzgerei | produkt=Rinder-Hackfleisch | 500-g-Packung | 4.59 kg ml=500 st=1
+  Namen: Hackfleisch | ALDI SÜD | marke=Meine Metzgerei | produkt=Rinderhackfleisch XXL | 1-kg-Packung | 9.49 kg ml=1000 st=1
+  Namen: Hackfleisch | Lidl | marke=Metzgerfrisch | produkt=XXL Rinderhackfleisch | Je 1 kg | 9.49 kg ml=1000 st=1
+  Namen: Hackfleisch | Netto Marken-Discount | marke=Gut Ponholz | produkt=Rinder-Hackfleisch | zum Braten 500 g | 4.79 kg ml=500 st=1
+  Namen: Hackfleisch | REWE (47053) | marke=Metzgerei Wilhelm Brandenburg | produkt=Rinder-Hackfleisch | je 250-g-Pckg. | 3.49 kg ml=250 st=1
+  Namen: Hackfleisch | Kaufland | marke=K-Bio | produkt=Bio Rinderhackfleisch | Bioland zum Braten, gekühlt je 400-g-Packg. | 5.59 kg ml=400 st=1
+  Namen: Hidrofugal | ALDI SÜD | marke=Hidrofugal | produkt=Deodorant-Spray | ab 5.99 oder Deo-Roll-on Versch. Sorten, z. B. Deo-Spray; je 2 x 150 ml = 300-ml-Packung | 5.99 l ml=300 st=1
+  Namen: Hidrofugal | REWE (47053) | marke=Hidrofugal | produkt=Deospray | versch. Sorten, je 150-ml-Dose | 3.49 l ml=150 st=1
+  Namen: Hidrofugal | Kaufland | marke=Hidrofugal | produkt=Deo Roll-on | versch. Sorten je 50-ml-Roller | 3.49 l ml=50 st=1
+  Namen: Hidrofugal | Kaufland | marke=Hidrofugal | produkt=Deo Roll-on | versch. Sorten je 50-ml-Roller | 3.49 l ml=50 st=1
+  Namen: Nivea | ROSSMANN | marke=Nivea | produkt=Dusche | 250 ml | 1.79 l ml=250 st=1
+  Namen: Nivea | Netto Marken-Discount | marke=Nivea | produkt=Shampoo | versch. Sorten 250 ml | 2.49 l ml=250 st=1
+  Namen: Nivea | ROSSMANN | marke=Nivea | produkt=Creme Care | oder Repair & Care je 400 ml | 5.99 l ml=400 st=1
+  Namen: Nivea | ROSSMANN | marke=Nivea | produkt=Creme Natural Touch | 150 ml oder Creme Soft 100 ml | 2.49 l ml=150 st=1
+  Namen: Nivea | ROSSMANN | marke=Nivea | produkt=Face+ Vitamin C | oder Pro-Vitamin B5 oder Hyaluron Tagescreme je 100 ml | 4.49 l ml=100 st=1
+  Namen: Nivea | Kaufland | marke=Nivea For Men | produkt=Sensitive After Shave Balsam | versch. Sorten je 100-ml-Fl. | 4.99 l ml=100 st=1
+  Namen: Nivea | ROSSMANN | marke=Nivea | produkt=Erfrischende Tagespflege | 50 ml Gültigkeit: 19.10.2026 – 23.10.2026 20 % Rabatt auf alle Nivea Essentials Gesichtspf | 4.99 l ml=50 st=1
+  Namen: Nivea | ROSSMANN | marke=Nivea | produkt=Cellular Expert Lift Multi-Effekt Anti-Age Tagespflege | 50 ml oder Serum 30 ml | 15.99 l ml=50 st=1
+  Namen: Nivea | ROSSMANN | marke=Nivea | produkt=EdT Spay | oder Nivea Sun Eau de Toilette je 30 ml | 16.49 l ml=30 st=1
 Märkte 47178: 0 s, ["Kaufland=497","Lidl=875","PENNY=299","Kabs PolsterWelt=45","Bosch Car Service=10","SCHAFFRATH=267","HORNBACH=198","KiK=50","Opti Wohnwelt=44","Opti-MegaStore=107","ALDI SÜD=563","Thomas Philipps=189","ROSSMANN=294","toom Baumarkt=275","OBI=25","Handelshof=270","XXXLutz=1027","SB-Möbel BOSS=309","trinkgut=71","Möbel Inhofer=80","Netto Marken-Discount=365","EDEKA=48","REWE=272 (47053)"]
 Markt 126679: 1 s, {"name":"Lidl","total":875,"seiten":"875/875/875","geladen":875,"ohneMenge":0,"kategorien":69,"ohneKat":2,"kp":"0=2 3=19 5=30 6=7 10=7 11=3 12=3 14=11 16=42 17=1 20=85 23=12 28=4 35=6 50=28 53=14 69=15 70=5 83=7 85=12 94=10 95=4 97=23 101=2 102=22 103=33 104=19 106=8 107=54 108=9 110=10 112=18 113=10 115=1 116=2 119=5 120=45 122=3 126=1 129=4 137=4 142=2 143=21 144=25 147=10 149=11 174=2 187=1 191=6 193=10 218=1 363=14 364=21 382=13 383=3 384=3 385=2 386=3 392=1 398=47 402=3 414=1 415=6 427=25 428=15 454=4 473=9 497=7 630=9","beispiel":"Lidl Backshop Weltmeisterbrötchen 0.78 st Brötchen"}
 Markt 126735: 0 s, {"name":"Netto Marken-Discount","total":365,"seiten":"365/365/365","geladen":365,"ohneMenge":0,"kategorien":59,"ohneKat":0,"kp":"3=4 5=2 10=1 11=1 12=2 14=4 15=4 16=10 17=3 20=39 23=7 28=11 32=1 50=9 53=1 69=13 70=12 83=1 85=2 95=1 97=5 101=1 102=22 103=18 104=19 106=1 107=28 108=4 110=4 112=7 113=3 115=4 119=1 120=14 124=1 137=2 142=5 143=15 144=2 147=13 149=11 174=2 191=6 193=5 218=2 363=6 364=3 378=1 382=1 385=1 387=1 398=12 402=1 415=5 427=1 428=4 454=1 497=1 630=4","beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792785990","token":true}
+Konto anlegen: {"name":"test1792786229","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792785990","daten":{}}
+Konto Daten: {"name":"test1792786229","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792785990"]
+Konto Anfragen mit Code: ["test1792786229"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792785990","token":true}
-Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 200
-Code ein zweites Mal (erwartet Fehler): HTTP 200
+Neues Passwort mit Code: {"name":"test1792786229","token":true}
+Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
+Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
