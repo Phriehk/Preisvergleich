@@ -344,7 +344,7 @@ t("Suche: „Meintest du …?“ bei Tippfehlern, ein Tipp sucht neu", async () 
 t("Scannen: Nummer eingeben, Produkt aus Open Food Facts, Angebote prüfen, als Favorit speichern", async () => {
   await mitSeite({}, async ({ p, fehler }, u) => {
     let gefragt = "";
-    await p.route("https://world.openfoodfacts.org/**", r => { gefragt = r.request().url(); r.fulfill({ headers: { "access-control-allow-origin": "*", "content-type": "application/json" }, body: JSON.stringify({ status: 1, product: { product_name: "Irische Butter", brands: "Kerrygold, Ornua", quantity: "250 g" } }) }); });
+    await p.route("https://world.openfoodfacts.org/**", r => { gefragt = r.request().url(); r.fulfill({ headers: { "access-control-allow-origin": "*", "content-type": "application/json" }, body: JSON.stringify({ status: 1, product: { product_name: "Irische Butter", brands: "Kerrygold, Ornua", quantity: "250 g", image_front_small_url: "https://images.openfoodfacts.org/butter.200.jpg" } }) }); });
     await bereich(p, "suchen");
     await p.click('[data-aktion="scannen"]');
     assert.equal(await p.isVisible("#scanDlg"), true);
@@ -363,6 +363,7 @@ t("Scannen: Nummer eingeben, Produkt aus Open Food Facts, Angebote prüfen, als 
     const f = JSON.parse(await u.KV.get("favoriten")).find(x => x.name === "Kerrygold Butter");
     assert.ok(f, "Favorit fehlt");
     assert.deepEqual([f.nur, f.suche], [["kerrygold"], "Butter"]);
+    assert.equal(f.bild, "https://images.openfoodfacts.org/butter.200.jpg", "Vorschaubild aus dem Scan bleibt");
     await p.click("#sZu");
     await bereich(p, "angebote");
     assert.ok((await p.$$eval(".produkt h3", e => e.map(x => x.textContent))).includes("Kerrygold Butter"));
@@ -516,4 +517,25 @@ t("Angebote: Hinweise wie „bis …“ stehen immer in einer eigenen Zeile unte
       assert.ok(lage, n);
     }
   });
+});
+
+t("Favoriten ohne Angebot behalten ihr Vorschaubild, früher gescannte holen es aus Open Food Facts nach", async () => {
+  const u = await umgebung();
+  await u.KV.put("favoriten", JSON.stringify([{ name: "Eier", aus: "" }, { name: "Seife", aus: "", bild: "https://bilder.example/seife.png" }, { name: "Fa Duschgel", aus: "", nur: ["fa"], suche: "Duschgel" }]));
+  await u.A("/aktualisieren", "POST");
+  const s = await browserStarten(u, {});
+  try {
+    await s.c.addInitScript(() => localStorage.setItem("pv-ean", JSON.stringify({ "4005800000000": { marke: "Fa", artikel: "Duschgel" } })));
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+    for (const m of ["https://bilder.example/**", "https://images.openfoodfacts.org/**"]) await s.p.route(m, r => r.fulfill({ body: png, headers: { "content-type": "image/png" } }));
+    await s.p.route("https://world.openfoodfacts.org/**", r => r.fulfill({ headers: { "access-control-allow-origin": "*", "content-type": "application/json" }, body: JSON.stringify({ status: 1, product: { product_name: "Duschgel", brands: "Fa", image_front_small_url: "https://images.openfoodfacts.org/fa.200.jpg" } }) }));
+    await s.oeffnen("");
+    const p = s.p, src = n => p.evaluate(g => (document.querySelector(`.produkt[data-p="${g}"] .bild img`) || {}).src || "", n);
+    assert.equal(await src("Seife"), "https://bilder.example/seife.png");
+    await p.waitForFunction(() => !!document.querySelector('.produkt[data-p="Fa Duschgel"] .bild img'), null, { timeout: 10000 });
+    assert.equal(await src("Fa Duschgel"), "https://images.openfoodfacts.org/fa.200.jpg");
+    await p.waitForTimeout(500);
+    assert.equal(JSON.parse(u.store.get("favoriten")).find(f => f.name === "Fa Duschgel").bild, "https://images.openfoodfacts.org/fa.200.jpg", "auf dem Server gespeichert");
+    assert.deepEqual(s.fehler, []);
+  } finally { await s.b.close(); }
 });

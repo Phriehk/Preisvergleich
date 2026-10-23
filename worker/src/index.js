@@ -624,7 +624,7 @@ function datenPruefen(d) {   // nur erwartete Felder und Größen werden gespeic
     for (const k of Object.keys(d.haken).slice(0, 300)) if (k.length <= 130 && d.haken[k]) o.haken[k] = 1;
   }
   if (Array.isArray(d.aus)) o.aus = d.aus.filter(x => text(x, 60)).slice(0, 80);   // ausgeblendete Märkte
-  if (Array.isArray(d.favs)) o.favs = d.favs.filter(f => f && text(f.name, 40)).slice(0, 80).map(f => ({ name: f.name, aus: "", nur: (Array.isArray(f.nur) ? f.nur : []).filter(x => text(x, 60)).slice(0, 10), ...(text(f.suche, 40) ? { suche: f.suche } : {}) }));   // eigene Favoriten (ohne Zugangscode)
+  if (Array.isArray(d.favs)) o.favs = d.favs.filter(f => f && text(f.name, 40)).slice(0, 80).map(f => ({ name: f.name, aus: "", nur: (Array.isArray(f.nur) ? f.nur : []).filter(x => text(x, 60)).slice(0, 10), ...(text(f.suche, 40) ? { suche: f.suche } : {}), ...(text(f.bild, 400) && /^https:\/\//.test(f.bild) ? { bild: f.bild } : {}) }));   // eigene Favoriten (ohne Zugangscode)
   return o;
 }
 async function kontoRoute(req, env, p) {

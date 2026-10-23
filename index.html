@@ -588,7 +588,14 @@ if(Array.isArray(ls.get("pv3-favs",null)))favsServer=ls.get("pv3-favs",null);
 function favs(){return betreiber()?(favsServer||[]):favsLokal}
 const favVon=g=>favs().find(f=>f.name===g);
 let artMerk=objekt(ls.get("pv3-arten",{}));   // Einheit je Artikel merken, auch wenn gerade kein Angebot da ist
-function neuAufbereiten(){offers=aufbereiten(roh).liste;let neu=false;offers.forEach(o=>{if(artMerk[o.gruppe]!==o.art){artMerk[o.gruppe]=o.art;neu=true}});if(neu)ls.set("pv3-arten",artMerk)}
+let bildMerk=objekt(ls.get("pv3-bilder",{}));   // Vorschaubild je Artikel
+function neuAufbereiten(){
+  offers=aufbereiten(roh).liste;let neu=false,nb=false;
+  offers.forEach(o=>{if(artMerk[o.gruppe]!==o.art){artMerk[o.gruppe]=o.art;neu=true}if(o.bild&&/^https:\/\//.test(o.bild)&&!bildMerk[o.gruppe]){bildMerk[o.gruppe]=o.bild;nb=true}});
+  if(neu)ls.set("pv3-arten",artMerk);if(nb)ls.set("pv3-bilder",bildMerk);
+}
+/* Vorschaubild eines Favoriten, auch wenn er gerade kein Angebot hat: beim Anlegen gespeichert (Suche, Scan, Markt) oder vom letzten Angebot gemerkt */
+const favBild=g=>{const f=favVon(g),b=f&&f.bild;return (b&&/^https:\/\//.test(b)?b:"")||bildMerk[g]||""};
 function cacheSpeichern(quelle){cacheQuelle=quelle;cacheZeit=Date.now();ls.set("pv3-cache",{quelle,t:cacheZeit,roh})}
 /* Angebote einzelner Gruppen ersetzen (z. B. nach dem Speichern eines neuen Favoriten) */
 function rohMischen(eintraege){
@@ -688,7 +695,7 @@ function mkAkt(o,liste){   // ein Angebot als Favorit (wie eine Kachel in der Su
   const m=mkAktuell(),label=favLabel(o);
   const e={gruppe:label,bild:o.bild,marke:o.marke,coke:true,link:o.link,markt:m?mkName(m):"?",produkt:o.produkt,beschreibung:o.beschreibung,preis:o.preis,preis_alt:o.preis_alt,
     art:o.art,liter:o.liter,stueck:o.stueck,ml:o.ml,preis_pro_liter:o.preis_pro_liter,gueltig_von:o.gueltig_von,gueltig_bis:o.gueltig_bis};
-  return {name:label,entries:[e],nur:[pKey(o)],suche:label,liste,menge:null};
+  return {name:label,bild:o.bild,entries:[e],nur:[pKey(o)],suche:label,liste,menge:null};
 }
 
 async function regionLaden(frisch){
@@ -1219,7 +1226,7 @@ function preisKlein(o){
 }
 function karte(x){
   const {g,b,n}=x,f=favVon(g),al=f&&f.alarm,an=aufListe(g);
-  const bild=(b&&b.bild)||((offers.find(o=>grp(o)===g&&o.bild)||{}).bild)||"";
+  const bild=(b&&b.bild)||((offers.find(o=>grp(o)===g&&o.bild)||{}).bild)||favBild(g);
   const a=b?ampelInfo(b):null,tags=[];
   if(b){
     const d=tage(b);
@@ -1993,7 +2000,12 @@ async function sucheHinzu(akt){
   I.busy=true;render();
   try{
     const liste=favs().slice();let neu=false;
-    akt.forEach(a=>{if(!a.frei&&!liste.some(f=>f.name.toLowerCase()===a.name.toLowerCase())){liste.push({name:a.name,aus:"",nur:a.nur||[],...(a.suche?{suche:a.suche}:{})});neu=true}});
+    const bildOk=b=>typeof b==="string"&&/^https:\/\//.test(b)&&b.length<=400;
+    akt.forEach(a=>{
+      const bild=bildOk(a.bild)?a.bild:((a.entries||[]).find(o=>bildOk(o.bild))||{}).bild||"";   // Vorschaubild bleibt, auch wenn das Angebot endet
+      if(!a.frei&&!liste.some(f=>f.name.toLowerCase()===a.name.toLowerCase())){liste.push({name:a.name,aus:"",nur:a.nur||[],...(a.suche?{suche:a.suche}:{}),...(bild?{bild}:{})});neu=true}
+      if(bild&&!a.frei&&!bildMerk[a.name]){bildMerk[a.name]=bild;ls.set("pv3-bilder",bildMerk)}
+    });
     if(neu)await favsSpeichern(liste);
     const eintr=akt.flatMap(a=>a.entries.map(o=>({...o,gruppe:a.name})));
     if(eintr.length)rohMischen(eintr);
@@ -2003,8 +2015,8 @@ async function sucheHinzu(akt){
   }catch(e){melde(netzFehler(e),true)}
   I.busy=false;render();
 }
-function karteAkt(i,j,liste){const it=S.suche.items[i],c=it&&it.karten[j];return c?{name:c.label,entries:c.os,nur:[c.key],suche:it.name,menge:it.menge,liste}:null}
-const alleMarken=it=>({name:it.name,entries:it.roh,nur:[],menge:it.menge,liste:true});
+function karteAkt(i,j,liste){const it=S.suche.items[i],c=it&&it.karten[j];return c?{name:c.label,bild:c.bild,entries:c.os,nur:[c.key],suche:it.name,menge:it.menge,liste}:null}
+const alleMarken=it=>({name:it.name,bild:sucheBild(it.roh),entries:it.roh,nur:[],menge:it.menge,liste:true});
 
 /* ---------- Korrektur-Dialog für auffällige Preise ---------- */
 let eO=null;
@@ -2163,9 +2175,22 @@ async function scanSpeichern(){
   if(istFav(name)){melde("„"+name+"“ ist schon ein Favorit.");return}
   eanMerk[scan.ean]={marke:m,artikel:a};ls.set("pv-ean",eanMerk);
   const knopf=$("sSpeichern");knopf.disabled=true;knopf.textContent="Wird gespeichert …";
-  await sucheHinzu([{name,entries:scan.treffer,nur:m&&a?[m.toLowerCase()]:[],...(m&&a?{suche:a}:{}),liste:false,menge:null}]);
+  const p=scan.prod,bild=p&&(p.image_front_small_url||p.image_small_url)||"";   // Bild aus Open Food Facts, auch ohne Angebot
+  await sucheHinzu([{name,entries:scan.treffer,nur:m&&a?[m.toLowerCase()]:[],...(m&&a?{suche:a}:{}),bild,liste:false,menge:null}]);
   if(istFav(name)){knopf.textContent="★ Gespeichert";sStatus("„"+name+"“ ist jetzt ein Favorit. Weiter mit dem nächsten Produkt?")}
   else{knopf.disabled=false;knopf.textContent="☆ Als Favorit speichern"}
+}
+async function bilderNachholen(){
+  if(bilderNachholen.lief||demo)return;bilderNachholen.lief=true;
+  const offen=Object.entries(eanMerk).map(([ean,x])=>{const m=x.marke||"",a=x.artikel||"";return [ean,(!m?a:!a?m:nurK(a).includes(nurK(m))?a:m+" "+a).slice(0,40)]})
+    .filter(([,n])=>n&&istFav(n)&&!favBild(n)&&!offers.some(o=>grp(o)===n&&o.bild)).slice(0,10);
+  if(!offen.length)return;
+  const neu={};
+  for(const [ean,n] of offen){const p=await produktVonEan(ean).catch(()=>null),b=p&&(p.image_front_small_url||p.image_small_url);if(b&&/^https:\/\//.test(b))neu[n]=b}
+  if(!Object.keys(neu).length)return;
+  Object.assign(bildMerk,neu);ls.set("pv3-bilder",bildMerk);
+  try{await favsSpeichern(favs().map(f=>neu[f.name]&&!f.bild?{...f,bild:neu[f.name]}:f),true)}catch(e){}
+  render();
 }
 $("sZu").onclick=scanZu;
 $("scanDlg").onclick=e=>{
@@ -2259,7 +2284,7 @@ const AKTION={
   scannen:()=>scanOeffnen(),
   sucheLeeren:()=>{S.suche.items=[];S.suche.text="";render()},
   alleAufListe:()=>sucheHinzu(S.suche.items.filter(it=>it.status==="fertig"&&it.roh.length&&!aufListe(it.name)).map(alleMarken)),
-  favNeu:async()=>{try{await favsSpeichern([...favs(),{name:S.p,aus:"",nur:S.d.marke?[S.d.marke]:[]}]);melde("„"+S.p+"“ ist jetzt ein Favorit.")}catch(e){melde(netzFehler(e),true)}render()},
+  favNeu:async()=>{try{const bild=((offers.find(o=>grp(o)===S.p&&/^https:\/\//.test(o.bild||""))||{}).bild)||"";await favsSpeichern([...favs(),{name:S.p,aus:"",nur:S.d.marke?[S.d.marke]:[],...(bild?{bild}:{})}]);melde("„"+S.p+"“ ist jetzt ein Favorit.")}catch(e){melde(netzFehler(e),true)}render()},
   favWeg:async()=>{
     if(!S.d.weg){S.d.weg=true;render();setTimeout(()=>{if(S.d.weg){S.d.weg=false;render()}},5000);return}
     S.d.weg=false;favEntfernen(S.p);
@@ -2481,7 +2506,7 @@ themeSetzen();
   }
   mengenRunden();render();
   if(impText)sucheStarten();
-  if(online){verlaufLaden().then(render);distLaden();if(S.v==="mehr"&&betreiber())anfragenLaden()}
+  if(online){verlaufLaden().then(render);distLaden();setTimeout(()=>bilderNachholen().catch(()=>{}),3000);if(S.v==="mehr"&&betreiber())anfragenLaden()}
   if(cf&&"serviceWorker" in navigator){
     navigator.serviceWorker.register("sw.js").catch(()=>{});
     // Tipp auf eine Mitteilung bei offener App: dorthin wechseln (z. B. zum Artikel)
