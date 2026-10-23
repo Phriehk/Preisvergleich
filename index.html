@@ -137,6 +137,8 @@ details[open]>summary::before{content:"▾ "}
 .p-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
 .p-zeile{display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap}
 .p-zeile .p-tags{margin-top:0}
+.p-preise{white-space:normal}
+.nw{white-space:nowrap}
 .p-plus{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;border:1px solid var(--linie);background:var(--flaeche);color:var(--tinte);font-size:1.2rem;line-height:1;cursor:pointer;display:grid;place-items:center}
 .p-plus.an{background:var(--gruen);border-color:var(--gruen);color:#fff}
 /* Handy: kleinere Karten, damit mehrere Angebote auf einmal zu sehen sind */
@@ -539,6 +541,10 @@ const kKey=o=>(o.marke||o.produkt||"").trim().toLowerCase();
 // Text ohne Umlaute, Akzente, Groß-/Kleinschreibung; nurK zusätzlich ohne Leerzeichen und Striche ("Coca Cola" = "Coca-Cola")
 const flachT=t=>String(t||"").toLowerCase().replace(/ß/g,"ss").replace(/ä/g,"ae").replace(/ö/g,"oe").replace(/ü/g,"ue").normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 const nurK=t=>flachT(t).replace(/[^a-z0-9]/g,"");
+/* Ein bestimmtes Produkt (Marke und Produktname, z. B. „Nivea Pflegedusche“) statt aller Produkte einer Marke.
+   Favoriten merken sich in "nur" die Marke (alte Favoriten) oder dieses Produkt; beides passt. */
+const pKey=o=>nurK((o.marke||"")+(o.produkt||""));
+const nurPasst=(nur,o)=>{const l=(nur||[]).map(nurK);return !l.length||l.includes(nurK(kKey(o)))||l.includes(pKey(o))};
 
 /* Korrekturen auffälliger Preise (gleicher Schlüssel wie bisher, mit Zugangscode auf dem Server geteilt) */
 let korrSrv={};
@@ -680,7 +686,7 @@ function mkAkt(o,liste){   // ein Angebot als Favorit (wie eine Kachel in der Su
   const m=mkAktuell(),label=favLabel(o);
   const e={gruppe:label,bild:o.bild,marke:o.marke,coke:true,link:o.link,markt:m?mkName(m):"?",produkt:o.produkt,beschreibung:o.beschreibung,preis:o.preis,preis_alt:o.preis_alt,
     art:o.art,liter:o.liter,stueck:o.stueck,ml:o.ml,preis_pro_liter:o.preis_pro_liter,gueltig_von:o.gueltig_von,gueltig_bis:o.gueltig_bis};
-  return {name:label,entries:[e],nur:[kKey(o)],suche:label,liste,menge:null};
+  return {name:label,entries:[e],nur:[pKey(o)],suche:label,liste,menge:null};
 }
 
 async function regionLaden(frisch){
@@ -696,7 +702,7 @@ async function regionLaden(frisch){
   }
   if(!alle.length&&fehler)throw fehler;
   const neu=[];
-  auf.forEach(a=>{alle.forEach(o=>{if(String(o.gruppe).toLowerCase()===a.term.toLowerCase()&&(!a.nur.length||a.nur.map(nurK).includes(nurK(kKey(o)))))neu.push({...o,gruppe:a.name})})});
+  auf.forEach(a=>{alle.forEach(o=>{if(String(o.gruppe).toLowerCase()===a.term.toLowerCase()&&nurPasst(a.nur,o))neu.push({...o,gruppe:a.name})})});
   roh=neu;neuAufbereiten();cacheSpeichern(quelle);
   if(fehler)melde("Nicht alle Artikel konnten geladen werden: "+netzFehler(fehler),true);
 }
@@ -1134,7 +1140,7 @@ function ampelInfo(b){
 const FRISCH=/milch|joghurt|quark|sahne|käse|kaese|butter|fleisch|hack|wurst|schinken|salami|hähnchen|haehnchen|huhn|pute|fisch|lachs|brot|brötchen|obst|gemüse|salat|eier|banane|äpfel|apfel|birne|tomate|gurke|paprika|beere|trauben|kartoffel|zwiebel|pilz|champignon|aufschnitt|frisch/i;
 function haltbar(g,o){const t=g+" "+(o&&o.produkt||"");return /h-milch|haltbar|konserve|dose/i.test(t)||!FRISCH.test(t)}
 const tiefText=x=>x.wochen?"Bestpreis seit "+x.wochen+" Wochen":"Tiefstpreis seit Beginn";
-function gewaehlt(o){const f=favVon(grp(o));return !f||!f.nur||!f.nur.length||!lokalModus()||f.nur.map(nurK).includes(nurK(kKey(o)))}
+function gewaehlt(o){const f=favVon(grp(o));return !f||!lokalModus()||nurPasst(f.nur,o)}
 function gruppenInfo(g){
   const alle=offers.filter(o=>grp(o)===g&&!o.ausb&&!abgelaufen(o)&&!aus.has(o.markt)&&gewaehlt(o));
   const jetzt=alle.filter(o=>!kommt(o)),spaeter=alle.filter(kommt);
@@ -1159,7 +1165,7 @@ const segment=(name,optionen,wert)=>`<div class="segment" role="group">${optione
 const fv=k=>esc(S.form[k]??"");   // Wert eines Formularfelds
 
 function untertitel(){
-  if(S.v==="produkt"){const a=artG(S.p);return "Preis pro "+ARTEN[a].wort}
+  if(S.v==="produkt"){const a=artG(S.p);return "Verglichen pro "+ARTEN[a].wort}
   if(S.v==="treffer"){const d=trefferDaten();return d?(d.alle?"Alle Marken · ":"")+"Suche: "+d.it.name:""}
   if(S.v==="liste"){const n=zettelNamen().length+extra.length;return n?n+" Artikel":""}
   if(S.v==="einkaufen")return "";
@@ -1202,6 +1208,13 @@ function statusHtml(){
   if(regionPlz())h+=`<div class="status"><span class="punkt"></span>Angebote für deine Postleitzahl ${esc(regionPlz())}${favs().length?"":""}</div>`;
   return h;
 }
+// Preise eines Angebots: groß der Packungspreis, klein der Stückpreis (bei mehreren Stück) und der Preis je kg oder Liter
+function preisKlein(o){
+  const a=artO(o),t=[];
+  if(o.stueck>1)t.push(eur(pr(o)/o.stueck)+"/Stück");
+  if(a!=="st")t.push(eur(gp(o))+"/"+unitK(a));
+  return t;
+}
 function karte(x){
   const {g,b,n}=x,f=favVon(g),al=f&&f.alarm,an=aufListe(g);
   const bild=(b&&b.bild)||((offers.find(o=>grp(o)===g&&o.bild)||{}).bild)||"";
@@ -1220,9 +1233,9 @@ function karte(x){
   return `<article class="produkt${ziel?" ziel":""}${b?"":" ohne"}" data-p="${esc(g)}" tabindex="0" role="link" aria-label="${esc(g)} öffnen">
     ${bildHtml(bild,g)}
     <div class="p-text"><h3>${esc(g)}</h3>
-      ${b?`<div class="p-zeile"><div class="preisschild"><b>${eur(gp(b))}</b><span class="je">pro ${ARTEN[b.art].wort}</span></div>${tags.length?`<div class="p-tags">${tags.join("")}</div>`:""}</div>
-      <div class="p-info">${mlogo(b.markt)}${esc(mbase(b.markt))}${km?" · "+km:""} · ${mengeText(b)} für ${eur(pr(b))}</div>`:`<div class="p-info">Aktuell kein Angebot</div>${tags.length?`<div class="p-tags">${tags.join("")}</div>`:""}`}
-      ${n?`<div class="p-info" style="white-space:normal">Demnächst${n.von?" ab "+tagD(n.von):""}: ${eur(gp(n))}/${unitK(n.art)} bei ${esc(mbase(n.markt))}</div>`:""}
+      ${b?`<div class="p-zeile"><div class="preisschild"><b>${eur(pr(b))}</b><span class="je">${esc(mengeText(b))}</span></div>${tags.length?`<div class="p-tags">${tags.join("")}</div>`:""}</div>
+      <div class="p-info p-preise">${mlogo(b.markt)}${esc(mbase(b.markt))}${km?" · "+km:""}${preisKlein(b).map(t=>` · <span class="nw">${t}</span>`).join("")}</div>`:`<div class="p-info">Aktuell kein Angebot</div>${tags.length?`<div class="p-tags">${tags.join("")}</div>`:""}`}
+      ${n?`<div class="p-info" style="white-space:normal">Demnächst${n.von?" ab "+tagD(n.von):""}: ${eur(pr(n))} für ${esc(mengeText(n))}${artO(n)!=="st"?` (${eur(gp(n))}/${unitK(artO(n))})`:""} bei ${esc(mbase(n.markt))}</div>`:""}
     </div>
     <button type="button" class="p-plus${an?" an":""}" data-liste="${esc(g)}" aria-label="${an?esc(g)+" von der Liste nehmen":esc(g)+" auf die Liste"}" title="${an?"Auf der Liste":"Auf die Liste"}">${an?"✓":"+"}</button>
   </article>`;
@@ -1344,7 +1357,7 @@ function vProdukt(){
     const a=zeit==="jetzt"?ampelInfo(b):null;
     const ampel=a?(a.txt?`<div><span class="tag ${a.stufe}">${esc(a.txt)}</span> ${Math.abs(a.r).toFixed(0)} % ${a.r<0?"unter":"über"} deinem Durchschnitt (Ø ${eur(a.avg)}/${unitK(b.art)}, ${a.n} Messtage). ${esc(a.so)}</div>`:`<div class="klein-text">Für den Vergleich mit dem Durchschnitt fehlen noch Messtage (${a.n} von 3). ${esc(a.so)}</div>`)+(a.tief?`<div><span class="tag gruen">${a.tief.haltbar?"📦 ":"⬇ "}${tiefText(a.tief)}</span> ${a.tief.haltbar?"Wenn du Platz hast, lohnt es sich, jetzt auf Vorrat zu kaufen.":"So günstig gab es das lange nicht."}</div>`:""):"";
     const fahrt=zeit==="jetzt"?fahrtHtml(b,liste):"";
-    h+=`<div class="bestpreis"><div class="gross">${eur(gp(b))}<small>pro ${wort}</small></div><div class="rechts"><strong>${mlogo(b.markt)}${esc(b.markt)}${kmText(b.markt)?` <span class="km">${kmText(b.markt)}</span>`:""}</strong><span>${mengeText(b)}${b.form?" "+esc(b.form):""} für ${eur(pr(b))}${b.alt?` (statt ${eur(b.alt)})`:""}</span><span>${esc(gueltig(b))}</span></div>${ampel||fahrt?`<div class="unten">${ampel}${fahrt}</div>`:""}</div>`;
+    h+=`<div class="bestpreis"><div class="gross">${eur(pr(b))}<small>${esc(mengeText(b))}${b.form?" "+esc(b.form):""}</small></div><div class="rechts"><strong>${mlogo(b.markt)}${esc(b.markt)}${kmText(b.markt)?` <span class="km">${kmText(b.markt)}</span>`:""}</strong><span>${preisKlein(b).join(" · ")||"Packungspreis"}${b.alt?` · statt ${eur(b.alt)}`:""}</span><span>${esc(gueltig(b))}</span></div>${ampel||fahrt?`<div class="unten">${ampel}${fahrt}</div>`:""}</div>`;
   }
   // Tabelle
   const SORT={markt:(x,y)=>x.markt.localeCompare(y.markt,"de"),menge:(x,y)=>liter(x)-liter(y),preis:(x,y)=>pr(x)-pr(y),stueck:(x,y)=>pr(x)/x.stueck-pr(y)/y.stueck,liter:(x,y)=>gp(x)-gp(y),bis:(x,y)=>(x.bis||"9").localeCompare(y.bis||"9")};
@@ -1397,11 +1410,13 @@ function vSuchen(){
         const an=aufListe(f.name),gi=gruppenInfo(f.name),o=gi.b;
         k+=kachel(o&&o.bild,f.name,`Dein Favorit · ${o?"ab "+eur(gp(o))+"/"+unitK(o.art):"gerade kein Angebot"}`,`<button type="button" class="knopf klein${an?" an":""}" data-if="${esc(f.name)}" data-i="${i}">${an?"✓ Auf der Liste":"＋ Auf die Liste"}</button>`,an,f.name,{fav:f.name});
       });
-      k+=it.karten.map((c,j)=>[c,j]).filter(([c])=>!(it.roh.length&&c.label.toLowerCase()===it.name.toLowerCase())).slice(0,8).map(([c,j])=>{
+      const kl=it.karten.map((c,j)=>[c,j]).filter(([c])=>!(it.roh.length&&c.label.toLowerCase()===it.name.toLowerCase()));
+      k+=kl.slice(0,12).map(([c,j])=>{
         const fav=istFav(c.label),an=fav&&aufListe(c.label);
         return kachel(c.bild,c.label,`${c.os.length} Angebot${c.os.length>1?"e":""} · ab ${eur(c.min.preis_pro_liter)}/${unitK(c.art)}${c.min.preis_alt>c.min.preis?` (statt ${eur(c.min.preis_alt)})`:""}<br>${esc(c.groessen.join(", "))}<br>${c.jeMarkt.slice(0,3).map(o=>esc(mbase(o.markt))+" "+eur(o.preis)).join(" · ")}${c.jeMarkt.length>3?` · +${c.jeMarkt.length-3}`:""}`,
           `<button type="button" class="knopf klein${fav?" an":""}" data-ik="${i}|${j}"${dis}>${fav?"★ Favorit":"☆ Als Favorit"}</button><button type="button" class="knopf klein${an?" an":""}" data-il="${i}|${j}"${dis}>${an?"✓ Auf der Liste":"＋ Auf die Liste"}</button>`,an,c.label,{tz:i+"|"+j});
       }).join("");
+      if(kl.length>12)k+=`<div class="kachel">${bildHtml("","+")}<b><a href="#suchen" class="plink" data-tz="${i}|*">${kl.length-12} weitere Produkte</a></b><small>Alle Angebote nach Markt ansehen, dort kannst du jedes auf die Liste setzen.</small></div>`;
       if(it.roh.length||!istFav(it.name)){
         const fn=freiName(it),fa=aufListe(fn)&&!!frei[fn];
         k+=`<div class="kachel${fa?" an":""}">${bildHtml("",it.name)}<b>${it.roh.length?"Ohne Angebot":"Kein Angebot"}</b><small>${fa?"Steht ohne Angebot auf der Liste.":it.roh.length?"Nichts davon passt? Mit eigenem Normalpreis planen.":"Trotzdem auf die Liste, mit eigenem Normalpreis."}</small>${fa?"":sel("ie"+i,`data-ie="${i}"`,[["st","Stück"],["kg","kg"],["l","Liter"]],it.einheit,"Einheit")}<button type="button" class="knopf klein${fa?" an":""}" data-io="${i}"${dis}>${fa?"✓ Auf der Liste":"＋ Auf die Liste"}</button>${fa?mengeHtml(fn,true):""}</div>`;
@@ -1450,7 +1465,7 @@ function vTreffer(){
   trefferZeilen=[];
   h+=maerkte.map(({m,os},n)=>`<section class="karte-box t-markt"><div class="box-kopf"><h2>${mlogo(m)}${esc(m)}</h2>${n===0&&maerkte.length>1?`<span class="tag gruen">am günstigsten</span>`:""}${kmText(m)?`<span class="rechts km">${kmText(m)}</span>`:""}</div>
     ${os.map(o=>{
-      const j=d.alle?kartIdx.get(kKey(o)):d.j;if(j==null)return "";
+      const j=d.alle?kartIdx.get(pKey(o)):d.j;if(j==null)return "";
       const lab=it.karten[j].label,hier=istFav(lab)&&aufListe(lab)&&wahlName(lab)===m;
       trefferZeilen.push({i,j,m});const z=trefferZeilen.length-1;
       const link=o.link&&/^https?:\/\//.test(o.link)?`<a class="t-link" href="${esc(o.link)}" target="_blank" rel="noopener noreferrer">Bei Marktguru ansehen ↗</a>`:"";
@@ -1849,12 +1864,12 @@ function mengeUmrechnen(m,art){   // gewünschte Menge in kg, Liter oder Stück;
 }
 const mengeAnzeige=m=>m?zt(m.wert)+(m.einheit&&m.einheit!=="x"?" "+m.einheit:"×"):"";
 function favLabel(c){const m=(c.marke||"").trim(),p=(c.produkt||"").trim();return (!m?p:!p?m:p.toLowerCase().includes(m.toLowerCase())?p:m+" "+p).replace(/[,|]/g," ").replace(/\s+/g," ").trim().slice(0,40)||"?"}
-function ergKarten(l){   // Suchergebnisse je Produkt (Marke bzw. Name)
+function ergKarten(l){   // Suchergebnisse je Produkt (Marke und Produktname: „Nivea Pflegedusche“ und „Nivea Creme“ sind zwei Kacheln)
   const heute=new Date().toISOString().slice(0,10),map=new Map(),schon=new Set();
   (l||[]).filter(x=>x&&x.preis>0&&x.liter>0&&!(x.gueltig_bis&&x.gueltig_bis<heute)).forEach(x=>{
     // dasselbe Angebot kann aus zwei Postleitzahlen kommen (z. B. PENNY), es zählt einmal
     const d=[mbase(x.markt),x.marke,x.produkt,x.preis,x.stueck,x.ml,x.gueltig_von,x.gueltig_bis].join("|");if(schon.has(d))return;schon.add(d);
-    const k=(x.marke||x.produkt||"").trim().toLowerCase();if(!k)return;
+    const k=pKey(x);if(!k)return;
     const c=map.get(k)||{key:k,marke:x.marke||"",produkt:x.produkt||"",bild:"",os:[]};
     if(!c.bild&&x.bild&&/^https?:\/\//.test(x.bild))c.bild=x.bild;
     c.os.push(x);map.set(k,c);

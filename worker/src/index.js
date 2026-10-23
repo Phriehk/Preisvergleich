@@ -201,7 +201,8 @@ export class Teil extends WorkerEntrypoint {
       for (const seite of await Promise.all(a.suchen.map(s => teilAbfrage(this.env, plz, s)))) for (const o of seite) if (!ids.has(o.id)) { ids.add(o.id); alle.push(o); }
       // Das Angebot muss zum Suchwort passen (z. B. "Milch"); ist zusätzlich ein bestimmtes Produkt gewählt (nur), zählt nur dessen Marke bzw. Name.
       // Ohne die Prüfung des Suchworts kämen bei "K-Classic" + "Milch" auch K-Classic-Käse und -Sahne mit.
-      const wort = a.wort || a.p, nurL = (a.nur || []).map(nurK), nurOk = o => !nurL.length || nurL.includes(nurK(o.brand || o.name));
+      // "nur" nennt die Marke (alte Favoriten) oder ein bestimmtes Produkt aus Marke und Name ("Nivea Pflegedusche" statt aller Nivea-Produkte)
+      const wort = a.wort || a.p, nurL = (a.nur || []).map(nurK), nurOk = o => !nurL.length || nurL.includes(nurK(o.brand || o.name)) || nurL.includes(nurK((o.brand || "") + (o.name || "")));
       let t = alle.filter(o => istProdukt(wort, o, a.aus) && nurOk(o));
       // Nichts Passendes: bei der Suche (locker) oder einem fest gewählten Produkt (nur) auch Wortanfänge und Schreibweisen
       // ohne Leerzeichen gelten lassen ("hidro" -> "Hidrofugal", "hidro fugal" -> "Hidrofugal", "coca cola" -> "Coca-Cola").
@@ -304,7 +305,7 @@ async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2,
       const mg = mengenangabe(o), l = mg ? mg[1] : null, st = mg ? mg[0] : 1, art = mg ? mg[2] : "l";
       const kandidat = (o.brand || o.name).trim().toLowerCase();
       let coke = true;   // passende Treffer sind schon im Teilaufruf ausgewählt
-      if (info.nur && info.nur.size && ![...info.nur].map(nurK).includes(nurK(kandidat))) coke = false;
+      if (info.nur && info.nur.size) { const l = [...info.nur].map(nurK); if (!l.includes(nurK(kandidat)) && !l.includes(nurK((o.brand || "") + (o.name || "")))) coke = false; }
       ausgabe.push({ abgefragt: jetzt, gruppe: p, bild: o.bild, marke: o.brand, coke, link: o.link, markt: o.adv + (o.plz ? ` (${o.plz})` : ""), produkt: o.name,
         beschreibung: o.desc, preis: o.price, preis_alt: o.alt || null, art, liter: l, stueck: st, ml: l && st ? Math.round(l * 1000 / st) : null,
         preis_pro_liter: o.price && l ? Math.round(o.price / l * 100) / 100 : null, gueltig_von: o.von, gueltig_bis: o.bis });

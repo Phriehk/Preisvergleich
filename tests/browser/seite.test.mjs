@@ -2,7 +2,7 @@
 // Braucht Playwright mit Chromium (in der Pipeline installiert); ohne wird übersprungen.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { umgebung, browserStarten, playwright } from "./lib.mjs";
+import { umgebung, browserStarten, playwright, DATEN, O } from "./lib.mjs";
 
 const ok = !!playwright();
 const t = (name, fn) => test(name, { skip: !ok && "Playwright nicht installiert", timeout: 120000 }, fn);
@@ -272,7 +272,7 @@ t("Alle Angebote je Markt: Märkte, Gruppen, Suche, Favorit und Liste", async ()
     assert.deepEqual(zeilen, ["Tilda Basmati Reis"]);
     await p.click('.mk-z [data-mkl]'); await p.waitForFunction(() => !S.suche.busy && aufListe("Tilda Basmati Reis"), null, { timeout: 10000 });
     const fav = JSON.parse(u.store.get("favoriten")).find(f => f.name === "Tilda Basmati Reis");
-    assert.ok(fav && fav.suche === "Tilda Basmati Reis" && JSON.stringify(fav.nur) === '["tilda"]', JSON.stringify(fav));
+    assert.ok(fav && fav.suche === "Tilda Basmati Reis" && JSON.stringify(fav.nur) === '["tildabasmatireis"]', JSON.stringify(fav));
     assert.match(await p.textContent(".mk-z [data-mkl]"), /✓/);
     assert.match(await p.textContent(".mk-z [data-mkf]"), /★/);
     await p.fill("#mkSuche", ""); await p.waitForTimeout(200);
@@ -448,4 +448,26 @@ t("Mitteilungen: im Preisalarm einschalten, Test senden, ntfy abschalten, aussch
     assert.deepEqual(JSON.parse(u.store.get("push:abos")), []);
     assert.deepEqual(s.fehler, []);
   } finally { await s.b.close(); }
+});
+
+t("Suche nach einer Marke: je Produkt eine Kachel (Nivea Pflegedusche, Nivea Creme), Favorit zählt nur dieses Produkt", async () => {
+  const nivea = [O("PENNY", "Pflegedusche", "Nivea", "250 ml", 1.49), O("Kaufland", "Pflege-Dusche", "Nivea", "250 ml", 1.59), O("PENNY", "Creme", "Nivea", "150 ml", 2.29), O("Lidl", "Deospray", "Nivea", "150 ml", 1.79), O("Kaufland", "Creme", "Nivea", "400 ml", 4.99)];
+  await mitSeite({ daten: { ...DATEN, nivea }, favs: [{ name: "Eier", aus: "" }] }, async ({ p, fehler }, u) => {
+    await suche(p, "Nivea");
+    const karten = await p.evaluate(() => S.suche.items[0].karten.map(c => c.label + ":" + c.os.length));
+    assert.deepEqual(karten.sort(), ["Nivea Creme:2", "Nivea Deospray:1", "Nivea Pflegedusche:2"], "Pflegedusche und Pflege-Dusche sind dasselbe Produkt");
+    const j = await p.evaluate(() => S.suche.items[0].karten.findIndex(c => c.label === "Nivea Pflegedusche"));
+    await p.click(`.kachel a[data-tz="0|${j}"]`); await p.waitForTimeout(300);
+    const zeilen = await p.$$eval(".t-z .mk-t b", e => e.map(x => x.textContent));
+    assert.deepEqual(zeilen.sort(), ["Pflege-Dusche", "Pflegedusche"], "keine Creme und kein Deo");
+    await p.click('#zurueck'); await p.waitForTimeout(300);
+    await p.click(`[data-il="0|${j}"]`); await p.waitForFunction(() => !S.suche.busy && aufListe("Nivea Pflegedusche"), null, { timeout: 10000 });
+    const fav = JSON.parse(u.store.get("favoriten")).find(f => f.name === "Nivea Pflegedusche");
+    assert.deepEqual(fav.nur, ["niveapflegedusche"]); assert.equal(fav.suche, "Nivea");
+    // der tägliche Lauf holt für den Favoriten nur dieses Produkt
+    await u.A("/aktualisieren", "POST");
+    const ang = JSON.parse(u.store.get("angebote")).filter(x => x.gruppe === "Nivea Pflegedusche");
+    assert.ok(ang.length >= 2 && ang.every(x => /Pflege-?Dusche/i.test(x.produkt)), JSON.stringify(ang.map(x => x.produkt)));
+    assert.deepEqual(fehler, []);
+  });
 });
