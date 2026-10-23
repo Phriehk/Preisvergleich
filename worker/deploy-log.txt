@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 59.48 KiB / gzip: 17.32 KiB
-Worker Startup Time: 2 ms
+Total Upload: 59.55 KiB / gzip: 17.34 KiB
+Worker Startup Time: 3 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (4.92 sec)
+Uploaded preise (4.19 sec)
 Deployed preise triggers (0.80 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: ba9387ec-2b30-4284-bea3-2dd5858a758d
+Current Version ID: c38133d1-02b3-4f8d-95b1-952cebaf1517
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,7 +18,7 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-23T22:12","anzahl":45,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-23T22:24","anzahl":40,"fehler":0}}
 Alte Version: 200 https://preise.phriehk.workers.dev/alt <title>Preisvergleich (alte Version)
 Push ohne Code (erwartet 401): HTTP 401
 Push: Schlüssel 87 Zeichen, {"geraete":1,"ntfy":true,"ntfyAn":false}
@@ -27,17 +27,17 @@ Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
 Suche Fanta: 1 s, {"anzahl":1}
-Aktualisieren: 3 s, {"zeit":"2026-10-23T22:17","anzahl":45,"fehler":0,"alarm":[]}
-Angebote: {"anzahl":45,"gruppen":["Beckers Frikandellen","Ferrero Nutella Brotaufstrich","Gut Ponholz Gemischt-Hackfleisch","Hidrofugal Deo Roll-on","Hidrofugal Deodorant-Spray","K-Classic H-Vollmilch","Lenor Wäscheparfüm XL","Monster Energy","Nivea Dusche","Red Bull","Zewa Toilettenpapier Ultra Soft","coca cola"]}
-Verlauf: 362 Zeilen
+Aktualisieren: 7 s, {"zeit":"2026-10-23T22:34","anzahl":40,"fehler":0,"alarm":[]}
+Angebote: {"anzahl":40,"gruppen":["Beckers Frikandellen","Ferrero Nutella Brotaufstrich","Gut Ponholz Gemischt-Hackfleisch","Hidrofugal Deo Roll-on","K-Classic H-Vollmilch","Lenor Wäscheparfüm XL","Monster Energy","Nivea Dusche","Red Bull","Zewa Toilettenpapier Ultra Soft","coca cola"]}
+Verlauf: 357 Zeilen
 Korrekturen lesen: {}
 Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
 Korrektur gespeichert und gelesen: true
 Test-Korrektur gelöscht: true
 Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
-Region 40210 ohne Code: 1 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
+Region 40210 ohne Code: 0 s, {"anzahl":5,"maerkte":["ALDI SÜD","Lidl","PENNY","REWE"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
-Lebensmittel-Probe: 0 s, {"Butter":13,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl":3,"Nudeln":2}
+Lebensmittel-Probe: 1 s, {"Butter":13,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl":3,"Nudeln":2}
   Probe: Butter | Netto Marken-Discount | Butter | art=kg liter=0.45 stueck=1 ml=450 preis=0.99 | 450 g versch. Sorten
   Probe: Butter | Netto Marken-Discount | Butter | art=kg liter=0.25 stueck=1 ml=250 preis=0.99 | oder Streichzart gekühlt, versch. Sorten 250 g
   Probe: Butter | EDEKA | Beste Butter | art=kg liter=0.25 stueck=1 ml=250 preis=1.19 | 250 g Packung
@@ -79,18 +79,18 @@ Lebensmittel-Probe: 0 s, {"Butter":13,"Eier":1,"Joghurt":18,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | ALDI SÜD | Herzogin-Kartoffeln | art=kg liter=0.6 stueck=1 ml=600 preis=1.69 | 600-g-Packung
   Probe: Kartoffeln | Lidl | Marzipankartoffeln vegan | art=kg liter=0.125 stueck=1 ml=125 preis=1.49 | Je 125 g
 Märkte 47178: 0 s, ["Kaufland=497","Lidl=875","PENNY=299","Kabs PolsterWelt=45","Bosch Car Service=10","SCHAFFRATH=267","HORNBACH=198","KiK=50","Opti Wohnwelt=44","Opti-MegaStore=107","ALDI SÜD=563","Thomas Philipps=189","ROSSMANN=294","toom Baumarkt=275","OBI=25","Handelshof=270","XXXLutz=1027","SB-Möbel BOSS=309","trinkgut=71","Möbel Inhofer=80","Netto Marken-Discount=365","EDEKA=48","REWE=272 (47053)"]
-Markt 126679: 1 s, {"name":"Lidl","total":875,"seiten":"875/875/875","geladen":875,"ohneMenge":0,"kategorien":69,"ohneKat":2,"kp":"0=2 3=19 5=30 6=7 10=7 11=3 12=3 14=11 16=42 17=1 20=85 23=12 28=4 35=6 50=28 53=14 69=15 70=5 83=7 85=12 94=10 95=4 97=23 101=2 102=22 103=33 104=19 106=8 107=54 108=9 110=10 112=18 113=10 115=1 116=2 119=5 120=45 122=3 126=1 129=4 137=4 142=2 143=21 144=25 147=10 149=11 174=2 187=1 191=6 193=10 218=1 363=14 364=21 382=13 383=3 384=3 385=2 386=3 392=1 398=47 402=3 414=1 415=6 427=25 428=15 454=4 473=9 497=7 630=9","beispiel":"Lidl Backshop Weltmeisterbrötchen 0.78 st Brötchen"}
-Markt 126735: 0 s, {"name":"Netto Marken-Discount","total":365,"seiten":"365/365/365","geladen":365,"ohneMenge":0,"kategorien":59,"ohneKat":0,"kp":"3=4 5=2 10=1 11=1 12=2 14=4 15=4 16=10 17=3 20=39 23=7 28=11 32=1 50=9 53=1 69=13 70=12 83=1 85=2 95=1 97=5 101=1 102=22 103=18 104=19 106=1 107=28 108=4 110=4 112=7 113=3 115=4 119=1 120=14 124=1 137=2 142=5 143=15 144=2 147=13 149=11 174=2 191=6 193=5 218=2 363=6 364=3 378=1 382=1 385=1 387=1 398=12 402=1 415=5 427=1 428=4 454=1 497=1 630=4","beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
+Markt 126679: 0 s, {"name":"Lidl","total":875,"seiten":"875/875/875","geladen":875,"ohneMenge":0,"kategorien":69,"ohneKat":2,"kp":"0=2 3=19 5=30 6=7 10=7 11=3 12=3 14=11 16=42 17=1 20=85 23=12 28=4 35=6 50=28 53=14 69=15 70=5 83=7 85=12 94=10 95=4 97=23 101=2 102=22 103=33 104=19 106=8 107=54 108=9 110=10 112=18 113=10 115=1 116=2 119=5 120=45 122=3 126=1 129=4 137=4 142=2 143=21 144=25 147=10 149=11 174=2 187=1 191=6 193=10 218=1 363=14 364=21 382=13 383=3 384=3 385=2 386=3 392=1 398=47 402=3 414=1 415=6 427=25 428=15 454=4 473=9 497=7 630=9","beispiel":"Lidl Backshop Weltmeisterbrötchen 0.78 st Brötchen"}
+Markt 126735: 1 s, {"name":"Netto Marken-Discount","total":365,"seiten":"365/365/365","geladen":365,"ohneMenge":0,"kategorien":59,"ohneKat":0,"kp":"3=4 5=2 10=1 11=1 12=2 14=4 15=4 16=10 17=3 20=39 23=7 28=11 32=1 50=9 53=1 69=13 70=12 83=1 85=2 95=1 97=5 101=1 102=22 103=18 104=19 106=1 107=28 108=4 110=4 112=7 113=3 115=4 119=1 120=14 124=1 137=2 142=5 143=15 144=2 147=13 149=11 174=2 191=6 193=5 218=2 363=6 364=3 378=1 382=1 385=1 387=1 398=12 402=1 415=5 427=1 428=4 454=1 497=1 630=4","beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792786722","token":true}
+Konto anlegen: {"name":"test1792787702","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792786722","daten":{}}
+Konto Daten: {"name":"test1792787702","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792786722"]
+Konto Anfragen mit Code: ["test1792787702"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792786722","token":true}
+Neues Passwort mit Code: {"name":"test1792787702","token":true}
 Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
 Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
