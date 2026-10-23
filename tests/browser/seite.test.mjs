@@ -471,3 +471,49 @@ t("Suche nach einer Marke: je Produkt eine Kachel (Nivea Pflegedusche, Nivea Cre
     assert.deepEqual(fehler, []);
   });
 });
+
+t("Favoriten entfernen: unter Angebote mit „Bearbeiten“, in der Suche und unter „Nach Markt“ mit zweimal Tippen", async () => {
+  const hidro = [O("ALDI SÜD", "Deodorant-Spray", "Hidrofugal", "150 ml", 2.99), O("REWE", "Deospray", "Hidrofugal", "150 ml", 3.49), O("Kaufland", "Deo Roll-on", "Hidrofugal", "50 ml", 3.49), O("REWE", "Hackfleisch", "thisisnobrand123", "vom Schwein, je 500 g", 3.49)];
+  await mitSeite({ daten: { ...DATEN, hidrofugal: hidro }, favs: [{ name: "Eier", aus: "" }, { name: "Milch", aus: "" }] }, async ({ p, fehler }, u) => {
+    const namen = () => JSON.parse(u.store.get("favoriten")).map(f => f.name).sort();
+    // Angebote: Bearbeiten, ✕ entfernt (auch von der Liste)
+    await p.click('.produkt[data-p="Milch"] .p-plus');
+    await p.click('[data-aktion="favEdit"]'); await p.waitForTimeout(200);
+    assert.equal(await p.locator(".produkt [data-favweg]").count(), 2);
+    await p.click('[data-favweg="Milch"]'); await p.waitForTimeout(500);
+    assert.deepEqual(namen(), ["Eier"]);
+    assert.equal(await p.evaluate(() => aufListe("Milch")), false, "auch von der Liste genommen");
+    await p.click('[data-aktion="favEdit"]');
+    // Suche: Deodorant-Spray und Deospray sind dasselbe Produkt, die Marken-Attrappe von REWE zählt nicht
+    await suche(p, "Hidrofugal");
+    const karten = await p.evaluate(() => S.suche.items[0].karten.map(c => c.label + ":" + c.os.length));
+    assert.ok(karten.includes("Hidrofugal Deodorant-Spray:2") && karten.includes("Hidrofugal Deo Roll-on:1"), JSON.stringify(karten));
+    const j = await p.evaluate(() => S.suche.items[0].karten.findIndex(c => c.label === "Hidrofugal Deo Roll-on"));
+    await p.click(`[data-ik="0|${j}"]`); await p.waitForFunction(() => !S.suche.busy && istFav("Hidrofugal Deo Roll-on"));
+    await p.click(`[data-ik="0|${j}"]`); await p.waitForTimeout(200);
+    assert.match(await p.textContent(`[data-ik="0|${j}"]`), /Entfernen\?/);
+    assert.ok(namen().includes("Hidrofugal Deo Roll-on"), "erst nach dem zweiten Tippen weg");
+    await p.click(`[data-ik="0|${j}"]`); await p.waitForTimeout(500);
+    assert.ok(!namen().includes("Hidrofugal Deo Roll-on"));
+    // Nach Markt: ★ → ✕ → entfernt
+    await p.click('#leiste [data-v="angebote"]'); await p.waitForTimeout(200);
+    await p.click('[data-seg="aTab"][data-wert="markt"]'); await p.waitForSelector(".mk-chips .chip", { timeout: 10000 });
+    await p.click('.mk-chips [data-mk="126679"]'); await p.waitForSelector("#mkSuche", { timeout: 10000 });
+    await p.fill("#mkSuche", "reis"); await p.waitForTimeout(300);
+    await p.click(".mk-z [data-mkf]"); await p.waitForFunction(() => !S.suche.busy && istFav("Tilda Basmati Reis"));
+    await p.click(".mk-z [data-mkf]"); await p.waitForTimeout(200);
+    assert.equal((await p.textContent(".mk-z [data-mkf]")).trim(), "✕");
+    await p.click(".mk-z [data-mkf]"); await p.waitForTimeout(500);
+    assert.ok(!namen().includes("Tilda Basmati Reis"));
+    assert.deepEqual(fehler, []);
+  });
+});
+
+t("Angebote: Hinweise wie „bis …“ stehen immer in einer eigenen Zeile unter dem Preis", async () => {
+  await mitSeite({ favs: [{ name: "Milch", aus: "" }, { name: "Eier", aus: "" }] }, async ({ p }) => {
+    for (const n of ["Milch", "Eier"]) {
+      const lage = await p.evaluate(g => { const k = document.querySelector(`.produkt[data-p="${g}"]`), pr = k.querySelector(".preisschild").getBoundingClientRect(), tg = k.querySelector(".p-tags").getBoundingClientRect(); return tg.top >= pr.bottom - 1; }, n);
+      assert.ok(lage, n);
+    }
+  });
+});

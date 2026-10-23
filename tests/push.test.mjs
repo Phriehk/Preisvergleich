@@ -128,3 +128,13 @@ test("Hintergrunddienst (sw.js): Mitteilung zeigen, Tipp darauf öffnet die App 
   h.push({ data: null, waitUntil: p => { warte = p; } }); await warte;
   assert.equal(gezeigt[1][0], "Preisvergleich");
 });
+
+test("„Passwort vergessen“ meldet sich beim Betreiber, nur nicht beim automatischen Test nach dem Hochladen", async () => {
+  const u = await umgebung({ ntfy: true }); u.env.WARTUNG = "testschluessel";
+  const R = (pfad, body, kopf = {}) => u.H.fetch(new Request("https://preise.phriehk.workers.dev" + pfad, { method: "POST", headers: { "Content-Type": "application/json", ...kopf }, body: JSON.stringify(body) }), u.env, u.ctx);
+  for (const n of ["test1", "anna"]) assert.equal((await R("/konto/neu", { name: n, dk: "a".repeat(64) })).status, 200);
+  await R("/konto/vergessen", { name: "test1" }, { "X-Wartung": "testschluessel" });
+  assert.equal(u.ntfy.length, 0, "Test: keine Mitteilung");
+  await R("/konto/vergessen", { name: "anna" });
+  assert.equal(u.ntfy.length, 1); assert.match(u.ntfy[0].message, /anna/);
+});

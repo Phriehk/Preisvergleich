@@ -29,3 +29,10 @@ test("Monster Energy: nur der Energy Drink, kein Spielzeug und kein Quark", asyn
   const a = JSON.parse(u.store.get("angebote"));
   assert.deepEqual([...new Set(a.map(x => x.produkt))], ["Energy Drink"]);
 });
+
+test("REWE-Platzhalter „thisisnobrand…“ gilt als keine Marke", async () => {
+  const { O } = await import("./browser/lib.mjs");
+  const u = await umgebung({ daten: { hackfleisch: [O("REWE", "Hackfleisch", "thisisnobrand123", "vom Schwein, je 500 g", 3.49), O("ALDI SÜD", "Rinder-Hackfleisch", "Meine Metzgerei", "500-g-Packung", 4.59)] } });
+  const l = await (await u.A("/suche?q=Hackfleisch", "POST")).json();
+  assert.deepEqual(l.map(x => x.marke).sort(), ["", "Meine Metzgerei"]);
+});

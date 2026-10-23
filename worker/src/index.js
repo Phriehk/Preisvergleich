@@ -118,7 +118,7 @@ async function teilAbfrage(env, plz, suche) {
   const j = await mgHole(env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "250", offset: "0", q: suche, zipCode: plz }));
   return (j.results || []).map(o => {
     const v = (o.validityDates || [{}])[0] || {};
-    return { id: o.id, adv: (((o.advertisers || [{}])[0]) || {}).name || "?", name: (o.product || {}).name || "?", brand: (o.brand || {}).name || "",
+    return { id: o.id, adv: (((o.advertisers || [{}])[0]) || {}).name || "?", name: (o.product || {}).name || "?", brand: markeVon(o),
       desc: o.description || "", price: o.price, alt: +o.oldPrice > +o.price ? +o.oldPrice : null, einheit: (((o.unit || {}).shortName) || "").toLowerCase(), volume: o.volume, quantity: o.quantity,
       von: lokalDatum(v.from), bis: lokalDatum(v.to), bild: bildUrl(o), link: link(o) };
   });
@@ -134,10 +134,11 @@ async function mgHole(env, url) {   // eine Abfrage mit den Schlüsseln der Seit
   catch (e) { if (e.status === 401 || e.status === 403) { k = await schluessel(env, true); r = await http(url, { "x-apikey": k.api, "x-clientkey": k.client }); } else throw e; }
   return r.json();
 }
+const markeVon = o => { const m = String((o.brand || {}).name || "").trim(); return /^thisisnobrand/i.test(m) ? "" : m; };   // REWE: Platzhalter statt leerer Marke
 const haendlerId = o => String((((o.advertisers || [])[0]) || {}).id || "").replace(/\D/g, "");
 function kompakt(o) {   // ein Angebot im selben Format wie die übrigen Angebote, dazu die Kategorie
   const v = (o.validityDates || [{}])[0] || {}, k = (o.categories || [])[0] || {};
-  const x = { name: (o.product || {}).name || "?", brand: (o.brand || {}).name || "", desc: o.description || "", einheit: (((o.unit || {}).shortName) || "").toLowerCase(), volume: o.volume, quantity: o.quantity };
+  const x = { name: (o.product || {}).name || "?", brand: markeVon(o), desc: o.description || "", einheit: (((o.unit || {}).shortName) || "").toLowerCase(), volume: o.volume, quantity: o.quantity };
   const mg = mengenangabe(x), menge = mg ? mg[1] : null, st = mg ? mg[0] : null;
   return { id: o.id, marke: x.brand, produkt: x.name, beschreibung: x.desc.slice(0, 220), preis: o.price, preis_alt: +o.oldPrice > +o.price ? +o.oldPrice : null,
     art: mg ? mg[2] : null, liter: menge, stueck: st, ml: menge && st ? Math.round(menge * 1000 / st) : null, preis_pro_liter: o.price && menge ? Math.round(o.price / menge * 100) / 100 : null,
@@ -202,7 +203,7 @@ export class Teil extends WorkerEntrypoint {
       // Das Angebot muss zum Suchwort passen (z. B. "Milch"); ist zusätzlich ein bestimmtes Produkt gewählt (nur), zählt nur dessen Marke bzw. Name.
       // Ohne die Prüfung des Suchworts kämen bei "K-Classic" + "Milch" auch K-Classic-Käse und -Sahne mit.
       // "nur" nennt die Marke (alte Favoriten) oder ein bestimmtes Produkt aus Marke und Name ("Nivea Pflegedusche" statt aller Nivea-Produkte)
-      const wort = a.wort || a.p, nurL = (a.nur || []).map(nurK), nurOk = o => !nurL.length || nurL.includes(nurK(o.brand || o.name)) || nurL.includes(nurK((o.brand || "") + (o.name || "")));
+      const wort = a.wort || a.p, nurL = (a.nur || []).map(nurK), nurOk = o => !nurL.length || nurL.includes(nurK(o.brand || o.name)) || nurL.map(prodK).includes(prodK((o.brand || "") + (o.name || "")));
       let t = alle.filter(o => istProdukt(wort, o, a.aus) && nurOk(o));
       // Nichts Passendes: bei der Suche (locker) oder einem fest gewählten Produkt (nur) auch Wortanfänge und Schreibweisen
       // ohne Leerzeichen gelten lassen ("hidro" -> "Hidrofugal", "hidro fugal" -> "Hidrofugal", "coca cola" -> "Coca-Cola").
@@ -244,6 +245,8 @@ function passtLocker(gruppe, o, extra) {
 }
 // Marke eines gewählten Produkts vergleichen, ohne dass Groß-/Kleinschreibung, Striche oder Umlaute stören ("Coca Cola" = "Coca-Cola")
 const nurK = t => flach(t).replace(/[^a-z0-9]/g, "");
+// ein bestimmtes Produkt (Marke und Name): "Deodorant" = "Deo", Zusätze wie XXL oder Vorteilspackung zählen nicht (nur die Größe ist anders)
+const prodK = t => nurK(t).replace(/deodorant/g, "deo").replace(/xxl|familienpackung|vorteilspackung|vorteilspack|grosspackung/g, "");
 // Suchbegriffe für Marktguru: aus mehreren Wörtern zusätzlich die zusammengeschriebene Form ("hidro fugal" -> "hidrofugal")
 const varianten = s => { const z = s.replace(/[\s-]+/g, ""); return /[\s-]/.test(s.trim()) && z.length >= 4 ? [s, z] : [s]; };
 
@@ -305,7 +308,7 @@ async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2,
       const mg = mengenangabe(o), l = mg ? mg[1] : null, st = mg ? mg[0] : 1, art = mg ? mg[2] : "l";
       const kandidat = (o.brand || o.name).trim().toLowerCase();
       let coke = true;   // passende Treffer sind schon im Teilaufruf ausgewählt
-      if (info.nur && info.nur.size) { const l = [...info.nur].map(nurK); if (!l.includes(nurK(kandidat)) && !l.includes(nurK((o.brand || "") + (o.name || "")))) coke = false; }
+      if (info.nur && info.nur.size) { const l = [...info.nur].map(nurK); if (!l.includes(nurK(kandidat)) && !l.map(prodK).includes(prodK((o.brand || "") + (o.name || "")))) coke = false; }
       ausgabe.push({ abgefragt: jetzt, gruppe: p, bild: o.bild, marke: o.brand, coke, link: o.link, markt: o.adv + (o.plz ? ` (${o.plz})` : ""), produkt: o.name,
         beschreibung: o.desc, preis: o.price, preis_alt: o.alt || null, art, liter: l, stueck: st, ml: l && st ? Math.round(l * 1000 / st) : null,
         preis_pro_liter: o.price && l ? Math.round(o.price / l * 100) / 100 : null, gueltig_von: o.von, gueltig_bis: o.bis });
@@ -677,7 +680,9 @@ async function kontoRoute(req, env, p) {
     liste[name] = jetzt;
     for (const k of Object.keys(liste)) if (jetzt - liste[k] > 7 * 864e5) delete liste[k];
     await env.PV.put("anfragen", JSON.stringify(liste));
-    await ntfy(env, "Passwort vergessen", `Benutzer „${name}“ möchte ein neues Passwort. Prüfe, ob die Person wirklich du kennst, und erzeuge in der Seite unter Konto einen Code.`, "key");
+    // der automatische Test nach dem Hochladen (X-Wartung) prüft nur den Ablauf und soll keine Mitteilung auslösen
+    const test = req.headers.get("X-Wartung") && env.WARTUNG && req.headers.get("X-Wartung") === env.WARTUNG;
+    if (!test) await ntfy(env, "Passwort vergessen", `Benutzer „${name}“ möchte ein neues Passwort. Prüfe, ob die Person wirklich du kennst, und erzeuge in der Seite unter Konto einen Code.`, "key");
     return antwortText;
   }
   if (p === "/konto/anfragen" && req.method === "GET") {
