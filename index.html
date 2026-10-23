@@ -135,8 +135,25 @@ details[open]>summary::before{content:"▾ "}
 .preisschild .je{font-size:.9rem;color:var(--grau)}
 .p-info{font-size:.86rem;color:var(--grau);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .p-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.p-zeile{display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap}
+.p-zeile .p-tags{margin-top:0}
 .p-plus{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;border:1px solid var(--linie);background:var(--flaeche);color:var(--tinte);font-size:1.2rem;line-height:1;cursor:pointer;display:grid;place-items:center}
 .p-plus.an{background:var(--gruen);border-color:var(--gruen);color:#fff}
+/* Handy: kleinere Karten, damit mehrere Angebote auf einmal zu sehen sind */
+@media (max-width:600px){
+  .raster{gap:8px}
+  .produkt{padding:8px 10px;gap:10px;align-items:center}
+  .produkt>.bild{width:44px;height:44px;border-radius:8px}
+  .produkt>.bild .ph{font-size:1.05rem}
+  .p-text{gap:2px;padding-right:36px}   /* Platz für den Plus-Knopf */
+  .p-text h3{font-size:.95rem;padding-right:0}
+  .preisschild b{font-size:1.45rem}
+  .preisschild .je{font-size:.8rem}
+  .p-info{font-size:.8rem}
+  .p-tags{gap:4px}
+  .p-tags .tag{font-size:.7rem;padding:0 6px}
+  .p-plus{top:50%;right:8px;transform:translateY(-50%);width:32px;height:32px;font-size:1.05rem}
+}
 .werkzeug{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .werkzeug .feld{flex:1 1 180px}
 
@@ -1203,9 +1220,8 @@ function karte(x){
   return `<article class="produkt${ziel?" ziel":""}${b?"":" ohne"}" data-p="${esc(g)}" tabindex="0" role="link" aria-label="${esc(g)} öffnen">
     ${bildHtml(bild,g)}
     <div class="p-text"><h3>${esc(g)}</h3>
-      ${b?`<div class="preisschild"><b>${eur(gp(b))}</b><span class="je">pro ${ARTEN[b.art].wort}</span></div>
-      <div class="p-info">${mlogo(b.markt)}${esc(mbase(b.markt))}${km?" · "+km:""} · ${mengeText(b)} für ${eur(pr(b))}</div>`:`<div class="p-info">Aktuell kein Angebot</div>`}
-      ${tags.length?`<div class="p-tags">${tags.join("")}</div>`:""}
+      ${b?`<div class="p-zeile"><div class="preisschild"><b>${eur(gp(b))}</b><span class="je">pro ${ARTEN[b.art].wort}</span></div>${tags.length?`<div class="p-tags">${tags.join("")}</div>`:""}</div>
+      <div class="p-info">${mlogo(b.markt)}${esc(mbase(b.markt))}${km?" · "+km:""} · ${mengeText(b)} für ${eur(pr(b))}</div>`:`<div class="p-info">Aktuell kein Angebot</div>${tags.length?`<div class="p-tags">${tags.join("")}</div>`:""}`}
       ${n?`<div class="p-info" style="white-space:normal">Demnächst${n.von?" ab "+tagD(n.von):""}: ${eur(gp(n))}/${unitK(n.art)} bei ${esc(mbase(n.markt))}</div>`:""}
     </div>
     <button type="button" class="p-plus${an?" an":""}" data-liste="${esc(g)}" aria-label="${an?esc(g)+" von der Liste nehmen":esc(g)+" auf die Liste"}" title="${an?"Auf der Liste":"Auf die Liste"}">${an?"✓":"+"}</button>
