@@ -58,6 +58,7 @@ jobs:
           set +e
           for i in $(seq 1 24); do curl -sf -m 20 "$URL/status" >/dev/null && break; sleep 10; done
           log "Status: $(curl -s -m 30 $URL/status)"
+          log "Spar-Tipp: $(curl -s -m 30 "$URL/alternativen.json" | jq -c 'if type=="array" then {alternativen: length, favoriten: ([.[].gruppe] | unique | length)} else . end' 2>/dev/null)"
           log "Push ohne Code (erwartet 401): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 "$URL/push/status")"
           log "Push: Schlüssel $(curl -s -m 30 -H "Authorization: Bearer $ZUG" "$URL/push/schluessel" | jq -r '.key | length') Zeichen, $(curl -s -m 30 -H "Authorization: Bearer $ZUG" "$URL/push/status" | jq -c '{geraete, ntfy, ntfyAn}')"
           log "Hintergrunddienst mit Push: $(curl -s -m 30 "$URL/sw.js" | grep -c 'addEventListener("push"')"
