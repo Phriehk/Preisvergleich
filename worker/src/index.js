@@ -181,27 +181,6 @@ async function marktAngebote(env, ctx, sp, ip) {
   return erg;
 }
 
-/* Vorübergehende Diagnose: liefert Marktguru zu einem Angebot einen Strichcode (EAN/GTIN)? (nur mit Zugangscode) */
-async function erkunden(env) {
-  const out = [], zahlen = t => [...new Set((JSON.stringify(t).match(/(?<![\d.])\d{8,14}(?![\d.])/g) || []))].slice(0, 12).join(",");
-  for (const q of ["Nivea", "Milch", "Coca-Cola"]) {
-    try {
-      const j = await mgHole(env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "3", offset: "0", q, zipCode: PLZ }));
-      for (const o of (j.results || []).slice(0, 2)) {
-        out.push(`${q}: Felder ${Object.keys(o).join(",")}`);
-        out.push(`${q}: product ${JSON.stringify(o.product).slice(0, 300)} · brand ${JSON.stringify(o.brand).slice(0, 120)}`);
-        out.push(`${q}: Zahlen ${zahlen(o)} · id ${o.id}`);
-        try {
-          const d = await mgHole(env, "https://api.marktguru.de/api/v1/offers/" + o.id + "?as=web");
-          out.push(`${q}: Einzelabruf Felder ${Object.keys(d).join(",")} · Zahlen ${zahlen(d)}`);
-          for (const k of ["products", "product", "eans", "ean", "gtin", "gtins"]) if (d[k]) out.push(`${q}: ${k} = ${JSON.stringify(d[k]).slice(0, 400)}`);
-        } catch (e) { out.push(`${q}: Einzelabruf ${e.message}`); }
-      }
-    } catch (e) { out.push(q + ": " + e.message); }
-  }
-  return out;
-}
-
 // Eigener Einstiegspunkt, damit jede Teilabfrage als eigener Aufruf mit eigenen Grenzen läuft.
 // Ein Aufruf holt mehrere Artikel in einer Postleitzahl und sortiert unpassende Treffer gleich aus (spart Aufrufe und Rechenzeit im Hauptaufruf).
 export class Teil extends WorkerEntrypoint {
@@ -940,7 +919,6 @@ export default {
     const url = new URL(req.url), p = url.pathname.replace(/\/+$/, "") || "/";
     try {
       if (p.startsWith("/konto/")) return antwort(await kontoRoute(req, env, p));
-      if (p === "/erkunden" && req.method === "POST") { if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401); return antwort(await erkunden(env)); }
       if (p.startsWith("/push/")) {
         if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401);
         return antwort(await pushRoute(req, env, p));
