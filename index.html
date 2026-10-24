@@ -136,6 +136,7 @@ details[open]>summary::before{content:"▾ "}
 .p-info{font-size:.86rem;color:var(--grau);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .p-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
 .tag.neu{background:var(--tinte);border-color:var(--tinte);color:var(--flaeche)}
+.p-tipp{font-size:.8rem;color:var(--gruen);font-weight:600;margin-top:2px}
 .p-zeile{display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap}
 .p-zeile .p-tags{margin-top:0}
 .p-preise{white-space:normal}
@@ -288,6 +289,12 @@ textarea.export{font-size:.92rem;min-height:120px}
 .haken-gruppe{display:flex;flex-direction:column}
 .haken-kopf{display:flex;align-items:center;gap:6px;padding:10px 2px 6px;border-bottom:1px solid var(--linie);font-weight:600}
 .haken-kopf small{margin-left:auto;color:var(--grau);font-weight:400}
+.bon-knopf{cursor:pointer}
+.bon-pruefen{gap:6px}
+.bon-z2{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--linie)}
+.bon-z2 select{grid-column:1/-1;max-width:100%}
+.bon-z2>small{grid-column:1/-1}
+.gang{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--grau);padding:8px 2px 2px}
 .haken{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--linie)}
 .haken label{flex:1;display:flex;align-items:center;gap:12px;padding:13px 4px;font-size:1.08rem;cursor:pointer;min-width:0}
 .haken input{appearance:none;-webkit-appearance:none;width:26px;height:26px;border:2px solid var(--grau);border-radius:50%;flex:none;margin:0;display:grid;place-content:center;background:transparent;cursor:pointer}
@@ -635,6 +642,16 @@ function neuAufbereiten(){
   if(neu)ls.set("pv3-arten",artMerk);if(nb)ls.set("pv3-bilder",bildMerk);if(nk)ls.set("pv3-kp",kpMerk);
   if(!(typeof demo!=="undefined"&&demo))neuMerken(neuAufbereiten.bekannt);
 }
+/* Spar-Tipp: Angebote derselben Sorte von anderen Marken (nicht Teil des Favoriten, nur zum Vergleich) */
+let altOffers=[];
+function altSetzen(l){altOffers=Array.isArray(l)?aufbereiten(l).liste:[];try{ls.set("pv3-alt",Array.isArray(l)?l:[])}catch(e){}}
+function sparTipp(g,b){
+  const f=favVon(g);if(!b||!f||!f.nur||!f.nur.length||f.nur.every(x=>/^sorte:/i.test(x)))return null;
+  const sk=sorteK(b.produkt,b.marke);
+  const c=altOffers.filter(o=>grp(o)===g&&o.art===b.art&&!abgelaufen(o)&&!kommt(o)&&!aus.has(o.markt)&&sorteK(o.produkt,o.marke)===sk).sort((x,y)=>gp(x)-gp(y))[0];
+  return c&&gp(c)<=gp(b)*0.9?{o:c,r:1-gp(c)/gp(b)}:null;
+}
+{const a=ls.get("pv3-alt",null);if(Array.isArray(a))altOffers=aufbereiten(a).liste}
 /* Vorschaubild eines Favoriten, auch wenn er gerade kein Angebot hat: beim Anlegen gespeichert (Suche, Scan, Markt) oder vom letzten Angebot gemerkt */
 const favBild=g=>{const f=favVon(g),b=f&&f.bild;return (b&&/^https:\/\//.test(b)?b:"")||bildMerk[g]||""};
 function cacheSpeichern(quelle){cacheQuelle=quelle;cacheZeit=Date.now();ls.set("pv3-cache",{quelle,t:cacheZeit,roh})}
@@ -758,14 +775,20 @@ async function regionLaden(frisch){
     catch(e){fehler=e}
   }
   if(!alle.length&&fehler)throw fehler;
-  const neu=[];
-  auf.forEach(a=>{alle.forEach(o=>{if(String(o.gruppe).toLowerCase()===a.term.toLowerCase()&&nurPasst(a.nur,o))neu.push({...o,gruppe:a.name})})});
-  roh=neu;neuAufbereiten();cacheSpeichern(quelle);
+  const neu=[],andere=[];
+  auf.forEach(a=>{
+    const passt=alle.filter(o=>String(o.gruppe).toLowerCase()===a.term.toLowerCase());
+    const eigene=passt.filter(o=>nurPasst(a.nur,o));eigene.forEach(o=>neu.push({...o,gruppe:a.name}));
+    // Spar-Tipp: dieselbe Sorte von anderen Marken (nur bei einer gewählten Marke bzw. einem Produkt)
+    if(eigene.length&&a.nur.some(x=>!/^sorte:/i.test(x))){const so=new Set(eigene.map(o=>sorteK(o.produkt,o.marke)));passt.forEach(o=>{if(!nurPasst(a.nur,o)&&so.has(sorteK(o.produkt,o.marke)))andere.push({...o,gruppe:a.name})})}
+  });
+  roh=neu;altSetzen(andere);neuAufbereiten();cacheSpeichern(quelle);
   if(fehler)melde("Nicht alle Artikel konnten geladen werden: "+netzFehler(fehler),true);
 }
 async function angeboteLaden(frisch){
   if(lokalModus())return regionLaden(frisch);
   roh=await (await wf("/angebote.json")).json();
+  try{altSetzen(await (await wf("/alternativen.json")).json())}catch(e){}
   neuAufbereiten();cacheSpeichern("server");
 }
 async function standLaden(){try{const s=await (await wf("/status")).json();stand=s.stand||null}catch(e){}}
@@ -970,6 +993,7 @@ const S={
   form:{},                   // Eingaben in Formularen (bleiben beim Neuzeichnen erhalten)
   kMode:"login",kInfo:"",kBusy:false,anfragen:null,
   gruppen:ls.raw("pv-gruppen")!=="aus",   // Angebote nach Abteilungen gliedern
+  badge:ls.raw("pv-badge")||"neu",        // Zahl auf dem App-Symbol: neu | liste | aus
   filter:"",sort:"name",
   push:{stand:"?",busy:false,ep:"",server:null},   // Mitteilungen auf diesem Gerät: ? | laedt | nicht | aus | an | verweigert
   mk:{id:ls.raw("pv-markt")||"",liste:null,plz:"",laedt:false,lade:{},versucht:{},fehler:{},daten:{},q:"",zeit:"jetzt",bereich:"L"},   // Angebote je Markt
@@ -1156,6 +1180,9 @@ function abteilung(g){
   return i==null?ABTEILUNG.length:i;
 }
 const abtName=i=>i<ABTEILUNG.length?ABTEILUNG[i][0]:"Sonstiges";
+// Laufweg im Markt: Obst und Gemüse vorne, Brot, Fleisch, Kühlregal, Vorrat, Süßes, Getränke, Tiefkühl, Drogerie zuletzt
+const GANG=[0,3,1,2,5,6,7,4,8,9,ABTEILUNG.length];
+const gangVon=z=>{const i=GANG.indexOf(abteilung(zk(z).g));return i<0?GANG.length:i};
 /* Ersparnis: beim Abhaken merkt sich die App, was der Artikel im gewählten Markt kostet und was er sonst gekostet hätte
    (dein Normalpreis bzw. der Vorschlag daraus, sonst der frühere Preis „statt …“ aus dem Prospekt). Ohne bekannten Normalpreis zählt nur der Preis. */
 const heuteT=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
@@ -1168,11 +1195,62 @@ function kaufMerken(x,an){
   if(w){bezahlt=w.kosten;if(normal==null&&w.teile.every(t=>t.o.alt>pr(t.o)))normal=w.teile.reduce((s,t)=>s+t.o.alt*t.packs,0)}
   else if(normal!=null)bezahlt=normal;   // ohne Angebot zum Normalpreis
   else return;
-  const e={k:x.k,d,n:x.name.slice(0,60),m:w?x.markt:"",p:Math.round(bezahlt*100)/100,r:normal!=null?Math.round(normal*100)/100:null};
+  const e={k:x.k,d,n:x.name.slice(0,60),z:String(x.z).slice(0,60),m:w?x.markt:"",p:Math.round(bezahlt*100)/100,r:normal!=null?Math.round(normal*100)/100:null};
   if(i>=0)kaeufe[i]=e;else kaeufe.push(e);
   const grenze=new Date(Date.now()-400*864e5).toISOString().slice(0,10);kaeufe=kaeufe.filter(e=>e.d>=grenze).slice(-1000);
 }
 const gespart=e=>e.r!=null&&e.r>e.p?e.r-e.p:0;
+/* ---------- Kassenbon: Zeilen mit Preisen aus dem erkannten Text, Zuordnung zu den Artikeln der Liste ---------- */
+const BON_WEG=/summe|zu zahlen|zwischensumme|gesamt|gegeben|rückgeld|rueckgeld|mwst|netto|brutto|\bbar\b|ec[- ]?karte|girocard|kartenzahlung|visa|mastercard|steuer|beleg|bon-?nr|kasse\b|datum|uhrzeit|filiale|vielen dank|\btse\b|terminal|payback|punkte|coupon|zahlung/i;
+function bonZeilen(text){   // [{name, preis (gesamt), n (Anzahl)}]
+  const out=[];let menge=null;
+  for(let z of String(text||"").split(/\r?\n/)){
+    z=z.replace(/[|]/g," ").replace(/\s+/g," ").trim();if(z.length<3)continue;
+    const q=z.match(/^(\d{1,2})\s*[x×*]\s*(\d+[.,]\d{2})\s*(?:€|eur)?$/i);   // Mengenzeile "2 x 1,79"
+    if(q){const n=+q[1],p=+q[2].replace(",","."),l=out[out.length-1];if(l&&l.n===1&&Math.abs(l.preis-n*p)<0.03)l.n=n;else menge={n,p};continue}
+    if(BON_WEG.test(z))continue;
+    const m=z.match(/^(.*?[a-zäöüß].*?)\s+(-?\d+[.,]\d{2})(?:\s*(?:€|eur))?(?:\s+[a-z*]{1,2})?$/i);
+    if(!m)continue;
+    const preis=+m[2].replace(",",".");
+    if(preis<0){if(out.length)out[out.length-1].preis=Math.round((out[out.length-1].preis+preis)*100)/100;continue}   // Rabatt gehört zur Zeile davor
+    let name=m[1].replace(/\b\d+(?:[.,]\d+)?\s*(?:kg|g|l|ml|%|stk|st)(?![a-zäöüß])/gi," ").replace(/[^a-zäöüß0-9 .&-]/gi," ").replace(/\s+/g," ").trim();
+    if(name.replace(/[^a-zäöüß]/gi,"").length<3||/pfand|leergut/i.test(name))continue;
+    const n=menge&&Math.abs(menge.n*menge.p-preis)<0.03?menge.n:1;menge=null;
+    out.push({name,preis:Math.round(preis*100)/100,n});
+  }
+  return out;
+}
+function bonPasst(bon,texte){   // Anteil der Wörter vom Bon, die in den Namen eines Artikels vorkommen (Abkürzungen wie „WEIHENST.“ zählen)
+  const w=flachT(bon).split(/[^a-z0-9]+/).filter(x=>x.length>=3);if(!w.length)return 0;
+  const t=" "+texte.map(x=>flachT(x).replace(/[^a-z0-9]+/g," ")).join(" ")+" ",tk=nurK(texte.join(" "));
+  let h=0,lang=false;w.forEach(x=>{if(t.includes(" "+x)||(x.length>=5&&tk.includes(x))){h++;if(x.length>=4)lang=true}});
+  return lang?h/w.length:0;
+}
+function bonZuordnen(zeilen){   // jede Bon-Zeile zum am besten passenden Artikel der Liste (jeder Artikel höchstens einmal)
+  const V=vergleich(),namen=zettelNamen(),kand=namen.map(k=>{const t=[zLabel(k),...zMitglieder(k).map(m=>zk(m).g)];const b=V.beste&&V.beste.zu[k];if(b)b.w.teile.forEach(x=>t.push((x.o.marke||"")+" "+x.o.produkt,x.o.produkt));return {k,t}});
+  const paare=[];zeilen.forEach((z,i)=>kand.forEach(c=>{const s=bonPasst(z.name,c.t);if(s>=0.5)paare.push({i,k:c.k,s})}));
+  paare.sort((a,b)=>b.s-a.s);const vergeben=new Set(),zu={};
+  paare.forEach(p=>{if(zu[p.i]==null&&!vergeben.has(p.k)){zu[p.i]=p.k;vergeben.add(p.k)}});
+  return zeilen.map((z,i)=>({...z,k:zu[i]||""}));
+}
+/* übernehmen: bezahlten Preis bei den Käufen von heute eintragen (abhaken, falls noch nicht geschehen); ohne Angebot gekauft: als Normalpreis merken */
+function bonUebernehmen(zeilen){
+  const d=heuteT();let n=0,rw=0;
+  for(const z of zeilen){
+    if(!z.k||!z.an)continue;
+    let x=null;expGruppen().forEach(g=>g.namen.forEach(y=>{if(y.z===z.k&&!y.eigen)x=y}));
+    if(!(x&&x.markt)){   // ohne Angebot gekauft: der Preis vom Bon wird dein Normalpreis (je kg, Liter oder Stück)
+      const ref=zRef(z.k),stk=z.preis/(z.n||1),art=artG(zk(z.k).g);
+      const v=ref?stk/ref:art==="st"||!(zettel[z.k]>0)?stk:z.preis/zettel[z.k];
+      zMitglieder(z.k).forEach(m=>{delete richt[zk(m).g]});richt[zk(z.k).g]=Math.round(v*1e4)/1e4;rw++;vCache=null;rwC={};
+    }
+    if(x&&!haken[x.k]){haken[x.k]=1;kaufMerken(x,true)}
+    const e=kaeufe.find(e=>e.d===d&&(e.z===z.k||(x&&e.k===x.k)));
+    if(e){e.p=z.preis;if(!(x&&x.markt))e.r=z.preis;else n++}   // im Angebot gekauft: jetzt mit dem echten Preis
+  }
+  listeSpeichern();
+  return {n,rw};
+}
 function ersparnisMonate(){   // je Monat: Artikel, bezahlt, gespart, mit Normalpreis, Märkte
   const m=new Map();
   kaeufe.forEach(e=>{const k=e.d.slice(0,7),x=m.get(k)||{monat:k,n:0,bezahlt:0,gespart:0,mitR:0,maerkte:{}};x.n++;x.bezahlt+=e.p;x.gespart+=gespart(e);if(e.r!=null)x.mitR++;if(e.m)x.maerkte[e.m]=(x.maerkte[e.m]||0)+1;m.set(k,x)});
@@ -1182,8 +1260,9 @@ function ersparnisMonate(){   // je Monat: Artikel, bezahlt, gespart, mit Normal
 function expGruppen(){
   const V=vergleich(),p=V.plaeneExp[Math.min(S.plan,V.plaeneExp.length-1)];
   const ms=Object.keys(p.wo).sort((a,b)=>(dkm(a)??99)-(dkm(b)??99));
-  const out=ms.map(m=>({kopf:m,namen:p.wo[m].map(([g,w])=>({k:m+"|"+expName(g,w),name:expName(g,w),z:g,markt:m}))}));
-  const ohne=[...p.rw,...p.fehl].map(g=>({k:"*|"+expName(g),name:expName(g),z:g}));
+  const gang=(a,b)=>a.gang-b.gang||a.name.localeCompare(b.name,"de");   // nach Laufweg im Markt
+  const out=ms.map(m=>({kopf:m,namen:p.wo[m].map(([g,w])=>({k:m+"|"+expName(g,w),name:expName(g,w),z:g,markt:m,gang:gangVon(g)})).sort(gang)}));
+  const ohne=[...p.rw,...p.fehl].map(g=>({k:"*|"+expName(g),name:expName(g),z:g,gang:gangVon(g)})).sort(gang);
   if(ohne.length)out.push({kopf:"Egal wo (kein Angebot)",namen:ohne});
   if(extra.length)out.push({kopf:"Sonstiges",namen:extra.map(n=>({k:"+|"+n,name:n,eigen:true}))});
   return out;
@@ -1286,7 +1365,22 @@ function render(){
   if(gleich)window.scrollTo(0,y);
   render.letzte=schluessel;
   if(S.v==="markt")setTimeout(mkAuto,0);   // Märkte und Angebote bei Bedarf nachladen
+  badgeSetzen();
   if(fokus){const el=$(fokus.id);if(el){el.focus({preventScroll:true});try{if(fokus.s!=null)el.setSelectionRange(fokus.s,fokus.e)}catch(e){}}}
+}
+
+/* Zahl auf dem App-Symbol (Badging-API; auf dem iPhone in der App vom Home-Bildschirm mit erlaubten Mitteilungen) */
+const badgeGeht=()=>"setAppBadge" in navigator;
+function badgeZahl(){
+  if(S.badge==="liste"){let n=0;expGruppen().forEach(g=>g.namen.forEach(x=>{if(!haken[x.k])n++}));return n}
+  if(S.badge==="neu")return favs().filter(f=>!f.pause).filter(f=>{const b=gruppenInfo(f.name).b;return b&&istNeu(b)}).length;
+  return 0;
+}
+function badgeSetzen(){
+  if(!badgeGeht()||demo)return;
+  let n=0;try{n=badgeZahl()}catch(e){return}
+  if(n===badgeSetzen.letzte)return;badgeSetzen.letzte=n;
+  try{const p=n?navigator.setAppBadge(n):(navigator.clearAppBadge?navigator.clearAppBadge():navigator.setAppBadge(0));if(p&&p.catch)p.catch(()=>{})}catch(e){}
 }
 
 /* ---------------- Angebote: eine Karte je Favorit ---------------- */
@@ -1328,6 +1422,7 @@ function karte(x){
       ${b?`<div class="preisschild"><b>${eur(pr(b))}</b><span class="je">${esc(mengeText(b))}</span></div>
       <div class="p-info p-preise">${mlogo(b.markt)}${esc(mbase(b.markt))}${km?" · "+km:""}${preisKlein(b).map(t=>` · <span class="nw">${t}</span>`).join("")}</div>`:`<div class="p-info">Aktuell kein Angebot</div>`}
       ${tags.length?`<div class="p-tags">${tags.join("")}</div>`:""}
+      ${(()=>{const t=b&&sparTipp(g,b);return t?`<div class="p-tipp">💡 ${esc(favLabel(t.o))} bei ${esc(mbase(t.o.markt))}: ${eur(pr(t.o))} für ${esc(mengeText(t.o))}, ${Math.round(t.r*100)} % günstiger je ${ARTEN[t.o.art].wort}</div>`:""})()}
       ${n?`<div class="p-info" style="white-space:normal">Demnächst${n.von?" ab "+tagD(n.von):""}: ${eur(pr(n))} für ${esc(mengeText(n))}${artO(n)!=="st"?` (${eur(gp(n))}/${unitK(artO(n))})`:""} bei ${esc(mbase(n.markt))}</div>`:""}
     </div>
     ${S.favEdit?`<div class="p-edit"><button type="button" class="rund" data-favpause="${esc(g)}" aria-label="${esc(g)} pausieren" title="Pausieren: wird nicht mehr abgefragt, bleibt aber gespeichert">⏸</button><button type="button" class="rund weg" data-favweg="${esc(g)}" aria-label="${esc(g)} aus den Favoriten entfernen" title="Aus den Favoriten entfernen">✕</button></div>`:`<button type="button" class="p-plus${an?" an":""}" data-liste="${esc(g)}" aria-label="${an?esc(g)+" von der Liste nehmen":esc(g)+" auf die Liste"}" title="${an?"Auf der Liste":"Auf die Liste"}">${an?"✓":"+"}</button>`}
@@ -1460,6 +1555,7 @@ function vProdukt(){
     const ampel=a?(a.txt?`<div><span class="tag ${a.stufe}">${esc(a.txt)}</span> ${Math.abs(a.r).toFixed(0)} % ${a.r<0?"unter":"über"} deinem Durchschnitt (Ø ${eur(a.avg)}/${unitK(b.art)}, ${a.n} Messtage). ${esc(a.so)}</div>`:`<div class="klein-text">Für den Vergleich mit dem Durchschnitt fehlen noch Messtage (${a.n} von 3). ${esc(a.so)}</div>`)+(a.tief?`<div><span class="tag gruen">${a.tief.haltbar?"📦 ":"⬇ "}${tiefText(a.tief)}</span> ${a.tief.haltbar?"Wenn du Platz hast, lohnt es sich, jetzt auf Vorrat zu kaufen.":"So günstig gab es das lange nicht."}</div>`:""):"";
     const fahrt=zeit==="jetzt"?fahrtHtml(b,liste):"";
     h+=`<div class="bestpreis"><div class="gross">${eur(pr(b))}<small>${esc(mengeText(b))}${b.form?" "+esc(b.form):""}</small></div><div class="rechts"><strong>${mlogo(b.markt)}${esc(b.markt)}${kmText(b.markt)?` <span class="km">${kmText(b.markt)}</span>`:""}</strong><span>${preisKlein(b).join(" · ")||"Packungspreis"}${b.alt?` · statt ${eur(b.alt)}`:""}</span><span>${esc(gueltig(b))}</span></div>${ampel||fahrt?`<div class="unten">${ampel}${fahrt}</div>`:""}</div>`;
+    {const t=sparTipp(g,b);if(t)h+=`<div class="banner">💡 Dieselbe Sorte gibt es günstiger: <b>${esc(favLabel(t.o))}</b> bei ${esc(mbase(t.o.markt))}, ${eur(pr(t.o))} für ${esc(mengeText(t.o))} (${eur(gp(t.o))}/${unitK(t.o.art)}, ${Math.round(t.r*100)} % günstiger)${t.o.link&&/^https?:\/\//.test(t.o.link)?` · <a href="${esc(t.o.link)}" target="_blank" rel="noopener noreferrer">bei Marktguru</a>`:""}</div>`}
   }
   // Tabelle
   const SORT={markt:(x,y)=>x.markt.localeCompare(y.markt,"de"),menge:(x,y)=>liter(x)-liter(y),preis:(x,y)=>pr(x)-pr(y),stueck:(x,y)=>pr(x)/x.stueck-pr(y)/y.stueck,liter:(x,y)=>gp(x)-gp(y),bis:(x,y)=>(x.bis||"9").localeCompare(y.bis||"9")};
@@ -1691,6 +1787,22 @@ function schnellHtml(innen){
   return `<div class="reihe"${innen?' style="padding-top:8px"':""}><input class="feld wachsen" id="schnell" data-f="schnell" placeholder="Artikel hinzufügen, z. B. Zahnpasta" value="${fv("schnell")}" aria-label="Artikel hinzufügen" autocomplete="off"><button type="button" class="knopf" data-aktion="schnellSuchen">Angebote suchen</button><button type="button" class="knopf leise" data-aktion="schnellNotieren">Nur notieren</button></div>`;
 }
 /* ---------------- Einkaufen: abhaken, nach Markt gegliedert ---------------- */
+function bonHtmlE(){   // Kassenbon einlesen: Knopf, Fortschritt, Prüfen der Zuordnung
+  const B=S.bon;
+  const knopf=`<label class="knopf klein bon-knopf">🧾 Kassenbon einlesen<input type="file" id="bonFoto" accept="image/*" hidden></label>`;
+  if(!B)return `<div class="reihe">${knopf}<span class="klein-text">Fotografier den Bon nach dem Einkauf, dann lerne ich deine Normalpreise und die Ersparnis wird genauer.</span></div>`;
+  if(B.stand==="liest")return `<div class="banner">🧾 ${B.text||"Ich lese den Kassenbon"} … ${B.fortschritt?Math.round(B.fortschritt*100)+" %":""}</div>`;
+  if(B.stand==="fehler")return `<div class="banner warn">${esc(B.fehler)} <button type="button" class="knopf klein" data-aktion="bonZu">Schließen</button></div>${knopf}`;
+  const l=B.zeilen,namen=zettelNamen();
+  if(!l.length)return `<div class="banner warn">Auf dem Foto habe ich keine Zeilen mit Preisen gefunden. Am besten den Bon gerade und hell fotografieren, mit allen Zeilen im Bild. <button type="button" class="knopf klein" data-aktion="bonZu">Schließen</button></div>${knopf}`;
+  const d=heuteT(),imPlan={};expGruppen().forEach(g=>g.namen.forEach(y=>{if(y.z&&y.markt)imPlan[y.z]=y.markt}));
+  return `<section class="karte-box bon-pruefen"><div class="box-kopf"><h2>🧾 Kassenbon</h2><span class="rechts">${l.length} Zeilen</span></div>
+    <p class="klein-text" style="margin:0">Prüfe die Zuordnung. Im Angebot Gekauftes zählt mit dem echten Preis für die Ersparnis, ohne Angebot Gekauftes wird dein Normalpreis.</p>
+    ${l.map((z,i)=>{const was=!z.k?"":imPlan[z.k]?`im Angebot (${imPlan[z.k]}): zählt mit diesem Preis für die Ersparnis`:"ohne Angebot: wird dein Normalpreis";
+      return `<div class="bon-z2"><label class="schalter"><input type="checkbox" data-bon-an="${i}"${z.k&&z.an?" checked":""}${z.k?"":" disabled"}><span><b>${esc(z.name)}</b>${z.n>1?` <small>${z.n} ×</small>`:""}</span></label><b class="nw">${eur(z.preis)}</b>
+        ${sel("bonK"+i,`data-bon-k="${i}"`,[["","– nicht zuordnen –"],...namen.map(k=>[k,zLabel(k)])],z.k,"Artikel für "+z.name)}<small class="klein-text">${esc(was)}</small></div>`}).join("")}
+    <div class="reihe"><button type="button" class="knopf haupt" data-aktion="bonOk">Übernehmen</button><button type="button" class="knopf leise" data-aktion="bonZu">Verwerfen</button></div></section>`;
+}
 function vEinkaufen(){
   const V=vergleich(),grp2=expGruppen();
   let alle=0,fertig=0;grp2.forEach(g=>g.namen.forEach(x=>{alle++;if(haken[x.k])fertig++}));
@@ -1700,12 +1812,14 @@ function vEinkaufen(){
   if(!alle)h+=`<p class="leise-text" style="margin:0">Setze Artikel auf die Einkaufsliste oder notiere sie hier. Sie erscheinen nach Markt sortiert, so wie es sich am meisten lohnt.</p>`;
   h+=grp2.map(g=>{
     const f=g.namen.filter(x=>haken[x.k]).length,sichtbar=g.namen.filter(x=>!(S.erledigtAus&&haken[x.k])).sort((a,b)=>(!!haken[a.k]-!!haken[b.k]));
+    const mehrGaenge=new Set(sichtbar.filter(x=>!haken[x.k]).map(x=>x.gang)).size>1;   // Zwischenüberschriften nur, wenn es mehrere Abteilungen gibt
     if(!sichtbar.length&&S.erledigtAus)return `<div class="haken-gruppe"><div class="haken-kopf">${g.kopf==="Sonstiges"||g.kopf.startsWith("Egal")?"":mlogo(g.kopf)}${esc(g.kopf)}<small>✓ alles erledigt</small></div></div>`;
     return `<div class="haken-gruppe"><div class="haken-kopf">${g.kopf==="Sonstiges"||g.kopf.startsWith("Egal")?"":mlogo(g.kopf)}${esc(g.kopf)}${g.kopf!=="Sonstiges"&&!g.kopf.startsWith("Egal")&&kmText(g.kopf)?` <span class="km">${kmText(g.kopf)}</span>`:""}<small>${f}/${g.namen.length}</small></div>`
-      +sichtbar.map(x=>`<div class="haken${haken[x.k]?" an":""}"><label><input type="checkbox" data-hk="${esc(x.k)}"${haken[x.k]?" checked":""}><span>${esc(x.name)}</span></label>${x.eigen?`<button type="button" class="x" data-xdel="${esc(x.name)}" aria-label="${esc(x.name)} entfernen">✕</button>`:""}</div>`).join("")+`</div>`;
+      +sichtbar.map((x,j)=>(mehrGaenge&&!haken[x.k]&&x.gang!=null&&(j===0||sichtbar[j-1].gang!==x.gang)?`<div class="gang">${esc(abtName(GANG[x.gang]??ABTEILUNG.length))}</div>`:"")+`<div class="haken${haken[x.k]?" an":""}"><label><input type="checkbox" data-hk="${esc(x.k)}"${haken[x.k]?" checked":""}><span>${esc(x.name)}</span></label>${x.eigen?`<button type="button" class="x" data-xdel="${esc(x.name)}" aria-label="${esc(x.name)} entfernen">✕</button>`:""}</div>`).join("")+`</div>`;
   }).join("");
   const mo=ersparnisMonate()[0];
   if(mo&&mo.monat===heuteT().slice(0,7))h+=`<p class="klein-text" style="margin:0">💶 ${monatName(mo.monat)}: ${mo.n} Artikel für ${eur(mo.bezahlt)}${mo.gespart>0.005?`, <b class="spart">${eur(mo.gespart)} gespart</b>`:""}. Mehr dazu unter „Mehr“.</p>`;
+  if(zettelNamen().length)h+=bonHtmlE();
   if(alle)h+=`<div class="reihe" style="padding-top:6px"><label class="schalter"><input type="checkbox" id="erledigtAus" data-aktion-change="erledigtAus"${S.erledigtAus?" checked":""}> Erledigte ausblenden</label></div>
     <div class="reihe"><button type="button" class="knopf" data-aktion="abgehakteWeg"${fertig?"":" disabled"}>Abgehakte von der Liste nehmen</button><button type="button" class="knopf leise" data-aktion="hakenNull"${fertig?"":" disabled"}>Alle Haken entfernen</button></div>`;
   return h+`</section>`;
@@ -1740,7 +1854,9 @@ function vMehr(){
   h+=`<section class="karte-box formular"><div class="box-kopf"><h2>Märkte und Preise</h2></div>
     ${alleMaerkte.length?`<p class="leise-text" style="margin:0">Märkte, in die du nicht gehst, blende ich überall aus.</p><div class="chips">${alleMaerkte.map(m=>`<label class="chip${aus.has(m)?" aus":""}"><input type="checkbox" data-markt="${esc(m)}"${aus.has(m)?"":" checked"}>${mlogo(m)}${esc(m)}</label>`).join("")}</div>`:""}
     <label class="schalter"><input type="checkbox" id="appFeld" data-aktion-change="app"${appPreise?" checked":""}> App-Preise einrechnen (z. B. Lidl Plus)</label></section>`;
-  h+=`<section class="karte-box formular"><div class="box-kopf"><h2>Darstellung</h2></div>${segment("theme",[["auto","Wie das Gerät"],["light","Hell"],["dark","Dunkel"]],theme)}</section>`;
+  h+=`<section class="karte-box formular"><div class="box-kopf"><h2>Darstellung</h2></div>${segment("theme",[["auto","Wie das Gerät"],["light","Hell"],["dark","Dunkel"]],theme)}
+    <div class="klein-text">Zahl auf dem App-Symbol</div>${segment("badge",[["neu","Neue Angebote"],["liste","Offene Artikel"],["aus","Keine"]],S.badge)}
+    ${badgeGeht()?"":`<p class="klein-text" style="margin:0">Hier erscheint keine Zahl am Symbol. Auf dem iPhone geht das nur in der App vom Home-Bildschirm und wenn Mitteilungen erlaubt sind (unter „Alarm“).</p>`}</section>`;
   h+=ersparnisHtml();
   h+=kontoHtml();
   h+=betreiberHtml();
@@ -2134,6 +2250,34 @@ async function einzelSuche(x){
   render();
   if(x.status==="fertig"&&!x.roh.length)namenLaden().then(render);
 }
+/* ---------- Kassenbon: Foto verkleinern, Text auf dem Gerät erkennen (Tesseract.js, wird beim ersten Mal geladen) ---------- */
+const TESSERACT="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+async function tesseractLaden(){
+  if(window.Tesseract)return window.Tesseract;
+  await new Promise((ok,f)=>{const s=document.createElement("script");s.src=TESSERACT;s.onload=ok;s.onerror=()=>f(new Error("Die Texterkennung ließ sich nicht laden. Bitte die Internetverbindung prüfen."));document.head.appendChild(s)});
+  return window.Tesseract;
+}
+async function bildVerkleinern(datei,max=1800){
+  const url=URL.createObjectURL(datei);
+  try{
+    const img=await new Promise((ok,f)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>f(new Error("Das Foto ließ sich nicht öffnen."));i.src=url});
+    const f=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight)),c=document.createElement("canvas");
+    c.width=Math.round(img.naturalWidth*f);c.height=Math.round(img.naturalHeight*f);c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    return c;
+  }finally{URL.revokeObjectURL(url)}
+}
+async function bonLesen(datei){
+  S.bon={stand:"liest",text:"Ich lade die Texterkennung (beim ersten Mal einige MB)",fortschritt:0};render();
+  try{
+    const T=await tesseractLaden(),bild=await bildVerkleinern(datei);
+    S.bon.text="Ich lese den Kassenbon";render();
+    let t=0;const w=await T.createWorker("deu",1,{logger:m=>{if(m.status==="recognizing text"&&S.bon){S.bon.fortschritt=m.progress;if(Date.now()-t>400){t=Date.now();render()}}}});
+    const r=await w.recognize(bild);await w.terminate();
+    const zeilen=bonZuordnen(bonZeilen(r.data&&r.data.text)).map(z=>({...z,an:!!z.k}));
+    S.bon={stand:"fertig",zeilen};
+  }catch(e){S.bon={stand:"fehler",fehler:e.message||String(e)}}
+  render();
+}
 /* Favorit entfernen (auch von der Liste); der Preisverlauf bleibt. Zweimal tippen, damit nichts aus Versehen verschwindet. */
 async function favEntfernen(name){
   const warAn=aufListe(name);
@@ -2469,6 +2613,8 @@ const AKTION={
     expGruppen().forEach(g=>g.namen.forEach(x=>{if(!haken[x.k])return;n++;if(x.eigen)extra=extra.filter(e=>e!==x.name);else if(x.z)zMitglieder(x.z).forEach(m=>delete zettel[m]);delete haken[x.k]}));
     listeSpeichern();melde(n+" Artikel von der Liste genommen.");render();
   },
+  bonZu:()=>{S.bon=null;render()},
+  bonOk:()=>{const r=bonUebernehmen(S.bon.zeilen);S.bon=null;melde(r.n+r.rw?`Übernommen: ${r.n?r.n+" bezahlte Preise":""}${r.n&&r.rw?", ":""}${r.rw?r.rw+" Normalpreise":""}.`:"Nichts übernommen.");render()},
   hakenNull:()=>{const d=heuteT();kaeufe=kaeufe.filter(e=>!(e.d===d&&haken[e.k]));haken={};listeSpeichern();render()},
   ersparnisWeg:()=>{if(wegFragen("ersparnis")){kaeufe=[];listeSpeichern();melde("Die Ersparnis ist zurückgesetzt.");render()}},
   kopieren:()=>{
@@ -2531,6 +2677,7 @@ $("ansicht").addEventListener("click",e=>{
     else if(n==="lzeit")S.lzeit=w;
     else if(n==="tour"){tourArt=w;ls.setRaw("pv-tour",w)}
     else if(n==="theme"){theme=w;ls.setRaw("pv-theme",w);themeSetzen()}
+    else if(n==="badge"){S.badge=w;ls.setRaw("pv-badge",w);badgeSetzen.letzte=null}
     else if(n==="kMode"){S.kMode=w;S.kInfo=""}
     else if(n==="aTab"){zeige(w);return}
     else if(n==="mkZeit")S.mk.zeit=w;
@@ -2624,6 +2771,9 @@ $("ansicht").addEventListener("change",e=>{
     listeSpeichern();render();return;
   }
   if(t.matches("[data-push-ntfy]")){pushNtfy(t.checked);return}
+  if(t.id==="bonFoto"){const f=t.files&&t.files[0];t.value="";if(f)bonLesen(f);return}
+  if(t.matches("[data-bon-an]")){const z=S.bon&&S.bon.zeilen[+t.dataset.bonAn];if(z)z.an=t.checked;return}
+  if(t.matches("[data-bon-k]")){const z=S.bon&&S.bon.zeilen[+t.dataset.bonK];if(z){z.k=t.value;z.an=!!t.value}render();return}
   if(t.matches("[data-push-woche]")){pushWoche(t.checked);return}
   if(t.dataset.segSel){const n=t.dataset.segSel;if(n==="plan")S.plan=+t.value||0;else S[n]=t.value;render();return}
   if(t.dataset.alAn){const g=t.dataset.alAn;alarmSetzen([g],f=>t.checked?(f.alarm||{wert:JEDES,einheit:alarmEinheiten(artG(g))[0][0],ml:null}):null);render();return}
@@ -2653,6 +2803,7 @@ $("ansicht").addEventListener("change",e=>{
     listeSpeichern();render();return;
   }
 });
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){badgeSetzen.letzte=null;badgeSetzen()}});   // Zahl am App-Symbol beim Zurückkehren auffrischen
 $("ansicht").addEventListener("toggle",e=>{
   const d=e.target;if(!d.dataset||!d.dataset.merk)return;
   const vorher=!!S.form[d.dataset.merk];S.form[d.dataset.merk]=d.open;

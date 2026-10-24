@@ -648,3 +648,83 @@ t("Nach Markt: nach Rabatt sortieren (größter Nachlass zuerst) und „Neu“ s
     assert.deepEqual(fehler, []);
   });
 });
+
+t("Einkaufen: je Markt in der Reihenfolge des Laufwegs (Obst zuerst), mit Abteilungen als Zwischenüberschrift", async () => {
+  await mitSeite({ favs: ["Reis", "Butter", "Äpfel", "Eier"].map(name => ({ name, aus: "" })) }, async ({ p, fehler }) => {
+    await p.evaluate(() => { for (const n of ["Reis", "Butter", "Äpfel", "Eier"]) { aufListeSetzen(n); wahl[n] = "ALDI SÜD"; } listeSpeichern(); render(); });
+    await p.click('#leiste [data-v="einkaufen"]'); await p.waitForTimeout(300);
+    const aldi = p.locator(".haken-gruppe", { hasText: "ALDI SÜD" }).first();
+    const reihe = await aldi.evaluate(g => [...g.querySelectorAll(".gang, .haken span")].map(x => (x.classList.contains("gang") ? "# " : "") + x.textContent.trim()));
+    assert.deepEqual(reihe, ["# Obst & Gemüse", "Äpfel", "# Milch, Käse & Eier", "Butter", "Eier", "# Vorrat", "Reis"]);
+    assert.deepEqual(fehler, []);
+  });
+});
+
+t("Spar-Tipp: bei einem Marken-Favoriten steht dieselbe Sorte einer anderen Marke, wenn sie deutlich günstiger ist", async () => {
+  const daten = { ...DATEN, butter: [...DATEN.butter, O("Lidl", "Butter", "Milsani", "250 g", 1.49)] };
+  for (const code of ["betreiber", ""]) {
+    await mitSeite({ daten, code, favs: [{ name: "Weihenstephan Butter", aus: "", nur: ["weihenstephanbutter"], suche: "Butter" }, { name: "Milch", aus: "" }] }, async ({ p, fehler }) => {
+      if (!code) { await p.evaluate(async () => { favsLokal = [{ name: "Weihenstephan Butter", aus: "", nur: ["weihenstephanbutter"], suche: "Butter" }]; await angeboteLaden(true); render(); }); }
+      const k = p.locator('.produkt[data-p="Weihenstephan Butter"]');
+      assert.match(await k.textContent(), /1,79\s€/, "der Favorit selbst bleibt bei seiner Marke");
+      assert.match(await k.locator(".p-tipp").textContent(), /Milsani Butter bei Lidl: 1,49\s€ für 250 g, 17 % günstiger/, code || "ohne Code");
+      if (code) {
+        assert.equal(await p.locator('.produkt[data-p="Milch"] .p-tipp').count(), 0, "Alle-Marken-Favorit braucht keinen Tipp");
+        await k.click(); await p.waitForTimeout(300);
+        assert.match(await p.textContent(".banner"), /Dieselbe Sorte gibt es günstiger: Milsani Butter bei Lidl/);
+      }
+      assert.deepEqual(fehler, []);
+    });
+  }
+});
+
+t("Zahl auf dem App-Symbol: neue Angebote, offene Artikel oder keine", async () => {
+  const daten = { ...DATEN };
+  const u = await umgebung({ daten });
+  await u.KV.put("favoriten", JSON.stringify([{ name: "Milch", aus: "" }, { name: "Eier", aus: "" }]));
+  await u.A("/aktualisieren", "POST");
+  const s = await browserStarten(u, {});
+  try {
+    await s.c.addInitScript(() => { window.__badge = []; navigator.setAppBadge = async n => { window.__badge.push(n); }; navigator.clearAppBadge = async () => { window.__badge.push(0); }; });
+    await s.oeffnen("");
+    const p = s.p, letzte = () => p.evaluate(() => window.__badge[window.__badge.length - 1]);
+    assert.equal(await letzte(), 0, "beim ersten Öffnen nichts neu");
+    daten.milch = [...DATEN.milch, O("Kaufland", "Milch", "Weihenstephan", "1 l", 0.79, "l", 1, 1)];
+    await u.A("/aktualisieren", "POST"); await p.reload(); await p.waitForTimeout(1500);
+    assert.equal(await letzte(), 1, "ein Favorit mit neuem Angebot");
+    await p.click('.produkt[data-p="Eier"] .p-plus'); await p.click('.produkt[data-p="Milch"] .p-plus');
+    await p.click('#leiste [data-v="mehr"]'); await p.waitForTimeout(200);
+    await p.click('[data-seg="badge"][data-wert="liste"]'); await p.waitForTimeout(200);
+    assert.equal(await letzte(), 2, "zwei offene Artikel");
+    await p.click('[data-seg="badge"][data-wert="aus"]'); await p.waitForTimeout(200);
+    assert.equal(await letzte(), 0);
+    assert.deepEqual(s.fehler, []);
+  } finally { await s.b.close(); }
+});
+
+t("Kassenbon: Zeilen mit Preisen erkennen, der Liste zuordnen, bezahlte Preise und Normalpreise übernehmen", async () => {
+  const u = await umgebung();
+  await u.KV.put("favoriten", JSON.stringify(["Butter", "Eier", "Milch"].map(name => ({ name, aus: "" }))));
+  await u.A("/aktualisieren", "POST");
+  const s = await browserStarten(u, {});
+  try {
+    // die Texterkennung selbst ist nachgebaut (im Test gibt es kein Netz); erkannt wird dieser Text
+    await s.c.addInitScript(() => { window.Tesseract = { createWorker: async (l, o, opt) => ({ recognize: async () => { opt.logger({ status: "recognizing text", progress: 0.5 }); return { data: { text: "ALDI SUED\nKERRYGOLD BUTTER 1,99 A\nFREILAND-EIER M 10ST 2,29 A\n2 x 0,89\nH-MILCH 3,5% 1,78 A\nSALZ 0,19 A\nPFAND 0,25 B\nSUMME EUR 6,50\nEC-Karte 6,50" } }; }, terminate: async () => {} }) }; });
+    await s.oeffnen("");
+    const p = s.p;
+    await p.evaluate(() => { for (const n of ["Butter", "Eier", "Milch"]) { aufListeSetzen(n); wahl[n] = "ALDI SÜD"; } wahl.Milch = "Lidl"; frei.Salz = "st"; aufListeSetzen("Salz", 1); listeSpeichern(); render(); });
+    assert.deepEqual(await p.evaluate(() => bonZeilen("KERRYGOLD BUTTER 1,99 A\n2 x 0,89\nH-MILCH 3,5% 1,78 A\nRabatt -0,20\nSUMME 3,57").map(z => [z.name, z.preis, z.n])), [["KERRYGOLD BUTTER", 1.99, 1], ["H-MILCH", 1.58, 2]]);
+    await p.click('#leiste [data-v="einkaufen"]'); await p.waitForTimeout(300);
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+    await p.setInputFiles("#bonFoto", { name: "bon.png", mimeType: "image/png", buffer: png });
+    await p.waitForSelector(".bon-pruefen", { timeout: 10000 });
+    const zu = await p.evaluate(() => S.bon.zeilen.map(z => [z.name, z.preis, z.k]));
+    assert.deepEqual(zu, [["KERRYGOLD BUTTER", 1.99, "Butter"], ["FREILAND-EIER M", 2.29, "Eier"], ["H-MILCH", 1.78, "Milch"], ["SALZ", 0.19, "Salz"]]);
+    await p.click('[data-aktion="bonOk"]'); await p.waitForTimeout(300);
+    const k = await p.evaluate(() => kaeufe.map(e => e.z + ":" + e.p).sort());
+    assert.deepEqual(k, ["Butter:1.99", "Eier:2.29", "Milch:1.78", "Salz:0.19"], "abgehakt, mit den Preisen vom Bon");
+    assert.equal(await p.evaluate(() => richt.Salz), 0.19, "ohne Angebot gekauft: Normalpreis je Stück");
+    assert.equal(await p.evaluate(() => Object.keys(haken).length), 4);
+    assert.deepEqual(s.fehler, []);
+  } finally { await s.b.close(); }
+});

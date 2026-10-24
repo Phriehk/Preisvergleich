@@ -208,7 +208,13 @@ export class Teil extends WorkerEntrypoint {
       // Nichts Passendes: bei der Suche (locker) oder einem fest gewählten Produkt (nur) auch Wortanfänge und Schreibweisen
       // ohne Leerzeichen gelten lassen ("hidro" -> "Hidrofugal", "hidro fugal" -> "Hidrofugal", "coca cola" -> "Coca-Cola").
       if (!t.length && (a.locker || (a.nur && a.nur.length))) t = alle.filter(o => passtLocker(wort, o, a.aus) && nurOk(o));
-      return !t.length && ohneFilterFallback ? alle : t;
+      // Spar-Tipp: bei einer gewählten Marke bzw. einem Produkt auch dieselbe Sorte von anderen Marken (zum Vergleich, zählt nicht als Angebot des Favoriten)
+      let andere = [];
+      if (t.length && (a.nur || []).some(x => !/^sorte:/i.test(x))) {
+        const sorten = new Set(t.map(o => sorteK(o.name, o.brand)));
+        andere = alle.filter(o => !nurOk(o) && istProdukt(wort, o, a.aus) && sorten.has(sorteK(o.name, o.brand)));
+      }
+      return { t: !t.length && ohneFilterFallback ? alle : t, andere };
     }));
   }
 }
@@ -297,12 +303,12 @@ async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2,
   const ergebnis = await parallel(stapel.map(st => async () => {
     try {
       const r = await teile.holeStapel(st.plz, st.liste.map(a => ({ p: a.p, wort: a.wort, suchen: a.suchen, aus: a.aus, nur: a.nur, locker: a.locker })), einzeln);
-      st.liste.forEach((a, i) => { a.roh = r[i]; });
+      st.liste.forEach((a, i) => { a.roh = Array.isArray(r[i]) ? r[i] : r[i].t; a.andere = (r[i] && r[i].andere) || []; });
       return true;
     } catch (e) { fehlerListe.push(`${st.liste.map(a => a.p).join("+")}/${st.plz}: ${e.message}`); return false; }
   }), GLEICHZEITIG);
   if (ergebnis.every(x => !x)) throw new Error("Marktguru nicht erreichbar: " + fehlerListe.slice(0, 2).join("; "));
-  const jetzt = berlin(new Date(), true), ausgabe = [];
+  const jetzt = berlin(new Date(), true), ausgabe = [], alternativen = [];
   for (const p of produkte) {
     const ids = new Set(), treffer = [];
     for (const a of auftraege) {
@@ -320,6 +326,20 @@ async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2,
       }
     }
     const info = favInfo[p] || { aus: extraAus, nur: new Set() };
+    // Alternativen (dieselbe Sorte anderer Marken) für den Spar-Tipp, wie die Treffer aus der Hauptgegend plus PENNY bzw. REWE aus den Nachbar-Postleitzahlen
+    const altIds = new Set();
+    for (const a of auftraege) {
+      if (a.p !== p || !a.andere || !a.andere.length) continue;
+      for (const o of a.andere) {
+        const name = o.adv.trim().toLowerCase(), key = a.plz + "|" + o.id;
+        if (a.plz !== HAUPT && !(a.plz === PLZ2 ? PLZ2_MAERKTE.some(z => name.includes(z)) : PLZ3_MAERKTE.includes(name))) continue;
+        if (altIds.has(key)) continue; altIds.add(key);
+        const mg = mengenangabe(o), l = mg ? mg[1] : null, st = mg ? mg[0] : 1;
+        if (!l || !o.price) continue;
+        alternativen.push({ gruppe: p, bild: o.bild, marke: o.brand, link: o.link, markt: o.adv + (a.plz !== HAUPT ? ` (${a.plz})` : ""), produkt: o.name, beschreibung: o.desc, preis: o.price, preis_alt: o.alt || null,
+          art: mg[2], liter: l, stueck: st, ml: Math.round(l * 1000 / st), preis_pro_liter: Math.round(o.price / l * 100) / 100, gueltig_von: o.von, gueltig_bis: o.bis });
+      }
+    }
     for (const o of treffer) {
       const mg = mengenangabe(o), l = mg ? mg[1] : null, st = mg ? mg[0] : 1, art = mg ? mg[2] : "l";
       const kandidat = (o.brand || o.name).trim().toLowerCase();
@@ -338,7 +358,7 @@ async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2,
     if (gesehen.has(k)) return false; gesehen.add(k); return true;
   });
   liste.sort((a, b) => a.gruppe.localeCompare(b.gruppe) || ((a.preis_pro_liter == null) - (b.preis_pro_liter == null)) || (a.preis_pro_liter || 0) - (b.preis_pro_liter || 0));
-  return { liste, fehler: fehlerListe };
+  return { liste, fehler: fehlerListe, alternativen };
 }
 
 /* ---------- Gespeicherte Daten (liegen im Cloudflare-Speicher KV) ---------- */
@@ -456,9 +476,10 @@ async function aktualisieren(env, ctx) {
   const { info, alarm } = favAuswerten(favs);
   const produkte = Object.keys(info);
   if (!produkte.length) return { anzahl: 0, alarm: [] };
-  const { liste, fehler: f } = await abfragen(ctx, produkte, info, []);
+  const { liste, fehler: f, alternativen } = await abfragen(ctx, produkte, info, []);
   if (!liste.length) throw new Error("Marktguru hat für keines der Produkte Angebote geliefert. Die bisherigen Daten bleiben unverändert." + (f.length ? " " + f[0] : ""));
   await env.PV.put("angebote", JSON.stringify(liste));
+  await env.PV.put("alternativen", JSON.stringify(alternativen || []));   // für den Spar-Tipp
   // Verlauf: je Monat ein Speicherblock, damit nicht jedes Mal die ganze Datei neu geschrieben wird.
   // Höchstens ein Eintrag pro Tag (ein neuer Lauf am selben Tag ersetzt die Zeilen dieses Tages).
   const tag = heute(), monat = tag.slice(0, 7), monate = await verlaufMonate(env);
@@ -679,7 +700,7 @@ function datenPruefen(d) {   // nur erwartete Felder und Größen werden gespeic
   if (Array.isArray(d.kaeufe)) {   // abgehakte Einkäufe für die Ersparnis (höchstens 1000)
     const geld = x => Number.isFinite(+x) && +x >= 0 && +x < 10000 ? Math.round(+x * 100) / 100 : null;
     o.kaeufe = d.kaeufe.filter(x => x && text(x.k, 140) && /^\d{4}-\d\d-\d\d$/.test(x.d) && geld(x.p) != null).slice(-1000)
-      .map(x => ({ k: x.k, d: x.d, n: String(x.n || "").slice(0, 60), m: String(x.m || "").slice(0, 60), p: geld(x.p), r: x.r == null ? null : geld(x.r) }));
+      .map(x => ({ k: x.k, d: x.d, n: String(x.n || "").slice(0, 60), ...(text(x.z, 60) ? { z: x.z } : {}), m: String(x.m || "").slice(0, 60), p: geld(x.p), r: x.r == null ? null : geld(x.r) }));
   }
   if (Array.isArray(d.extra)) o.extra = d.extra.filter(x => text(x, 40)).slice(0, 100);   // von Hand notierte Artikel
   if (obj(d.haken)) {   // beim Einkaufen abgehakt
@@ -925,6 +946,7 @@ export default {
       }
       if (req.method === "GET") {
         if (p === "/angebote.json") return antwort(JSON.stringify(await lade(env, "angebote", "json")));
+        if (p === "/alternativen.json") return antwort((await env.PV.get("alternativen")) || "[]");
         if (p === "/favoriten.json") return antwort(JSON.stringify(await lade(env, "favoriten", "json")));
         if (p === "/verlauf.csv") return antwort(await verlaufCsv(env), "text/csv; charset=utf-8");
         if (p === "/entfernungen") {
