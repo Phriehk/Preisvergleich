@@ -86,6 +86,7 @@ jobs:
           T0=$(date +%s); R=$(curl -s -m 120 -G --data-urlencode "plz=47178" --data-urlencode "q=Butter|Eier|Mehl|Nudeln|Joghurt|Kartoffeln" --data-urlencode "streng=1" "$URL/region")
           log "Lebensmittel-Probe: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if type=="array" then (group_by(.gruppe) | map({(.[0].gruppe): length}) | add) else . end' 2>/dev/null || echo "$R" | head -c 300)"
           echo "$R" | jq -r 'if type=="array" then .[0:40][] | "  Probe: \(.gruppe) | \(.markt) | \(.produkt[0:28]) | art=\(.art) liter=\(.liter) stueck=\(.stueck) ml=\(.ml) preis=\(.preis) | \(.beschreibung[0:70])" else empty end' 2>/dev/null | while IFS= read -r z; do log "$z"; done
+          curl -s -m 90 -X POST -H "Authorization: Bearer $ZUG" "$URL/erkunden" | jq -r '.[]?' | cut -c1-700 | sed 's/^/  Erkunden: /' | tee -a $LOG
           T0=$(date +%s); R=$(curl -s -m 120 "$URL/maerkte?plz=47178")
           log "Märkte 47178: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if type=="array" then [.[] | "\(.name)=\(.n)\(if .plz != "47178" then " (" + .plz + ")" else "" end)"] else . end' 2>/dev/null || echo "$R" | head -c 300)"
           for M in 126679 126735; do
