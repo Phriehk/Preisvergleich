@@ -181,6 +181,46 @@ async function marktAngebote(env, ctx, sp, ip) {
   return erg;
 }
 
+/* Vorübergehende Diagnose: können wir Angebote direkt bei den Ketten abrufen? (nur mit Zugangscode) */
+async function erkunden(env) {
+  const out = [], H = { ...UA, Accept: "application/json, text/html;q=0.9, */*;q=0.8", "Accept-Language": "de-DE,de;q=0.9" };
+  const hol = async (u, n = 300) => { try { const r = await fetch(u, { headers: H, redirect: "follow" }); const t = await r.text(); return { s: r.status, t, ct: r.headers.get("content-type") || "", url: r.url }; } catch (e) { return { s: 0, t: String(e.message || e) }; } };
+  const kurz = (t, n) => String(t).replace(/\s+/g, " ").slice(0, n);
+  // ALDI SÜD: llms.txt und Prospekt-JSON
+  const l = await hol("https://www.aldi-sued.de/llms.txt");
+  out.push(`ALDI llms.txt: ${l.s} ${l.t.length} Zeichen`);
+  for (const z of l.t.split("\n").filter(z => /prospekt|json|kw\d/i.test(z)).slice(0, 14)) out.push("  llms: " + kurz(z, 220));
+  const jetzt = new Date(), d = new Date(Date.UTC(jetzt.getUTCFullYear(), jetzt.getUTCMonth(), jetzt.getUTCDate())), tag = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - tag); const j1 = new Date(Date.UTC(d.getUTCFullYear(), 0, 1)), kw = Math.ceil(((d - j1) / 864e5 + 1) / 7), jj = String(d.getUTCFullYear()).slice(2);
+  for (const k of [kw, kw + 1]) {
+    const slug = `kw${String(k).padStart(2, "0")}-${jj}-op-mp`, sp = await hol(`https://prospekt.aldi-sued.de/${slug}/spreads.json`);
+    out.push(`ALDI ${slug} spreads: ${sp.s} ${sp.t.length} Zeichen ${sp.ct} · ${kurz(sp.t, 300)}`);
+    if (sp.s === 200) {
+      let j = null; try { j = JSON.parse(sp.t); } catch (e) {}
+      const ber = [...new Set((sp.t.match(/"(\d+-\d+|\d+)"/g) || []).map(x => x.replace(/"/g, "")))].slice(0, 6);
+      out.push(`  Schlüssel ${j ? Object.keys(Array.isArray(j) ? j[0] || {} : j).slice(0, 12).join(",") : "?"} · Bereiche ${ber.join(" ")}`);
+      for (const b of ["2-3", "1", "4-5"]) {
+        const h = await hol(`https://prospekt.aldi-sued.de/${slug}/page/${b}/hotspots_data.json`);
+        out.push(`  hotspots ${b}: ${h.s} ${h.t.length} Zeichen · ${kurz(h.t, 700)}`);
+        if (h.s === 200) break;
+      }
+    }
+  }
+  // PENNY
+  const pe = await hol("https://www.penny.de/angebote");
+  out.push(`PENNY angebote: ${pe.s} ${pe.t.length} Zeichen ${pe.ct} · rest-URLs ${[...new Set(pe.t.match(/\/\.rest\/[^"'\s<>]+/g) || [])].slice(0, 8).join(" ")} · NEXT ${pe.t.includes("__NEXT_DATA__")} · ld+json ${pe.t.split("application/ld+json").length - 1}`);
+  const preis = pe.t.match(/.{0,120}(statt|UVP|bisher).{0,120}/i); if (preis) out.push("  PENNY statt: " + kurz(preis[0], 240));
+  // EDEKA
+  const ed = await hol("https://www.edeka.de/eh/service/eh/offers?marketId=1");
+  out.push(`EDEKA offers: ${ed.s} ${ed.t.length} Zeichen ${ed.ct} · ${kurz(ed.t, 500)}`);
+  // Lidl
+  const lo = await hol("https://endpoints.leaflets.schwarz/v4/overview/?client_locale=lidl/de-DE");
+  out.push(`Lidl overview: ${lo.s} ${lo.t.length} Zeichen · ${kurz(lo.t, 500)}`);
+  const lp = await hol("https://www.lidl.de/c/online-prospekte/s10005610");
+  out.push(`Lidl Prospekte-Seite: ${lp.s} ${lp.t.length} Zeichen · leaflets-URLs ${[...new Set(lp.t.match(/https?:\/\/[^"'\s<>]*leaflets[^"'\s<>]*/g) || [])].slice(0, 6).join(" ")} · flyer-ids ${[...new Set(lp.t.match(/flyer[^"'\s<>]{0,60}/gi) || [])].slice(0, 6).join(" | ")}`);
+  return out;
+}
+
 // Eigener Einstiegspunkt, damit jede Teilabfrage als eigener Aufruf mit eigenen Grenzen läuft.
 // Ein Aufruf holt mehrere Artikel in einer Postleitzahl und sortiert unpassende Treffer gleich aus (spart Aufrufe und Rechenzeit im Hauptaufruf).
 export class Teil extends WorkerEntrypoint {
@@ -940,6 +980,7 @@ export default {
     const url = new URL(req.url), p = url.pathname.replace(/\/+$/, "") || "/";
     try {
       if (p.startsWith("/konto/")) return antwort(await kontoRoute(req, env, p));
+      if (p === "/erkunden" && req.method === "POST") { if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401); return antwort(await erkunden(env)); }
       if (p.startsWith("/push/")) {
         if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401);
         return antwort(await pushRoute(req, env, p));
