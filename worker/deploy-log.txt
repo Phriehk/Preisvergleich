@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 70.75 KiB / gzip: 20.76 KiB
+Total Upload: 68.58 KiB / gzip: 20.00 KiB
 Worker Startup Time: 2 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (3.58 sec)
-Deployed preise triggers (0.73 sec)
+Uploaded preise (3.13 sec)
+Deployed preise triggers (0.57 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: c70a5c2e-1bc8-44a6-bb69-d8a086923a2e
+Current Version ID: 56c15172-7159-4afb-9b29-7f783f31da35
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,7 +18,7 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-25T13:24","anzahl":30,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-25T13:27","anzahl":30,"fehler":0}}
 Spar-Tipp: {"alternativen":3,"favoriten":2}
 Push ohne Code (erwartet 401): HTTP 401
 Push: Schlüssel 87 Zeichen, {"geraete":1,"ntfy":true,"ntfyAn":false}
@@ -27,7 +27,7 @@ Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
 Suche Fanta: 1 s, {"anzahl":0}
-Aktualisieren: 3 s, {"zeit":"2026-10-25T13:27","anzahl":30,"fehler":0,"alarm":[]}
+Aktualisieren: 4 s, {"zeit":"2026-10-25T13:30","anzahl":30,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":30,"gruppen":["Ferrero Nutella Brotaufstrich","Heinz Ketchup","Knorr Spaghetteria","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","Zewa Toilettenpapier Ultra Soft","coca cola"]}
 Verlauf: 421 Zeilen
 Korrekturen lesen: {}
@@ -78,33 +78,46 @@ Lebensmittel-Probe: 0 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | Netto Marken-Discount | Speisekartoffeln XXL | art=kg liter=4 stueck=1 ml=4000 preis=2.99 | 4 kg Netz Deutschland, versch. Kocheigenschaften
   Probe: Kartoffeln | Kaufland | Speisekartoffeln | art=kg liter=1 stueck=1 ml=1000 preis=0.79 | Dtsch. lose Qualität II je kg
   Probe: Kartoffeln | Lidl | Bio-Speisekartoffeln | art=kg liter=2 stueck=1 ml=2000 preis=2.79 | Bioland Deutsche Qualität I Je 2 kg
-  Erkunden: ALDI kw44-26-op-mp: 200 · 17 Doppelseiten · Produkte 168 · Probe 0 · Text Gültig von Mo. 26.10. – Sa. 31.10. BIS ZU -SPAREN. TIEFPREIS46 % HIGHLIGHT ab Do. 29.10. CROFTON Kinder-Backset 10er-Set 4. 49 ab Mo. 26.10. * Aktion DE BEUKELA
-  Erkunden: ALDI kw44-26-op: 200 · 17 Doppelseiten · Produkte 0 · Probe 0/1 · Text Gültig von Mo. 26.10. – Sa. 31.10. BIS ZU -SPAREN. TIEFPREIS46 % HIGHLIGHT ab Do. 29.10. CROFTON Kinder-Backset 10er-Set 4. 49 ab Mo. 26.10. * Aktion DE BEUKELA
-  Erkunden: ALDI kw45-26-op: 200 · 17 Doppelseiten · Produkte 0 · Probe 0/2 · Text Gültig von Mo. 2.11. – Sa. 7.11. TIEFPREIS- HIGHLIGHT ab Do. 5.11. HOME CREATION LED-Papierlicht 3. BIS ZU 99 -SPAREN. 46 % * Aktion PREISWERT UND FESTLICH BELE
-  Erkunden: ALDI kw45-26-op-mp: 404 · 0 Doppelseiten · Produkte 0 · Probe 0 · Text 
-  Erkunden: ALDI kw46-26-vop: 200 · 12 Doppelseiten · Produkte 0 · Probe 0/0 · Text Gültig von Mo. 9.11. – Sa. 14.11. TIEFPREIS- HIGHLIGHT ab Mo. 9.11. HOME CREATION DIY-WeihnachtsKeramik 1.49 * Aktion KREATIV-SPASS ZU BEST-PREISEN. Im Innentei
-  Erkunden: ALDI Marktguru 468 Angebote (preis_alt 85) · Prospekt 168 · gefunden 162 · dort schon statt-Preis 46 · neu statt-Preis 1 · ohne Gegenstück 6
-  Erkunden:   ohne: Orangen-Tiramisu NaN | Geschmortes Rindergulasch mit Champignons und Perlzwiebeln NaN | Knabberbox SUNSNACKS 1.29 26.10. | Bauset 6.99 26.10. | Bauset 9.99 26.10. | Minutensteaks MEINE METZGEREI 4.79 30.10.
-  Erkunden:   MG-Bsp: Meine Backwelt Pain au Chocolat 0.45 0.65 2026-10-26 | Meine Backwelt Apfelecke 0.45 0.69 2026-10-26 | Magnet-Spiel-Buch 4.99 2026-10-26 | Novitesse Modulares Kindersofa 79.99 2026-10-26 | Puzzle 3.99 2026-10-26 | Toylino Magnet-Baukasten 12.99 2026-10-26 | Burago F1-Modellautos 4.99 2026-10-26 | Spin Master Monster Jam Truck 4.99 2026-10-26
-  Erkunden: PENNY Datenquellen: data-icon-sprite-url="/.resources/penny/webresources/media/icon-sprite.51fa347e.svg" data-market-api="/.rest/market" data-src="https://cdn.penny.de/dam/jcr:066b10cb-587e-4c51-8d0d-08aee6f4228a/Image_navi_angebote.png?impolicy=penny&imwidth=400" data-src="https://cdn.penny.de/dam/jcr:c2c64890-a73b-40fa-b375-b156c18ff56f/Image_navi_aktionen.png?impolicy=penny&imwidth=400" data-src="https://cdn.penny.de/dam/jcr:fe717c78-e8b6-4ab1-bb12-d9173202d337/Image_navi_foerderpenny.png?impolicy=penny&imwidth=400" data-src="https://cdn.penny.de/dam/jcr:fe1c2f21-0321-48cf-bbae-af8c6cba8136/Image_navi_tipps.png?impolicy=penny&imwidth=400" data-market="/.rest/market" data-rest-api="/.rest" data-market-select-label="Auswählen" data-week="current_week" data-week="current" data-week="current_week_menu" data-week="ab-montag_period_menu" data-week="ab-donnerstag_period_menu" data-week="ab-f
-  Erkunden: PENNY Skripte: <script async src="//assets.adobedtm.com/8665cc68f8ef/302850a9b963/launch-465a61895221.min.js" <script defer src="https://privacy-proxy.usercentrics.eu/latest/uc-block.bundle.js" <script type="module" src="/.resources/penny/webresources/js/index~2026-10-21-07-43-13-000~cache.js"
-  Erkunden: PENNY Preise: <p><sup>5</sup> Aktionszeitraum: 12.10.26 &ndash; 31.10.26. Teilnahme ab 18 Jahren. Voraussetzung ist die Registrierun || <p><sup>8</sup> Aktionszeitraum: 12.10.26 &ndash; 2.1.27. 1 Treuepunkt je 5 &euro; Einkaufswert. Ausgenommen Tabakwa || rrat reicht. F&uuml;r 55 Treuepunkte und einer Zuzahlung ab 0.99 &euro; erh&auml;ltst du eine Pr&auml;mie deiner Wahl. Weite || t Wohnsitz au&szlig;erhalb Deutschlands. Teilnahmezeitraum: 15.10.26 &ndash; 31.10.26. Teilnahmebedingungen &amp; Datenschutz || <div class="handout__subline">26.10. bis 31.10.</div> || <div class="handout__subline">2.11. bis 7.11.</div>
-  Erkunden: PENNY Kachel 3:  <div ></div> <div > <h3 ></h3> <div ></div> </div> </article> </a> </li> <li > <a > 
-  Erkunden: PENNY Kachel 4:  <div ></div> <div > <h3 ></h3> <div ></div> </div> </article> </a> </li> <li > <a > 
-  Erkunden: PENNY wwIdent: on () { var pennyMarket = {}; try { var raw = localStorage.getItem('marketData'); var market = raw && raw !== 'undefined' ? JSON.parse(raw) : null; if (market) { pennyMarket = { city: market.marketCity, country: 'germany', id: market.wwIdent, postcode: market.marketZipCode, street: market.marketStreetWithHouseNumber }; } } catch (e) { // corrupt localStorage entry: track without market data } if (!window.pageData) { window.pageData = { page: { name: '', type: '', hierarc
+  Erkunden: PENNY JS /.resources/penny/webresources/js/index~2026-10-21-07-43-13-000~cache.js: 200 11622
+  Erkunden:   Teile: "bubble-price.BvCNFEoq.js" "button-ripple.pdUhouQv.js" "icon-html-by-name.NuLcykbD.js" "step-progress.C7ybGeJ5.js" "app-store-link.Bd0AoE90.js" "back-to-top.iD5F3jMN.js" "bot-validation.D5XXvwif.js" "collapsible-content-group.yANLu7dt.js" "collapsible-content.B9OrSSvQ.js" "consent.DaagSqAU.js" "carousel.Dk7US-WO.js" "carousel-swiper.D0ySBFSN.js" "video-actions.Do8zFSFC.js" "collapsible-multiple-exclusive.B1PqgVHE.js" "collapsible.2sGwDsVB.js" "tabs-offers.DJDrzIPb.js" "content-tile-list.DKPnIiWV.js" "content-tile-slider-progress-bar.D6GF-EK5.js" "content-tile-slider-slides.B-G1tIec.js" "content-tile-slider-test-utils.Ca5FpgAI.js" "content-tile-slider-video-controls.CTdsuv0t.js" "content-tile-slider-viewport-observer.XsssRe_1.js" "content-tile-slider.constants.BKmodttH.js" "content-tile-slider.BrNMuzgu.js" "content-tile-region-filter.BZDI6S1j.js" "content-tile-video.Bf
+  Erkunden:   tabs-offers.DJDrzIPb.js: 404 50573
+  Erkunden:   content-tile-list.DKPnIiWV.js: 404 50579
+  Erkunden:   content-tile-slider-progress-bar.D6GF-EK5.js: 404 50594
+  Erkunden:   content-tile-slider-slides.B-G1tIec.js: 404 50588
+  Erkunden:   content-tile-slider-test-utils.Ca5FpgAI.js: 404 50592
+  Erkunden:   content-tile-slider-video-controls.CTdsuv0t.js: 404 50596
+  Erkunden:   content-tile-slider-viewport-observer.XsssRe_1.js: 404 50599
+  Erkunden:   content-tile-slider.constants.BKmodttH.js: 404 50591
+  Erkunden:   [tabs-offers.DJDrzIPb.js]  id: market.wwIdent,
+  Erkunden:   [tabs-offers.DJDrzIPb.js]  const marketWwIdent = marketDataObj?.wwIdent;
+  Erkunden:   [content-tile-list.DKPnIiWV.js]  id: market.wwIdent,
+  Erkunden:   [content-tile-list.DKPnIiWV.js]  const marketWwIdent = marketDataObj?.wwIdent;
+  Erkunden:   [lider-progress-bar.D6GF-EK5.js]  id: market.wwIdent,
+  Erkunden:   [lider-progress-bar.D6GF-EK5.js]  const marketWwIdent = marketDataObj?.wwIdent;
+  Erkunden:   [tile-slider-slides.B-G1tIec.js]  id: market.wwIdent,
+  Erkunden:   [tile-slider-slides.B-G1tIec.js]  const marketWwIdent = marketDataObj?.wwIdent;
+  Erkunden:   [-slider-test-utils.Ca5FpgAI.js]  id: market.wwIdent,
+  Erkunden:   [-slider-test-utils.Ca5FpgAI.js]  const marketWwIdent = marketDataObj?.wwIdent;
+  Erkunden:   [der-video-controls.CTdsuv0t.js]  id: market.wwIdent,
+  Erkunden:   [der-video-controls.CTdsuv0t.js]  const marketWwIdent = marketDataObj?.wwIdent;
+  Erkunden:   [-viewport-observer.XsssRe_1.js]  id: market.wwIdent,
+  Erkunden:   [-viewport-observer.XsssRe_1.js]  const marketWwIdent = marketDataObj?.wwIdent;
+  Erkunden:   [e-slider.constants.BKmodttH.js]  id: market.wwIdent,
+  Erkunden:   [e-slider.constants.BKmodttH.js]  const marketWwIdent = marketDataObj?.wwIdent;
+  Erkunden: MG PENNY 47178: 284 Angebote · statt 0 · Bsp Marktliebe Honigpomelo 1.99 [Kl. I, je kg] | Best Moments Tafeltrauben 3.69 [dunkle oder helle kernlose Kl. I, je kg] | Marktliebe Regional Spitzkohl 1.39 [Deutscher KL. 1, je kg] | Milram Frischer Schmand 1.11 [je 250 g] | Popp Brotaufstrich 1.19 [Versch. Sorten, je 150 g] | Roma Sahnepudding 0.39 [Versch. Sorten, je 200 g]
 Märkte 47178: 0 s, ["Lidl=887","PENNY=284","Kabs PolsterWelt=45","Bosch Car Service=10","SCHAFFRATH=267","HORNBACH=198","KiK=50","Opti Wohnwelt=44","ALDI SÜD=468","Thomas Philipps=185","ROSSMANN=7","toom Baumarkt=319","OBI=25","Handelshof=270","XXXLutz=1497","SB-Möbel BOSS=309","Möbel Inhofer=80","Netto Marken-Discount=357","REWE=234 (47053)"]
 Markt 126679: 0 s, {"name":"Lidl","total":885,"seiten":"885/885/885","geladen":885,"ohneMenge":0,"kategorien":65,"ohneKat":0,"kp":"3=21 5=56 6=7 10=6 11=3 12=3 14=10 15=3 16=50 17=1 20=69 23=9 35=6 50=23 53=9 69=15 70=4 83=5 85=14 91=6 94=24 95=8 97=21 101=1 102=17 103=31 104=20 106=6 107=64 108=8 110=24 112=11 113=6 116=2 119=3 120=31 122=3 126=1 129=2 137=6 142=2 143=33 144=26 147=7 149=13 187=2 191=8 193=8 218=1 363=32 364=29 382=3 383=3 384=1 385=4 386=4 398=34 402=3 415=6 427=26 428=7 454=6 473=7 497=8 630=3","beispiel":"Lidl Backshop Kakao Donuts XXL 2.69 kg Kuchen & Feinbackwaren"}
 Markt 126735: 0 s, {"name":"Netto Marken-Discount","total":357,"seiten":"357/357/357","geladen":357,"ohneMenge":0,"kategorien":56,"ohneKat":0,"kp":"3=6 5=7 6=1 10=1 11=1 12=1 14=1 16=3 17=1 20=36 23=5 26=2 50=8 53=7 69=16 70=5 83=2 85=5 97=3 101=1 102=8 103=20 104=18 106=2 107=28 108=4 110=12 112=11 113=4 116=1 119=1 120=15 136=1 142=3 143=18 144=5 147=14 149=14 174=11 187=1 191=8 193=4 363=4 364=4 382=3 383=2 384=2 398=6 402=3 415=3 427=1 428=1 454=1 473=7 497=1 630=4","beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792931298","token":true}
+Konto anlegen: {"name":"test1792931456","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792931298","daten":{}}
+Konto Daten: {"name":"test1792931456","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792931298"]
+Konto Anfragen mit Code: ["test1792931456"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792931298","token":true}
+Neues Passwort mit Code: {"name":"test1792931456","token":true}
 Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
 Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
