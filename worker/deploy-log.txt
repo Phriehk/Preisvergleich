@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 67.67 KiB / gzip: 19.72 KiB
+Total Upload: 68.84 KiB / gzip: 20.13 KiB
 Worker Startup Time: 2 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (3.08 sec)
-Deployed preise triggers (0.58 sec)
+Uploaded preise (3.30 sec)
+Deployed preise triggers (0.63 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: 5b9f0047-cb64-4c28-b98d-75ec5b40b5f5
+Current Version ID: 723bd8bc-fa3f-4a8c-9b8a-53068be8c2aa
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,7 +18,7 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-25T13:37","anzahl":30,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-25T13:39","anzahl":30,"fehler":0}}
 Spar-Tipp: {"alternativen":3,"favoriten":2}
 Push ohne Code (erwartet 401): HTTP 401
 Push: Schlüssel 87 Zeichen, {"geraete":1,"ntfy":true,"ntfyAn":false}
@@ -26,8 +26,8 @@ Hintergrunddienst mit Push: 1
 Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
-Suche Fanta: 1 s, {"anzahl":0}
-Aktualisieren: 6 s, {"zeit":"2026-10-25T13:39","anzahl":30,"fehler":0,"alarm":[]}
+Suche Fanta: 0 s, {"anzahl":0}
+Aktualisieren: 4 s, {"zeit":"2026-10-25T13:42","anzahl":30,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":30,"gruppen":["Ferrero Nutella Brotaufstrich","Heinz Ketchup","Knorr Spaghetteria","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","Zewa Toilettenpapier Ultra Soft","coca cola"]}
 Verlauf: 421 Zeilen
 Korrekturen lesen: {}
@@ -35,9 +35,9 @@ Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
 Korrektur gespeichert und gelesen: true
 Test-Korrektur gelöscht: true
 Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
-Region 40210 ohne Code: 0 s, {"anzahl":4,"maerkte":["ALDI SÜD","Kaufland","Lidl","Thomas Philipps"]}
+Region 40210 ohne Code: 2 s, {"anzahl":4,"maerkte":["ALDI SÜD","Kaufland","Lidl","Thomas Philipps"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
-Lebensmittel-Probe: 0 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl":4,"Nudeln":4}
+Lebensmittel-Probe: 1 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl":4,"Nudeln":4}
   Probe: Butter | Netto Marken-Discount | Beste Butter | art=kg liter=0.25 stueck=1 ml=250 preis=0.88 | gekühlt 250 g
   Probe: Butter | Thomas Philipps | Butter Beans | art=kg liter=0.24 stueck=1 ml=240 preis=0.89 | weiße Riesenbohnen 400 g, 240 g Abtropfgewicht
   Probe: Butter | Kaufland | Butter | art=kg liter=0.25 stueck=1 ml=250 preis=1.11 | oder Die Streichzarte mildgesäuert, Die Streichzarte auch gesalzen, ge
@@ -78,34 +78,35 @@ Lebensmittel-Probe: 0 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | Netto Marken-Discount | Speisekartoffeln XXL | art=kg liter=4 stueck=1 ml=4000 preis=2.99 | 4 kg Netz Deutschland, versch. Kocheigenschaften
   Probe: Kartoffeln | Kaufland | Speisekartoffeln | art=kg liter=1 stueck=1 ml=1000 preis=0.79 | Dtsch. lose Qualität II je kg
   Probe: Kartoffeln | Lidl | Bio-Speisekartoffeln | art=kg liter=2 stueck=1 ml=2000 preis=2.79 | Bioland Deutsche Qualität I Je 2 kg
-  Erkunden: offer 0: ValueOriginalPrice:o,offerData:r,bubbleIndex:t})},p=({elBubble:e,bubbleIndex:t,offerData:r})=>{let i=e.querySelector(`.bubble__price`),o=i.querySelector(`.bubble__price-value`);o&&(r.primaryType!==n.PRIMARY_TYPE.PROMO_PLUS||t===1?(o.textContent=r.price??``,a({elBubble:e,elem:i,value:r.price??``,offerData:r,bubbleIndex:t})):(o.textContent=r.benefitPrice??``,a({elBubble:e,elem:i,value:r.benefitPrice??``,offerData:r,bubbleIndex:t})))},m=e=>{e.querySelector(`[data-bubble-secondary]`)?.remove()},h=({elBubble:e,bubbleIndex:t,offerData:n,tileIndex:r})=>{o({elBubble:e,tileIndex:r}),s({elBubble:e,bubbleIndex:t,offerData:n,tileIndex:r}),c({elBubble:e,bubbleIndex:t,offerData:n,tileIndex:r}),f({elBubble:e,bubbleIndex:t,offerData:n,tileIndex:r}),p({elBubble:e,bubbleIndex:t,offerData:n,tileIndex:r})};return Object.freeze({generateBubble:({elOffer:e,offerData:t,tileIndex:r
-  Erkunden: offer 1: })=>{if(t.primaryType===n.PRIMARY_TYPE.PROMO_PLUS)e.querySelectorAll(`.bubble`).forEach((e,n)=>{h({elBubble:e,bubbleIndex:n,offerData:t,tileIndex:r})});else{m(e);let n=e.querySelector(`.bubble`);h({elBubble:n,bubbleIndex:0,offerData:t,tileIndex:r})}},_handleScreenReaderCrossOutLabel:i,_handleScreenReaderPriceLabel:a})}var n={PRIMARY_TYPE:{OFFER:`offer`,PROMO:`promo`,PROMO_PLUS:`promoPlus`,CONTENT_TEASER:`contentTeaser`}},r=`Aktion`,i=`Preisknaller`,a=25,o=`{0}`,s=`⁰¹²³⁴⁵⁶⁷⁸⁹`,c=e=>{let t=e.length;for(;t>0&&s.includes(e.charAt(t-1));)--t;return e.slice(t)},l=e=>{if(!e)return null;let t=e.split(`-`),n=t.length>1?t[1]:t[0],r=Number.parseInt(n,10);return Number.isNaN(r)?null:r},u=e=>{let t=l(e);return t!==null&&t<=a?i:r},d=e=>{let t=(e??``).trim();return t.includes(`%`)&&!t.startsWith(`-`)?`-${t}`:t};function f(){let r=({title:e,price:t})=>`${e.replaceAll(`*`,``
-  Erkunden: offer 2: )} ${t.replaceAll(`*`,``).replace(`.-`,``)}`,i=({title:e,price:t,subline:n=``})=>`${e.replaceAll(`*`,``)} ${t.replaceAll(`*`,``).replace(`.-`,``)} ${n}`,a=(e,t)=>e.primaryType===n.PRIMARY_TYPE.PROMO||e.primaryType===n.PRIMARY_TYPE.PROMO_PLUS?s(e,t):e.type?`${e.quantity??``} ${e.basePrice??``}`:`${e.quantity??``}`,s=(e,t)=>{if(!t)return``;let n=e.quantity?`${e.quantity} `:``,{withAppLabel:r=``,withoutAppLabel:i=``}=t.dataset;if(e.basePrice||e.benefitGroundPrice){let t=e.benefitGroundPrice?`${r}: ${n} ${e.benefitGroundPrice}`:``,a=e.basePrice?`${i}: ${n} ${e.basePrice}`:``;return`${t}${t&&a?`; `:``}${a}`}return n},l=({elImage:e,offerData:t})=>{let{imageAlt:n,imageTitle:o}=t.imageRendition??{},s=t.title??``,c=t.price??``;e.alt=n||r({title:s,price:c}),e.title=o||i({title:s,price:c,subline:a(t)})},f=({elOffer:e,offerData:t})=>{let r=e.querySelector(`[data-badge-h
-  Erkunden: offer 3: eader]`);t.primaryType!==n.PRIMARY_TYPE.PROMO&&r?.remove()},p=e=>c(e.querySelector(`.bubble:not([data-bubble-secondary]) .bubble__price-value`)?.textContent?.trim()??``),m=({elOffer:e,offerData:t})=>{t.lowestPrice30Days?.trim()||e.querySelector(`.offer-tile__info-text`)?.remove()},h=({elOffer:e,offerData:t})=>{let r=e.querySelector(`.offer-tile__max-purchase`);if(!r)return;if(t.primaryType!==n.PRIMARY_TYPE.PROMO&&t.primaryType!==n.PRIMARY_TYPE.PROMO_PLUS||!t.maxFactor){r.remove();return}let{label:i=o}=r.dataset,a=p(e);r.textContent=`${i.replace(o,t.maxFactor.trim())}${a}`},g=({elLink:e,offerData:t})=>{e.href=t.linkHref??``,e.dataset.detailUrl=t.detailLinkHref??``,e.setAttribute(`rel`,`nofollow`)},_=({elBadgeTemplate:e,text:t=``,bgColor:n,label:r,color:i,hasIcon:a=!1,hasLabel:o=!1})=>{let s=e.content.cloneNode(!0),c=s.firstElementChild,l=s.querySelector(`.bad
-  Erkunden: offer 4: ge-label-template`);if(c.textContent=r??t,c.classList.add(`badge--lg`,`t-bg--${n}`,`t-color--${i}`),a&&c.classList.add(`badge--icon`),o){let e=l.content.cloneNode(!0).firstElementChild;c.appendChild(e)}return c},v=({elBadgeTemplate:e,offerData:t,week:r})=>{let i=u(r),a={ACTION_PRICE:{text:i,bgColor:`red`,color:`white`},DISCOUNT:{text:d(t.discountPercentage),bgColor:`red`,color:`white`},ADVANTAGE:{text:d(t.advantage),bgColor:t.primaryType===n.PRIMARY_TYPE.PROMO?`blue-petrol`:`red`,color:`white`},BENEFIT:{text:d(t.benefitValue),bgColor:`blue-petrol`,color:`white`},ONLY_ONLINE:{text:`Nur online`,bgColor:`blue-petrol`,color:`white`},ALSO_ONLINE:{text:`Auch online`,bgColor:`blue-petrol`,color:`white`},BARGAIN_PRICE:{text:i,bgColor:`red`,color:`white`}},o=[];return t.primaryType===n.PRIMARY_TYPE.PROMO?y(o,e,t,a):t.primaryType===n.PRIMARY_TYPE.PROMO_PLUS?b(o,e,t,a)
-  Erkunden: offer 5: :x(o,e,t,a),S(o,e,t,a),o},y=(e,t,n,r)=>{n.advantage&&e.push(_({elBadgeTemplate:t,...r.ADVANTAGE,hasIcon:!0}))},b=(e,t,n,r)=>{n.benefitValue&&e.push(_({elBadgeTemplate:t,...r.BENEFIT,hasIcon:!0,hasLabel:!0})),n.advantage&&e.push(_({elBadgeTemplate:t,...r.ADVANTAGE})),n.bargainPrice&&e.push(_({elBadgeTemplate:t,...r.BARGAIN_PRICE}))},x=(e,t,n,r)=>{n.discount&&n.discount.toString()===`true`&&e.push(_({elBadgeTemplate:t,...r.DISCOUNT})),n.onlyOnline&&e.push(_({elBadgeTemplate:t,...r.ONLY_ONLINE})),n.alsoOnline&&e.push(_({elBadgeTemplate:t,...r.ALSO_ONLINE})),n.bargainPrice&&e.push(_({elBadgeTemplate:t,...r.BARGAIN_PRICE}))},S=(e,t,n,r)=>{n.actionPrice&&e.push(_({elBadgeTemplate:t,...r.ACTION_PRICE}))};return Object.freeze({generateOffer:({elOfferTemplate:n,offerData:r,tileIndex:i,addEager:o,week:s})=>{let c=n.content.cloneNode(!0).firstElementChild,u=c.querySele
-  Erkunden: offer 6: ctor(`.offer-tile__image`),d=t();i===0&&c.querySelector(`.offer-tile`)?.classList.add(`offer-tile--highlight`);let p=c.querySelector(`.offer-tile__headline`);p&&(p.textContent=r.title??``);let _=c.querySelector(`.offer-tile__unit-price`);_&&(_.textContent=a(r,_)),f({elOffer:c,offerData:r});let y=c.querySelector(`.badge__container`),b=c.querySelector(`.badge-template`),x=v({elBadgeTemplate:b,offerData:r,week:s});return y?.append(...x),d.generateBubble({elOffer:c,offerData:r,tileIndex:i}),h({elOffer:c,offerData:r}),m({elOffer:c,offerData:r}),e({elTile:c,imageClass:`offer-tile__image`,imageRendition:r.imageRendition,addEager:o,tileIndex:i}),u&&l({elImage:u,offerData:r}),g({elLink:c,offerData:r}),typeof globalThis<`u`&&globalThis.pageData?.products&&r.uuid&&r.productData&&(globalThis.pageData.products[r.uuid]=JSON.parse(r.productData)),c}})}export{f as n,t as r,
-  Erkunden: offer 7: n as t};
-  Erkunden: HTML primaryType: 0 · 
-  Erkunden: HTML listPrice: 0 · 
-  Erkunden: HTML data-offer: 20 ·  <button class="category-bar d-flex t-bg--orange-carrot" data-css-component="button-ripple" data-js-component="button-ripple" data-js-ripple="true" data-offers="true" > <img alt="" class="category-bar__img" height="50" loading="eager" sizes="75px" src="https://cdn.penny.de/dam/jcr:73e3b489-99ed-4116-9a7f-6b81c497119b/Top%20Angebote_category_image.png?impol
-  Erkunden: HTML application/json: 0 · 
-  Erkunden: HTML data-regions: 0 · 
-  Erkunden: HTML sellingRegion: 0 · 
-  Erkunden: HTML /angebote/20: 0 · 
+  Erkunden: Komponenten: bubble-price button-ripple icon-html-by-name step-progress app-store-link back-to-top bot-validation collapsible-content-group collapsible-content consent carousel carousel-swiper video-actions collapsible-multiple-exclusive collapsible tabs-offers content-tile-list content-tile-slider-progress-bar content-tile-slider-slides content-tile-slider-test-utils content-tile-slider-video-controls content-tile-slider-viewport-observer content-tile-slider.constants content-tile-slider content-tile-region-filter content-tile-video cta-component dropdown-search info-toggletip input-date input-file-validate input-file input-select zip-search not-found notification-tile rating tile-list-consts tile-list offer-tile teaser-steps teaser tile-video toast-notification video week-teaser category-offers category-offers.types category content-teaser offer-image-utils offer content-hub-sli
+  Erkunden: Komponenten 2: nt-hub-slider crm-form form-actions form-animation form-loading-spinner form-redirect-newsletter form-redirect-raffle form-redirect-vote form-redirect form-validate market-finder-validate detail-block-carousel contest-raffle game-raffle quiz-raffle single-select-raffle spot-difference-raffle throw-raffle handout iframe image-gallery jump-marks input-wrapper input market-finder-active market-finder-form market-finder-generate market-finder-geolocate market-finder-map market-finder-results market-finder market-locator market-finder-current market-finder-select market-services market-status position-locator media-carousel modal-category-offers modal-category modal-handout modal-market-finder modal-non-food modal-pdp modal-rating modal newsletter podio-form recipe recipe-pdf recipes-ingredients recipe-tags shopping-gallery body-scroll-state region scrollable site-header s
+  Erkunden: Auf der Seite: site-header button-ripple tabs-offers market-finder-select modal-market-finder category-offers|notification-tile modal-category-offers tile-list offer-tile|button-ripple teaser|button-ripple tile-video handout modal-handout toast-notification modal-non-food collapsible modal-pdp back-to-top|button-ripple
+  Erkunden: Prüfe: tabs-offers notification-tile tile-list offer-tile tile-video category-offers modal-category-offers
+  Erkunden: components/tile-list.U20s3M9K.js: 1669
+  Erkunden:     ks/winner.Dk3S08JA.js";import{p as r}from"../chunks/market-locator.C6qckVnY.js";import{n as i,t as a}from"../chunks/current-time.C5FGfi2i.js";function o(o){let s=o.dataset.categoryType||``,c=o.dataset.restUri||``,l=`l-visually-hidden`,u=async()=>{let e=r();if(e){let{date:t}=i(a(new Date).time),r=t.getFullYear(),s=await n({wawi:e.wawi,restUri:c,winnersType:`winner`,winnersYear:r-1}),u=o.querySelectorAll(`[data-mode="foerderpenny"]`);s&&s.length>0&&u.forEach(t=>{
+  Erkunden: chunks/winner.Dk3S08JA.js: 272
+  Erkunden:     var e=({wawi:e,restUri:t,winnersType:n,winnersYear:r})=>{let i=`${t}/foerderpenny/organizations?year=${r}&type=${n}`;return fetch(i).then(e=>e.json()).then(t=>t.filter(t=>(t.wawi??``).split(`,`).map(e=>e.trim()).includes(e??``))).catch(e=>console.warn(e))};export{e as t};
+  Erkunden: chunks/category-offers.CerXnT9E.js: 6004
+  Erkunden:     NVVs.js";var u=`tile-list__item--placeholder`,d=`offer-tile--highlight`,f=`tile-list__item`,p=`tile-list__item--highlight`,m=new Set,h=new Set,g=new Map,_=()=>g.clear(),v=async(e,t)=>{try{let n=await fetch(e,{priority:t});if(!n.ok)throw Error(`Unexpected response status ${n.status}`);return await n.json()}catch{return console.warn(`Offers for current week unavailable`),null}},y=async(e,t=`auto`)=>(g.has(e)||g.set(e,(async()=>{let n=await v(e,t)??await v(e,t);ret
+  Erkunden:     OfferTemplate:_,elTeaserTemplate:v}=r,y=null;n.forEach((e,t)=>{let n=h[t];try{y=e.primaryType===c.PRIMARY_TYPE.OFFER||e.primaryType===c.PRIMARY_TYPE.PROMO||e.primaryType===c.PRIMARY_TYPE.PROMO_PLUS?i.generateOffer({elOfferTemplate:_,offerData:e,tileIndex:t,addEager:p,week:m}):l({elTeaserTemplate:v,offerData:e,tileIndex:t,editMode:o,organisation:s??void 0,currentLSMarket:f??void 0,addEager:p})}catch(e){console.warn(e)}g.shift(),y?(n.classList.remove(u),t===0&&y.classLis
+  Erkunden:     [data-period-category="false"]`),m=o.querySelectorAll(`.tabs__content--next-week .js-category-section[data-period-category="false"]`),{currentWeek:h,nextWeek:g}=f.dataset,{restUri:_}=o.dataset,v=`${_}/offers`,b=`${v}/by-category`,x=location.href.includes(`.magnolia/admincentral`),S=null,C=null,w=!1,E=s(),D=async({elCategory:e,baseUrl:t,week:n,region:r})=>{let i=r?`?region=${r}`:``,a=e.dataset.categoryName;T({elCategory:e,oCategoryOffers:await y(`${t}/${n}/${a}${i
+  Erkunden:     let i=t===`next`,a=i?g:h,o=i?S?.nextWeekSellingRegion:S?.sellingRegion,s=o?`?region=${o}`:``;y(`${b}/${a}/${r}${s}`,`low`)},M=()=>{let e=document.querySelector(`link[rel="preload"][as="fetch"][href*="/offers/by-category/"]`)?.getAttribute(`href`);e&&y(e)};return Object.freeze({init:async()=>{if(S=n(),document.addEventListener(a.PREFETCH_CATEGORY,j),M(),S){let{date:e}=r(i(new Date).time),n=e.getFullYear();C=await t({wawi:S.wawi,restUri:_,winnersType:`winner`,winne
+  Erkunden: chunks/pinia.DFg5ff0t.js: 6121
+  Erkunden:     null};function C(e,{autoBom:t=!1}={}){return t&&/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(e.type)?new Blob([` `,e],{type:e.type}):e}function w(e,t,n){let r=new XMLHttpRequest;r.open(`GET`,e),r.responseType=`blob`,r.onload=function(){k(r.response,t,n)},r.onerror=function(){console.error(`could not download file`)},r.send()}function T(e){let t=new XMLHttpRequest;t.open(`HEAD`,e,!1);try{t.send()}catch{}return t.status>=200&&t.status<
+  Erkunden: geprüft 26
 Märkte 47178: 0 s, ["Lidl=887","PENNY=284","Kabs PolsterWelt=45","Bosch Car Service=10","SCHAFFRATH=267","HORNBACH=198","KiK=50","Opti Wohnwelt=44","ALDI SÜD=468","Thomas Philipps=185","ROSSMANN=7","toom Baumarkt=319","OBI=25","Handelshof=270","XXXLutz=1497","SB-Möbel BOSS=309","Möbel Inhofer=80","Netto Marken-Discount=357","REWE=234 (47053)"]
 Markt 126679: 0 s, {"name":"Lidl","total":885,"seiten":"885/885/885","geladen":885,"ohneMenge":0,"kategorien":65,"ohneKat":0,"kp":"3=21 5=56 6=7 10=6 11=3 12=3 14=10 15=3 16=50 17=1 20=69 23=9 35=6 50=23 53=9 69=15 70=4 83=5 85=14 91=6 94=24 95=8 97=21 101=1 102=17 103=31 104=20 106=6 107=64 108=8 110=24 112=11 113=6 116=2 119=3 120=31 122=3 126=1 129=2 137=6 142=2 143=33 144=26 147=7 149=13 187=2 191=8 193=8 218=1 363=32 364=29 382=3 383=3 384=1 385=4 386=4 398=34 402=3 415=6 427=26 428=7 454=6 473=7 497=8 630=3","beispiel":"Lidl Backshop Kakao Donuts XXL 2.69 kg Kuchen & Feinbackwaren"}
 Markt 126735: 1 s, {"name":"Netto Marken-Discount","total":357,"seiten":"357/357/357","geladen":357,"ohneMenge":0,"kategorien":56,"ohneKat":0,"kp":"3=6 5=7 6=1 10=1 11=1 12=1 14=1 16=3 17=1 20=36 23=5 26=2 50=8 53=7 69=16 70=5 83=2 85=5 97=3 101=1 102=8 103=20 104=18 106=2 107=28 108=4 110=12 112=11 113=4 116=1 119=1 120=15 136=1 142=3 143=18 144=5 147=14 149=14 174=11 187=1 191=8 193=4 363=4 364=4 382=3 383=2 384=2 398=6 402=3 415=3 427=1 428=1 454=1 473=7 497=1 630=4","beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792932042","token":true}
+Konto anlegen: {"name":"test1792932196","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792932042","daten":{}}
+Konto Daten: {"name":"test1792932196","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792932042"]
+Konto Anfragen mit Code: ["test1792932196"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792932042","token":true}
+Neues Passwort mit Code: {"name":"test1792932196","token":true}
 Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
 Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
