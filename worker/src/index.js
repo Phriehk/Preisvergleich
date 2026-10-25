@@ -6,7 +6,14 @@ import { WorkerEntrypoint } from "cloudflare:workers";
 const APP_URL = "https://preise.phriehk.workers.dev/";
 const UA = { "User-Agent": "Mozilla/5.0 (privates Testprojekt)" };
 const SEARCH = "https://api.marktguru.de/api/v1/offers/search";
-const PLZ = "47178", PLZ2 = "46535", PLZ2_MAERKTE = ["penny", "thomas philipps"], PLZ3 = "47053", PLZ3_MAERKTE = ["rewe"];
+const PLZ = "47178";
+// Märkte aus Nachbar-Postleitzahlen, die Marktguru für die eigene nicht (oder nicht passend) führt: PENNY und Thomas Philipps aus Dinslaken,
+// REWE aus der Duisburger Innenstadt, dm aus Duisburg-Meiderich (dm-Preise gelten bundesweit)
+const NACHBARN = [{ plz: "46535", maerkte: ["penny", "thomas philipps"] }, { plz: "47053", maerkte: ["rewe"] }, { plz: "47137", maerkte: ["dm-drogerie markt"] }];
+const nachbarPasst = (plz, name) => ((NACHBARN.find(n => n.plz === plz) || {}).maerkte || []).includes(String(name || "").trim().toLowerCase());
+// Nur Märkte mit Lebensmitteln und Drogerie (dieselbe Liste wie auf der Seite); Möbel-, Bau- und Modemärkte werden gar nicht erst gezählt
+const LM_MAERKTE = ["lidl", "aldi", "kaufland", "rewe", "penny", "netto", "edeka", "trinkgut", "thomas philipps", "handelshof", "rossmann", "dm", "norma", "globus", "marktkauf", "famila", "getränke", "nahkauf", "hit ", "real", "müller", "combi", "np ", "mix markt", "metro", "denns", "alnatura", "budni", "tegut", "v-markt", "wasgau"];
+const lmMarkt = name => LM_MAERKTE.some(x => (String(name || "").trim().toLowerCase() + " ").startsWith(x));
 const SUCHEN = { "Coca-Cola": ["Coca-Cola", "Coca Cola", "Cola"], "Red Bull": ["Red Bull"], "Monster Energy": ["Monster Energy", "Monster"] };
 const KW = { "Coca-Cola": ["coca"], "Red Bull": ["red bull", "redbull"], "Monster Energy": ["monster energy"] };
 const AUSSCHLUSS = ["munch", "mash"];
@@ -144,22 +151,31 @@ function kompakt(o) {   // ein Angebot im selben Format wie die übrigen Angebot
     art: mg ? mg[2] : null, liter: menge, stueck: st, ml: menge && st ? Math.round(menge * 1000 / st) : null, preis_pro_liter: o.price && menge ? Math.round(o.price / menge * 100) / 100 : null,
     gueltig_von: lokalDatum(v.from), gueltig_bis: lokalDatum(v.to), bild: bildUrl(o), link: link(o), kat: String(k.name || ""), kp: +k.parentId || 0 };
 }
+const zaehle = (env, x) => mgHole(env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "1", offset: "0", q: x.name, retailers: x.id, zipCode: x.plz })).then(r => r.totalResults || 0);
 async function marktListe(env, plz, passt, ohne) {   // Märkte einer Postleitzahl mit der Zahl ihrer Angebote
   const j = await mgHole(env, PUBLISHERS + "?" + new URLSearchParams({ as: "web", zipCode: plz, limit: "60" }));
   const liste = (j.results || []).map(x => ({ id: String(x.id || "").replace(/\D/g, ""), name: String(x.name || "").trim(), plz }))
-    .filter(x => x.id && x.name && (!passt || passt(x.name.toLowerCase())) && !(ohne || []).includes(x.id));
-  const n = await parallel(liste.map(x => () => mgHole(env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "1", offset: "0", q: x.name, retailers: x.id, zipCode: plz })).then(r => r.totalResults || 0).catch(() => null)), 6);
+    .filter(x => x.id && x.name && lmMarkt(x.name) && (!passt || passt(x.name.toLowerCase())) && !(ohne || []).includes(x.id));
+  const n = await parallel(liste.map(x => () => zaehle(env, x).catch(() => null)), 6);
   liste.forEach((x, i) => { x.n = n[i]; });
   return liste;
 }
 async function maerkteRegion(env, plz) {   // für die eigene Gegend kommen wie bei den Favoriten einzelne Märkte aus den Nachbar-Postleitzahlen dazu
-  const key = "mkl2:" + plz, alt = await env.PV.get(key, "json");
+  const key = "mkl3:" + plz, alt = await env.PV.get(key, "json");
   if (alt && Date.now() - alt.t < 12 * 3600e3) return alt.liste;
   let liste = await marktListe(env, plz);
-  if (plz === PLZ) for (const [p2, passt] of [[PLZ2, n => PLZ2_MAERKTE.some(z => n.includes(z))], [PLZ3, n => PLZ3_MAERKTE.includes(n)]]) {
-    try { liste = liste.concat(await marktListe(env, p2, passt, liste.map(x => x.id))); } catch (e) {}
+  if (plz === PLZ) for (const nb of NACHBARN) {
+    try { liste = liste.concat(await marktListe(env, nb.plz, n => nb.maerkte.includes(n), liste.map(x => x.id))); } catch (e) {}
   }
+  // Marktguru nennt einen Markt manchmal kurz nicht (z. B. Kaufland am Sonntag, bevor das neue Prospekt gilt), obwohl seine Angebote
+  // in der Suche schon stehen: Märkte, die in den letzten 14 Tagen genannt wurden, werden dann trotzdem gezählt
+  const bk = "mkbek:" + plz, bek = (await env.PV.get(bk, "json")) || {}, jetzt = Date.now();
+  const fehlt = Object.entries(bek).filter(([k, v]) => jetzt - v.t < 14 * 864e5 && !liste.some(x => x.plz + "|" + x.id === k)).map(([k, v]) => ({ id: k.split("|")[1], name: v.name, plz: v.plz }));
+  if (fehlt.length) { const n = await parallel(fehlt.map(x => () => zaehle(env, x).catch(() => null)), 4); fehlt.forEach((x, i) => { x.n = n[i]; }); liste = liste.concat(fehlt.filter(x => x.n)); }
   liste = liste.filter(x => x.n !== 0);
+  for (const x of liste) if (x.n && !fehlt.includes(x)) bek[x.plz + "|" + x.id] = { name: x.name, plz: x.plz, t: jetzt };
+  for (const [k, v] of Object.entries(bek)) if (jetzt - v.t > 30 * 864e5) delete bek[k];
+  await env.PV.put(bk, JSON.stringify(bek));
   await env.PV.put(key, JSON.stringify({ t: Date.now(), liste }), { expirationTtl: 86400 });
   return liste;
 }
@@ -167,7 +183,8 @@ async function marktAngebote(env, ctx, sp, ip) {
   const plz = sp.get("plz") || PLZ, id = String(sp.get("id") || "").replace(/\D/g, "");
   if (!plzOk(plz) || !id) throw Object.assign(new Error("Ungültige Anfrage"), { status: 400 });
   const key = "mk4:" + plz + ":" + id, alt = await env.PV.get(key, "json");
-  if (alt && Date.now() - alt.t < 6 * 3600e3) return alt;
+  const mitProspekt = async e => { try { prospekteErgaenzen(e.angebote, await prospekteGueltig(env), e.name); } catch (x) { /* nur eine Zugabe */ } return e; };   // auch nach dem Zwischenspeicher: ein neues Prospekt gilt sofort
+  if (alt && Date.now() - alt.t < 6 * 3600e3) return mitProspekt(alt);
   if (begrenzt("mk:" + ip, 30) || !(await tagesOk(env, "markt", 400))) { if (alt) return alt; throw zuViel(); }
   const m = (await maerkteRegion(env, plz)).find(x => x.id === id);
   if (!m) throw Object.assign(new Error("Diesen Markt gibt es hier gerade nicht"), { status: 404 });
@@ -179,7 +196,7 @@ async function marktAngebote(env, ctx, sp, ip) {
   if (/^penny\b/i.test(m.name)) try { pennyErgaenzen(angebote, await pennyStand(env), true); } catch (e) { /* nur eine Zugabe */ }
   const erg = { t: Date.now(), id, name: m.name, plz: m.plz, total: erste.total, seiten: info, angebote };
   await env.PV.put(key, JSON.stringify(erg), { expirationTtl: 86400 });
-  return erg;
+  return mitProspekt(erg);
 }
 
 /* ---------- PENNY direkt von penny.de: frühere Preise bzw. UVP und App-Preise, die Marktguru bei PENNY nicht mitliefert ----------
@@ -206,13 +223,13 @@ function pennyKachel(o, kat) {   // eine Kachel von penny.de, verkleinert; früh
     ...(app && app < p ? { app } : {}), k: kat, ...(o.linkHref ? { l: PENNY + String(o.linkHref).split("~")[0] } : {}) };
 }
 const woerter = t => new Set(flach(t).split(/[^a-z0-9]+/).filter(x => x.length >= 3));
-function pennyErgaenzen(liste, penny, alle) {   // Angebote von PENNY (Marktguru) um früheren Preis bzw. UVP und App-Preis ergänzen; alle = Liste nur aus PENNY (Ansicht „Nach Markt“)
-  if (!penny || !penny.wochen || !Array.isArray(liste)) return 0;
+function angebotErgaenzen(liste, wochen, marktPasst, alle) {   // Angebote (Marktguru) um früheren Preis bzw. UVP und App-Preis ergänzen; alle = Liste nur aus diesem Markt („Nach Markt“)
+  if (!wochen || !Array.isArray(liste)) return 0;
   const jeWoche = {}, gesamt = [];
-  for (const [w, l] of Object.entries(penny.wochen)) { jeWoche[pWoche(w)] = l.map(o => ({ ...o, w: woerter(o.t) })); gesamt.push(...jeWoche[pWoche(w)]); }
+  for (const [w, l] of Object.entries(wochen)) { jeWoche[pWoche(w)] = (l || []).map(o => ({ ...o, w: woerter(o.t) })); gesamt.push(...jeWoche[pWoche(w)]); }
   let n = 0;
   for (const x of liste) {
-    if (!x || !x.preis || (!alle && !/^penny\b/i.test(String(x.markt || "")))) continue;
+    if (!x || !x.preis || (!alle && !marktPasst(String(x.markt || "")))) continue;
     const xw = woerter(`${x.marke || ""} ${x.produkt || ""}`); if (!xw.size) continue;
     const text = flach(`${x.produkt || ""} ${x.beschreibung || ""}`);
     let best = null, bs = 0, unklar = false;
@@ -220,7 +237,7 @@ function pennyErgaenzen(liste, penny, alle) {   // Angebote von PENNY (Marktguru
       if (!(Math.abs(o.p - x.preis) < 0.005 || (o.app && Math.abs(o.app - x.preis) < 0.005))) continue;
       let g = 0; xw.forEach(z => { if (o.w.has(z)) g++; });
       let s = g / Math.max(1, Math.min(xw.size, o.w.size)); if (s < 0.5) continue;
-      const zahlen = o.q.match(/\d+(?:,\d+)?/g) || [];
+      const zahlen = String(o.q || "").match(/\d+(?:,\d+)?/g) || [];
       if (zahlen.length && zahlen.every(z => text.includes(z))) s += 0.2;   // gleiche Menge („je 500 g“)
       if (s > bs + 1e-9) { best = o; bs = s; unklar = false; }
       else if (Math.abs(s - bs) < 1e-9 && (o.alt !== best.alt || o.app !== best.app)) unklar = true;
@@ -233,6 +250,7 @@ function pennyErgaenzen(liste, penny, alle) {   // Angebote von PENNY (Marktguru
   }
   return n;
 }
+const pennyErgaenzen = (liste, penny, alle) => angebotErgaenzen(liste, penny && penny.wochen, m => /^penny\b/i.test(m), alle);
 async function pennyStand(env, ctx, neu) {   // gespeicherte PENNY-Daten; neu = frisch holen, wenn älter als 20 Stunden (klappt das nicht, gelten die alten noch 4 Tage)
   const alt = await env.PV.get("penny", "json");
   if (!neu) return alt && Date.now() - alt.t < 8 * 864e5 ? alt : null;
@@ -249,25 +267,104 @@ async function pennyStand(env, ctx, neu) {   // gespeicherte PENNY-Daten; neu = 
   } catch (e) { if (alt && Date.now() - alt.t < 4 * 864e5) return alt; throw e; }
 }
 
-/* Vorübergehende Diagnose: warum fehlt Kaufland unter „Nach Markt“? (nur mit Zugangscode) */
-async function erkunden(env) {
-  const out = [], ids = { "dm-drogerie markt": "127057" };
-  for (const plz of ["47138", "47137", "47809"]) {
-    try {
-      const j = await mgHole(env, PUBLISHERS + "?" + new URLSearchParams({ as: "web", zipCode: plz, limit: "100" }));
-      const l = (j.results || []).map(x => ({ n: String(x.name).trim(), id: String(x.id).replace(/\D/g, "") }));
-      l.filter(x => /globus|\bdm\b|edeka/i.test(x.n)).forEach(x => { ids[x.n] = x.id; });
-      out.push(`Publishers ${plz}: ${l.length} · ${l.map(x => x.n + "=" + x.id).join(", ").slice(0, 700)}`);
-    } catch (e) { out.push(`Publishers ${plz}: ${e.message}`); }
+/* ---------- Prospekte (PDF, auf dem Gerät gelesen) und Normalpreise ----------
+   Die Seite liest ein Prospekt als PDF auf dem Gerät und schickt nur die erkannten Angebote: Name, Menge, Preis, früherer Preis bzw. UVP.
+   Gespeichert je Markt unter "prospekt:<markt>". Die früheren Preise kommen in den Normalpreis-Speicher "normal" (dazu täglich die
+   früheren Preise der Marktguru- und PENNY-Angebote). Für die Favoriten entsteht daraus "normalpreise": der Vorschlag für den Normalpreis. */
+const mBasis = m => String(m || "").replace(/\s*\(\d{5}\)\s*$/, "").trim();
+const mSchluessel = m => flach(mBasis(m)).replace(/[^a-z0-9]+/g, "-").slice(0, 40);
+const NORMAL_MAX = 3000;
+function prospektPruefen(b) {   // nur erwartete Felder und Größen
+  const datum = x => /^\d{4}-\d{2}-\d{2}$/.test(String(x || "")) ? String(x) : "";
+  const zahl = x => Number.isFinite(+x) && +x > 0 && +x < 2000 ? Math.round(+x * 100) / 100 : null;
+  const markt = String((b && b.markt) || "").replace(/\s+/g, " ").trim().slice(0, 40);
+  if (!markt || !Array.isArray(b.angebote)) throw konto(400, "Markt oder Angebote fehlen");
+  const angebote = [];
+  for (const o of b.angebote.slice(0, 1500)) {
+    const t = String((o && o.t) || "").replace(/\s+/g, " ").trim().slice(0, 120), p = zahl(o && o.p), alt = zahl(o && o.alt), app = zahl(o && o.app);
+    if (t.length < 2 || !p) continue;
+    angebote.push({ t, q: String(o.q || "").replace(/\s+/g, " ").trim().slice(0, 120), p, ...(alt && alt > p ? { alt, ...(o.uvp ? { uvp: 1 } : {}) } : {}), ...(app && app < p ? { app } : {}) });
   }
-  for (const [name, id] of Object.entries(ids)) {
-    const z = [];
-    for (const plz of ["47178", "47138", "47137", "47166", "47169", "46535", "46045", "47441", "47057", "47119", "47059"]) {
-      try { const j = await mgHole(env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "1", offset: "0", q: name.split(" ")[0], retailers: id, zipCode: plz })); z.push(`${plz}:${j.totalResults}`); } catch (e) { z.push(`${plz}:F`); }
+  if (!angebote.length) throw konto(400, "Keine Angebote erkannt");
+  return { markt, von: datum(b.von), bis: datum(b.bis), angebote };
+}
+const markeAusName = t => { const m = String(t).match(/^((?:[A-ZÄÖÜ0-9][A-ZÄÖÜ0-9&.'’+-]*\s+){1,3})(?=[A-ZÄÖÜa-zäöüß]*[a-zäöüß])/); return m && m[1].replace(/[^A-ZÄÖÜ]/g, "").length >= 2 ? m[1].trim() : ""; };
+function normalMerken(mem, e) {   // e: {m, n, b, q, p, u, s, d}; je Markt, Produkt und Menge der neueste
+  const k = mSchluessel(e.m) + "|" + prodK(`${e.b || ""} ${e.n}`) + "|" + (String(e.q || "").match(/\d+(?:[.,]\d+)?/g) || []).join("x");
+  const alt = mem[k];
+  if (alt && alt.d > e.d) return;
+  mem[k] = e;
+}
+async function normalSpeichern(env, mem) {
+  let l = Object.entries(mem);
+  const grenze = new Date(Date.now() - 365 * 864e5).toISOString().slice(0, 10);
+  l = l.filter(([, e]) => e.d >= grenze).sort((a, b) => b[1].d.localeCompare(a[1].d)).slice(0, NORMAL_MAX);
+  await env.PV.put("normal", JSON.stringify(Object.fromEntries(l)));
+}
+function nurLocker(nur) {   // wie nurPruefer, aber Namen aus Prospekten enthalten Marke und Produkt oft zusammen mit Sorten („Butter oder Die Streichzarte“)
+  const streng = nurPruefer(nur), l = [...(nur || [])].map(String).filter(x => !/^sorte:/i.test(x)).map(prodK).filter(x => x.length >= 4);
+  return o => streng(o) || (l.length && l.some(k => prodK(`${o.brand || ""} ${o.name || ""}`).includes(k)));
+}
+async function normalpreiseBerechnen(env, mem) {   // Normalpreise je Favorit (für den Vorschlag in der Liste)
+  mem = mem || (await env.PV.get("normal", "json")) || {};
+  const { info } = favAuswerten(await lade(env, "favoriten", "json"));
+  const aus = [], eintraege = Object.values(mem);
+  for (const [gruppe, f] of Object.entries(info)) {
+    const wort = f.suche || gruppe, nurOk = nurLocker(f.nur);
+    for (const e of eintraege) {
+      const o = { name: e.n, brand: e.b || "", desc: e.q || "" };
+      if (!istProdukt(wort, o, f.aus) && !(f.nur && f.nur.size && passtLocker(wort, o, f.aus))) continue;
+      if (!nurOk(o)) continue;
+      const mg = mengenangabe(o); if (!mg || !(mg[1] > 0)) continue;
+      aus.push({ gruppe, markt: e.m, marke: e.b || "", produkt: e.n, beschreibung: e.q || "", preis: e.p, ...(e.u ? { uvp: 1 } : {}), quelle: e.s, datum: e.d,
+        art: mg[2], liter: mg[1], stueck: mg[0], ml: Math.round(mg[1] * 1000 / mg[0]) });
     }
-    out.push(`  ${name}=${id}: ${z.join(" ")}`);
   }
-  return out;
+  await env.PV.put("normalpreise", JSON.stringify(aus));
+  return aus;
+}
+async function prospekteGueltig(env) {   // Prospekte, deren Woche noch nicht vorbei ist (für das Ergänzen der Angebote)
+  const idx = (await env.PV.get("prospekte", "json")) || [], h = heute(), aus = [];
+  for (const x of idx) if (!x.bis || x.bis >= h) { const d = await env.PV.get("prospekt:" + mSchluessel(x.markt), "json"); if (d) aus.push(d); }
+  return aus;
+}
+function prospekteErgaenzen(liste, prospekte, alle) {   // alle = Name des Marktes, dessen Liste das ist („Nach Markt“)
+  let n = 0;
+  for (const d of prospekte || []) {
+    const k = mSchluessel(d.markt);
+    if (alle && mSchluessel(alle) !== k) continue;
+    n += angebotErgaenzen(liste, { [d.von ? isoWoche(d.von) : "x"]: d.angebote }, m => mSchluessel(m) === k, !!alle);
+  }
+  return n;
+}
+async function prospektRoute(req, env, url) {
+  if (req.method === "GET") return (await env.PV.get("prospekte", "json")) || [];
+  const idx = (await env.PV.get("prospekte", "json")) || [], mem = (await env.PV.get("normal", "json")) || {};
+  if (req.method === "DELETE") {
+    const k = mSchluessel(url.searchParams.get("markt"));
+    await env.PV.delete("prospekt:" + k);
+    for (const [key, e] of Object.entries(mem)) if (e.s === "prospekt" && mSchluessel(e.m) === k) delete mem[key];
+    await normalSpeichern(env, mem);
+    const rest = idx.filter(x => mSchluessel(x.markt) !== k);
+    await env.PV.put("prospekte", JSON.stringify(rest));
+    await normalpreiseBerechnen(env, mem);
+    return rest;
+  }
+  const d = prospektPruefen(await req.json()), k = mSchluessel(d.markt), tag = d.von || heute();
+  await env.PV.put("prospekt:" + k, JSON.stringify({ ...d, t: Date.now() }));
+  let statt = 0;
+  for (const o of d.angebote) if (o.alt) { statt++; normalMerken(mem, { m: d.markt, n: o.t, b: markeAusName(o.t), q: o.q, p: o.alt, ...(o.uvp ? { u: 1 } : {}), s: "prospekt", d: tag }); }
+  await normalSpeichern(env, mem);
+  const eintrag = { markt: d.markt, von: d.von, bis: d.bis, angebote: d.angebote.length, statt, t: berlin(new Date(), true) };
+  await env.PV.put("prospekte", JSON.stringify([eintrag, ...idx.filter(x => mSchluessel(x.markt) !== k)].slice(0, 20)));
+  const np = await normalpreiseBerechnen(env, mem);
+  // die gespeicherten Angebote der Favoriten gleich ergänzen (sonst erst beim nächsten täglichen Lauf)
+  let ergaenzt = 0;
+  if (!d.bis || d.bis >= heute()) for (const name of ["angebote", "alternativen"]) {
+    const l = await env.PV.get(name, "json");
+    if (Array.isArray(l)) { const n = prospekteErgaenzen(l, [d]); if (n) { ergaenzt += n; await env.PV.put(name, JSON.stringify(l)); } }
+  }
+  return { ...eintrag, normalpreise: np.filter(x => x.quelle === "prospekt" && mSchluessel(x.markt) === k).length, gruppen: new Set(np.filter(x => mSchluessel(x.markt) === k).map(x => x.gruppe)).size, ergaenzt };
 }
 
 // Eigener Einstiegspunkt, damit jede Teilabfrage als eigener Aufruf mit eigenen Grenzen läuft.
@@ -384,7 +481,7 @@ async function parallel(aufgaben, n) {
   return erg;
 }
 
-async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2, PLZ3], streng = false, locker = false) {   // erste Postleitzahl = Hauptgebiet, die weiteren liefern nur ausgewählte Märkte dazu
+async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, ...NACHBARN.map(n => n.plz)], streng = false, locker = false) {   // erste Postleitzahl = Hauptgebiet, die weiteren liefern nur ausgewählte Märkte dazu
   const HAUPT = plzListe[0];
   // produkte: Liste von Gruppennamen; favInfo: {name: {aus:[...], nur:Set}}
   // Je Postleitzahl werden die Artikel in Stapeln von höchstens 4 Suchbegriffen abgefragt (ein Aufruf je Stapel, wegen der Grenzen bei Cloudflare)
@@ -426,7 +523,7 @@ async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2,
       if (a.p !== p || a.plz === HAUPT || !a.roh) continue;
       for (const o of a.roh) {
         const name = o.adv.trim().toLowerCase();
-        const passt = a.plz === PLZ2 ? PLZ2_MAERKTE.some(z => name.includes(z)) : PLZ3_MAERKTE.includes(name) && !bekannt.has(o.id);
+        const passt = nachbarPasst(a.plz, name) && !bekannt.has(o.id);
         const key = a.plz + "|" + o.id;
         if (passt && !zweit.has(key)) { zweit.add(key); treffer.push({ ...o, plz: a.plz }); }
       }
@@ -438,7 +535,7 @@ async function abfragen(ctx, produkte, favInfo, extraAus, plzListe = [PLZ, PLZ2,
       if (a.p !== p || !a.andere || !a.andere.length) continue;
       for (const o of a.andere) {
         const name = o.adv.trim().toLowerCase(), key = a.plz + "|" + o.id;
-        if (a.plz !== HAUPT && !(a.plz === PLZ2 ? PLZ2_MAERKTE.some(z => name.includes(z)) : PLZ3_MAERKTE.includes(name))) continue;
+        if (a.plz !== HAUPT && !nachbarPasst(a.plz, name)) continue;
         if (altIds.has(key)) continue; altIds.add(key);
         const mg = mengenangabe(o), l = mg ? mg[1] : null, st = mg ? mg[0] : 1;
         if (!l || !o.price) continue;
@@ -587,6 +684,14 @@ async function aktualisieren(env, ctx) {
   let pennyInfo = null;   // frühere Preise bzw. UVP und App-Preise von penny.de (nur eine Zugabe: ohne sie bleibt alles wie von Marktguru)
   try { const pd = await pennyStand(env, ctx, true); pennyInfo = { angebote: Object.values((pd && pd.wochen) || {}).reduce((s, l) => s + l.length, 0), ergaenzt: pennyErgaenzen(liste, pd) + pennyErgaenzen(alternativen, pd) }; }
   catch (e) { pennyInfo = { fehler: String(e.message || e).slice(0, 120) }; }
+  let normalInfo = null;
+  try {
+    const pros = await prospekteGueltig(env), ergaenzt = prospekteErgaenzen(liste, pros) + prospekteErgaenzen(alternativen, pros);
+    const mem = (await env.PV.get("normal", "json")) || {}, tag = heute();
+    for (const x of liste) if (x.preis_alt > x.preis) normalMerken(mem, { m: mBasis(x.markt), n: x.produkt, b: x.marke || "", q: x.beschreibung || "", p: x.preis_alt, ...(x.alt_uvp ? { u: 1 } : {}), s: "angebot", d: tag });
+    await normalSpeichern(env, mem);
+    normalInfo = { prospekte: pros.length, ergaenzt, normalpreise: (await normalpreiseBerechnen(env, mem)).length };
+  } catch (e) { normalInfo = { fehler: String(e.message || e).slice(0, 120) }; }
   await env.PV.put("angebote", JSON.stringify(liste));
   await env.PV.put("alternativen", JSON.stringify(alternativen || []));   // für den Spar-Tipp
   // Verlauf: je Monat ein Speicherblock, damit nicht jedes Mal die ganze Datei neu geschrieben wird.
@@ -599,7 +704,7 @@ async function aktualisieren(env, ctx) {
   if (!monate.includes(monat)) { monate.push(monat); await env.PV.put("verlauf:monate", JSON.stringify(monate)); }
   try { await entfernungenPflegen(env, liste.map(x => x.markt)); } catch (e) { /* Entfernungen sind nur eine Zugabe */ }
   const gesendet = await benachrichtige(env, liste, alarm);
-  const stand = { zeit: berlin(new Date(), true), anzahl: liste.length, fehler: f.length, penny: pennyInfo };
+  const stand = { zeit: berlin(new Date(), true), anzahl: liste.length, fehler: f.length, penny: pennyInfo, normal: normalInfo };
   await env.PV.put("stand", JSON.stringify(stand));
   return { ...stand, alarm: gesendet };
 }
@@ -731,12 +836,13 @@ async function regionAngebote(env, ctx, sp, ip) {
   const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", roh))].slice(0, 8).map(b => b.toString(16).padStart(2, "0")).join("");
   const streng = sp.get("streng") === "1", locker = sp.get("locker") === "1", key = "reg:" + plz + ":" + hash + (streng ? ":s" : "") + (locker ? ":l" : ""), frisch = sp.get("neu") === "1";
   const alt = await env.PV.get(key, "json");
-  if (alt && Date.now() - alt.t < (frisch ? 15 * 60e3 : 3 * 3600e3)) return alt.liste;
+  if (alt && Date.now() - alt.t < (frisch ? 15 * 60e3 : 3 * 3600e3)) { try { prospekteErgaenzen(alt.liste, await prospekteGueltig(env)); } catch (e) {} return alt.liste; }
   if (!besucherOk(ip) || !(await tagesOk(env, "region", 300))) throw zuViel();
   const { info } = favAuswerten(await lade(env, "favoriten", "json"));
   const { liste } = await abfragen(ctx, begriffe, info, [], [plz], streng, locker);
   try { pennyErgaenzen(liste, await pennyStand(env)); } catch (e) { /* nur eine Zugabe */ }
   await env.PV.put(key, JSON.stringify({ t: Date.now(), liste }), { expirationTtl: 86400 });
+  try { prospekteErgaenzen(liste, await prospekteGueltig(env)); } catch (e) { /* nur eine Zugabe */ }
   return liste;
 }
 
@@ -1050,7 +1156,10 @@ export default {
     const url = new URL(req.url), p = url.pathname.replace(/\/+$/, "") || "/";
     try {
       if (p.startsWith("/konto/")) return antwort(await kontoRoute(req, env, p));
-      if (p === "/erkunden" && req.method === "POST") { if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401); return antwort(await erkunden(env)); }
+      if (p === "/prospekte" || p === "/prospekt") {
+        if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401);
+        return antwort(await prospektRoute(req, env, url));
+      }
       if (p.startsWith("/push/")) {
         if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401);
         return antwort(await pushRoute(req, env, p));
@@ -1058,6 +1167,7 @@ export default {
       if (req.method === "GET") {
         if (p === "/angebote.json") return antwort(JSON.stringify(await lade(env, "angebote", "json")));
         if (p === "/alternativen.json") return antwort((await env.PV.get("alternativen")) || "[]");
+        if (p === "/normalpreise.json") return antwort((await env.PV.get("normalpreise")) || "[]");
         if (p === "/favoriten.json") return antwort(JSON.stringify(await lade(env, "favoriten", "json")));
         if (p === "/verlauf.csv") return antwort(await verlaufCsv(env), "text/csv; charset=utf-8");
         if (p === "/entfernungen") {

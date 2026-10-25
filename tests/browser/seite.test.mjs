@@ -2,7 +2,7 @@
 // Braucht Playwright mit Chromium (in der Pipeline installiert); ohne wird übersprungen.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { umgebung, browserStarten, playwright, DATEN, O } from "./lib.mjs";
+import { umgebung, browserStarten, playwright, DATEN, O, PDFJS_DIR, pdfMachen, prospektSeiten } from "./lib.mjs";
 
 const ok = !!playwright();
 const t = (name, fn) => test(name, { skip: !ok && "Playwright nicht installiert", timeout: 120000 }, fn);
@@ -16,6 +16,11 @@ async function mitSeite(opts, fn) {
   try { await s.oeffnen(opts.hash || ""); await fn(s, u); }
   finally { await s.b.close(); }
 }
+const marktWahl = async (p, id) => {   // „Nach Markt“: Liste der Märkte aufklappen (falls zu) und einen antippen
+  await p.waitForSelector(".mk-wahl", { timeout: 10000 });
+  if (!(await p.$eval(".mk-wahl", d => d.open))) await p.click(".mk-wahl > summary");
+  await p.click(`.mk-liste [data-mk="${id}"]`);
+};
 const klick = async (p, sel) => { await p.evaluate(s => document.querySelector(s).click(), sel); await p.waitForTimeout(900); };
 const bereich = async (p, v) => { await p.click(`#leiste [data-v="${v}"]`); await p.waitForTimeout(300); };
 const suche = async (p, text) => { await bereich(p, "suchen"); await p.fill("#sucheText", text); await p.click('[data-aktion="suchen"]'); await p.waitForFunction(() => !S.suche.laeuft, null, { timeout: 15000 }); await p.waitForTimeout(200); };
@@ -245,15 +250,22 @@ t("Liste: Name führt zur Produktseite (mit Marktguru-Link), Zurück an dieselbe
   });
 });
 
-t("Alle Angebote je Markt: Märkte, Gruppen, Suche, Favorit und Liste", async () => {
-  await mitSeite({ favs: [{ name: "Eier", aus: "" }] }, async ({ p, fehler }, u) => {
+t("Alle Angebote je Markt: Märkte untereinander (ohne Baumärkte), Gruppen, Suche, Favorit und Liste", async () => {
+  await mitSeite({ favs: [{ name: "Eier", aus: "" }], daten: { ...DATEN, schrauben: [O("OBI", "Schrauben", "Fischer", "100 Stück", 4.99)] } }, async ({ p, fehler }, u) => {
     await p.click('[data-seg="aTab"][data-wert="markt"]');
-    await p.waitForSelector(".mk-chips .chip", { timeout: 10000 });
+    await p.waitForSelector(".mk-liste .mk-m", { timeout: 10000 });
     assert.equal(await p.evaluate(() => location.hash), "#markt");
     assert.equal(await p.locator('#leiste [data-v="angebote"].an').count(), 1);
-    const chips = await p.$$eval(".mk-chips .chip", e => e.map(x => x.textContent.replace(/\s+/g, " ").trim()));
-    assert.ok(chips.some(c => /^Lidl 4$/.test(c)) && chips.some(c => /^PENNY 4$/.test(c)), JSON.stringify(chips));
-    await p.click('.mk-chips [data-mk="126679"]');
+    assert.equal(await p.$eval(".mk-wahl", d => d.open), true, "beim ersten Mal ist die Liste offen");
+    const chips = await p.$$eval(".mk-liste .mk-m", e => e.map(x => x.textContent.replace(/\s+/g, " ").trim()));
+    assert.ok(chips.some(c => /^Lidl 4 Angebote$/.test(c)) && chips.some(c => /^PENNY 4 Angebote$/.test(c)), JSON.stringify(chips));
+    assert.ok(!chips.some(c => /OBI/.test(c)), "Baumarkt fehlt: " + JSON.stringify(chips));
+    const lage = await p.$$eval(".mk-liste .mk-m", e => e.map(x => x.getBoundingClientRect()).map(r => [Math.round(r.left), Math.round(r.top)]));
+    assert.ok(lage.every((r, i) => i === 0 || (r[0] === lage[0][0] && r[1] > lage[i - 1][1])), "untereinander: " + JSON.stringify(lage));
+    assert.equal(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, "nichts zum Seitwärtsscrollen");
+    await p.click('.mk-liste [data-mk="126679"]');
+    assert.equal(await p.$eval(".mk-wahl", d => d.open), false, "nach der Wahl zu");
+    assert.match(await p.textContent(".mk-wahl > summary"), /Lidl[\s\S]*Markt wechseln/);
     await p.waitForSelector(".mk-gruppe", { timeout: 10000 });
     const gruppen = async () => p.$$eval(".mk-gruppe > summary", e => e.map(x => x.textContent.replace(/\s+/g, " ").trim()));
     let g = await gruppen();
@@ -500,8 +512,7 @@ t("Favoriten entfernen: unter Angebote mit „Bearbeiten“, in der Suche und un
     assert.ok(!namen().includes("Hidrofugal Deo Roll-on"));
     // Nach Markt: ★ → ✕ → entfernt
     await p.click('#leiste [data-v="angebote"]'); await p.waitForTimeout(200);
-    await p.click('[data-seg="aTab"][data-wert="markt"]'); await p.waitForSelector(".mk-chips .chip", { timeout: 10000 });
-    await p.click('.mk-chips [data-mk="126679"]'); await p.waitForSelector("#mkSuche", { timeout: 10000 });
+    await p.click('[data-seg="aTab"][data-wert="markt"]'); await marktWahl(p, "126679"); await p.waitForSelector("#mkSuche", { timeout: 10000 });
     await p.fill("#mkSuche", "reis"); await p.waitForTimeout(300);
     await p.click(".mk-z [data-mkf]"); await p.waitForFunction(() => !S.suche.busy && istFav("Tilda Basmati Reis"));
     await p.click(".mk-z [data-mkf]"); await p.waitForTimeout(200);
@@ -630,7 +641,7 @@ t("Angebote nach Abteilungen (abschaltbar) und Favorit pausieren: nicht abgefrag
 t("Nach Markt: nach Rabatt sortieren (größter Nachlass zuerst) und „Neu“ seit dem letzten Besuch", async () => {
   const daten = { ...DATEN };
   await mitSeite({ daten, favs: [{ name: "Eier", aus: "" }] }, async ({ p, fehler }, u) => {
-    const lidl = async () => { await p.click('[data-seg="aTab"][data-wert="markt"]'); await p.waitForSelector(".mk-chips .chip", { timeout: 10000 }); await p.click('.mk-chips [data-mk="126679"]'); await p.waitForSelector("#mkSuche", { timeout: 10000 }); };
+    const lidl = async () => { await p.click('[data-seg="aTab"][data-wert="markt"]'); await marktWahl(p, "126679"); await p.waitForSelector("#mkSuche", { timeout: 10000 }); };
     await lidl();
     await p.click('[data-seg="mkSort"][data-wert="rabatt"]'); await p.waitForTimeout(200);
     const r = await p.$$eval(".mk-z", e => e.map(x => x.innerText.replace(/\s+/g, " ")));
@@ -802,12 +813,43 @@ t("PENNY: UVP, Streichpreis und App-Preis von penny.de auf der Produktseite und 
     assert.match(t2, /statt\s*1,15/); assert.match(t2, /statt\s*1,09/, "Lidl behält den Preis von Marktguru"); assert.doesNotMatch(t2, /UVP/);
     await p.goBack(); await p.waitForTimeout(300);
     await p.click('[data-seg="aTab"][data-wert="markt"]');
-    await p.waitForSelector(".mk-chips .chip", { timeout: 10000 });
-    await p.click('.mk-chips [data-mk="126765"]');
+    await marktWahl(p, "126765");
     await p.waitForSelector(".mk-gruppe", { timeout: 10000 });
     await p.click('.mk-gruppe:has-text("Milch, Käse") > summary'); await p.waitForTimeout(300);
     const t3 = await p.textContent("#ansicht");
     assert.match(t3, /UVP\s*2,49/); assert.match(t3, /App\s*1,59/); assert.match(t3, /statt\s*1,15/);
+    assert.deepEqual(fehler, []);
+  });
+});
+
+t("Prospekt einlesen: PDF auf dem Gerät lesen, frühere Preise werden Normalpreis-Vorschlag, das PENNY-Angebot bekommt „statt“", async () => {
+  if (!PDFJS_DIR) return;
+  await mitSeite({ favs: [{ name: "Butter", aus: "" }, { name: "Schokolade", aus: "" }], hash: "#mehr" }, async ({ p, fehler }, u) => {
+    await p.waitForSelector("#prospektDatei", { state: "attached", timeout: 5000 });
+    assert.match(await p.textContent("#prospekte"), /Noch kein Prospekt eingelesen/);
+    await p.setInputFiles("#prospektDatei", { name: "Prospekt.pdf", mimeType: "application/pdf", buffer: pdfMachen(prospektSeiten("PENNY")) });
+    await p.waitForSelector("#prErgebnis", { timeout: 30000 }).catch(async () => { throw new Error("nicht gelesen: " + JSON.stringify(await p.evaluate(() => S.pr)).slice(0, 300)); });
+    assert.match(await p.textContent("#prErgebnis"), /Prospekt\.pdf: 4 Angebote auf 1 Seite erkannt, 4 davon sicher\. 3 mit früherem Preis \(2 davon UVP\)/);
+    assert.equal(await p.$eval("#prMarkt", s => s.value), "PENNY");
+    assert.match(await p.textContent("#prospekte"), /Milka Schokolade 0,95\s€ \(UVP 1,99\s€\)/);
+    await p.click('[data-aktion="prOk"]');
+    await p.waitForFunction(() => /3 frühere Preise/.test(document.querySelector("#prospekte").textContent), null, { timeout: 10000 });
+    assert.match(await p.textContent("#prospekte"), /PENNY[\s\S]*3 frühere Preise/);
+    assert.equal(JSON.parse(u.store.get("prospekt:penny")).angebote.length, 4);
+    // Liste: Schokolade hat kein Angebot, der Normalpreis kommt aus dem Prospekt (UVP)
+    await p.evaluate(() => { aufListeSetzen("Schokolade"); aufListeSetzen("Butter"); listeSpeichern(); render(); });
+    await bereich(p, "liste");
+    const liste = await p.textContent("#ansicht");
+    assert.match(liste, /Vorschlag aus der UVP bei PENNY \(Prospekt\)/);
+    assert.match(liste, /Vorschlag aus dem früheren Preis \(„statt“\) bei PENNY/);
+    // Produktseite: das PENNY-Angebot von Marktguru hat jetzt den früheren Preis
+    await bereich(p, "angebote");
+    await p.click('.produkt[data-p="Butter"]'); await p.waitForTimeout(300);
+    assert.match(await p.textContent("#ansicht"), /statt\s*2,49/);
+    // Entfernen (zweimal tippen)
+    await bereich(p, "mehr");
+    await p.click("[data-prweg]"); await p.click("[data-prweg]");
+    await p.waitForFunction(() => /Noch kein Prospekt eingelesen/.test(document.querySelector("#prospekte").textContent), null, { timeout: 10000 });
     assert.deepEqual(fehler, []);
   });
 });

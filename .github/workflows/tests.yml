@@ -25,11 +25,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --test tests/alarm.test.mjs tests/zuordnung.test.mjs tests/push.test.mjs tests/sorte.test.mjs tests/penny.test.mjs
-      - name: Playwright und Chromium installieren
+      - name: Playwright, Chromium und pdf.js installieren
         run: |
-          npm install --no-save --no-package-lock playwright
+          npm install --no-save --no-package-lock playwright pdfjs-dist@6.2.108
           npx playwright install --with-deps chromium
+      - run: node --test tests/alarm.test.mjs tests/zuordnung.test.mjs tests/push.test.mjs tests/sorte.test.mjs tests/penny.test.mjs tests/maerkte.test.mjs tests/prospekt.test.mjs
       - name: Browser-Tests (echte Seite gegen den Worker-Code)
         run: |
           set -o pipefail

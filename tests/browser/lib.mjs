@@ -18,13 +18,54 @@ export async function ladeWorker() {
   return await import(pathToFileURL(datei).href);
 }
 
+// pdf.js für das Einlesen von Prospekten (die Seite lädt es von jsDelivr; im Test kommt es aus node_modules)
+export const PDFJS_DIR = [process.env.PDFJS_DIR, path.join(wurzel, "node_modules/pdfjs-dist"), "/opt/npm-tools/node_modules/pdfjs-dist"].filter(Boolean).find(d => fs.existsSync(path.join(d, "build/pdf.min.mjs")));
+
+/** Ein kleines PDF mit Textebene (Helvetica, WinAnsi): seiten = [[{s, x, y (Grundlinie von oben), h, fett}]] */
+export function pdfMachen(seiten, { breite = 560, hoehe = 800 } = {}) {
+  const obj = [], esc = t => t.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+  obj[1] = "<</Type/Catalog/Pages 2 0 R>>";
+  obj[3] = "<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold/Encoding/WinAnsiEncoding>>";
+  obj[4] = "<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>";
+  const kids = [];
+  seiten.forEach((l, i) => {
+    const inhalt = l.map(t => `BT /${t.fett ? "F1" : "F2"} ${t.h} Tf 1 0 0 1 ${t.x} ${hoehe - t.y} Tm (${esc(t.s)}) Tj ET`).join("\n");
+    const n = 5 + i * 2;
+    obj[n] = `<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${breite} ${hoehe}]/Resources<</Font<</F1 3 0 R/F2 4 0 R>>>>/Contents ${n + 1} 0 R>>`;
+    obj[n + 1] = `<</Length ${Buffer.byteLength(inhalt, "latin1")}>>\nstream\n${inhalt}\nendstream`;
+    kids.push(`${n} 0 R`);
+  });
+  obj[2] = `<</Type/Pages/Kids[${kids.join(" ")}]/Count ${kids.length}>>`;
+  let out = "%PDF-1.4\n", lage = [];
+  for (let i = 1; i < obj.length; i++) { lage[i] = Buffer.byteLength(out, "latin1"); out += `${i} 0 obj\n${obj[i]}\nendobj\n`; }
+  const x = Buffer.byteLength(out, "latin1");
+  out += `xref\n0 ${obj.length}\n0000000000 65535 f \n` + lage.slice(1).map(o => String(o).padStart(10, "0") + " 00000 n \n").join("") + `trailer\n<</Size ${obj.length}/Root 1 0 R>>\nstartxref\n${x}\n%%EOF\n`;
+  return Buffer.from(out, "latin1");
+}
+
+/** Prospektseite wie bei Netto: Name fett, Beschreibung, Menge, Grundpreis links; rechts groß der Preis, klein UVP bzw. statt, darüber die Prozente */
+export function prospektSeiten(markt = "PENNY", von = new Date()) {
+  const d = x => { const t = new Date(von.getTime() + x * 864e5); return `${t.getDate()}.${t.getMonth() + 1}.`; };
+  const preis = (x, y, ganz, cent, klein, uvp, proz) => [{ s: ganz + ".", x, y, h: 37, fett: true }, { s: cent, x: x + 24, y: y - 11, h: 21.6, fett: true },
+    ...(uvp ? [{ s: "UVP", x: x + 20, y: y + 7, h: 8, fett: true }] : []), ...(klein ? [{ s: klein, x: x + 42, y: y + 7, h: 8, fett: true }] : []), ...(proz ? [{ s: proz, x: x + 1, y: y - 34, h: 19.8, fett: true }] : [])];
+  const block = (x, y, zeilen) => zeilen.map((z, i) => ({ s: z, x, y: y + i * 10, h: i ? 7.5 : 9, fett: !i }));
+  return [[
+    { s: `Montag ${d(0)} - Samstag ${d(5)}${String(von.getFullYear()).slice(2)}`, x: 160, y: 25, h: 16, fett: true },
+    ...block(26, 110, ["Weihenstephan Butter", "mildgesäuert", "250 g", "(9.96 / kg)"]), ...preis(130, 131, "2", "49", "", false, ""),
+    ...block(26, 300, ["Weihenstephan Butter", "gesalzen, gekühlt", "250 g", "(7.16 / kg)"]), ...preis(130, 321, "1", "79", "2.49", false, "-28%"),
+    ...block(300, 300, ["Milka Schokolade", "versch. Sorten", "100 g", "(9.50 / kg)"]), ...preis(400, 321, "0", "95", "1.99", true, "-52%"),
+    ...block(26, 500, ["Zewa Toilettenpapier", "Ultrasoft 4-lagig", "16 x 150 Blatt"]), ...preis(130, 521, "6", "99", "8.39", true, "-17%"),
+    { s: `${markt} Markt GmbH, Artikel mit diesem Hinweis gibt es solange der Vorrat reicht.`, x: 20, y: 780, h: 6 },
+  ]];
+}
+
 export function playwright() {
   try { return require("playwright"); } catch (e) { return null; }
 }
 
 const V = [{ from: "2026-10-19T00:00:00Z", to: "2099-10-25T21:59:00Z" }];
 let nr = 100;
-const RID = { "ALDI SÜD": 127153, PENNY: 126765, REWE: 126802, Lidl: 126679, Kaufland: 126654 };
+const RID = { "ALDI SÜD": 127153, PENNY: 126765, REWE: 126802, Lidl: 126679, Kaufland: 126654, OBI: 126750, "dm-drogerie markt": 127057 };
 export const O = (adv, name, brand, desc, price, unit, volume, quantity, oldPrice) => ({ id: ++nr, oldPrice, url: "https://www.marktguru.de/offers/" + nr, advertisers: [{ id: "retailers/" + RID[adv], name: adv }], product: { name }, brand: { name: brand }, description: desc, price, unit: unit ? { shortName: unit } : undefined, volume, quantity, validityDates: V });
 export const DATEN = {
   butter: [O("ALDI SÜD", "Butter", "Kerrygold", "250-g-Packung", 1.99), O("PENNY", "Butter", "Weihenstephan", "250 g", 1.79, "g", 250, 1), O("REWE", "Butter", "Milram", "2 x 250 g", 3.49), O("Lidl", "Erdnussbutter", "Skippy", "350 g", 3.99)],
@@ -58,14 +99,16 @@ export async function umgebung(opts = {}) {
     if (u === "https://ntfy.sh") { ntfy.push(JSON.parse(o.body)); return new Response("{}"); }
     if (u.startsWith("https://push.example/")) { push.push({ url: u, headers: o.headers, body: o.body }); return new Response("", { status: push.status }); }   // Push-Dienst (Web-Push)
     if (u.startsWith("https://api.marktguru.de/api/v1/offers/publishers")) {   // Märkte der Gegend
-      const m = new Map(); Object.values(opts.daten || DATEN).flat().forEach(o => m.set(o.advertisers[0].id, o.advertisers[0].name));
+      const m = new Map(), zip = new URL(u).searchParams.get("zipCode");
+      // opts.nurPlz: Markt nur in dieser Postleitzahl; opts.verlagOhne: Märkte, die Marktguru gerade nicht nennt (ihre Angebote findet die Suche trotzdem)
+      Object.values(opts.daten || DATEN).flat().forEach(o => { const n = o.advertisers[0].name; if (!(opts.verlagOhne && opts.verlagOhne.has(n)) && (!(opts.nurPlz || {})[n] || opts.nurPlz[n] === zip)) m.set(o.advertisers[0].id, n); });
       return new Response(JSON.stringify({ totalResults: m.size, results: [...m].map(([id, name]) => ({ id, name, uniqueName: name.toLowerCase(), offers: [] })) }));
     }
     if (u.startsWith("https://api.marktguru.de") && new URL(u).searchParams.get("retailers")) {   // alle Angebote eines Marktes
-      const q = new URL(u).searchParams, l = Object.values(opts.daten || DATEN).flat().filter(o => o.advertisers[0].id === "retailers/" + q.get("retailers"));
+      const q = new URL(u).searchParams, l = Object.values(opts.daten || DATEN).flat().filter(o => o.advertisers[0].id === "retailers/" + q.get("retailers") && (!(opts.nurPlz || {})[o.advertisers[0].name] || opts.nurPlz[o.advertisers[0].name] === q.get("zipCode")));
       return new Response(JSON.stringify({ totalResults: l.length, results: l.slice(+q.get("offset"), +q.get("offset") + +q.get("limit")) }));
     }
-    if (u.startsWith("https://api.marktguru.de")) { const q = new URL(u).searchParams; return new Response(JSON.stringify({ results: q.get("offset") === "0" ? (opts.daten || DATEN)[q.get("q").toLowerCase()] || [] : [] })); }
+    if (u.startsWith("https://api.marktguru.de")) { const q = new URL(u).searchParams, nur = opts.nurPlz || {}; return new Response(JSON.stringify({ results: q.get("offset") === "0" ? ((opts.daten || DATEN)[q.get("q").toLowerCase()] || []).filter(o => !nur[o.advertisers[0].name] || nur[o.advertisers[0].name] === q.get("zipCode")) : [] })); }
     if (opts.penny && u.startsWith("https://www.penny.de/")) {   // penny.de nachgebaut: Kategorien der Woche 2026-44, Verkaufsregion eines Marktes
       const q = new URL(u), m = q.pathname.match(/^\/\.rest\/offers\/by-category\/([^/]+)\/([^/]+)$/);
       if (q.pathname === "/angebote") return new Response(`<div data-current-week="2026-44" data-next-week="2026-45">${Object.keys(opts.penny).map(k => `<section data-category-name="${k}"></section>`).join("")}</div>`);
@@ -85,6 +128,11 @@ export async function browserStarten(u, { breite = 390, hoehe = 844, code = "bet
   const c = await b.newContext({ viewport: { width: breite, height: hoehe }, serviceWorkers: "block" });   // ein Service Worker würde an page.route vorbei ins echte Netz gehen
   await c.addInitScript(([cd]) => { localStorage.setItem("pv-ort", JSON.stringify({ lat: 51.40, lon: 6.70, name: "Test 1, Duisburg", plz: "47178", angebote: true })); if (cd) localStorage.setItem("pv-code", cd); }, [code]);
   await c.route("**/*", r => r.abort());   // alles, was nicht nachgebaut ist, scheitert (kein Zugriff aufs echte Netz)
+  if (PDFJS_DIR) await c.route("https://cdn.jsdelivr.net/npm/pdfjs-dist@*/build/*", r => {   // pdf.js aus node_modules (auch für den Hintergrund-Worker)
+    const datei = path.join(PDFJS_DIR, "build", path.basename(new URL(r.request().url()).pathname));
+    if (!fs.existsSync(datei)) return r.fulfill({ status: 404, body: "" });
+    return r.fulfill({ body: fs.readFileSync(datei), headers: { "content-type": "text/javascript", "access-control-allow-origin": "*" } });
+  });
   const p = await c.newPage();
   const fehler = [];
   p.on("pageerror", e => fehler.push(e.message));
