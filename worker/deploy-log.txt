@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 68.47 KiB / gzip: 19.99 KiB
-Worker Startup Time: 3 ms
+Total Upload: 68.15 KiB / gzip: 19.90 KiB
+Worker Startup Time: 1 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (4.10 sec)
-Deployed preise triggers (0.67 sec)
+Uploaded preise (3.30 sec)
+Deployed preise triggers (0.63 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: 07cab841-9112-4901-a950-009483dc65ed
+Current Version ID: 30e95770-ae59-4cca-8139-7bccfc3143ff
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,7 +18,7 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-25T13:32","anzahl":30,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-25T13:35","anzahl":30,"fehler":0}}
 Spar-Tipp: {"alternativen":3,"favoriten":2}
 Push ohne Code (erwartet 401): HTTP 401
 Push: Schlüssel 87 Zeichen, {"geraete":1,"ntfy":true,"ntfyAn":false}
@@ -26,8 +26,8 @@ Hintergrunddienst mit Push: 1
 Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
-Suche Fanta: 1 s, {"anzahl":0}
-Aktualisieren: 4 s, {"zeit":"2026-10-25T13:35","anzahl":30,"fehler":0,"alarm":[]}
+Suche Fanta: 0 s, {"anzahl":0}
+Aktualisieren: 4 s, {"zeit":"2026-10-25T13:37","anzahl":30,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":30,"gruppen":["Ferrero Nutella Brotaufstrich","Heinz Ketchup","Knorr Spaghetteria","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","Zewa Toilettenpapier Ultra Soft","coca cola"]}
 Verlauf: 421 Zeilen
 Korrekturen lesen: {}
@@ -35,7 +35,7 @@ Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
 Korrektur gespeichert und gelesen: true
 Test-Korrektur gelöscht: true
 Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
-Region 40210 ohne Code: 1 s, {"anzahl":4,"maerkte":["ALDI SÜD","Kaufland","Lidl","Thomas Philipps"]}
+Region 40210 ohne Code: 0 s, {"anzahl":4,"maerkte":["ALDI SÜD","Kaufland","Lidl","Thomas Philipps"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
 Lebensmittel-Probe: 0 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl":4,"Nudeln":4}
   Probe: Butter | Netto Marken-Discount | Beste Butter | art=kg liter=0.25 stueck=1 ml=250 preis=0.88 | gekühlt 250 g
@@ -78,37 +78,28 @@ Lebensmittel-Probe: 0 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | Netto Marken-Discount | Speisekartoffeln XXL | art=kg liter=4 stueck=1 ml=4000 preis=2.99 | 4 kg Netz Deutschland, versch. Kocheigenschaften
   Probe: Kartoffeln | Kaufland | Speisekartoffeln | art=kg liter=1 stueck=1 ml=1000 preis=0.79 | Dtsch. lose Qualität II je kg
   Probe: Kartoffeln | Lidl | Bio-Speisekartoffeln | art=kg liter=2 stueck=1 ml=2000 preis=2.79 | Bioland Deutsche Qualität I Je 2 kg
-  Erkunden: components/tabs-offers.DJDrzIPb.js: 128 · Treffer 0
-  Erkunden: components/content-tile-list.DKPnIiWV.js: 1379 · Treffer 0
-  Erkunden: components/bubble-price.BvCNFEoq.js: 69 · Treffer 0
-  Erkunden: components/content-tile-region-filter.BZDI6S1j.js: 894 · Treffer 0
-  Erkunden: chunks/tabs-offers.DUT9lQZ1.js: 1415 · Treffer 0
-  Erkunden: chunks/content-tile-video.C7j_-AlX.js: 442 · Treffer 0
-  Erkunden: chunks/offer.BKe7i0_u.js: 9538 · Treffer 0
-  Erkunden: chunks/market-locator.C6qckVnY.js: 1777 · Treffer 2
-  Erkunden:     lue!==void 0){let e=r.key,t=r.value;a=a.filter(n=>n[e]===t)}}else a=o(i);return a},m=async(e,t,n=null)=>{let r=`${t}/markets/market_${e}`;try{let e=await(await fetch(r)).json();return n?s([e],n)[0]:e}catch(e){return console.warn(e),null}},h=async(e,t)=>{try{let n=await(await fetch(e)).json();return n&&Array.isArray(n)&&n.length>0?o(s(n,t)):[]}catch(e){return console.warn(e),[]}},g=as
-  Erkunden:     ync e=>{try{return await(await fetch(e)).json()}catch(e){return console.warn(e),[]}},_=async(e,t)=>{let n=`${t}/marketRegion/${e}`;try{return await(await fetch(n)).json()}catch(e){return console.warn(e),null}},v=()=>{let e=u();if(!e)return null;let t=e.wwIdent;return!t||t===`undefined`?null:t},y=e=>{let t=v();return t?m(t,e):null};export{f as _,e as a,g as c,p as d,l as f,_ as 
-  Erkunden: chunks/region.guPd0Cq1.js: 728 · Treffer 0
-  Erkunden: chunks/event-helpers.CfOsv4kQ.js: 391 · Treffer 0
-  Erkunden: chunks/week-teaser.B9R64wCn.js: 669 · Treffer 0
-  Erkunden: chunks/offer-image-utils.UxV8anjQ.js: 677 · Treffer 0
-  Erkunden: chunks/sanitize.QPIMZw7v.js: 29566 · Treffer 1
-  Erkunden:     contentunits.patterntransform.patternunits.pointer-events.points.preservealpha.preserveaspectratio.primitiveunits.r.rx.ry.radius.refx.refy.repeatcount.repeatdur.restart.result.rotate.scale.seed.shape-rendering.slope.specularconstant.specularexponent.spreadmethod.startoffset.stddeviation.stitchtiles.stop-color.stop-opacity.stroke-dasharray.stroke-dashoffset.stroke-linecap.stroke-line
-  Erkunden: chunks/scroller.BC_aa0bu.js: 1347 · Treffer 1
-  Erkunden:     ent.querySelector(`.jump-marks`),a=i?i.offsetHeight+Number.parseInt(globalThis.getComputedStyle(i).paddingBottom.replace(`px`,``)):0,o=document.querySelector(`.category-menu`),s=o?o.offsetHeight:0;return Number.parseInt(String(r-n-a-s-t))},n=({elScrollTo:n,elScrollContainer:r,behavior:i,additionalOffset:a},o,s)=>{if(!n){console.warn(`Scroll target element is not defined`),o();return}t
+  Erkunden: PENNY keine gefüllte Überschrift
+  Erkunden: PENNY Region-Attribute: 
+  Erkunden: PENNY Preis-Attribute: data-label-cross-out="Streichpreis" data-label-uvp-full="Unverbindlichle Preisempfehlung" data-label-price-app="App-preis" data-label-price="Angebotspreis"
+  Erkunden: chunks/region.guPd0Cq1.js 0: import{r as e}from"./sanitize.QPIMZw7v.js";import{r as t}from"./tabs-offers.DUT9lQZ1.js";var n=`(/?)([A-Z0-9]+(?:[-_][A-Z0-9]+)+?(/?))$`,r={offers:`angebote`},i=(e,t)=>{let n=`/${r.offers}/`,i=e.indexOf(n);if(i===-1)return e;let a=e.slice(0,i+n.length),o=e.slice(i+n.length),s=/^(\d{4}-\d{1,2})(\/(.*))?$/.exec(o);if(s){let n=s[1]??``,r=s[3]??``;return r.startsWith(`${t}/`)||r===t?e:`${a}${n}/${t}${r?`/`+r:``}`}return o.startsWith(`${t}/`)||o===t?e:`${a}${t}/${o}`},a=(t,r)=>{let i=RegExp(`(${e(String(t)).source}${n})`),a=((r.split(`;jsessionid=`)[0]??``).split(`#`)[0]??``).split(`?`)[0]??``;return r.search(String(t))!==-1&&i.test(a)},o=()=>{a(r.offers,location.href)&&t(location.href)};export{a as i,o as n,i as r,r as t};
+  Erkunden: components/content-tile-region-filter.BZDI6S1j.js 0: import{p as e}from"../chunks/market-locator.C6qckVnY.js";import{r as t,t as n}from"../chunks/region.guPd0Cq1.js";var r=`tile-list__item--region-visible`,i=`js-pending`;function a(a){let o=(e,t)=>{let r=`/`+n.offers+`/`,i=e.indexOf(r),a=i===-1?``:e.slice(i+r.length);return/^\d{4}-\d{1,2}\//.test(a)?t.nextWeekSellingRegion??t.sellingRegion:t.sellingRegion},s=(e,n)=>{let r=e.querySelector(`a[data-detail-url]`);if(!r)return;let i=r.getAttribute(`href`)??``,a=r.dataset.detailUrl,s=o(i,n);s&&(r.setAttribute(`href`,t(i,s)),r.dataset.detailUrl=t(a,s))},c=(t=document)=>{let n=e(),a=n?.sellingRegion,o=n?.nextWeekSellingRegion;t.querySelectorAll(`[data-regions]`).forEach(e=>{let t=new Set(e.dataset.regions.split(` `)),i=!!(a&&t.has(a)||o&&t.has(o));e.classList.toggle(r,i),i&&n&&s(e,n)}),document.documentElement.classList.remove(i)};return Object.
+  Erkunden: chunks/offer.BKe7i0_u.js 0: import{n as e}from"./offer-image-utils.UxV8anjQ.js";function t(){let e={MD:`bubble--md`,LG:`bubble--lg`},t={YELLOW:`yellow`,RED:`red`,BLUE_PETROL:`blue-petrol`},r={WHITE:`white`,RED_THUNDERBIRD:`red-thunderbird`},i=({elBubble:e,elem:t,value:r,offerData:i,bubbleIndex:a})=>{let{labelUvpFull:o,labelCrossOut:s}=e.dataset;if(!t?.classList.contains(`bubble__small-value`))return;let c=``,l=t.querySelector(`.label-hidden`);if(i.primaryType===n.PRIMARY_TYPE.PROMO||i.primaryType===n.PRIMARY_TYPE.PROMO_PLUS&&a===0?c=`Nur mit App`:i.listPrice&&i.listPrice!==`0.00`?c=`${o} ${r}€`:i.crossOutPrice&&i.crossOutPrice!==`0.00`?c=`${s} ${r}€`:i.showOriginalPrice&&i.showOriginalPrice.toString()===`true`&&(c=i.originalPriceType&&i.originalPriceType===`uvp`?`${o} ${r}€`:`${s} ${r}€`),!c){l.textContent=``;return}l.textContent=c},a=({elBubble:e,elem:t,value:r,offerData:i,b
+  Erkunden: chunks/offer.BKe7i0_u.js 1: ubbleIndex:a})=>{let{labelPriceApp:o,labelPrice:s}=e.dataset;if(!t?.classList.contains(`bubble__price`))return;let c=t.querySelector(`.label-hidden`);c.textContent=i.primaryType===n.PRIMARY_TYPE.PROMO||i.primaryType===n.PRIMARY_TYPE.PROMO_PLUS&&a===0?`${o} ${r}€`:`${s} ${r}€`},o=({elBubble:t,tileIndex:n})=>{n===0?t.classList.add(e.LG):t.classList.add(e.MD)},s=({elBubble:e,bubbleIndex:r,offerData:i})=>{let a=t.YELLOW;i.multiBuy&&(a=t.RED),(i.primaryType===n.PRIMARY_TYPE.PROMO||i.primaryType===n.PRIMARY_TYPE.PROMO_PLUS)&&(a=t.BLUE_PETROL),r===0?e.classList.add(`t-bg--${a}`):e.classList.add(`t-bg--${t.YELLOW}`)},c=({elBubble:e,bubbleIndex:t,offerData:i})=>{let a=r.RED_THUNDERBIRD;(i.primaryType===n.PRIMARY_TYPE.PROMO||i.primaryType===n.PRIMARY_TYPE.PROMO_PLUS||i.multiBuy)&&(a=r.WHITE),t===0?e.classList.add(`t-color--${a}`):e.classList.add(`t-color--${
+  Erkunden: chunks/offer.BKe7i0_u.js 2: r.RED_THUNDERBIRD}`)},l=({elBubble:e,elSmallValue:t,elSmallValueLabel:n,elSmallValueOriginalPrice:r,offerData:a,bubbleIndex:o})=>{if(a.actionMarker||a.priceFrom&&a.priceFrom.toString()===`true`){n.textContent=a.actionMarker??`ab`;return}if(a.listPrice&&a.listPrice!==`0.00`){n.textContent=`UVP`,r.textContent=a.listPrice,i({elBubble:e,elem:t,value:a.listPrice,offerData:a,bubbleIndex:o});return}a.crossOutPrice&&a.crossOutPrice!==`0.00`&&(r.textContent=a.crossOutPrice,i({elBubble:e,elem:t,value:a.crossOutPrice,offerData:a,bubbleIndex:0}))},u=({elSmallValue:e,elSmallValueLabel:t,elSmallValueOriginalPrice:n,bubbleIndex:r})=>{r===0&&(t.textContent=`Nur mit App`,e.removeAttribute(`aria-label`),n?.remove())},d=({elBubble:e,elSmallValue:t,elSmallValueLabel:n,elSmallValueOriginalPrice:r,offerData:a,bubbleIndex:o})=>{if(a.actionPriceFrom&&a.actionPriceFrom.toS
+  Erkunden: chunks/offer.BKe7i0_u.js 3: tring()===`true`||a.priceFrom&&a.priceFrom.toString()===`true`){n.textContent=`ab`;return}a.showOriginalPrice&&a.showOriginalPrice.toString()===`true`&&(a.originalPriceType&&a.originalPriceType===`uvp`&&(n.textContent=`UVP`),r.textContent=a.originalPrice??``,i({elBubble:e,elem:t,value:a.originalPrice??``,offerData:a,bubbleIndex:o}))},f=({elBubble:e,bubbleIndex:t,offerData:r})=>{let i=e.querySelector(`.bubble__small-value`),a=i.querySelector(`.label`),o=i.querySelector(`.value`);if(r.primaryType===n.PRIMARY_TYPE.PROMO||r.primaryType===n.PRIMARY_TYPE.PROMO_PLUS){l({elBubble:e,elSmallValue:i,elSmallValueLabel:a,elSmallValueOriginalPrice:o,offerData:r,bubbleIndex:t}),r.primaryType===n.PRIMARY_TYPE.PROMO_PLUS&&u({elSmallValue:i,elSmallValueLabel:a,elSmallValueOriginalPrice:o,bubbleIndex:t});return}d({elBubble:e,elSmallValue:i,elSmallValueLabel:a,elSmall
 Märkte 47178: 1 s, ["Lidl=887","PENNY=284","Kabs PolsterWelt=45","Bosch Car Service=10","SCHAFFRATH=267","HORNBACH=198","KiK=50","Opti Wohnwelt=44","ALDI SÜD=468","Thomas Philipps=185","ROSSMANN=7","toom Baumarkt=319","OBI=25","Handelshof=270","XXXLutz=1497","SB-Möbel BOSS=309","Möbel Inhofer=80","Netto Marken-Discount=357","REWE=234 (47053)"]
 Markt 126679: 0 s, {"name":"Lidl","total":885,"seiten":"885/885/885","geladen":885,"ohneMenge":0,"kategorien":65,"ohneKat":0,"kp":"3=21 5=56 6=7 10=6 11=3 12=3 14=10 15=3 16=50 17=1 20=69 23=9 35=6 50=23 53=9 69=15 70=4 83=5 85=14 91=6 94=24 95=8 97=21 101=1 102=17 103=31 104=20 106=6 107=64 108=8 110=24 112=11 113=6 116=2 119=3 120=31 122=3 126=1 129=2 137=6 142=2 143=33 144=26 147=7 149=13 187=2 191=8 193=8 218=1 363=32 364=29 382=3 383=3 384=1 385=4 386=4 398=34 402=3 415=6 427=26 428=7 454=6 473=7 497=8 630=3","beispiel":"Lidl Backshop Kakao Donuts XXL 2.69 kg Kuchen & Feinbackwaren"}
 Markt 126735: 0 s, {"name":"Netto Marken-Discount","total":357,"seiten":"357/357/357","geladen":357,"ohneMenge":0,"kategorien":56,"ohneKat":0,"kp":"3=6 5=7 6=1 10=1 11=1 12=1 14=1 16=3 17=1 20=36 23=5 26=2 50=8 53=7 69=16 70=5 83=2 85=5 97=3 101=1 102=8 103=20 104=18 106=2 107=28 108=4 110=12 112=11 113=4 116=1 119=1 120=15 136=1 142=3 143=18 144=5 147=14 149=14 174=11 187=1 191=8 193=4 363=4 364=4 382=3 383=2 384=2 398=6 402=3 415=3 427=1 428=1 454=1 473=7 497=1 630=4","beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792931764","token":true}
+Konto anlegen: {"name":"test1792931904","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792931764","daten":{}}
+Konto Daten: {"name":"test1792931904","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792931764"]
+Konto Anfragen mit Code: ["test1792931904"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792931764","token":true}
+Neues Passwort mit Code: {"name":"test1792931904","token":true}
 Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
 Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
