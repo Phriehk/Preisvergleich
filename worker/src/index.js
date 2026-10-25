@@ -251,20 +251,27 @@ async function pennyStand(env, ctx, neu) {   // gespeicherte PENNY-Daten; neu = 
 
 /* Vorübergehende Diagnose: warum fehlt Kaufland unter „Nach Markt“? (nur mit Zugangscode) */
 async function erkunden(env) {
-  const out = [];
-  for (const plz of ["47178", "47169", "46535"]) {
-    const j = await mgHole(env, PUBLISHERS + "?" + new URLSearchParams({ as: "web", zipCode: plz, limit: "100" }));
-    const l = (j.results || []).map(x => `${String(x.name).trim()}=${String(x.id).replace(/\D/g, "")}`);
-    out.push(`Publishers ${plz}: total ${j.totalResults} · geliefert ${l.length} · Kaufland ${l.filter(x => /kaufland/i.test(x)).join(",") || "-"} · EDEKA ${l.filter(x => /edeka/i.test(x)).join(",") || "-"} · ${l.join(" | ").slice(0, 500)}`);
+  const out = [], ids = {}, RE = /\bdm\b|drogerie|globus|edeka|marktkauf|trinkgut|müller|budni/i;
+  for (const q of ["dm", "Balea", "Globus", "EDEKA", "Marktkauf", "Zahnpasta", "Duschgel"]) {
+    const j = await mgHole(env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "250", offset: "0", q, zipCode: "47178" }));
+    const z = {}; for (const o of j.results || []) { const a = (o.advertisers || [])[0] || {}; z[a.name] = (z[a.name] || 0) + 1; if (RE.test(a.name || "")) ids[a.name + "=" + haendlerId(o)] = "47178"; }
+    out.push(`Suche ${q} 47178: ${j.totalResults} · ${Object.entries(z).map(([k, v]) => k + " " + v).join(", ").slice(0, 600)}`);
   }
-  for (const q of ["Butter", "Kaufland", "Milch"]) {
-    const j = await mgHole(env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "100", offset: "0", q, zipCode: "47178" }));
-    const k = (j.results || []).filter(o => /kaufland|edeka/i.test(((o.advertisers || [])[0] || {}).name || ""));
-    out.push(`Suche ${q} 47178: ${j.totalResults} · Kaufland/EDEKA ${k.length} · ids ${[...new Set(k.map(o => ((o.advertisers || [])[0] || {}).name + "=" + haendlerId(o)))].join(",")} · Beispiel ${k.slice(0, 2).map(o => (o.product || {}).name + " " + o.price + " " + JSON.stringify(o.validityDates || []).slice(0, 80)).join(" | ")}`);
+  for (const plz of ["47441", "46045", "45127", "47798", "40210", "47051", "46483", "44135"]) {
+    try {
+      const j = await mgHole(env, PUBLISHERS + "?" + new URLSearchParams({ as: "web", zipCode: plz, limit: "100" }));
+      const l = (j.results || []).map(x => ({ n: String(x.name).trim(), id: String(x.id).replace(/\D/g, "") })).filter(x => RE.test(x.n));
+      l.forEach(x => { if (!ids[x.n + "=" + x.id]) ids[x.n + "=" + x.id] = plz; });
+      out.push(`Publishers ${plz}: ${(j.results || []).length} · ${l.map(x => x.n + "=" + x.id).join(", ") || "-"}`);
+    } catch (e) { out.push(`Publishers ${plz}: ${e.message}`); }
   }
-  for (const [name, id] of [["Kaufland", "126654"]]) for (const q of ["Kaufland", "Butter", "a"]) {
-    const j = await mgHole(env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "5", offset: "0", q, retailers: id, zipCode: "47178" }));
-    out.push(`retailers=${id} q=${q}: total ${j.totalResults} · geliefert ${(j.results || []).length} · Händler ${[...new Set((j.results || []).map(o => haendlerId(o)))].join(",")}`);
+  for (const [k, plzQ] of Object.entries(ids)) {
+    const [name, id] = k.split("=");
+    const z = [];
+    for (const plz of ["47178", "47169", "46535", "47051", plzQ]) {
+      try { const j = await mgHole(env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "1", offset: "0", q: name, retailers: id, zipCode: plz })); z.push(`${plz}:${j.totalResults}`); } catch (e) { z.push(`${plz}:F`); }
+    }
+    out.push(`  ${name}=${id} (gefunden ${plzQ}): ${[...new Set(z)].join(" ")}`);
   }
   return out;
 }
