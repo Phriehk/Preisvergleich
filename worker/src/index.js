@@ -178,7 +178,7 @@ async function marktListe(env, plz, passt, ohne) {   // Märkte einer Postleitza
   return liste;
 }
 async function maerkteRegion(env, plz) {   // für die eigene Gegend kommen wie bei den Favoriten einzelne Märkte aus den Nachbar-Postleitzahlen dazu
-  const key = "mkl3:" + plz, alt = await env.PV.get(key, "json");
+  const key = "mkl4:" + plz, alt = await env.PV.get(key, "json");
   if (alt && Date.now() - alt.t < 12 * 3600e3) return alt.liste;
   let liste = await marktListe(env, plz);
   if (plz === PLZ) for (const nb of NACHBARN) {
