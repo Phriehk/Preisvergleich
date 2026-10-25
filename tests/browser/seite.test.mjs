@@ -760,3 +760,31 @@ t("Kassenbon später eingelesen: Einkaufstag vom Bon, Angebot von damals aus dem
     assert.deepEqual(s.fehler, []);
   } finally { await s.b.close(); }
 });
+
+t("Kassenbon nach „Abgehakte von der Liste nehmen“: ordnet trotzdem zu (abgehakt am Einkaufstag, Favoriten) und doppelt nichts", async () => {
+  const u = await umgebung();
+  await u.KV.put("favoriten", JSON.stringify(["Butter", "Eier", "Reis"].map(name => ({ name, aus: "" }))));
+  await u.A("/aktualisieren", "POST");
+  const s = await browserStarten(u, {});
+  try {
+    await s.c.addInitScript(() => { window.Tesseract = { createWorker: async () => ({ recognize: async () => ({ data: { text: "ALDI SUED\nKERRYGOLD BUTTER 1,99 A\nFREILAND-EIER 2,29 A\nBASMATI REIS 1,29 A\nSUMME 5,57" } }), terminate: async () => {} }) }; });
+    await s.oeffnen("");
+    const p = s.p;
+    await p.evaluate(() => { for (const n of ["Butter", "Eier"]) { aufListeSetzen(n); wahl[n] = "ALDI SÜD"; } listeSpeichern(); render(); });
+    await p.click('#leiste [data-v="einkaufen"]'); await p.waitForTimeout(300);
+    for (const n of ["Butter", "Eier"]) { await p.locator(".haken", { hasText: n }).first().locator("input[type=checkbox]").check(); await p.waitForTimeout(150); }
+    await p.click('[data-aktion="abgehakteWeg"]'); await p.waitForTimeout(300);
+    assert.equal(await p.evaluate(() => zettelNamen().length), 0, "Liste ist leer");
+    assert.equal(await p.locator("#bonFoto").count(), 1, "Kassenbon geht auch mit leerer Liste");
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+    await p.setInputFiles("#bonFoto", { name: "bon.png", mimeType: "image/png", buffer: png });
+    await p.waitForSelector(".bon-pruefen", { timeout: 10000 });
+    assert.deepEqual(await p.evaluate(() => S.bon.zeilen.map(z => z.k)), ["Butter", "Eier", "Reis"], "Reis war nie auf der Liste, ist aber ein Favorit");
+    await p.click('[data-aktion="bonOk"]'); await p.waitForTimeout(300);
+    const k = await p.evaluate(() => kaeufe.map(e => e.z + ":" + e.p + ":" + e.a).sort());
+    assert.deepEqual(k, ["Butter:1.99:1", "Eier:2.29:1", "Reis:1.29:0"], "abgehakte Käufe aktualisiert, keine doppelten");
+    assert.equal(await p.evaluate(() => richt.Butter), undefined);
+    assert.equal(await p.evaluate(() => zettelNamen().length), 0, "nichts wieder auf die Liste gesetzt");
+    assert.deepEqual(s.fehler, []);
+  } finally { await s.b.close(); }
+});

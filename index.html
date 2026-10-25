@@ -1227,9 +1227,22 @@ function bonPasst(bon,texte){   // Anteil der Wörter vom Bon, die in den Namen 
   let h=0,lang=false;w.forEach(x=>{if(t.includes(" "+x)||(x.length>=5&&tk.includes(x))){h++;if(x.length>=4)lang=true}});
   return lang?h/w.length:0;
 }
-function bonZuordnen(zeilen){   // jede Bon-Zeile zum am besten passenden Artikel der Liste (jeder Artikel höchstens einmal)
-  const V=vergleich(),namen=zettelNamen(),kand=namen.map(k=>{const t=[zLabel(k),...zMitglieder(k).map(m=>zk(m).g)];const b=V.beste&&V.beste.zu[k];if(b)b.w.teile.forEach(x=>t.push((x.o.marke||"")+" "+x.o.produkt,x.o.produkt));return {k,t}});
-  const paare=[];zeilen.forEach((z,i)=>kand.forEach(c=>{const s=bonPasst(z.name,c.t);if(s>=0.5)paare.push({i,k:c.k,s})}));
+/* Wofür eine Bon-Zeile stehen kann: Artikel der Liste, an dem Tag Abgehaktes (auch wenn es schon von der Liste genommen ist) und alle Favoriten */
+function bonKandidaten(datum){
+  const d=datum||heuteT(),von=new Date(new Date(d+"T12:00:00")-7*864e5).toISOString().slice(0,10),m=new Map();
+  zettelNamen().forEach(k=>m.set(k,1));   // Bonus beim Zuordnen: auf der Liste
+  kaeufe.forEach(e=>{if(e.z&&e.d>=von&&e.d<=d)m.set(e.z,e.d===d?2:Math.max(m.get(e.z)||0,1))});   // am Einkaufstag abgehakt zählt am meisten
+  favs().forEach(f=>{if(!f.pause&&!m.has(f.name))m.set(f.name,0)});
+  return m;
+}
+function bonZuordnen(zeilen,datum){   // jede Bon-Zeile zum am besten passenden Artikel (jeder Artikel höchstens einmal)
+  const V=vergleich(),km=bonKandidaten(datum),kand=[...km.keys()].map(k=>{
+    const t=[zLabel(k),...zMitglieder(k).map(m=>zk(m).g)];
+    const b=V.beste&&V.beste.zu[k];if(b)b.w.teile.forEach(x=>t.push((x.o.marke||"")+" "+x.o.produkt,x.o.produkt));
+    else offers.filter(o=>grp(o)===zk(k).g).slice(0,8).forEach(o=>t.push((o.marke||"")+" "+o.produkt,o.produkt));
+    return {k,t,bonus:km.get(k)};
+  });
+  const paare=[];zeilen.forEach((z,i)=>kand.forEach(c=>{const s=bonPasst(z.name,c.t);if(s>=0.5)paare.push({i,k:c.k,s:s+c.bonus*0.1})}));
   paare.sort((a,b)=>b.s-a.s);const vergeben=new Set(),zu={};
   paare.forEach(p=>{if(zu[p.i]==null&&!vergeben.has(p.k)){zu[p.i]=p.k;vergeben.add(p.k)}});
   return zeilen.map((z,i)=>({...z,k:zu[i]||""}));
@@ -1274,8 +1287,8 @@ function bonUebernehmen(zeilen,kopf){
     const ang=bonAngebot(z.k,d,z.preis,z.n,markt);
     if(!ang){   // ohne Angebot gekauft: der Preis vom Bon wird dein Normalpreis (je kg, Liter oder Stück)
       const ref=zRef(z.k),stk=z.preis/(z.n||1),art=artG(zk(z.k).g);
-      const v=ref?stk/ref:art==="st"||!(zettel[z.k]>0)?stk:z.preis/zettel[z.k];
-      zMitglieder(z.k).forEach(m=>{delete richt[zk(m).g]});richt[zk(z.k).g]=Math.round(v*1e4)/1e4;rw++;vCache=null;rwC={};
+      const v=ref?stk/ref:art==="st"?stk:zettel[z.k]>0?z.preis/zettel[z.k]:null;   // ohne bekannte Menge (nicht mehr auf der Liste, lose Ware) lässt sich kein Preis je kg ableiten
+      if(v){zMitglieder(z.k).forEach(m=>{delete richt[zk(m).g]});richt[zk(z.k).g]=Math.round(v*1e4)/1e4;rw++;vCache=null;rwC={}}
     }
     if(x&&!haken[x.k]){haken[x.k]=1;if(heute)kaufMerken(x,true)}
     let e=kaeufe.find(e=>e.d===d&&(e.z===z.k||(x&&e.k===x.k)));
@@ -1830,10 +1843,10 @@ function schnellHtml(innen){
 function bonHtmlE(){   // Kassenbon einlesen: Knopf, Fortschritt, Prüfen der Zuordnung
   const B=S.bon;
   const knopf=`<label class="knopf klein bon-knopf">🧾 Kassenbon einlesen<input type="file" id="bonFoto" accept="image/*" hidden></label>`;
-  if(!B)return `<div class="reihe">${knopf}<span class="klein-text">Fotografier den Bon nach dem Einkauf, dann lerne ich deine Normalpreise und die Ersparnis wird genauer.</span></div>`;
+  if(!B)return `<div class="reihe">${knopf}<span class="klein-text">Fotografier den Bon nach dem Einkauf, auch später noch, dann lerne ich deine Normalpreise und die Ersparnis wird genauer.</span></div>`;
   if(B.stand==="liest")return `<div class="banner">🧾 ${B.text||"Ich lese den Kassenbon"} … ${B.fortschritt?Math.round(B.fortschritt*100)+" %":""}</div>`;
   if(B.stand==="fehler")return `<div class="banner warn">${esc(B.fehler)} <button type="button" class="knopf klein" data-aktion="bonZu">Schließen</button></div>${knopf}`;
-  const l=B.zeilen,namen=zettelNamen();
+  const l=B.zeilen,namen=[...bonKandidaten((B.kopf||{}).datum).keys()].sort((a,b)=>zLabel(a).localeCompare(zLabel(b),"de"));
   if(!l.length)return `<div class="banner warn">Auf dem Foto habe ich keine Zeilen mit Preisen gefunden. Am besten den Bon gerade und hell fotografieren, mit allen Zeilen im Bild. <button type="button" class="knopf klein" data-aktion="bonZu">Schließen</button></div>${knopf}`;
   const K=B.kopf||{datum:heuteT(),markt:""},tag=jahrD(K.datum).replace(/\.$/,"");
   const maerkte=[...new Set([...offers.map(o=>mbase(o.markt)),...vd.map(r=>mbase(r[1])),...(K.markt?[K.markt]:[])])].sort((a,b)=>a.localeCompare(b,"de"));
@@ -1862,7 +1875,7 @@ function vEinkaufen(){
   }).join("");
   const mo=ersparnisMonate()[0];
   if(mo&&mo.monat===heuteT().slice(0,7))h+=`<p class="klein-text" style="margin:0">💶 ${monatName(mo.monat)}: ${mo.n} Artikel für ${eur(mo.bezahlt)}${mo.gespart>0.005?`, <b class="spart">${eur(mo.gespart)} gespart</b>`:""}. Mehr dazu unter „Mehr“.</p>`;
-  if(zettelNamen().length)h+=bonHtmlE();
+  h+=bonHtmlE();   // auch mit leerer Liste: der Bon kommt oft erst, wenn die Abgehakten schon weg sind
   if(alle)h+=`<div class="reihe" style="padding-top:6px"><label class="schalter"><input type="checkbox" id="erledigtAus" data-aktion-change="erledigtAus"${S.erledigtAus?" checked":""}> Erledigte ausblenden</label></div>
     <div class="reihe"><button type="button" class="knopf" data-aktion="abgehakteWeg"${fertig?"":" disabled"}>Abgehakte von der Liste nehmen</button><button type="button" class="knopf leise" data-aktion="hakenNull"${fertig?"":" disabled"}>Alle Haken entfernen</button></div>`;
   return h+`</section>`;
@@ -2316,8 +2329,8 @@ async function bonLesen(datei){
     S.bon.text="Ich lese den Kassenbon";render();
     let t=0;const w=await T.createWorker("deu",1,{logger:m=>{if(m.status==="recognizing text"&&S.bon){S.bon.fortschritt=m.progress;if(Date.now()-t>400){t=Date.now();render()}}}});
     const r=await w.recognize(bild);await w.terminate();
-    const text=r.data&&r.data.text,zeilen=bonZuordnen(bonZeilen(text)).map(z=>({...z,an:!!z.k}));
-    S.bon={stand:"fertig",zeilen,kopf:bonKopf(text)};
+    const text=r.data&&r.data.text,kopf=bonKopf(text),zeilen=bonZuordnen(bonZeilen(text),kopf.datum).map(z=>({...z,an:!!z.k}));
+    S.bon={stand:"fertig",zeilen,kopf};
   }catch(e){S.bon={stand:"fehler",fehler:e.message||String(e)}}
   render();
 }
