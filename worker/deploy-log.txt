@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 70.17 KiB / gzip: 20.56 KiB
+Total Upload: 70.75 KiB / gzip: 20.76 KiB
 Worker Startup Time: 2 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (2.98 sec)
-Deployed preise triggers (1.49 sec)
+Uploaded preise (3.58 sec)
+Deployed preise triggers (0.73 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: 9481d530-d889-4c86-85db-0aa9f9e719d3
+Current Version ID: c70a5c2e-1bc8-44a6-bb69-d8a086923a2e
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,7 +18,7 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-25T13:19","anzahl":30,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-25T13:24","anzahl":30,"fehler":0}}
 Spar-Tipp: {"alternativen":3,"favoriten":2}
 Push ohne Code (erwartet 401): HTTP 401
 Push: Schlüssel 87 Zeichen, {"geraete":1,"ntfy":true,"ntfyAn":false}
@@ -27,7 +27,7 @@ Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
 Suche Fanta: 1 s, {"anzahl":0}
-Aktualisieren: 3 s, {"zeit":"2026-10-25T13:24","anzahl":30,"fehler":0,"alarm":[]}
+Aktualisieren: 3 s, {"zeit":"2026-10-25T13:27","anzahl":30,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":30,"gruppen":["Ferrero Nutella Brotaufstrich","Heinz Ketchup","Knorr Spaghetteria","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","Zewa Toilettenpapier Ultra Soft","coca cola"]}
 Verlauf: 421 Zeilen
 Korrekturen lesen: {}
@@ -35,7 +35,7 @@ Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
 Korrektur gespeichert und gelesen: true
 Test-Korrektur gelöscht: true
 Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
-Region 40210 ohne Code: 0 s, {"anzahl":4,"maerkte":["ALDI SÜD","Kaufland","Lidl","Thomas Philipps"]}
+Region 40210 ohne Code: 1 s, {"anzahl":4,"maerkte":["ALDI SÜD","Kaufland","Lidl","Thomas Philipps"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
 Lebensmittel-Probe: 0 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl":4,"Nudeln":4}
   Probe: Butter | Netto Marken-Discount | Beste Butter | art=kg liter=0.25 stueck=1 ml=250 preis=0.88 | gekühlt 250 g
@@ -78,76 +78,33 @@ Lebensmittel-Probe: 0 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | Netto Marken-Discount | Speisekartoffeln XXL | art=kg liter=4 stueck=1 ml=4000 preis=2.99 | 4 kg Netz Deutschland, versch. Kocheigenschaften
   Probe: Kartoffeln | Kaufland | Speisekartoffeln | art=kg liter=1 stueck=1 ml=1000 preis=0.79 | Dtsch. lose Qualität II je kg
   Probe: Kartoffeln | Lidl | Bio-Speisekartoffeln | art=kg liter=2 stueck=1 ml=2000 preis=2.79 | Bioland Deutsche Qualität I Je 2 kg
-  Erkunden: robots https://prospekt.aldi-sued.de/robots.txt: 404 146
-  Erkunden: robots https://www.aldi-sued.de/robots.txt: 200 698
-  Erkunden:   User-agent: * → Allow: /*?page=*
-  Erkunden:   User-Agent: GPTBot → Allow: /
-  Erkunden:   User-Agent: ChatGPT-User → Allow: /
-  Erkunden:   User-Agent: OAI-SearchBot → Allow: /
-  Erkunden:   User-Agent: Google-Extended → Allow: /
-  Erkunden:   User-Agent: Cohere-Ai → Allow: /
-  Erkunden:   User-Agent: OmgiliBot → Allow: /
-  Erkunden:   User-Agent: Omgili → Allow: /
-  Erkunden:   User-Agent: Claude-Web → Allow: /
-  Erkunden:   User-Agent: ClaudeBot → Allow: /
-  Erkunden:   User-Agent: PerplexityBot → Allow: /
-  Erkunden:   User-agent: CCBot → Allow: /
-  Erkunden:   User-agent: anthropic-ai → Allow: /
-  Erkunden:   User-agent: applebot-extended → Allow: /
-  Erkunden: robots https://www.penny.de/robots.txt: 200 66
-  Erkunden:   User-agent: * → Allow: /
-  Erkunden: ALDI kw44-26-op-mp: 17 Doppelseiten · Nummern 1 2-3 4-5 6-7 8-9 10-11 12-13 14-15 16-17 18-19 20-21 22-23 24-25 26-27 28-29 30-31 32
-  Erkunden:   Seite-Schlüssel images,screenshots,text,backgroundType,backgroundColor,number,id
-  Erkunden: ALDI Produkte 168 · mit discountedPrice 43 · price>discounted 43 · ohne Preis 2
-  Erkunden:   Felder id,hotspotId,title,description,price,removedFromFeed,webshopIdentifier,productType,customLabel1,customLabel2,customLabel6,customLabel8,customLabel12,photoUrls,photoSharingUrl,brand,customLabel9,webshopUrl,discountedPrice,customLabel0,customLabel4,customLabel5,customLabel3,customLabel7
-  Erkunden:   customLabel1: 26.10. | 29.10. | 30.10. | 31.10.
-  Erkunden:   customLabel2: je 1-kg-Schale | je 2-kg-Netz | je 1-kg-Packung | je 800-g-Packung | je 600-g-Packung | je 500-g-Packung | je 350-g-Packung | je 2-kg-Beutel | je 400-g-Packung | je 200-g-Packung | je 250-g-Packung | je 150-g-Packung
-  Erkunden:   customLabel6: new
-  Erkunden:   customLabel8: je Schale | je Netz | je Packung | je kg | je Beutel | je Stück | je Flasche | je Tafel | je Dose | je Set | je Paar | je Becher
-  Erkunden:   customLabel12: Aktion | 10 Stück, 24 x 10 Stück | 4er-Set, 2er-Set, 6er-Set | 2er-Set, 4er-Set | Aktion, 5er-Set | 2er-Set | 3er-Set, 8er-Set | 4er-Set | 48er-Set, 50er-Set | Aktion, 2er-Set, 4er-Set | 3er-Set | 10er-Set
-  Erkunden:   customLabel9: kg-Preis 1.25 | kg-Preis 3.99 | kg-Preis 8.74 | kg-Preis 13.29 | kg-Preis 9.98 | kg-Preis 15.99 | kg-Preis 13.38 | kg-Preis 8.79 | kg-Preis 6.83 | kg-Preis 0.60 | kg-Preis 6.45 | kg-Preis 3.25
-  Erkunden:   customLabel0: 20 | 25 | 19 | 14 | 26 | 31 | 30 | 34 | 23 | 17 | 35 | 27
-  Erkunden:   customLabel4: 3.99 | 8.74 | 13.29 | 9.98 | 15.99 | 13.38 | 8.79 | 6.83 | 0.60 | 6.45 | 0.08 | 3.25
-  Erkunden:   customLabel5: XXL
-  Erkunden:   customLabel3: Vegan | Vegetarisch
-  Erkunden:   customLabel7: NEU
-  Erkunden:   Bsp {"id":75745922,"hotspotId":157949152,"title":"Puten-Unterkeule","description":"1-kg-Packung","price":"4.99","removedFromFeed":false,"discountedPrice":"3.99","webshopIdentifier":"736770_kw44","brand":"MEINE METZGEREI","customLabel0":"20","customLabel1":"26.10.","customLabel2":"je 1-kg-Packung","customLabel4":"3.99","customLabel6":"new","customLabel8":"je Packung","customLabel9":"kg-Preis 3.99","photoSharingUrl":"https://aldi-assets.publitas.com/feed-images/2026/44/736770_001_Puten-Unterkeule-Puten-Unterkeule_Produkt_001.png"}
-  Erkunden:   Bsp {"id":75745920,"hotspotId":157949201,"title":"Lachsfiletseite","description":"Mit Haut; versch. Gewichte, z. B. 1203 g für 15.99","price":"16.65","removedFromFeed":false,"discountedPrice":"13.29","webshopIdentifier":"712962_kw44","brand":"GOLDEN SEAFOOD","customLabel0":"20","customLabel1":"26.10.","customLabel4":"13.29","customLabel5":"XXL","customLabel6":"new","customLabel8":"je kg","customLabel9":"kg-Preis 13.29","photoSharingUrl":"https://aldi-assets.publitas.com/feed-images/2026/44/712962_001_Lachsfiletseite-Lachsfiletseite_Produkt_001.png"}
-  Erkunden:   Bsp {"id":75745917,"hotspotId":157949164,"title":"Spare Ribs","description":"Vom Schwein; versch. Sorten; je 600-g-Packung","price":"7.99","removedFromFeed":false,"discountedPrice":"5.99","webshopIdentifier":"763274_kw44","brand":"GOURMET FINEST CUISINE","customLabel0":"25","customLabel1":"26.10.","customLabel2":"je 600-g-Packung","customLabel4":"9.98","customLabel6":"new","customLabel8":"je Packung","customLabel9":"kg-Preis 9.98","photoSharingUrl":"https://aldi-assets.publitas.com/feed-images/2026/44/763274_001_Spare-Ribs-Sweet-Chilli_Produkt_001.png"}
-  Erkunden:   Bsp {"id":75745927,"hotspotId":157949162,"title":"Sauerbraten","description":"Vom Rind; versch. Gewichte, z. B. 687 g","price":"13.73","removedFromFeed":false,"discountedPrice":"10.99","webshopIdentifier":"548717_kw44","brand":"MEINE METZGEREI","customLabel0":"19","customLabel1":"26.10.","customLabel4":"15.99","customLabel6":"new","customLabel8":"je Packung","customLabel9":"kg-Preis 15.99","photoSharingUrl":"https://aldi-assets.publitas.com/feed-images/2026/44/548717_001_Sauerbraten-vom-Rind-Sauerbraten-vom-Rind_Produkt_001.png"}
-  Erkunden:   Bsp {"id":75742869,"hotspotId":157948242,"title":"Äpfel, fein säuerlich","description":"Ursprung: Deutschland; Sorte: Elstar; Klasse: I; 1-kg-Schale","price":"1.69","removedFromFeed":false,"webshopIdentifier":"778061_kw44","productType":"Obst - Äpfel","customLabel1":"26.10.","customLabel2":"je 1-kg-Schale","customLabel6":"new","customLabel8":"je Schale","customLabel12":"Aktion","photoSharingUrl":"https://aldi-assets.publitas.com/feed-images/2026/44/778061_001_AepfelRot-Elster03.png"}
-  Erkunden:   Bsp {"id":76379759,"hotspotId":158651635,"title":"Bio-Hokkaido, lose","description":"Ursprung: Deutschland; kg-Preis","price":"1.29","removedFromFeed":false,"webshopIdentifier":"123456_kw44","brand":"BIO NATURLAND","customLabel1":"26.10.","customLabel6":"new","customLabel12":"Aktion","photoSharingUrl":"https://aldi-assets.publitas.com/feed-images/2026/40/523858_001_HokaidoKuerbis-3994.png"}
-  Erkunden:   Typen Obst - Äpfel |  | Obst - Zitrusfrüchte | Geflügel frisch - Hühnchen frisch | Gemüse - Wurzel-/Knollengemüse | Gemüse - Sonstiges Gemüse | Gemüse - Pilze | Käse/Käseersatzprodukte - Weichkäse | Bake-Off - Feinbackwaren | Papierwaren - Taschentücher/Kosmetiktücher | Bonbons/Kaugummi - Fruchtgummi | Brot/Kuchen - Frischbrot | Saisonartikel Süßwaren - Weihnachten | Nährmittel - Reis | CO2 Erfrischungsgetränke - Softdrinks/Fruchthaltige Erfrischungsget | Gekühltes verzehrfertiges Fleisch/Fleisc - Fleischersatzprodukte | Margarine/pflanzliche Fette - Margarine/pflanzliche Fette | Chips/Snacks - Chips | Salzgebäck - Salzgebäck/Kräcker | Dauerwurst/Speck - Dauerwurst/Speck | TK Fleisch/Fisch - Fisch/Meeresfrüchte | Wein - Weißwein | Brot/Kuchen - Aufbackartikel | Fertiggerichte/Suppen - Instantgerichte | Käse/Käseersatzprodukte - Hart-/Schnittkäse | Deko-Artikel - Weihnachts-/Silvesterde
-  Erkunden: PENNY 200 301522
-  Erkunden:   zählt offer-tile: 1506
-  Erkunden:   zählt tile__: 1382
-  Erkunden:   zählt data-price: 0
-  Erkunden:   zählt uvp: 2
-  Erkunden:   zählt €: 0
-  Erkunden:   zählt data-ww: 0
-  Erkunden:   zählt wwIdent: 2
-  Erkunden:   zählt market: 191
-  Erkunden:   zählt ellipsis: 3
-  Erkunden:   zählt regular: 0
-  Erkunden:   zählt strike: 0
-  Erkunden:   zählt lowest: 0
-  Erkunden:   um .rest/market: w.location.hash.includes('handout')) { window.pageData.page.name += ':prospekt der woche'; window.pageData.page.type = 'handout'; window.pageData.page.hierarchy.push('prospekt der woche'); } </script> <div class="site-header" data-js-component="site-header" data-market-api="/.rest/market" > <div> <a class="btn btn--primary btn--lg btn--round t-bg--white btn__skip-to-main" data-js-component="button-ripple" data-css-component="button-ripple" data-js-ripple="true" aria-label="zum Hauptinhalt springen" href="#maincontent" > <svg aria-hidden="true" class="icon"><use href="/.resources/penny/webresources/media/icon-sprite.51fa347e.svg#icon-big-arrow-up"></use></svg> </a> </div> <header class="site-header__container page-sect
-  Erkunden:   um data-label-uvp: t="offer-tile|button-ripple" data-css-component="button-ripple" data-js-ripple="true" data-prevent-navigation="true" > <article class="offer-tile"> <div class="offer-tile__header"> <div class="bubble" data-label-cross-out="Streichpreis" data-label-uvp-full="Unverbindlichle Preisempfehlung" data-label-price-app="App-preis" data-label-price="Angebotspreis" > <div class="bubble__small-value"> <span class="label-hidden l-visually-hidden"></span> <span class="label" aria-hidden="true"></span> <span class="value" aria-hidden="true"></span> </div> <div class="bubble__price ellipsis"> <span class="label-hidden l-visually-hidden"></
-  Erkunden:   um offer-tile:  <div class="l-container--extra-wide spacing-below-s-sm spacing-below-l-lg"> <div class="l-row"> <div class="l-col"> <ul class="tile-list"> <li class="tile-list__item--placeholder tile-list__item--highlight "> <a class="offer-tile__link"> <article class="offer-tile"> <div class="offer-tile__image-container"></div> <div class="offer-tile__info-container"> <h3 class="offer-tile__headline"></h3> <div class="offer-tile__unit-price"></div> </div> </article> </a> </li> <li class="tile-list__item-
-  Erkunden:   uvp-Treffer UVP.</p> 
+  Erkunden: ALDI kw44-26-op-mp: 200 · 17 Doppelseiten · Produkte 168 · Probe 0 · Text Gültig von Mo. 26.10. – Sa. 31.10. BIS ZU -SPAREN. TIEFPREIS46 % HIGHLIGHT ab Do. 29.10. CROFTON Kinder-Backset 10er-Set 4. 49 ab Mo. 26.10. * Aktion DE BEUKELA
+  Erkunden: ALDI kw44-26-op: 200 · 17 Doppelseiten · Produkte 0 · Probe 0/1 · Text Gültig von Mo. 26.10. – Sa. 31.10. BIS ZU -SPAREN. TIEFPREIS46 % HIGHLIGHT ab Do. 29.10. CROFTON Kinder-Backset 10er-Set 4. 49 ab Mo. 26.10. * Aktion DE BEUKELA
+  Erkunden: ALDI kw45-26-op: 200 · 17 Doppelseiten · Produkte 0 · Probe 0/2 · Text Gültig von Mo. 2.11. – Sa. 7.11. TIEFPREIS- HIGHLIGHT ab Do. 5.11. HOME CREATION LED-Papierlicht 3. BIS ZU 99 -SPAREN. 46 % * Aktion PREISWERT UND FESTLICH BELE
+  Erkunden: ALDI kw45-26-op-mp: 404 · 0 Doppelseiten · Produkte 0 · Probe 0 · Text 
+  Erkunden: ALDI kw46-26-vop: 200 · 12 Doppelseiten · Produkte 0 · Probe 0/0 · Text Gültig von Mo. 9.11. – Sa. 14.11. TIEFPREIS- HIGHLIGHT ab Mo. 9.11. HOME CREATION DIY-WeihnachtsKeramik 1.49 * Aktion KREATIV-SPASS ZU BEST-PREISEN. Im Innentei
+  Erkunden: ALDI Marktguru 468 Angebote (preis_alt 85) · Prospekt 168 · gefunden 162 · dort schon statt-Preis 46 · neu statt-Preis 1 · ohne Gegenstück 6
+  Erkunden:   ohne: Orangen-Tiramisu NaN | Geschmortes Rindergulasch mit Champignons und Perlzwiebeln NaN | Knabberbox SUNSNACKS 1.29 26.10. | Bauset 6.99 26.10. | Bauset 9.99 26.10. | Minutensteaks MEINE METZGEREI 4.79 30.10.
+  Erkunden:   MG-Bsp: Meine Backwelt Pain au Chocolat 0.45 0.65 2026-10-26 | Meine Backwelt Apfelecke 0.45 0.69 2026-10-26 | Magnet-Spiel-Buch 4.99 2026-10-26 | Novitesse Modulares Kindersofa 79.99 2026-10-26 | Puzzle 3.99 2026-10-26 | Toylino Magnet-Baukasten 12.99 2026-10-26 | Burago F1-Modellautos 4.99 2026-10-26 | Spin Master Monster Jam Truck 4.99 2026-10-26
+  Erkunden: PENNY Datenquellen: data-icon-sprite-url="/.resources/penny/webresources/media/icon-sprite.51fa347e.svg" data-market-api="/.rest/market" data-src="https://cdn.penny.de/dam/jcr:066b10cb-587e-4c51-8d0d-08aee6f4228a/Image_navi_angebote.png?impolicy=penny&imwidth=400" data-src="https://cdn.penny.de/dam/jcr:c2c64890-a73b-40fa-b375-b156c18ff56f/Image_navi_aktionen.png?impolicy=penny&imwidth=400" data-src="https://cdn.penny.de/dam/jcr:fe717c78-e8b6-4ab1-bb12-d9173202d337/Image_navi_foerderpenny.png?impolicy=penny&imwidth=400" data-src="https://cdn.penny.de/dam/jcr:fe1c2f21-0321-48cf-bbae-af8c6cba8136/Image_navi_tipps.png?impolicy=penny&imwidth=400" data-market="/.rest/market" data-rest-api="/.rest" data-market-select-label="Auswählen" data-week="current_week" data-week="current" data-week="current_week_menu" data-week="ab-montag_period_menu" data-week="ab-donnerstag_period_menu" data-week="ab-f
+  Erkunden: PENNY Skripte: <script async src="//assets.adobedtm.com/8665cc68f8ef/302850a9b963/launch-465a61895221.min.js" <script defer src="https://privacy-proxy.usercentrics.eu/latest/uc-block.bundle.js" <script type="module" src="/.resources/penny/webresources/js/index~2026-10-21-07-43-13-000~cache.js"
+  Erkunden: PENNY Preise: <p><sup>5</sup> Aktionszeitraum: 12.10.26 &ndash; 31.10.26. Teilnahme ab 18 Jahren. Voraussetzung ist die Registrierun || <p><sup>8</sup> Aktionszeitraum: 12.10.26 &ndash; 2.1.27. 1 Treuepunkt je 5 &euro; Einkaufswert. Ausgenommen Tabakwa || rrat reicht. F&uuml;r 55 Treuepunkte und einer Zuzahlung ab 0.99 &euro; erh&auml;ltst du eine Pr&auml;mie deiner Wahl. Weite || t Wohnsitz au&szlig;erhalb Deutschlands. Teilnahmezeitraum: 15.10.26 &ndash; 31.10.26. Teilnahmebedingungen &amp; Datenschutz || <div class="handout__subline">26.10. bis 31.10.</div> || <div class="handout__subline">2.11. bis 7.11.</div>
+  Erkunden: PENNY Kachel 3:  <div ></div> <div > <h3 ></h3> <div ></div> </div> </article> </a> </li> <li > <a > 
+  Erkunden: PENNY Kachel 4:  <div ></div> <div > <h3 ></h3> <div ></div> </div> </article> </a> </li> <li > <a > 
+  Erkunden: PENNY wwIdent: on () { var pennyMarket = {}; try { var raw = localStorage.getItem('marketData'); var market = raw && raw !== 'undefined' ? JSON.parse(raw) : null; if (market) { pennyMarket = { city: market.marketCity, country: 'germany', id: market.wwIdent, postcode: market.marketZipCode, street: market.marketStreetWithHouseNumber }; } } catch (e) { // corrupt localStorage entry: track without market data } if (!window.pageData) { window.pageData = { page: { name: '', type: '', hierarc
 Märkte 47178: 0 s, ["Lidl=887","PENNY=284","Kabs PolsterWelt=45","Bosch Car Service=10","SCHAFFRATH=267","HORNBACH=198","KiK=50","Opti Wohnwelt=44","ALDI SÜD=468","Thomas Philipps=185","ROSSMANN=7","toom Baumarkt=319","OBI=25","Handelshof=270","XXXLutz=1497","SB-Möbel BOSS=309","Möbel Inhofer=80","Netto Marken-Discount=357","REWE=234 (47053)"]
 Markt 126679: 0 s, {"name":"Lidl","total":885,"seiten":"885/885/885","geladen":885,"ohneMenge":0,"kategorien":65,"ohneKat":0,"kp":"3=21 5=56 6=7 10=6 11=3 12=3 14=10 15=3 16=50 17=1 20=69 23=9 35=6 50=23 53=9 69=15 70=4 83=5 85=14 91=6 94=24 95=8 97=21 101=1 102=17 103=31 104=20 106=6 107=64 108=8 110=24 112=11 113=6 116=2 119=3 120=31 122=3 126=1 129=2 137=6 142=2 143=33 144=26 147=7 149=13 187=2 191=8 193=8 218=1 363=32 364=29 382=3 383=3 384=1 385=4 386=4 398=34 402=3 415=6 427=26 428=7 454=6 473=7 497=8 630=3","beispiel":"Lidl Backshop Kakao Donuts XXL 2.69 kg Kuchen & Feinbackwaren"}
 Markt 126735: 0 s, {"name":"Netto Marken-Discount","total":357,"seiten":"357/357/357","geladen":357,"ohneMenge":0,"kategorien":56,"ohneKat":0,"kp":"3=6 5=7 6=1 10=1 11=1 12=1 14=1 16=3 17=1 20=36 23=5 26=2 50=8 53=7 69=16 70=5 83=2 85=5 97=3 101=1 102=8 103=20 104=18 106=2 107=28 108=4 110=12 112=11 113=4 116=1 119=1 120=15 136=1 142=3 143=18 144=5 147=14 149=14 174=11 187=1 191=8 193=4 363=4 364=4 382=3 383=2 384=2 398=6 402=3 415=3 427=1 428=1 454=1 473=7 497=1 630=4","beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792931108","token":true}
+Konto anlegen: {"name":"test1792931298","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792931108","daten":{}}
+Konto Daten: {"name":"test1792931298","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792931108"]
+Konto Anfragen mit Code: ["test1792931298"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792931108","token":true}
+Neues Passwort mit Code: {"name":"test1792931298","token":true}
 Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
 Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
