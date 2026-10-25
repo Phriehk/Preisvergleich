@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 68.84 KiB / gzip: 20.13 KiB
-Worker Startup Time: 2 ms
+Total Upload: 70.48 KiB / gzip: 20.65 KiB
+Worker Startup Time: 1 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (3.30 sec)
-Deployed preise triggers (0.63 sec)
+Uploaded preise (3.25 sec)
+Deployed preise triggers (0.71 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: 723bd8bc-fa3f-4a8c-9b8a-53068be8c2aa
+Current Version ID: 6ca6c6a0-3bbc-464c-adff-4c4956d5182c
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,7 +18,7 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-25T13:39","anzahl":30,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-25T13:42","anzahl":30,"fehler":0}}
 Spar-Tipp: {"alternativen":3,"favoriten":2}
 Push ohne Code (erwartet 401): HTTP 401
 Push: Schlüssel 87 Zeichen, {"geraete":1,"ntfy":true,"ntfyAn":false}
@@ -26,8 +26,8 @@ Hintergrunddienst mit Push: 1
 Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
-Suche Fanta: 0 s, {"anzahl":0}
-Aktualisieren: 4 s, {"zeit":"2026-10-25T13:42","anzahl":30,"fehler":0,"alarm":[]}
+Suche Fanta: 1 s, {"anzahl":0}
+Aktualisieren: 4 s, {"zeit":"2026-10-25T13:44","anzahl":30,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":30,"gruppen":["Ferrero Nutella Brotaufstrich","Heinz Ketchup","Knorr Spaghetteria","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","Zewa Toilettenpapier Ultra Soft","coca cola"]}
 Verlauf: 421 Zeilen
 Korrekturen lesen: {}
@@ -35,7 +35,7 @@ Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
 Korrektur gespeichert und gelesen: true
 Test-Korrektur gelöscht: true
 Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
-Region 40210 ohne Code: 2 s, {"anzahl":4,"maerkte":["ALDI SÜD","Kaufland","Lidl","Thomas Philipps"]}
+Region 40210 ohne Code: 0 s, {"anzahl":4,"maerkte":["ALDI SÜD","Kaufland","Lidl","Thomas Philipps"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
 Lebensmittel-Probe: 1 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl":4,"Nudeln":4}
   Probe: Butter | Netto Marken-Discount | Beste Butter | art=kg liter=0.25 stueck=1 ml=250 preis=0.88 | gekühlt 250 g
@@ -78,35 +78,28 @@ Lebensmittel-Probe: 1 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | Netto Marken-Discount | Speisekartoffeln XXL | art=kg liter=4 stueck=1 ml=4000 preis=2.99 | 4 kg Netz Deutschland, versch. Kocheigenschaften
   Probe: Kartoffeln | Kaufland | Speisekartoffeln | art=kg liter=1 stueck=1 ml=1000 preis=0.79 | Dtsch. lose Qualität II je kg
   Probe: Kartoffeln | Lidl | Bio-Speisekartoffeln | art=kg liter=2 stueck=1 ml=2000 preis=2.79 | Bioland Deutsche Qualität I Je 2 kg
-  Erkunden: Komponenten: bubble-price button-ripple icon-html-by-name step-progress app-store-link back-to-top bot-validation collapsible-content-group collapsible-content consent carousel carousel-swiper video-actions collapsible-multiple-exclusive collapsible tabs-offers content-tile-list content-tile-slider-progress-bar content-tile-slider-slides content-tile-slider-test-utils content-tile-slider-video-controls content-tile-slider-viewport-observer content-tile-slider.constants content-tile-slider content-tile-region-filter content-tile-video cta-component dropdown-search info-toggletip input-date input-file-validate input-file input-select zip-search not-found notification-tile rating tile-list-consts tile-list offer-tile teaser-steps teaser tile-video toast-notification video week-teaser category-offers category-offers.types category content-teaser offer-image-utils offer content-hub-sli
-  Erkunden: Komponenten 2: nt-hub-slider crm-form form-actions form-animation form-loading-spinner form-redirect-newsletter form-redirect-raffle form-redirect-vote form-redirect form-validate market-finder-validate detail-block-carousel contest-raffle game-raffle quiz-raffle single-select-raffle spot-difference-raffle throw-raffle handout iframe image-gallery jump-marks input-wrapper input market-finder-active market-finder-form market-finder-generate market-finder-geolocate market-finder-map market-finder-results market-finder market-locator market-finder-current market-finder-select market-services market-status position-locator media-carousel modal-category-offers modal-category modal-handout modal-market-finder modal-non-food modal-pdp modal-rating modal newsletter podio-form recipe recipe-pdf recipes-ingredients recipe-tags shopping-gallery body-scroll-state region scrollable site-header s
-  Erkunden: Auf der Seite: site-header button-ripple tabs-offers market-finder-select modal-market-finder category-offers|notification-tile modal-category-offers tile-list offer-tile|button-ripple teaser|button-ripple tile-video handout modal-handout toast-notification modal-non-food collapsible modal-pdp back-to-top|button-ripple
-  Erkunden: Prüfe: tabs-offers notification-tile tile-list offer-tile tile-video category-offers modal-category-offers
-  Erkunden: components/tile-list.U20s3M9K.js: 1669
-  Erkunden:     ks/winner.Dk3S08JA.js";import{p as r}from"../chunks/market-locator.C6qckVnY.js";import{n as i,t as a}from"../chunks/current-time.C5FGfi2i.js";function o(o){let s=o.dataset.categoryType||``,c=o.dataset.restUri||``,l=`l-visually-hidden`,u=async()=>{let e=r();if(e){let{date:t}=i(a(new Date).time),r=t.getFullYear(),s=await n({wawi:e.wawi,restUri:c,winnersType:`winner`,winnersYear:r-1}),u=o.querySelectorAll(`[data-mode="foerderpenny"]`);s&&s.length>0&&u.forEach(t=>{
-  Erkunden: chunks/winner.Dk3S08JA.js: 272
-  Erkunden:     var e=({wawi:e,restUri:t,winnersType:n,winnersYear:r})=>{let i=`${t}/foerderpenny/organizations?year=${r}&type=${n}`;return fetch(i).then(e=>e.json()).then(t=>t.filter(t=>(t.wawi??``).split(`,`).map(e=>e.trim()).includes(e??``))).catch(e=>console.warn(e))};export{e as t};
-  Erkunden: chunks/category-offers.CerXnT9E.js: 6004
-  Erkunden:     NVVs.js";var u=`tile-list__item--placeholder`,d=`offer-tile--highlight`,f=`tile-list__item`,p=`tile-list__item--highlight`,m=new Set,h=new Set,g=new Map,_=()=>g.clear(),v=async(e,t)=>{try{let n=await fetch(e,{priority:t});if(!n.ok)throw Error(`Unexpected response status ${n.status}`);return await n.json()}catch{return console.warn(`Offers for current week unavailable`),null}},y=async(e,t=`auto`)=>(g.has(e)||g.set(e,(async()=>{let n=await v(e,t)??await v(e,t);ret
-  Erkunden:     OfferTemplate:_,elTeaserTemplate:v}=r,y=null;n.forEach((e,t)=>{let n=h[t];try{y=e.primaryType===c.PRIMARY_TYPE.OFFER||e.primaryType===c.PRIMARY_TYPE.PROMO||e.primaryType===c.PRIMARY_TYPE.PROMO_PLUS?i.generateOffer({elOfferTemplate:_,offerData:e,tileIndex:t,addEager:p,week:m}):l({elTeaserTemplate:v,offerData:e,tileIndex:t,editMode:o,organisation:s??void 0,currentLSMarket:f??void 0,addEager:p})}catch(e){console.warn(e)}g.shift(),y?(n.classList.remove(u),t===0&&y.classLis
-  Erkunden:     [data-period-category="false"]`),m=o.querySelectorAll(`.tabs__content--next-week .js-category-section[data-period-category="false"]`),{currentWeek:h,nextWeek:g}=f.dataset,{restUri:_}=o.dataset,v=`${_}/offers`,b=`${v}/by-category`,x=location.href.includes(`.magnolia/admincentral`),S=null,C=null,w=!1,E=s(),D=async({elCategory:e,baseUrl:t,week:n,region:r})=>{let i=r?`?region=${r}`:``,a=e.dataset.categoryName;T({elCategory:e,oCategoryOffers:await y(`${t}/${n}/${a}${i
-  Erkunden:     let i=t===`next`,a=i?g:h,o=i?S?.nextWeekSellingRegion:S?.sellingRegion,s=o?`?region=${o}`:``;y(`${b}/${a}/${r}${s}`,`low`)},M=()=>{let e=document.querySelector(`link[rel="preload"][as="fetch"][href*="/offers/by-category/"]`)?.getAttribute(`href`);e&&y(e)};return Object.freeze({init:async()=>{if(S=n(),document.addEventListener(a.PREFETCH_CATEGORY,j),M(),S){let{date:e}=r(i(new Date).time),n=e.getFullYear();C=await t({wawi:S.wawi,restUri:_,winnersType:`winner`,winne
-  Erkunden: chunks/pinia.DFg5ff0t.js: 6121
-  Erkunden:     null};function C(e,{autoBom:t=!1}={}){return t&&/^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(e.type)?new Blob([` `,e],{type:e.type}):e}function w(e,t,n){let r=new XMLHttpRequest;r.open(`GET`,e),r.responseType=`blob`,r.onload=function(){k(r.response,t,n)},r.onerror=function(){console.error(`could not download file`)},r.send()}function T(e){let t=new XMLHttpRequest;t.open(`HEAD`,e,!1);try{t.send()}catch{}return t.status>=200&&t.status<
-  Erkunden: geprüft 26
+  Erkunden: preload undefined · weeks data-current-week="2026-44" data-next-week="2026-45" · rest data-rest-uri="/.rest"
+  Erkunden: Kategorien: top-angebote obst-und-gemuese kuehlregal milprima suessigkeiten-und-snacks douceur fleisch-und-wurst weitere-angebote drogerie-und-haushalt getraenke pflanzen-mo-sa haushalt-und-wohnen kochen-und-backen pflanzen sport-und-freizeit heimbuero food-highlights-fuer-alle xxl-lebensmittel-fuer-alle mitakos framstag
+  Erkunden: chunks/market-locator.C6qckVnY.js: 1777
+  Erkunden:     (e,t)=>e.distance-t.distance),r&&r.key&&r.value!==void 0){let e=r.key,t=r.value;a=a.filter(n=>n[e]===t)}}else a=o(i);return a},m=async(e,t,n=null)=>{let r=`${t}/markets/market_${e}`;try{let e=await(await fetch(r)).json();return n?s([e],n)[0]:e}catch(e){return console.warn(e),null}},h=async(e,t)=>{try{let n=await(await fetch(e)).json();return n&&Array.isArray(n)&&n.l
+  Erkunden:     ength>0?o(s(n,t)):[]}catch(e){return console.warn(e),[]}},g=async e=>{try{return await(await fetch(e)).json()}catch(e){return console.warn(e),[]}},_=async(e,t)=>{let n=`${t}/marketRegion/${e}`;try{return await(await fetch(n)).json()}catch(e){return console.warn(e),null}},v=()=>{let e=u();if(!e)retu
+  Erkunden: chunks/position-locator.wpPtHhPm.js: 1024
+  Erkunden:     ps.googleapis.com/maps/api/geocode/json?key=AIzaSyC0Gdj-DxmF2DNdc3Qx6NB3rnhlvYBaQkM&region=de&components=country:DE`);return e&&t.searchParams.set(`address`,e),fetch(t).then(e=>e.json()).then(e=>({state:1,location:e.results})).catch(e=>({state:2,message:e}))};function r(){return new Promise((e,t)=>{if(i())navigator.geolocation.getCurrentPosition(t=>{e({state:1,pos
+  Erkunden: https://www.penny.de/.rest/market/markets?zipCode=46535: 404 0 · 
+  Erkunden: https://www.penny.de/.rest/market: 200 3830740 · [{"wwIdent":"530027","wawi":"31302027","sellingRegion":"15A-08-26","nextWeekSellingRegion":"","marketName":"Penny Hasporter Damm","streetWithHouseNumber":"Hasporter Damm 110-114","slug":"penny-hasporter-damm-hasporter-damm-110-114","zipCode":"27749","city":"Delmenhorst","citySlug":"delmenhorst","sta
 Märkte 47178: 0 s, ["Lidl=887","PENNY=284","Kabs PolsterWelt=45","Bosch Car Service=10","SCHAFFRATH=267","HORNBACH=198","KiK=50","Opti Wohnwelt=44","ALDI SÜD=468","Thomas Philipps=185","ROSSMANN=7","toom Baumarkt=319","OBI=25","Handelshof=270","XXXLutz=1497","SB-Möbel BOSS=309","Möbel Inhofer=80","Netto Marken-Discount=357","REWE=234 (47053)"]
 Markt 126679: 0 s, {"name":"Lidl","total":885,"seiten":"885/885/885","geladen":885,"ohneMenge":0,"kategorien":65,"ohneKat":0,"kp":"3=21 5=56 6=7 10=6 11=3 12=3 14=10 15=3 16=50 17=1 20=69 23=9 35=6 50=23 53=9 69=15 70=4 83=5 85=14 91=6 94=24 95=8 97=21 101=1 102=17 103=31 104=20 106=6 107=64 108=8 110=24 112=11 113=6 116=2 119=3 120=31 122=3 126=1 129=2 137=6 142=2 143=33 144=26 147=7 149=13 187=2 191=8 193=8 218=1 363=32 364=29 382=3 383=3 384=1 385=4 386=4 398=34 402=3 415=6 427=26 428=7 454=6 473=7 497=8 630=3","beispiel":"Lidl Backshop Kakao Donuts XXL 2.69 kg Kuchen & Feinbackwaren"}
 Markt 126735: 1 s, {"name":"Netto Marken-Discount","total":357,"seiten":"357/357/357","geladen":357,"ohneMenge":0,"kategorien":56,"ohneKat":0,"kp":"3=6 5=7 6=1 10=1 11=1 12=1 14=1 16=3 17=1 20=36 23=5 26=2 50=8 53=7 69=16 70=5 83=2 85=5 97=3 101=1 102=8 103=20 104=18 106=2 107=28 108=4 110=12 112=11 113=4 116=1 119=1 120=15 136=1 142=3 143=18 144=5 147=14 149=14 174=11 187=1 191=8 193=4 363=4 364=4 382=3 383=2 384=2 398=6 402=3 415=3 427=1 428=1 454=1 473=7 497=1 630=4","beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792932196","token":true}
+Konto anlegen: {"name":"test1792932360","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792932196","daten":{}}
+Konto Daten: {"name":"test1792932360","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792932196"]
+Konto Anfragen mit Code: ["test1792932360"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792932196","token":true}
+Neues Passwort mit Code: {"name":"test1792932360","token":true}
 Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
 Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
