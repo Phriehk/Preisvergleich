@@ -186,21 +186,20 @@ async function erkunden(env, ctx) {
   const out = [], H = { ...UA, Accept: "application/json, text/html;q=0.9, */*;q=0.8", "Accept-Language": "de-DE,de;q=0.9" };
   const hol = async u => { try { const r = await fetch(u, { headers: H, redirect: "follow" }); const t = await r.text(); return { s: r.status, t, ct: r.headers.get("content-type") || "" }; } catch (e) { return { s: 0, t: String(e.message || e) }; } };
   const kurz = (t, n) => String(t).replace(/\s+/g, " ").slice(0, n);
+  const B = "https://www.penny.de/.resources/penny/webresources/js/";
   const pe = await hol("https://www.penny.de/angebote");
-  const js0 = (pe.t.match(/\/\.resources\/penny\/webresources\/js\/index[^"]+\.js/) || [])[0];
-  const js = await hol("https://www.penny.de" + js0);
-  const i = js.t.indexOf("tabs-offers"); out.push("PENNY index um tabs-offers: " + kurz(js.t.slice(Math.max(0, i - 400), i + 200), 880));
-  out.push("PENNY index Anfang: " + kurz(js.t.slice(0, 700), 880));
-  const pfade = [...new Set(js.t.match(/["'`][^"'`\s]*\/[^"'`\s]*["'`]/g) || [])].slice(0, 30); out.push("PENNY Pfade: " + kurz(pfade.join(" "), 880));
-  const tabs = (js.t.match(/["'`]([^"'`\s]*tabs-offers[^"'`\s]*\.js)["'`]/) || [])[1] || "";
-  for (const basis of ["https://www.penny.de" + js0, "https://www.penny.de/.resources/penny/webresources/js/chunks/x.js", "https://www.penny.de/.resources/penny/webresources/x.js", "https://www.penny.de/.resources/penny/webresources/js/components/x.js"]) {
-    const u = new URL(tabs.replace(/^\//, "./"), basis).href, r = await hol(u);
-    out.push(`  ${u}: ${r.s} ${r.t.length} ${r.ct}`);
-    if (r.s === 200 && /javascript/.test(r.ct)) {
-      for (const m of (r.t.match(/.{0,200}(fetch\(|\.rest|restApi|rest-api|offers).{0,200}/g) || []).slice(0, 12)) out.push("    " + kurz(m, 420));
-      const weitere = [...new Set(r.t.match(/["'`]\.?\.?\/[^"'`\s]+\.js["'`]/g) || [])].slice(0, 20); out.push("    importiert: " + weitere.join(" "));
-      break;
-    }
+  const js0 = (pe.t.match(/\/\.resources\/penny\/webresources\/js\/index[^"]+\.js/) || [])[0], js = await hol("https://www.penny.de" + js0);
+  let map = {}; try { map = JSON.parse(js.t.match(/assetsMap = (\{.*?\}\});?/)[1]).js; } catch (e) { out.push("map? " + e.message); }
+  const gesehen = new Set(), schlange = [];
+  for (const k of ["tabs-offers", "content-tile-list", "bubble-price", "content-tile-region-filter"]) if (map[k]) schlange.push(B + "components/" + map[k]);
+  let n = 0;
+  while (schlange.length && n < 14) {
+    const u = schlange.shift(); if (gesehen.has(u)) continue; gesehen.add(u); n++;
+    const r = await hol(u); if (r.s !== 200) { out.push(`${u.slice(B.length)}: ${r.s}`); continue; }
+    const tr = (r.t.match(/.{0,160}(fetch\(|\.rest|restApi|rest-api|\/offers|offers\?|weekRegion|apiUrl|categor).{0,220}/g) || []);
+    out.push(`${u.slice(B.length)}: ${r.t.length} · Treffer ${tr.length}`);
+    for (const m of tr.slice(0, 6)) out.push("    " + kurz(m, 400));
+    for (const x of r.t.match(/["'`]\.\.?\/[^"'`\s]+\.js["'`]/g) || []) { const v = new URL(x.replace(/["'`]/g, ""), u).href; if (!gesehen.has(v) && !/viewport|tracking|input-modality|component-initializer|icon|ripple/.test(v)) schlange.push(v); }
   }
   return out;
 }
