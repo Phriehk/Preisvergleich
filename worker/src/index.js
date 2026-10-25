@@ -186,26 +186,24 @@ async function erkunden(env, ctx) {
   const out = [], H = { ...UA, Accept: "application/json, text/html;q=0.9, */*;q=0.8", "Accept-Language": "de-DE,de;q=0.9" };
   const hol = async u => { try { const r = await fetch(u, { headers: H, redirect: "follow" }); const t = await r.text(); return { s: r.status, t, ct: r.headers.get("content-type") || "" }; } catch (e) { return { s: 0, t: String(e.message || e) }; } };
   const kurz = (t, n) => String(t).replace(/\s+/g, " ").slice(0, n);
-  for (const u of ["https://www.lidl.de/robots.txt", "https://endpoints.leaflets.schwarz/robots.txt"]) {
-    const r = await hol(u); out.push(`robots ${u}: ${r.s} ${r.t.length}`); let ua = "";
-    for (const z of r.t.split("\n")) { if (/^user-agent/i.test(z)) ua = z.trim(); else if (/^(dis)?allow/i.test(z) && /^.{0,9}:\s*\/\s*$|\/c\/|\/p\/|flyer|prospekt|api|\*$/i.test(z)) out.push(`  ${ua} → ${z.trim()}`); }
-  }
   const ov = await hol("https://endpoints.leaflets.schwarz/v4/overview/?client_locale=lidl/de-DE");
   let j = null; try { j = JSON.parse(ov.t); } catch (e) {}
   const flyer = []; for (const c of (j && j.categories) || []) for (const sc of c.subcategories || []) for (const f of sc.flyers || []) flyer.push({ ...f, kat: c.name + "/" + sc.name });
-  out.push(`Lidl Flyer ${flyer.length} · Felder ${Object.keys(flyer[0] || {}).join(",")}`);
-  for (const f of flyer.slice(0, 6)) out.push("  " + kurz(JSON.stringify({ ...f, thumbnail: undefined, image: undefined, images: undefined, pages: undefined }), 420));
+  for (const f of flyer.slice(0, 4)) out.push("  " + kurz(JSON.stringify({ name: f.name, kat: f.kat, url: f.flyerUrlAbsolute, reg: f.regionAliasAbsoluteUrl, json: f.flyerJson, regions: f.regions, target: f.target, start: f.offerStartDate }), 860));
+  out.push("Namen: " + kurz([...new Set(flyer.map(f => f.name + "@" + f.kat))].join(" | "), 860));
   const f0 = flyer[0] || {};
-  for (const u of [`https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=${f0.slug || f0.identifier || ""}&region_id=0&region_code=0&client_locale=lidl/de-DE`, `https://endpoints.leaflets.schwarz/v4/flyer?flyer_id=${f0.id}&client_locale=lidl/de-DE`, `https://endpoints.leaflets.schwarz/v4/flyer/${f0.id}?client_locale=lidl/de-DE`]) {
-    const r = await hol(u); out.push(`${u.slice(34, 140)}: ${r.s} ${r.t.length} · ${kurz(r.t, 400)}`);
+  const slug = String(f0.flyerUrlAbsolute || "").split("/").filter(Boolean).pop() || "";
+  const kand = [typeof f0.flyerJson === "string" ? f0.flyerJson : "", `https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=${slug}&client_locale=lidl/de-DE`, `https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=${f0.id}&client_locale=lidl/de-DE`].filter(Boolean);
+  for (const u of kand) {
+    const r = await hol(u); out.push(`${u.slice(0, 150)}: ${r.s} ${r.t.length} · ${kurz(r.t, 300)}`);
     if (r.s === 200 && r.t.length > 2000) {
       let x = null; try { x = JSON.parse(r.t); } catch (e) {}
       const fl = x && (x.flyer || x);
       out.push("  Schlüssel " + Object.keys(fl || {}).join(","));
-      const prod = []; const such = (v, tiefe) => { if (tiefe > 6 || !v) return; if (Array.isArray(v)) v.forEach(y => such(y, tiefe + 1)); else if (typeof v === "object") { if ((v.price != null || v.prices) && (v.title || v.name)) prod.push(v); else Object.values(v).forEach(y => such(y, tiefe + 1)); } };
+      const prod = []; const such = (v, tiefe) => { if (tiefe > 8 || !v) return; if (Array.isArray(v)) v.forEach(y => such(y, tiefe + 1)); else if (typeof v === "object") { if ((v.price != null || v.prices || v.priceData) && (v.title || v.name)) prod.push(v); else Object.values(v).forEach(y => such(y, tiefe + 1)); } };
       such(fl, 0);
-      out.push(`  Produkte ${prod.length} · Felder ${[...new Set(prod.flatMap(p => Object.keys(p)))].slice(0, 40).join(",")}`);
-      for (const p of prod.slice(0, 3)) out.push("  Bsp " + kurz(JSON.stringify(p), 800));
+      out.push(`  Produkte ${prod.length} · Felder ${[...new Set(prod.flatMap(p => Object.keys(p)))].slice(0, 50).join(",")}`);
+      for (const p of prod.slice(0, 3)) out.push("  Bsp " + kurz(JSON.stringify(p), 850));
       break;
     }
   }
