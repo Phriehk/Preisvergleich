@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 70.48 KiB / gzip: 20.65 KiB
+Total Upload: 69.78 KiB / gzip: 20.34 KiB
 Worker Startup Time: 1 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (3.25 sec)
-Deployed preise triggers (0.71 sec)
+Uploaded preise (7.46 sec)
+Deployed preise triggers (2.77 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: 6ca6c6a0-3bbc-464c-adff-4c4956d5182c
+Current Version ID: bfc756b8-c23c-48d9-b44b-766fc4b56237
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,7 +18,7 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-25T13:42","anzahl":30,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-25T13:44","anzahl":30,"fehler":0}}
 Spar-Tipp: {"alternativen":3,"favoriten":2}
 Push ohne Code (erwartet 401): HTTP 401
 Push: Schlüssel 87 Zeichen, {"geraete":1,"ntfy":true,"ntfyAn":false}
@@ -27,7 +27,7 @@ Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
 Suche Fanta: 1 s, {"anzahl":0}
-Aktualisieren: 4 s, {"zeit":"2026-10-25T13:44","anzahl":30,"fehler":0,"alarm":[]}
+Aktualisieren: 4 s, {"zeit":"2026-10-25T13:47","anzahl":30,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":30,"gruppen":["Ferrero Nutella Brotaufstrich","Heinz Ketchup","Knorr Spaghetteria","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","Zewa Toilettenpapier Ultra Soft","coca cola"]}
 Verlauf: 421 Zeilen
 Korrekturen lesen: {}
@@ -37,7 +37,7 @@ Test-Korrektur gelöscht: true
 Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
 Region 40210 ohne Code: 0 s, {"anzahl":4,"maerkte":["ALDI SÜD","Kaufland","Lidl","Thomas Philipps"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
-Lebensmittel-Probe: 1 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl":4,"Nudeln":4}
+Lebensmittel-Probe: 0 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl":4,"Nudeln":4}
   Probe: Butter | Netto Marken-Discount | Beste Butter | art=kg liter=0.25 stueck=1 ml=250 preis=0.88 | gekühlt 250 g
   Probe: Butter | Thomas Philipps | Butter Beans | art=kg liter=0.24 stueck=1 ml=240 preis=0.89 | weiße Riesenbohnen 400 g, 240 g Abtropfgewicht
   Probe: Butter | Kaufland | Butter | art=kg liter=0.25 stueck=1 ml=250 preis=1.11 | oder Die Streichzarte mildgesäuert, Die Streichzarte auch gesalzen, ge
@@ -78,28 +78,31 @@ Lebensmittel-Probe: 1 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | Netto Marken-Discount | Speisekartoffeln XXL | art=kg liter=4 stueck=1 ml=4000 preis=2.99 | 4 kg Netz Deutschland, versch. Kocheigenschaften
   Probe: Kartoffeln | Kaufland | Speisekartoffeln | art=kg liter=1 stueck=1 ml=1000 preis=0.79 | Dtsch. lose Qualität II je kg
   Probe: Kartoffeln | Lidl | Bio-Speisekartoffeln | art=kg liter=2 stueck=1 ml=2000 preis=2.79 | Bioland Deutsche Qualität I Je 2 kg
-  Erkunden: preload undefined · weeks data-current-week="2026-44" data-next-week="2026-45" · rest data-rest-uri="/.rest"
-  Erkunden: Kategorien: top-angebote obst-und-gemuese kuehlregal milprima suessigkeiten-und-snacks douceur fleisch-und-wurst weitere-angebote drogerie-und-haushalt getraenke pflanzen-mo-sa haushalt-und-wohnen kochen-und-backen pflanzen sport-und-freizeit heimbuero food-highlights-fuer-alle xxl-lebensmittel-fuer-alle mitakos framstag
-  Erkunden: chunks/market-locator.C6qckVnY.js: 1777
-  Erkunden:     (e,t)=>e.distance-t.distance),r&&r.key&&r.value!==void 0){let e=r.key,t=r.value;a=a.filter(n=>n[e]===t)}}else a=o(i);return a},m=async(e,t,n=null)=>{let r=`${t}/markets/market_${e}`;try{let e=await(await fetch(r)).json();return n?s([e],n)[0]:e}catch(e){return console.warn(e),null}},h=async(e,t)=>{try{let n=await(await fetch(e)).json();return n&&Array.isArray(n)&&n.l
-  Erkunden:     ength>0?o(s(n,t)):[]}catch(e){return console.warn(e),[]}},g=async e=>{try{return await(await fetch(e)).json()}catch(e){return console.warn(e),[]}},_=async(e,t)=>{let n=`${t}/marketRegion/${e}`;try{return await(await fetch(n)).json()}catch(e){return console.warn(e),null}},v=()=>{let e=u();if(!e)retu
-  Erkunden: chunks/position-locator.wpPtHhPm.js: 1024
-  Erkunden:     ps.googleapis.com/maps/api/geocode/json?key=AIzaSyC0Gdj-DxmF2DNdc3Qx6NB3rnhlvYBaQkM&region=de&components=country:DE`);return e&&t.searchParams.set(`address`,e),fetch(t).then(e=>e.json()).then(e=>({state:1,location:e.results})).catch(e=>({state:2,message:e}))};function r(){return new Promise((e,t)=>{if(i())navigator.geolocation.getCurrentPosition(t=>{e({state:1,pos
-  Erkunden: https://www.penny.de/.rest/market/markets?zipCode=46535: 404 0 · 
-  Erkunden: https://www.penny.de/.rest/market: 200 3830740 · [{"wwIdent":"530027","wawi":"31302027","sellingRegion":"15A-08-26","nextWeekSellingRegion":"","marketName":"Penny Hasporter Damm","streetWithHouseNumber":"Hasporter Damm 110-114","slug":"penny-hasporter-damm-hasporter-damm-110-114","zipCode":"27749","city":"Delmenhorst","citySlug":"delmenhorst","sta
+  Erkunden: Märkte nah (0 ms): 230428 15A-09-33/ Sternbuschweg 112 47057 Duisburg | 1930406 15A-09-33/ Obermeidericher Strasse 26 47138 Duisburg | 1775069 15A-09-33/ Essenberger Str./Javastr. 1-5 47059 Duisburg | 1930735 15A-09-33/ Austr./Werthstr. 1 47119 Duisburg | 1930739 15A-09-33/ Schlachthofstr. 46 47167 Duisburg | 1775015 15A-09-33/ Kommandantenstr. 60 47057 Duisburg | 1478499 15A-09-33/ Königstraße 13 47051 Duisburg | 1930758 15A-09-33/ Karl-Heinz-Klingen-Str. 70 46539 Dinslaken | 1656587 15A-09-33/ Wallstraße 33-35 46535 Dinslaken | 1930771 15A-09-33/ Poststrasse 59 46562 Voerde | 210396 15A-09-33/ Rathausplatz 51 46562 Voerde | 1930846 15A-09-33/ Viktorstr. 12 46509 Xanten
+  Erkunden: Markt-Felder: [{"wwIdent":"530027","wawi":"31302027","sellingRegion":"15A-08-26","nextWeekSellingRegion":"","marketName":"Penny Hasporter Damm","streetWithHouseNumber":"Hasporter Damm 110-114","slug":"penny-hasporter-damm-hasporter-damm-110-114","zipCode":"27749","city":"Delmenhorst","citySlug":"delmenhorst","state":"Niedersachsen","stateSlug":"niedersachsen","renovationFrom":"22.01.2022","reopeningFrom":"01.02.2022","latitude":"53.03672","longitude":"8.64581","selfCheckoutActive":false,"selfCheckoutValidFrom":null,"selfCheckoutValidTo":null,"mobileSelfCheckoutActive":false,"mobileSelfCheckoutValidFrom":null,"mobileSelfCheckoutValidTo":null,"handoutRegion":"31","nonFood":"NF","bringooDeliveryService":false,"closedMonday":false,"opensAtMonday":"07:00","closesAtMonday":"22:00","closedTuesday":false,"opensAtTuesday":"07:00","closesAtTuesday":"22:00","closedWednesday":false,"opensAtWed
+  Erkunden: marketRegion 1930406: 404 
+  Erkunden: Regionen nah: 15A-09-33
+  Erkunden: /offers/by-category/2026-44/top-angebote?region=15A-09-33: 200 14051 application/json;charset=UTF-8 · {"offerTiles":[{"title":"PRINGLES*","type":"food","quantity":"je 185 g","lowestPrice30Days":null,"bargainPrice":false,"maxFactor":null,"actionMarker":null,"price":"1.69","listPrice":"2.79","crossOutPr
+  Erkunden:   Angebote 7 · Felder title,type,quantity,lowestPrice30Days,bargainPrice,maxFactor,actionMarker,price,listPrice,crossOutPrice,advantage,basePrice,benefitPrice,benefitValue,benefitGroundPrice,imageRendition,actionPrice,productData,linkHref,detailLinkHref,uuid,primaryType,priceFrom,actionPriceFrom,showOriginalPrice,multiBuy,originalPrice,originalPriceType,discount,discountPercentage,onlyOnline,alsoOnline
+  Erkunden:   mit UVP 4 · Streich 0 · showOriginal 0 · Typen promoPlus,offer
+  Erkunden:   Bsp {"title":"PRINGLES*","type":"food","quantity":"je 185 g","lowestPrice30Days":null,"bargainPrice":false,"maxFactor":null,"actionMarker":null,"price":"1.69","listPrice":"2.79","crossOutPrice":null,"advantage":"39%","basePrice":"(1 kg = 9.14)","benefitPrice":"1.49²","benefitValue":"46%¹","benefitGroundPrice":"(1 kg = 8.05)","actionPrice":false,"linkHref":"/angebote/top-angebote/pringles","detailLinkHref":"/angebote/top-angebote/pringles~mgnlArea=main~","uuid":"cd7e3738-c864-4220-b6e7-f0ec61e431bf","primaryType":"promoPlus"}
+  Erkunden:   Bsp {"title":"JACOBS Auslese Kaffee*","type":"food","quantity":"je 500 g","lowestPrice30Days":null,"bargainPrice":false,"maxFactor":null,"actionMarker":null,"price":"5.77","listPrice":"8.99","crossOutPrice":null,"advantage":"35%","basePrice":"(1 kg = 11.54)","benefitPrice":"5.49²","benefitValue":"38%¹","benefitGroundPrice":"(1 kg = 10.98)","actionPrice":false,"linkHref":"/angebote/top-angebote/jacobs-auslese-kaffee","detailLinkHref":"/angebote/top-angebote/jacobs-auslese-kaffee~mgnlArea=main~","uuid":"0f24ca37-4a67-4ac6-a146-7a52497da16b","primaryType":"promoPlus"}
+  Erkunden:   Bsp {"title":"COCA-COLA, FANTA, SPRITE oder MEZZO MIX*","type":"food","quantity":"je 1,25 l","lowestPrice30Days":null,"bargainPrice":false,"maxFactor":null,"actionMarker":null,"price":"1.19","listPrice":"1.69","crossOutPrice":null,"advantage":"29%","basePrice":"(1 l = 0.95)","benefitPrice":"0.99²","benefitValue":"41%¹","benefitGroundPrice":"(1 l = 0.79)","actionPrice":false,"linkHref":"/angebote/top-angebote/coca-cola-fanta-sprite-oder-mezzo-mix","detailLinkHref":"/angebote/top-angebote/coca-cola-fanta-sprite-oder-mezzo-mix~mgnlArea=main~","uuid":"bca406f8-a9a9-42d9-8a81-d9bed7d47a1c","primaryType":"promoPlus"}
+  Erkunden:   Bsp {"title":"PRINGLES*","type":"food","quantity":"je 185 g","lowestPrice30Days":null,"bargainPrice":false,"maxFactor":null,"actionMarker":null,"price":"1.69","listPrice":"2.79","crossOutPrice":null,"advantage":"39%","basePrice":"(1 kg = 9.14)","benefitPrice":"1.49²","benefitValue":"46%¹","benefitGroundPrice":"(1 kg = 8.05)","actionPrice":false,"linkHref":"/angebote/top-angebote/pringles","detailLinkHref":"/angebote/top-angebote/pringles~mgnlArea=main~","uuid":"cd7e3738-c864-4220-b6e7-f0ec61e431bf","primaryType":"promoPlus"}
+  Erkunden:   Bsp {"title":"Zitronen*","type":"food","quantity":"je 750-g-Netz","lowestPrice30Days":null,"priceFrom":false,"price":"1.29","actionPrice":true,"actionPriceFrom":false,"showOriginalPrice":false,"multiBuy":false,"bargainPrice":false,"originalPrice":null,"originalPriceType":null,"basePrice":"(1 kg = 1.72)","discount":false,"discountPercentage":null,"onlyOnline":false,"alsoOnline":false,"linkHref":"/angebote/top-angebote/zitronen","detailLinkHref":"/angebote/top-angebote/zitronen~mgnlArea=main~","uuid":"d113bb91-8dc3-4836-965a-dc911b19786a","primaryType":"offer"}
 Märkte 47178: 0 s, ["Lidl=887","PENNY=284","Kabs PolsterWelt=45","Bosch Car Service=10","SCHAFFRATH=267","HORNBACH=198","KiK=50","Opti Wohnwelt=44","ALDI SÜD=468","Thomas Philipps=185","ROSSMANN=7","toom Baumarkt=319","OBI=25","Handelshof=270","XXXLutz=1497","SB-Möbel BOSS=309","Möbel Inhofer=80","Netto Marken-Discount=357","REWE=234 (47053)"]
-Markt 126679: 0 s, {"name":"Lidl","total":885,"seiten":"885/885/885","geladen":885,"ohneMenge":0,"kategorien":65,"ohneKat":0,"kp":"3=21 5=56 6=7 10=6 11=3 12=3 14=10 15=3 16=50 17=1 20=69 23=9 35=6 50=23 53=9 69=15 70=4 83=5 85=14 91=6 94=24 95=8 97=21 101=1 102=17 103=31 104=20 106=6 107=64 108=8 110=24 112=11 113=6 116=2 119=3 120=31 122=3 126=1 129=2 137=6 142=2 143=33 144=26 147=7 149=13 187=2 191=8 193=8 218=1 363=32 364=29 382=3 383=3 384=1 385=4 386=4 398=34 402=3 415=6 427=26 428=7 454=6 473=7 497=8 630=3","beispiel":"Lidl Backshop Kakao Donuts XXL 2.69 kg Kuchen & Feinbackwaren"}
-Markt 126735: 1 s, {"name":"Netto Marken-Discount","total":357,"seiten":"357/357/357","geladen":357,"ohneMenge":0,"kategorien":56,"ohneKat":0,"kp":"3=6 5=7 6=1 10=1 11=1 12=1 14=1 16=3 17=1 20=36 23=5 26=2 50=8 53=7 69=16 70=5 83=2 85=5 97=3 101=1 102=8 103=20 104=18 106=2 107=28 108=4 110=12 112=11 113=4 116=1 119=1 120=15 136=1 142=3 143=18 144=5 147=14 149=14 174=11 187=1 191=8 193=4 363=4 364=4 382=3 383=2 384=2 398=6 402=3 415=3 427=1 428=1 454=1 473=7 497=1 630=4","beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
+Markt 126679: 1 s, {"name":"Lidl","total":885,"seiten":"885/885/885","geladen":885,"ohneMenge":0,"kategorien":65,"ohneKat":0,"kp":"3=21 5=56 6=7 10=6 11=3 12=3 14=10 15=3 16=50 17=1 20=69 23=9 35=6 50=23 53=9 69=15 70=4 83=5 85=14 91=6 94=24 95=8 97=21 101=1 102=17 103=31 104=20 106=6 107=64 108=8 110=24 112=11 113=6 116=2 119=3 120=31 122=3 126=1 129=2 137=6 142=2 143=33 144=26 147=7 149=13 187=2 191=8 193=8 218=1 363=32 364=29 382=3 383=3 384=1 385=4 386=4 398=34 402=3 415=6 427=26 428=7 454=6 473=7 497=8 630=3","beispiel":"Lidl Backshop Kakao Donuts XXL 2.69 kg Kuchen & Feinbackwaren"}
+Markt 126735: 0 s, {"name":"Netto Marken-Discount","total":357,"seiten":"357/357/357","geladen":357,"ohneMenge":0,"kategorien":56,"ohneKat":0,"kp":"3=6 5=7 6=1 10=1 11=1 12=1 14=1 16=3 17=1 20=36 23=5 26=2 50=8 53=7 69=16 70=5 83=2 85=5 97=3 101=1 102=8 103=20 104=18 106=2 107=28 108=4 110=12 112=11 113=4 116=1 119=1 120=15 136=1 142=3 143=18 144=5 147=14 149=14 174=11 187=1 191=8 193=4 363=4 364=4 382=3 383=2 384=2 398=6 402=3 415=3 427=1 428=1 454=1 473=7 497=1 630=4","beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792932360","token":true}
+Konto anlegen: {"name":"test1792932516","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792932360","daten":{}}
+Konto Daten: {"name":"test1792932516","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792932360"]
+Konto Anfragen mit Code: ["test1792932516"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792932360","token":true}
+Neues Passwort mit Code: {"name":"test1792932516","token":true}
 Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
 Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
