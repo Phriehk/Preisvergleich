@@ -189,18 +189,18 @@ async function erkunden(env, ctx) {
   const pe = await hol("https://www.penny.de/angebote");
   const js0 = (pe.t.match(/\/\.resources\/penny\/webresources\/js\/index[^"]+\.js/) || [])[0];
   const js = await hol("https://www.penny.de" + js0);
-  out.push(`PENNY JS ${js0}: ${js.s} ${js.t.length}`);
-  const imp = [...new Set(js.t.match(/["'`][^"'`\s]{0,80}\.js["'`]/g) || [])]; out.push("  Teile: " + kurz(imp.slice(0, 40).join(" "), 880));
-  let quellen = [{ n: "index", t: js.t }];
-  for (const x of imp.filter(x => /offer|angebot|tile|market|week|list/i.test(x)).slice(0, 8)) { const u = x.replace(/["'`]/g, ""), url = /^http/.test(u) ? u : new URL(u, "https://www.penny.de" + js0).href; const r = await hol(url); quellen.push({ n: u, t: r.t }); out.push(`  ${u}: ${r.s} ${r.t.length}`); }
-  for (const q of quellen) for (const m of (q.t.match(/.{0,120}(\/offers|offers\/|rest\}\/|\/market\/|weekRegion|categoryOffers|wwIdent).{0,160}/g) || []).slice(0, 6)) out.push(`  [${q.n.slice(-30)}] ` + kurz(m, 300));
-  // Marktguru PENNY: wie oft schon ein statt-Preis?
-  for (const plz of [PLZ, PLZ2]) {
-    const ml = await maerkteRegion(env, PLZ), pm = ml.find(m => /penny/i.test(m.name));
-    if (!pm) { out.push("MG PENNY fehlt"); break; }
-    const mg = (await ctx.exports.Teil.marktSeite(pm.plz, pm.name, pm.id, 0, 1000)).liste;
-    out.push(`MG PENNY ${pm.plz}: ${mg.length} Angebote · statt ${mg.filter(o => o.preis_alt).length} · Bsp ${kurz(mg.filter(o => !o.preis_alt).slice(0, 6).map(o => `${o.marke} ${o.produkt} ${o.preis} [${o.beschreibung.slice(0, 50)}]`).join(" | "), 700)}`);
-    break;
+  const i = js.t.indexOf("tabs-offers"); out.push("PENNY index um tabs-offers: " + kurz(js.t.slice(Math.max(0, i - 400), i + 200), 880));
+  out.push("PENNY index Anfang: " + kurz(js.t.slice(0, 700), 880));
+  const pfade = [...new Set(js.t.match(/["'`][^"'`\s]*\/[^"'`\s]*["'`]/g) || [])].slice(0, 30); out.push("PENNY Pfade: " + kurz(pfade.join(" "), 880));
+  const tabs = (js.t.match(/["'`]([^"'`\s]*tabs-offers[^"'`\s]*\.js)["'`]/) || [])[1] || "";
+  for (const basis of ["https://www.penny.de" + js0, "https://www.penny.de/.resources/penny/webresources/js/chunks/x.js", "https://www.penny.de/.resources/penny/webresources/x.js", "https://www.penny.de/.resources/penny/webresources/js/components/x.js"]) {
+    const u = new URL(tabs.replace(/^\//, "./"), basis).href, r = await hol(u);
+    out.push(`  ${u}: ${r.s} ${r.t.length} ${r.ct}`);
+    if (r.s === 200 && /javascript/.test(r.ct)) {
+      for (const m of (r.t.match(/.{0,200}(fetch\(|\.rest|restApi|rest-api|offers).{0,200}/g) || []).slice(0, 12)) out.push("    " + kurz(m, 420));
+      const weitere = [...new Set(r.t.match(/["'`]\.?\.?\/[^"'`\s]+\.js["'`]/g) || [])].slice(0, 20); out.push("    importiert: " + weitere.join(" "));
+      break;
+    }
   }
   return out;
 }
