@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 69.44 KiB / gzip: 20.19 KiB
-Worker Startup Time: 2 ms
+Total Upload: 69.17 KiB / gzip: 20.12 KiB
+Worker Startup Time: 3 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (3.22 sec)
-Deployed preise triggers (0.62 sec)
+Uploaded preise (3.33 sec)
+Deployed preise triggers (0.76 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: f320a44f-e949-4b08-9c67-c6a6c7176076
+Current Version ID: c0845ac6-b11f-4b10-a370-c53cd8d6fa8f
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,7 +18,7 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-25T13:50","anzahl":30,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-25T13:53","anzahl":30,"fehler":0}}
 Spar-Tipp: {"alternativen":3,"favoriten":2}
 Push ohne Code (erwartet 401): HTTP 401
 Push: Schlüssel 87 Zeichen, {"geraete":1,"ntfy":true,"ntfyAn":false}
@@ -27,7 +27,7 @@ Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
 Suche Fanta: 1 s, {"anzahl":0}
-Aktualisieren: 4 s, {"zeit":"2026-10-25T13:53","anzahl":30,"fehler":0,"alarm":[]}
+Aktualisieren: 5 s, {"zeit":"2026-10-25T13:55","anzahl":30,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":30,"gruppen":["Ferrero Nutella Brotaufstrich","Heinz Ketchup","Knorr Spaghetteria","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","Zewa Toilettenpapier Ultra Soft","coca cola"]}
 Verlauf: 421 Zeilen
 Korrekturen lesen: {}
@@ -78,42 +78,30 @@ Lebensmittel-Probe: 0 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | Netto Marken-Discount | Speisekartoffeln XXL | art=kg liter=4 stueck=1 ml=4000 preis=2.99 | 4 kg Netz Deutschland, versch. Kocheigenschaften
   Probe: Kartoffeln | Kaufland | Speisekartoffeln | art=kg liter=1 stueck=1 ml=1000 preis=0.79 | Dtsch. lose Qualität II je kg
   Probe: Kartoffeln | Lidl | Bio-Speisekartoffeln | art=kg liter=2 stueck=1 ml=2000 preis=2.79 | Bioland Deutsche Qualität I Je 2 kg
-  Erkunden: robots https://www.lidl.de/robots.txt: 200 312
-  Erkunden:   User-agent: * → Disallow: /cc.js*
-  Erkunden:   User-agent: * → Disallow: /user-api/*
-  Erkunden:   User-agent: * → Disallow: /cqe/*
-  Erkunden:   User-agent: * → Disallow: *search?q=*
-  Erkunden:   User-agent: * → Disallow: *?offset=*
-  Erkunden:   User-agent: * → Disallow: *idsOnly=*
-  Erkunden:   User-agent: * → Disallow: *productsOnly=*
-  Erkunden:   User-agent: * → Disallow: *id=*
-  Erkunden:   User-agent: * → Disallow: *pageId=*
-  Erkunden:   User-agent: * → Disallow: *advisor=*
-  Erkunden:   User-agent: * → Disallow: *sort=*
-  Erkunden: robots https://endpoints.leaflets.schwarz/robots.txt: 404 242
-  Erkunden: Lidl Flyer 41 · Felder id,name,title,isActive,pdfUrl,enableSharing,enableDownload,hiResPdfUrl,hiResFileSize,fileSize,thumbnailUrl,publicThumbnail,flyerUrlAbsolute,regionAliasAbsoluteUrl,flyerJson,startDate,endDate,offerStartDate,offerEndDate,status,discoverable,target,teasers,regions,thumbnailDimensions,kat
-  Erkunden:   {"id":"01a16977-db2d-758b-81b6-309bdd45681b","name":"Aktionsprospekt","title":"26.10.2026 – 31.10.2026","isActive":true,"pdfUrl":"https://assets.leaflets.schwarz/leaflets/pdfs/01a16977-db2d-758b-81b6-309bdd45681b/Aktionsprospekt-26-10-2026-31-10-2026-00.pdf","enableSharing":true,"enableDownload":false,"hiResPdfUrl":"https://assets.leaflets.schwarz/leaflets/pdfs/01a16977-db2d-758b-81b6-309bdd45681b/Aktionsprospekt-26-
-  Erkunden:   {"id":"01a16979-f973-7c4d-b1bf-d11a07ecb4b7","name":"Aktionsprospekt","title":"26.10.2026 – 31.10.2026","isActive":true,"pdfUrl":"https://assets.leaflets.schwarz/leaflets/pdfs/01a16979-f973-7c4d-b1bf-d11a07ecb4b7/Aktionsprospekt-26-10-2026-31-10-2026-00.pdf","enableSharing":true,"enableDownload":false,"hiResPdfUrl":"https://assets.leaflets.schwarz/leaflets/pdfs/01a16979-f973-7c4d-b1bf-d11a07ecb4b7/Aktionsprospekt-26-
-  Erkunden:   {"id":"01a16979-ba59-78ea-89b9-383e06bd5ce1","name":"Aktionsprospekt","title":"26.10.2026 – 31.10.2026","isActive":true,"pdfUrl":"https://assets.leaflets.schwarz/leaflets/pdfs/01a16979-ba59-78ea-89b9-383e06bd5ce1/Aktionsprospekt-26-10-2026-31-10-2026-00.pdf","enableSharing":true,"enableDownload":false,"hiResPdfUrl":"https://assets.leaflets.schwarz/leaflets/pdfs/01a16979-ba59-78ea-89b9-383e06bd5ce1/Aktionsprospekt-26-
-  Erkunden:   {"id":"01a16978-b841-7c21-b901-996ad0b30757","name":"Aktionsprospekt","title":"26.10.2026 – 31.10.2026","isActive":true,"pdfUrl":"https://assets.leaflets.schwarz/leaflets/pdfs/01a16978-b841-7c21-b901-996ad0b30757/Aktionsprospekt-26-10-2026-31-10-2026-00.pdf","enableSharing":true,"enableDownload":false,"hiResPdfUrl":"https://assets.leaflets.schwarz/leaflets/pdfs/01a16978-b841-7c21-b901-996ad0b30757/Aktionsprospekt-26-
-  Erkunden:   {"id":"01a16978-fdf6-79e3-8afd-762b2c8dba34","name":"Aktionsprospekt","title":"26.10.2026 – 31.10.2026","isActive":true,"pdfUrl":"https://assets.leaflets.schwarz/leaflets/pdfs/01a16978-fdf6-79e3-8afd-762b2c8dba34/Aktionsprospekt-26-10-2026-31-10-2026-00.pdf","enableSharing":true,"enableDownload":false,"hiResPdfUrl":"https://assets.leaflets.schwarz/leaflets/pdfs/01a16978-fdf6-79e3-8afd-762b2c8dba34/Aktionsprospekt-26-
-  Erkunden:   {"id":"01a16979-3cab-75c5-a668-1598540cc1a3","name":"Aktionsprospekt","title":"26.10.2026 – 31.10.2026","isActive":true,"pdfUrl":"https://assets.leaflets.schwarz/leaflets/pdfs/01a16979-3cab-75c5-a668-1598540cc1a3/Aktionsprospekt-26-10-2026-31-10-2026-00.pdf","enableSharing":true,"enableDownload":false,"hiResPdfUrl":"https://assets.leaflets.schwarz/leaflets/pdfs/01a16979-3cab-75c5-a668-1598540cc1a3/Aktionsprospekt-26-
-  Erkunden: /v4/flyer?flyer_identifier=&region_id=0&region_code=0&client_locale=lidl/de-DE: 400 282 · {"self":"v4/error_response?error_id=exception_24ec2e998437b23c0594a19b1b0ddb65bbbe557b","version":4,"success":false,"message":"The request contains some filter attributes with wrongly formatted values: flyer_identifier->.","dateTime":"2026-10-25T12:53:25+00:00","numberOfEntries":1}
-  Erkunden: /v4/flyer?flyer_id=01a16977-db2d-758b-81b6-309bdd45681b&client_locale=lidl/de-DE: 400 262 · {"self":"v4/error_response?error_id=exception_6be1e12db5c569fb5f053051cb17024d4d19acf3","version":4,"success":false,"message":"Request is missing one or more mandatory url parameters: flyer_identifier.","dateTime":"2026-10-25T12:53:25+00:00","numberOfEntries":1}
-  Erkunden: /v4/flyer/01a16977-db2d-758b-81b6-309bdd45681b?client_locale=lidl/de-DE: 404 232 · {"self":"v4/error_response?error_id=exception_5a797b7aa2c510b37940f3ae76d11de607117439","version":4,"success":false,"message":"The resource does not exist. (6addfbc58a24f)","dateTime":"2026-10-25T12:53:25+00:00","numberOfEntries":1}
-Märkte 47178: 0 s, ["Lidl=887","PENNY=284","Kabs PolsterWelt=45","Bosch Car Service=10","SCHAFFRATH=267","HORNBACH=198","KiK=50","Opti Wohnwelt=44","ALDI SÜD=468","Thomas Philipps=185","ROSSMANN=7","toom Baumarkt=319","OBI=25","Handelshof=270","XXXLutz=1497","SB-Möbel BOSS=309","Möbel Inhofer=80","Netto Marken-Discount=357","REWE=234 (47053)"]
-Markt 126679: 1 s, {"name":"Lidl","total":885,"seiten":"885/885/885","geladen":885,"ohneMenge":0,"kategorien":65,"ohneKat":0,"kp":"3=21 5=56 6=7 10=6 11=3 12=3 14=10 15=3 16=50 17=1 20=69 23=9 35=6 50=23 53=9 69=15 70=4 83=5 85=14 91=6 94=24 95=8 97=21 101=1 102=17 103=31 104=20 106=6 107=64 108=8 110=24 112=11 113=6 116=2 119=3 120=31 122=3 126=1 129=2 137=6 142=2 143=33 144=26 147=7 149=13 187=2 191=8 193=8 218=1 363=32 364=29 382=3 383=3 384=1 385=4 386=4 398=34 402=3 415=6 427=26 428=7 454=6 473=7 497=8 630=3","beispiel":"Lidl Backshop Kakao Donuts XXL 2.69 kg Kuchen & Feinbackwaren"}
+  Erkunden:   {"name":"Aktionsprospekt","kat":"Filial-Angebote/Unsere Aktionsprospekte","url":"https://www.lidl.de/l/prospekte/aktionsprospekt-26-10-2026-31-10-2026-84f6cc/ar/0?_ab=1&lf=HHZ","reg":"https://www.lidl.de/l/prospekte/aktionsprospekt-26-10-2026-31-10-2026-84f6cc/ar/0?_ab=1&lf=HHZ","json":"https://endpoints.leaflets.schwarz/v4/flyer?version=4&flyer_identifier=aktionsprospekt-26-10-2026-31-10-2026-84f6cc&client=lidl","regions":[{"type":"national","code":"0"}],"target":"flyer","start":"2026-10-26"}
+  Erkunden:   {"name":"Aktionsprospekt","kat":"Filial-Angebote/Unsere Aktionsprospekte","url":"https://www.lidl.de/l/prospekte/aktionsprospekt-26-10-2026-31-10-2026-5b939e/ar/22?_ab=1&lf=HHZ","reg":"https://www.lidl.de/l/prospekte/aktionsprospekt-26-10-2026-31-10-2026-5b939e/ar/22?_ab=1&lf=HHZ","json":"https://endpoints.leaflets.schwarz/v4/flyer?version=4&flyer_identifier=aktionsprospekt-26-10-2026-31-10-2026-5b939e&client=lidl","regions":[{"type":"offer_region","code":"22"},{"type":"offer_region","code":"24"},{"type":"offer_region","code":"445"}],"target":"flyer","start":"2026-10-26"}
+  Erkunden:   {"name":"Aktionsprospekt","kat":"Filial-Angebote/Unsere Aktionsprospekte","url":"https://www.lidl.de/l/prospekte/aktionsprospekt-26-10-2026-31-10-2026-f62d83/ar/4?_ab=1&lf=HHZ","reg":"https://www.lidl.de/l/prospekte/aktionsprospekt-26-10-2026-31-10-2026-f62d83/ar/4?_ab=1&lf=HHZ","json":"https://endpoints.leaflets.schwarz/v4/flyer?version=4&flyer_identifier=aktionsprospekt-26-10-2026-31-10-2026-f62d83&client=lidl","regions":[{"type":"offer_region","code":"4"}],"target":"flyer","start":"2026-10-26"}
+  Erkunden:   {"name":"Aktionsprospekt","kat":"Filial-Angebote/Unsere Aktionsprospekte","url":"https://www.lidl.de/l/prospekte/aktionsprospekt-26-10-2026-31-10-2026-124b79/ar/12?_ab=1&lf=HHZ","reg":"https://www.lidl.de/l/prospekte/aktionsprospekt-26-10-2026-31-10-2026-124b79/ar/12?_ab=1&lf=HHZ","json":"https://endpoints.leaflets.schwarz/v4/flyer?version=4&flyer_identifier=aktionsprospekt-26-10-2026-31-10-2026-124b79&client=lidl","regions":[{"type":"offer_region","code":"12"},{"type":"offer_region","code":"16"},{"type":"offer_region","code":"2"},{"type":"offer_region","code":"36"},{"type":"offer_region","code":"5"},{"type":"offer_region","code":"6"}],"target":"flyer","start":"2026-10-26"}
+  Erkunden: Namen: Aktionsprospekt@Filial-Angebote/Unsere Aktionsprospekte | Spielwarenmagazin@Filial-Angebote/Aktuelle Sonderprospekte | Der Preisführer macht Deutschland@Filial-Angebote/Aktuelle Sonderprospekte | Deine Lidl Plus Vorteile@Filial-Angebote/Aktuelle Sonderprospekte | Unsere Monats-Highlights@Onlineshop-Angebote/Wein & Spirituosen im Onlineshop | Prospekt@Lidl-Reisen/Aktuelle Reiseprospekte | Oktober Reise-Highlights@Lidl-Reisen/Aktuelle Reiseprospekte | Oktober/November Reise-Highlights@Lidl-Reisen/Aktuelle Reiseprospekte | Lidl Connect@Lidl Connect/Lidl Connect
+  Erkunden: https://endpoints.leaflets.schwarz/v4/flyer?version=4&flyer_identifier=aktionsprospekt-26-10-2026-31-10-2026-84f6cc&client=lidl: 200 376994 · {"self":"v4/flyer?flyer_identifier=aktionsprospekt-26-10-2026-31-10-2026-84f6cc","version":4,"success":true,"message":"Requested Flyer found.","dateTime":"2026-10-25T12:20:12+00:00","numberOfEntries":1,"warnings":["The request contains some unused filter attributes: version,client."],"flyer":{"id":"
+  Erkunden:   Schlüssel id,name,title,locale,clientLocale,apiCountryCode,countryCode,category,subcategory,quitUrl,homeUrl,homeUrlTitle,privacyUrl,imprintUrl,newsletterUrl,isActive,showProductDetails,showProductLinks,showRclAnimation,showRecommendedProducts,showNewsletter,showNotificationCenter,enableSharing,enableDownload,myAccount,shoppingCart,pdfUrl,hiResPdfUrl,hiResFileSize,fileSize,teasers,regions,thumbnailUrl,publicThumbnail,flyerUrlAbsolute,startDate,endDate,offerStartDate,offerEndDate,showLinks,showTopics,showSearch,showRelatedFlyers,isRecommended,status,cookieConsent,pages,topics,videos,texts,products,notifications,relatedFlyers
+  Erkunden:   Produkte 163 · Felder productId,title,brand,currencyText,wonCategoryPrimary,wonCategoryPrimaryPath,canonicalUrl,categoryPrimary,image,url,price,currencySymbol,description,categoryPrimaryPath
+  Erkunden:   Bsp {"productId":"100411276","title":"SILVERCREST® Premium-Edelstahlpfanne","brand":"SILVERCREST®","currencyText":"EUR","wonCategoryPrimary":"Bedürfniswelten/Küche & Haushalt/Kochen & Backen","wonCategoryPrimaryPath":"0/11/1112","canonicalUrl":"/p/silvercrest-premium-edelstahlpfanne/p100411276","categoryPrimary":"Kategorien/Haushalt & Küche/Kochgeschirr/Pfannen","image":"https://www.lidl.de/assets/gcp008d4ba1f0704d32b8663f75f59e3803.png","url":"https://www.lidl.de/p/silvercrest-premium-edelstahlpfanne/p100411276?flyx_source=pageflip&flyx_medium=intern&flyx_campaign=in-lf_d-lf-dhz_others_notset_wt_omc_d-lf-dhz_sl_261026-311026&flyx_content=p-100411276","price":"14.99","currencySymbol":"€","description":"Durchmesser: &Oslash; 20 cm , &Oslash; 24 cm Merkmal: Ofenfest bis 200 &deg;C Geeignet f&uuml;r: F&uuml;r alle Herdarten geeignet, inklusive I
+  Erkunden:   Bsp {"productId":"100412874","title":"CRIVIT Herren Thermo Sweatpullover","brand":"CRIVIT","currencyText":"EUR","wonCategoryPrimary":"Bedürfniswelten/Sport & Freizeit/Laufen","wonCategoryPrimaryPath":"0/13/1316","canonicalUrl":"/p/crivit-herren-thermo-sweatpullover/p100412874","categoryPrimary":"Kategorien/Mode/Herrenmode/Herren Sportbekleidung/Sport Pullover & Sweatjacken","image":"https://www.lidl.de/assets/gcp961fd86e365e41ff8799778fdbc7ee6b.jpg","url":"https://www.lidl.de/p/crivit-herren-thermo-sweatpullover/p100412874?flyx_source=pageflip&flyx_medium=intern&flyx_campaign=in-lf_d-lf-dhz_others_notset_wt_omc_d-lf-dhz_sl_261026-311026&flyx_content=p-100412874","price":"9.99","currencySymbol":"€","description":"Farbe: schwarz, blau Merkmal: K&auml;ngurutasche Besonderheit: w&auml;rmend durch angeraute Innenseite","categoryPrimaryPath":"0/46/
+  Erkunden:   Bsp {"productId":"100412539","title":"CRIVIT Herren-Thermo-Funktionsshirt","brand":"CRIVIT","currencyText":"EUR","wonCategoryPrimary":"Bedürfniswelten/Sport & Freizeit/Laufen","wonCategoryPrimaryPath":"0/13/1316","canonicalUrl":"/p/crivit-herren-thermo-funktionsshirt/p100412539","categoryPrimary":"Kategorien/Mode/Herrenmode/Herren Sportbekleidung/Sport Shirts & Tops","image":"https://www.lidl.de/assets/gcpdebf042448604119b7d46d06e018e8a3.png","url":"https://www.lidl.de/p/crivit-herren-thermo-funktionsshirt/p100412539?flyx_source=pageflip&flyx_medium=intern&flyx_campaign=in-lf_d-lf-dhz_others_notset_wt_omc_d-lf-dhz_sl_261026-311026&flyx_content=p-100412539","price":"7.99","currencySymbol":"€","description":"CRIVIT Herren-Thermo-Funktionsshirt &ndash; angenehme W&auml;rme, optimale Passform und durchdachte Extras f&uuml;r dein Lauf- und Sporttr
+Märkte 47178: 1 s, ["Lidl=887","PENNY=284","Kabs PolsterWelt=45","Bosch Car Service=10","SCHAFFRATH=267","HORNBACH=198","KiK=50","Opti Wohnwelt=44","ALDI SÜD=468","Thomas Philipps=185","ROSSMANN=7","toom Baumarkt=319","OBI=25","Handelshof=270","XXXLutz=1497","SB-Möbel BOSS=309","Möbel Inhofer=80","Netto Marken-Discount=357","REWE=234 (47053)"]
+Markt 126679: 0 s, {"name":"Lidl","total":885,"seiten":"885/885/885","geladen":885,"ohneMenge":0,"kategorien":65,"ohneKat":0,"kp":"3=21 5=56 6=7 10=6 11=3 12=3 14=10 15=3 16=50 17=1 20=69 23=9 35=6 50=23 53=9 69=15 70=4 83=5 85=14 91=6 94=24 95=8 97=21 101=1 102=17 103=31 104=20 106=6 107=64 108=8 110=24 112=11 113=6 116=2 119=3 120=31 122=3 126=1 129=2 137=6 142=2 143=33 144=26 147=7 149=13 187=2 191=8 193=8 218=1 363=32 364=29 382=3 383=3 384=1 385=4 386=4 398=34 402=3 415=6 427=26 428=7 454=6 473=7 497=8 630=3","beispiel":"Lidl Backshop Kakao Donuts XXL 2.69 kg Kuchen & Feinbackwaren"}
 Markt 126735: 0 s, {"name":"Netto Marken-Discount","total":357,"seiten":"357/357/357","geladen":357,"ohneMenge":0,"kategorien":56,"ohneKat":0,"kp":"3=6 5=7 6=1 10=1 11=1 12=1 14=1 16=3 17=1 20=36 23=5 26=2 50=8 53=7 69=16 70=5 83=2 85=5 97=3 101=1 102=8 103=20 104=18 106=2 107=28 108=4 110=12 112=11 113=4 116=1 119=1 120=15 136=1 142=3 143=18 144=5 147=14 149=14 174=11 187=1 191=8 193=4 363=4 364=4 382=3 383=2 384=2 398=6 402=3 415=3 427=1 428=1 454=1 473=7 497=1 630=4","beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792932846","token":true}
+Konto anlegen: {"name":"test1792932981","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792932846","daten":{}}
+Konto Daten: {"name":"test1792932981","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792932846"]
+Konto Anfragen mit Code: ["test1792932981"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792932846","token":true}
+Neues Passwort mit Code: {"name":"test1792932981","token":true}
 Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
 Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
