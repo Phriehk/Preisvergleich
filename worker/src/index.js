@@ -187,10 +187,24 @@ async function erkunden(env, ctx) {
   const hol = async u => { try { const r = await fetch(u, { headers: H, redirect: "follow" }); const t = await r.text(); return { s: r.status, t, ct: r.headers.get("content-type") || "" }; } catch (e) { return { s: 0, t: String(e.message || e) }; } };
   const kurz = (t, n) => String(t).replace(/\s+/g, " ").slice(0, n);
   const B = "https://www.penny.de/.resources/penny/webresources/js/";
-  const r = await hol(B + "chunks/offer.BKe7i0_u.js");
-  const t = r.t.slice(3440); for (let k = 0; k * 870 < t.length && k < 8; k++) out.push(`offer ${k}: ` + t.slice(k * 870, (k + 1) * 870));
   const pe = await hol("https://www.penny.de/angebote"), h = pe.t;
-  for (const w of ["primaryType", "listPrice", "data-offer", "application/json", "data-regions", "sellingRegion", "/angebote/20"]) { const i = h.indexOf(w); out.push(`HTML ${w}: ${h.split(w).length - 1} · ${i >= 0 ? kurz(h.slice(Math.max(0, i - 200), i + 300), 520) : ""}`); }
+  const js0 = (h.match(/\/\.resources\/penny\/webresources\/js\/index[^"]+\.js/) || [])[0], js = await hol("https://www.penny.de" + js0);
+  let map = {}; try { map = JSON.parse(js.t.match(/assetsMap = (\{.*?\}\});?/)[1]).js; } catch (e) {}
+  out.push("Komponenten: " + kurz(Object.keys(map).join(" "), 880));
+  out.push("Komponenten 2: " + kurz(Object.keys(map).join(" ").slice(870), 880));
+  const imSeite = [...new Set(h.match(/data-js-component="[^"]+"/g) || [])].map(x => x.slice(19, -1)); out.push("Auf der Seite: " + kurz(imSeite.join(" "), 880));
+  const pruef = Object.keys(map).filter(k => /offer|categor|week|list|angebot|product|tile/i.test(k) && imSeite.some(x => x.split("|").includes(k)));
+  out.push("Prüfe: " + pruef.join(" "));
+  const gesehen = new Set(), schlange = pruef.map(k => B + "components/" + map[k]);
+  let n = 0;
+  while (schlange.length && n < 40) {
+    const u = schlange.shift(); if (gesehen.has(u)) continue; gesehen.add(u); n++;
+    const r = await hol(u); if (r.s !== 200) continue;
+    const tr = r.t.match(/.{0,200}(fetch\(|XMLHttpRequest|\.rest|restApi|\/offers|generateOffer).{0,260}/g) || [];
+    if (tr.length) { out.push(`${u.slice(B.length)}: ${r.t.length}`); for (const m of tr.slice(0, 5)) out.push("    " + kurz(m, 480)); }
+    for (const x of r.t.match(/["'`]\.\.?\/[^"'`\s]+\.js["'`]/g) || []) { const v = new URL(x.replace(/["'`]/g, ""), u).href; if (!gesehen.has(v) && !/viewport|tracking|input-modality|component-initializer|icon|ripple|sanitize|scroller|market-locator|offer\.BKe/.test(v)) schlange.push(v); }
+  }
+  out.push(`geprüft ${n}`);
   return out;
 }
 
