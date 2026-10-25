@@ -294,6 +294,7 @@ textarea.export{font-size:.92rem;min-height:120px}
 .bon-z2{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--linie)}
 .bon-z2 select{grid-column:1/-1;max-width:100%}
 .bon-z2>small{grid-column:1/-1}
+.bon-pruefen input[type=date]{min-height:34px;padding:4px 8px;border:1px solid var(--linie);border-radius:8px;background:var(--flaeche);color:var(--tinte)}
 .gang{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--grau);padding:8px 2px 2px}
 .haken{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--linie)}
 .haken label{flex:1;display:flex;align-items:center;gap:12px;padding:13px 4px;font-size:1.08rem;cursor:pointer;min-width:0}
@@ -801,7 +802,7 @@ async function verlaufLaden(){
   try{
     const t=await (await wf("/verlauf.csv")).text();
     const zeile=z=>{const r=[];let c="",q=false;for(const ch of z){if(ch==='"')q=!q;else if(ch===";"&&!q){r.push(c);c=""}else c+=ch}r.push(c);return r};
-    vd=t.trim().split(/\r?\n/).slice(1).map(zeile).map(c=>[c[0],c[1],parseFloat(c[5]),c[6]||"",c[7]||"",c[8]||"Coca-Cola",parseFloat(c[3])]).filter(x=>x[0]&&isFinite(x[2]));
+    vd=t.trim().split(/\r?\n/).slice(1).map(zeile).map(c=>[c[0],c[1],parseFloat(c[5]),c[6]||"",c[7]||"",c[8]||"Coca-Cola",parseFloat(c[3]),parseFloat(c[4])]).filter(x=>x[0]&&isFinite(x[2]));
     ls.set("pv-verlauf",vd);
   }catch(e){}
 }
@@ -1195,7 +1196,7 @@ function kaufMerken(x,an){
   if(w){bezahlt=w.kosten;if(normal==null&&w.teile.every(t=>t.o.alt>pr(t.o)))normal=w.teile.reduce((s,t)=>s+t.o.alt*t.packs,0)}
   else if(normal!=null)bezahlt=normal;   // ohne Angebot zum Normalpreis
   else return;
-  const e={k:x.k,d,n:x.name.slice(0,60),z:String(x.z).slice(0,60),m:w?x.markt:"",p:Math.round(bezahlt*100)/100,r:normal!=null?Math.round(normal*100)/100:null};
+  const e={k:x.k,d,n:x.name.slice(0,60),z:String(x.z).slice(0,60),m:w?x.markt:"",a:w?1:0,p:Math.round(bezahlt*100)/100,r:normal!=null?Math.round(normal*100)/100:null};
   if(i>=0)kaeufe[i]=e;else kaeufe.push(e);
   const grenze=new Date(Date.now()-400*864e5).toISOString().slice(0,10);kaeufe=kaeufe.filter(e=>e.d>=grenze).slice(-1000);
 }
@@ -1234,20 +1235,59 @@ function bonZuordnen(zeilen){   // jede Bon-Zeile zum am besten passenden Artike
   return zeilen.map((z,i)=>({...z,k:zu[i]||""}));
 }
 /* übernehmen: bezahlten Preis bei den Käufen von heute eintragen (abhaken, falls noch nicht geschehen); ohne Angebot gekauft: als Normalpreis merken */
-function bonUebernehmen(zeilen){
-  const d=heuteT();let n=0,rw=0;
+/* Kopf des Bons: Einkaufstag und Markt (für Bons, die erst später eingelesen werden) */
+const BON_MAERKTE=["aldi","lidl","penny","rewe","kaufland","netto","edeka","rossmann","trinkgut","handelshof","norma","thomas philipps","globus","marktkauf","dm-drogerie","famila","nahkauf"];
+function bonKopf(text){
+  const t=String(text||""),heute=heuteT(),grenze=new Date(Date.now()-90*864e5).toISOString().slice(0,10);
+  let datum="";
+  for(const m of t.matchAll(/\b(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2}|\d{4})\b/g)){
+    const j=m[3].length===2?"20"+m[3]:m[3],d=`${j}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+    if(!isNaN(new Date(d+"T12:00:00"))&&d<=heute&&d>=grenze){datum=d;break}
+  }
+  const klein=flachT(t),key=BON_MAERKTE.find(k=>klein.includes(flachT(k)));
+  let markt="";
+  if(key){const bekannt=[...new Set([...offers.map(o=>mbase(o.markt)),...vd.map(r=>mbase(r[1]))])];markt=bekannt.find(m=>flachT(m).startsWith(key.split("-")[0]))||key.toUpperCase()}
+  return {datum:datum||heute,markt,datumErkannt:!!datum};
+}
+/* War der Artikel an diesem Tag im Angebot? Aus deinem Abhaken an dem Tag, sonst aus dem Preisverlauf und den bekannten Angeboten:
+   ein Angebot, das an dem Tag galt (im Markt vom Bon, falls erkannt) und dessen Packungspreis zum Preis auf dem Bon passt */
+function bonAngebot(k,datum,preis,n,markt){
+  const e=kaeufe.find(e=>e.d===datum&&e.z===k&&e.a===1);   // beim Einkaufen im Angebot abgehakt
+  if(e)return {markt:e.m,preis:e.p,alt:null,quelle:"abgehakt"};
+  const gr=new Set(zMitglieder(k).map(m=>zk(m).g)),stk=preis/(n||1),mk=markt?flachT(markt):"";
+  const gilt=(von,bis)=>(!von||von<=datum)&&(!bis||bis>=datum),imMarkt=m=>!mk||flachT(mbase(m)).startsWith(mk.split(" ")[0]);
+  const passt=p=>p>0&&Math.abs(p-stk)<=0.02;
+  for(const o of offers)if(gr.has(grp(o))&&gilt(o.von,o.bis)&&imMarkt(o.markt)&&(passt(o.preis)||passt(o.app))){return {markt:mbase(o.markt),preis:o.preis,liter:liter(o),alt:o.alt,quelle:"angebot"}}
+  for(const r of vd){
+    if(!gr.has(r[5])||!gilt(r[4],r[3])||!imMarkt(r[1]))continue;
+    const pp=isFinite(r[7])?r[7]:r[2]*r[6];
+    if(passt(Math.round(pp*100)/100))return {markt:mbase(r[1]),preis:pp,liter:r[6],quelle:"verlauf"};
+  }
+  return null;
+}
+/* übernehmen: im Angebot Gekauftes zählt mit dem Preis vom Bon für die Ersparnis (am Tag des Einkaufs), ohne Angebot Gekauftes wird Normalpreis */
+function bonUebernehmen(zeilen,kopf){
+  const d=(kopf&&kopf.datum)||heuteT(),heute=d===heuteT(),markt=(kopf&&kopf.markt)||"";let n=0,rw=0;
   for(const z of zeilen){
     if(!z.k||!z.an)continue;
     let x=null;expGruppen().forEach(g=>g.namen.forEach(y=>{if(y.z===z.k&&!y.eigen)x=y}));
-    if(!(x&&x.markt)){   // ohne Angebot gekauft: der Preis vom Bon wird dein Normalpreis (je kg, Liter oder Stück)
+    const ang=bonAngebot(z.k,d,z.preis,z.n,markt);
+    if(!ang){   // ohne Angebot gekauft: der Preis vom Bon wird dein Normalpreis (je kg, Liter oder Stück)
       const ref=zRef(z.k),stk=z.preis/(z.n||1),art=artG(zk(z.k).g);
       const v=ref?stk/ref:art==="st"||!(zettel[z.k]>0)?stk:z.preis/zettel[z.k];
       zMitglieder(z.k).forEach(m=>{delete richt[zk(m).g]});richt[zk(z.k).g]=Math.round(v*1e4)/1e4;rw++;vCache=null;rwC={};
     }
-    if(x&&!haken[x.k]){haken[x.k]=1;kaufMerken(x,true)}
-    const e=kaeufe.find(e=>e.d===d&&(e.z===z.k||(x&&e.k===x.k)));
-    if(e){e.p=z.preis;if(!(x&&x.markt))e.r=z.preis;else n++}   // im Angebot gekauft: jetzt mit dem echten Preis
+    if(x&&!haken[x.k]){haken[x.k]=1;if(heute)kaufMerken(x,true)}
+    let e=kaeufe.find(e=>e.d===d&&(e.z===z.k||(x&&e.k===x.k)));
+    if(!e){e={k:(x?x.k:"bon|"+z.k),d,n:(x?x.name:zLabel(z.k)).slice(0,60),z:String(z.k).slice(0,60),m:"",p:0,r:null};kaeufe.push(e)}
+    e.p=z.preis;
+    if(ang){   // was es ohne Angebot gekostet hätte: dein Normalpreis für die gekaufte Menge, sonst der frühere Preis aus dem Prospekt
+      const r=rwPreis(z.k),menge=ang.liter?ang.liter*(z.n||1):null;
+      e.r=r!=null&&menge?Math.round(r*menge*100)/100:ang.alt?Math.round(ang.alt*(z.n||1)*100)/100:(e.r!=null&&e.r>z.preis?e.r:null);
+      e.m=ang.markt;e.a=1;n++;
+    }else{e.r=z.preis;e.m=markt||e.m||"";e.a=0}
   }
+  kaeufe.sort((a,b)=>a.d<b.d?-1:1);
   listeSpeichern();
   return {n,rw};
 }
@@ -1795,10 +1835,13 @@ function bonHtmlE(){   // Kassenbon einlesen: Knopf, Fortschritt, Prüfen der Zu
   if(B.stand==="fehler")return `<div class="banner warn">${esc(B.fehler)} <button type="button" class="knopf klein" data-aktion="bonZu">Schließen</button></div>${knopf}`;
   const l=B.zeilen,namen=zettelNamen();
   if(!l.length)return `<div class="banner warn">Auf dem Foto habe ich keine Zeilen mit Preisen gefunden. Am besten den Bon gerade und hell fotografieren, mit allen Zeilen im Bild. <button type="button" class="knopf klein" data-aktion="bonZu">Schließen</button></div>${knopf}`;
-  const d=heuteT(),imPlan={};expGruppen().forEach(g=>g.namen.forEach(y=>{if(y.z&&y.markt)imPlan[y.z]=y.markt}));
+  const K=B.kopf||{datum:heuteT(),markt:""},tag=jahrD(K.datum).replace(/\.$/,"");
+  const maerkte=[...new Set([...offers.map(o=>mbase(o.markt)),...vd.map(r=>mbase(r[1])),...(K.markt?[K.markt]:[])])].sort((a,b)=>a.localeCompare(b,"de"));
   return `<section class="karte-box bon-pruefen"><div class="box-kopf"><h2>🧾 Kassenbon</h2><span class="rechts">${l.length} Zeilen</span></div>
-    <p class="klein-text" style="margin:0">Prüfe die Zuordnung. Im Angebot Gekauftes zählt mit dem echten Preis für die Ersparnis, ohne Angebot Gekauftes wird dein Normalpreis.</p>
-    ${l.map((z,i)=>{const was=!z.k?"":imPlan[z.k]?`im Angebot (${imPlan[z.k]}): zählt mit diesem Preis für die Ersparnis`:"ohne Angebot: wird dein Normalpreis";
+    <div class="reihe"><label class="rw">Einkauf am <input type="date" id="bonDatum" value="${esc(K.datum)}" max="${heuteT()}"></label>${sel("bonMarkt","",[["","Markt unbekannt"],...maerkte.map(m=>[m,m])],K.markt,"Markt")}</div>
+    ${K.datumErkannt?"":`<p class="klein-text" style="margin:0">Das Datum stand nicht lesbar auf dem Bon. Stimmt der Tag nicht, stell ihn oben ein, damit ich die Angebote von damals finde.</p>`}
+    <p class="klein-text" style="margin:0">Ob etwas im Angebot war, prüfe ich an deinem Abhaken und am Preisverlauf: ein Angebot, das am ${esc(tag)} galt${K.markt?" bei "+esc(K.markt):""} und genau diesen Preis hatte. Das zählt für die Ersparnis, alles andere wird dein Normalpreis.</p>
+    ${l.map((z,i)=>{const a=z.k?bonAngebot(z.k,K.datum,z.preis,z.n,K.markt):null,was=!z.k?"":a?`war im Angebot bei ${a.markt}: zählt für die Ersparnis`:"kein passendes Angebot an dem Tag: wird dein Normalpreis";
       return `<div class="bon-z2"><label class="schalter"><input type="checkbox" data-bon-an="${i}"${z.k&&z.an?" checked":""}${z.k?"":" disabled"}><span><b>${esc(z.name)}</b>${z.n>1?` <small>${z.n} ×</small>`:""}</span></label><b class="nw">${eur(z.preis)}</b>
         ${sel("bonK"+i,`data-bon-k="${i}"`,[["","– nicht zuordnen –"],...namen.map(k=>[k,zLabel(k)])],z.k,"Artikel für "+z.name)}<small class="klein-text">${esc(was)}</small></div>`}).join("")}
     <div class="reihe"><button type="button" class="knopf haupt" data-aktion="bonOk">Übernehmen</button><button type="button" class="knopf leise" data-aktion="bonZu">Verwerfen</button></div></section>`;
@@ -2273,8 +2316,8 @@ async function bonLesen(datei){
     S.bon.text="Ich lese den Kassenbon";render();
     let t=0;const w=await T.createWorker("deu",1,{logger:m=>{if(m.status==="recognizing text"&&S.bon){S.bon.fortschritt=m.progress;if(Date.now()-t>400){t=Date.now();render()}}}});
     const r=await w.recognize(bild);await w.terminate();
-    const zeilen=bonZuordnen(bonZeilen(r.data&&r.data.text)).map(z=>({...z,an:!!z.k}));
-    S.bon={stand:"fertig",zeilen};
+    const text=r.data&&r.data.text,zeilen=bonZuordnen(bonZeilen(text)).map(z=>({...z,an:!!z.k}));
+    S.bon={stand:"fertig",zeilen,kopf:bonKopf(text)};
   }catch(e){S.bon={stand:"fehler",fehler:e.message||String(e)}}
   render();
 }
@@ -2614,7 +2657,7 @@ const AKTION={
     listeSpeichern();melde(n+" Artikel von der Liste genommen.");render();
   },
   bonZu:()=>{S.bon=null;render()},
-  bonOk:()=>{const r=bonUebernehmen(S.bon.zeilen);S.bon=null;melde(r.n+r.rw?`Übernommen: ${r.n?r.n+" bezahlte Preise":""}${r.n&&r.rw?", ":""}${r.rw?r.rw+" Normalpreise":""}.`:"Nichts übernommen.");render()},
+  bonOk:()=>{const r=bonUebernehmen(S.bon.zeilen,S.bon.kopf);S.bon=null;melde(r.n+r.rw?`Übernommen: ${r.n?r.n+" bezahlte Preise":""}${r.n&&r.rw?", ":""}${r.rw?r.rw+" Normalpreise":""}.`:"Nichts übernommen.");render()},
   hakenNull:()=>{const d=heuteT();kaeufe=kaeufe.filter(e=>!(e.d===d&&haken[e.k]));haken={};listeSpeichern();render()},
   ersparnisWeg:()=>{if(wegFragen("ersparnis")){kaeufe=[];listeSpeichern();melde("Die Ersparnis ist zurückgesetzt.");render()}},
   kopieren:()=>{
@@ -2773,6 +2816,8 @@ $("ansicht").addEventListener("change",e=>{
   if(t.matches("[data-push-ntfy]")){pushNtfy(t.checked);return}
   if(t.id==="bonFoto"){const f=t.files&&t.files[0];t.value="";if(f)bonLesen(f);return}
   if(t.matches("[data-bon-an]")){const z=S.bon&&S.bon.zeilen[+t.dataset.bonAn];if(z)z.an=t.checked;return}
+  if(t.id==="bonDatum"&&S.bon&&S.bon.kopf){if(/^\d{4}-\d\d-\d\d$/.test(t.value))S.bon.kopf.datum=t.value;render();return}
+  if(t.id==="bonMarkt"&&S.bon&&S.bon.kopf){S.bon.kopf.markt=t.value;render();return}
   if(t.matches("[data-bon-k]")){const z=S.bon&&S.bon.zeilen[+t.dataset.bonK];if(z){z.k=t.value;z.an=!!t.value}render();return}
   if(t.matches("[data-push-woche]")){pushWoche(t.checked);return}
   if(t.dataset.segSel){const n=t.dataset.segSel;if(n==="plan")S.plan=+t.value||0;else S[n]=t.value;render();return}

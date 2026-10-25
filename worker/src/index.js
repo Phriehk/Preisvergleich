@@ -700,7 +700,7 @@ function datenPruefen(d) {   // nur erwartete Felder und Größen werden gespeic
   if (Array.isArray(d.kaeufe)) {   // abgehakte Einkäufe für die Ersparnis (höchstens 1000)
     const geld = x => Number.isFinite(+x) && +x >= 0 && +x < 10000 ? Math.round(+x * 100) / 100 : null;
     o.kaeufe = d.kaeufe.filter(x => x && text(x.k, 140) && /^\d{4}-\d\d-\d\d$/.test(x.d) && geld(x.p) != null).slice(-1000)
-      .map(x => ({ k: x.k, d: x.d, n: String(x.n || "").slice(0, 60), ...(text(x.z, 60) ? { z: x.z } : {}), m: String(x.m || "").slice(0, 60), p: geld(x.p), r: x.r == null ? null : geld(x.r) }));
+      .map(x => ({ k: x.k, d: x.d, n: String(x.n || "").slice(0, 60), ...(text(x.z, 60) ? { z: x.z } : {}), ...(x.a === 1 ? { a: 1 } : {}), m: String(x.m || "").slice(0, 60), p: geld(x.p), r: x.r == null ? null : geld(x.r) }));
   }
   if (Array.isArray(d.extra)) o.extra = d.extra.filter(x => text(x, 40)).slice(0, 100);   // von Hand notierte Artikel
   if (obj(d.haken)) {   // beim Einkaufen abgehakt

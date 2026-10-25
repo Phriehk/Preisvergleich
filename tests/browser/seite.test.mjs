@@ -728,3 +728,35 @@ t("Kassenbon: Zeilen mit Preisen erkennen, der Liste zuordnen, bezahlte Preise u
     assert.deepEqual(s.fehler, []);
   } finally { await s.b.close(); }
 });
+
+t("Kassenbon später eingelesen: Einkaufstag vom Bon, Angebot von damals aus dem Preisverlauf, sonst Normalpreis", async () => {
+  const p2 = x => String(x).padStart(2, "0"), tag = n => { const d = new Date(Date.now() - n * 864e5); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`; };
+  const D = tag(1), bonDatum = `${D.slice(8, 10)}.${D.slice(5, 7)}.${D.slice(2, 4)}`;
+  const u = await umgebung({ daten: { ...DATEN, butter: [] } });   // das Butter-Angebot ist inzwischen abgelaufen
+  await u.KV.put("favoriten", JSON.stringify(["Butter", "Eier"].map(name => ({ name, aus: "" }))));
+  await u.KV.put("verlauf:" + D.slice(0, 7), `${tag(2)};ALDI SÜD;Butter;0.25;1.99;7.96;${D};${tag(5)};Butter`);
+  await u.KV.put("verlauf:monate", JSON.stringify([D.slice(0, 7)]));
+  await u.A("/aktualisieren", "POST");
+  const s = await browserStarten(u, {});
+  try {
+    await s.c.addInitScript(t => { window.Tesseract = { createWorker: async () => ({ recognize: async () => ({ data: { text: t } }), terminate: async () => {} }) }; }, `ALDI SÜD\nFiliale 123\n${bonDatum} 10:15\nKERRYGOLD BUTTER 1,99 A\nFREILAND-EIER 2,49 A\nSUMME 4,48`);
+    await s.oeffnen("");
+    const p = s.p;
+    await p.waitForFunction(() => vd.length > 0, null, { timeout: 5000 });
+    await p.evaluate(() => { aufListeSetzen("Butter"); aufListeSetzen("Eier"); listeSpeichern(); render(); });
+    await p.click('#leiste [data-v="einkaufen"]'); await p.waitForTimeout(300);
+    const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+    await p.setInputFiles("#bonFoto", { name: "bon.png", mimeType: "image/png", buffer: png });
+    await p.waitForSelector(".bon-pruefen", { timeout: 10000 });
+    assert.equal(await p.inputValue("#bonDatum"), D, "Einkaufstag vom Bon");
+    assert.equal(await p.inputValue("#bonMarkt"), "ALDI SÜD");
+    const was = await p.$$eval(".bon-z2 small.klein-text", e => e.map(x => x.textContent));
+    assert.match(was[0], /war im Angebot bei ALDI SÜD/); assert.match(was[1], /wird dein Normalpreis/);
+    await p.click('[data-aktion="bonOk"]'); await p.waitForTimeout(300);
+    const e = await p.evaluate(() => kaeufe.map(x => [x.z, x.d, x.p, x.a, x.m]));
+    assert.deepEqual(e.find(x => x[0] === "Butter"), ["Butter", D, 1.99, 1, "ALDI SÜD"], JSON.stringify(e));
+    assert.equal(await p.evaluate(() => richt.Butter), undefined, "Angebotspreis wird kein Normalpreis");
+    assert.ok(await p.evaluate(() => richt.Eier > 0), "ohne passendes Angebot: Normalpreis");
+    assert.deepEqual(s.fehler, []);
+  } finally { await s.b.close(); }
+});
