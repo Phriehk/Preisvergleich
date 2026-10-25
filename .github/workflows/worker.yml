@@ -71,7 +71,7 @@ jobs:
           T0=$(date +%s); R=$(curl -s -m 300 -X POST -H "X-Wartung: $KEY" "$URL/aktualisieren")
           echo "$R" | grep -q "Zugangscode" && { sleep 20; T0=$(date +%s); R=$(curl -s -m 300 -X POST -H "X-Wartung: $KEY" "$URL/aktualisieren"); }
           log "Aktualisieren: $(( $(date +%s) - T0 )) s, $(echo "$R" | head -c 400)"
-          log "Angebote: $(curl -s -m 30 $URL/angebote.json | jq -c '{anzahl: length, gruppen: ([.[].gruppe] | unique)}' 2>/dev/null)"
+          log "Angebote: $(curl -s -m 30 $URL/angebote.json | jq -c '{anzahl: length, gruppen: ([.[].gruppe] | unique), frueher: ([.[] | select(.preis_alt)] | length), penny: ([.[] | select(.markt | test("^PENNY")) | {p: .produkt, preis, alt: .preis_alt, uvp: .alt_uvp, app: .preis_app}] | .[0:4])}' 2>/dev/null)"
           log "Verlauf: $(curl -s -m 30 $URL/verlauf.csv | wc -l) Zeilen"
           log "Korrekturen lesen: $(curl -s -m 30 $URL/korrekturen.json | head -c 100)"
           log "Korrekturen ohne Code schreiben (erwartet 401): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 -X POST -H 'Content-Type: application/json' -d '{"set":{}}' $URL/korrekturen)"
@@ -87,9 +87,13 @@ jobs:
           T0=$(date +%s); R=$(curl -s -m 120 -G --data-urlencode "plz=47178" --data-urlencode "q=Butter|Eier|Mehl|Nudeln|Joghurt|Kartoffeln" --data-urlencode "streng=1" "$URL/region")
           log "Lebensmittel-Probe: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if type=="array" then (group_by(.gruppe) | map({(.[0].gruppe): length}) | add) else . end' 2>/dev/null || echo "$R" | head -c 300)"
           echo "$R" | jq -r 'if type=="array" then .[0:40][] | "  Probe: \(.gruppe) | \(.markt) | \(.produkt[0:28]) | art=\(.art) liter=\(.liter) stueck=\(.stueck) ml=\(.ml) preis=\(.preis) | \(.beschreibung[0:70])" else empty end' 2>/dev/null | while IFS= read -r z; do log "$z"; done
-          curl -s -m 110 -X POST -H "Authorization: Bearer $ZUG" "$URL/erkunden" | jq -r '.[]?' | cut -c1-900 | sed 's/^/  Erkunden: /' | tee -a $LOG
           T0=$(date +%s); R=$(curl -s -m 120 "$URL/maerkte?plz=47178")
           log "Märkte 47178: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if type=="array" then [.[] | "\(.name)=\(.n)\(if .plz != "47178" then " (" + .plz + ")" else "" end)"] else . end' 2>/dev/null || echo "$R" | head -c 300)"
+          PID=$(echo "$R" | jq -r 'if type=="array" then ([.[] | select(.name=="PENNY" and .plz=="47178")][0].id // "") else "" end' 2>/dev/null)
+          if [ -n "$PID" ]; then
+            R=$(curl -s -m 120 "$URL/markt?plz=47178&id=$PID")
+            log "PENNY mit penny.de: $(echo "$R" | jq -c 'if .angebote then {geladen: (.angebote | length), frueher: ([.angebote[] | select(.preis_alt)] | length), uvp: ([.angebote[] | select(.alt_uvp)] | length), app: ([.angebote[] | select(.preis_app)] | length), beispiel: ([.angebote[] | select(.preis_alt)][0:3] | map("\(.marke) \(.produkt) \(.preis) statt \(.preis_alt)\(if .alt_uvp then " UVP" else "" end)"))} else . end' 2>/dev/null || echo "$R" | head -c 300)"
+          fi
           for M in 126679 126735; do
             T0=$(date +%s); R=$(curl -s -m 120 "$URL/markt?plz=47178&id=$M")
             log "Markt $M: $(( $(date +%s) - T0 )) s, $(echo "$R" | jq -c 'if .angebote then {name, total, seiten: (.seiten | join(" ")), geladen: (.angebote | length), ohneMenge: ([.angebote[] | select(.liter == null)] | length), kategorien: ([.angebote[].kp] | unique | length), ohneKat: ([.angebote[] | select(.kp == 0)] | length), kp: ([.angebote[].kp] | group_by(.) | map("\(.[0])=\(length)") | join(" ")), beispiel: (.angebote[0] | "\(.marke) \(.produkt) \(.preis) \(.art) \(.kat)")} else . end' 2>/dev/null || echo "$R" | head -c 300)"

@@ -3,7 +3,7 @@
 Private Web-App: Supermarkt-Angebote von Marktguru vergleichen, eine Einkaufsliste planen (welcher Markt lohnt sich, mit Fahrtkosten) und beim Einkaufen abhaken.
 
 - **Seite:** `index.html` (eine Datei, keine Bibliotheken).
-- **Server:** Cloudflare Worker in `worker/` (Marktguru-Abfragen, alle Angebote je Markt über `/maerkte` und `/markt` mit Zwischenspeicher, täglicher Lauf um 7 Uhr, Preisalarm per Web-Push und ntfy, Konten ohne E-Mail, Entfernungen über OpenStreetMap). Hochgeladen wird automatisch über `.github/workflows/worker.yml`.
+- **Server:** Cloudflare Worker in `worker/` (Marktguru-Abfragen, alle Angebote je Markt über `/maerkte` und `/markt` mit Zwischenspeicher, täglicher Lauf um 7 Uhr, Preisalarm per Web-Push und ntfy, Konten ohne E-Mail, Entfernungen über OpenStreetMap, PENNY-Zusatzdaten von penny.de). Hochgeladen wird automatisch über `.github/workflows/worker.yml`.
 - **Daten:** im Cloudflare-Speicher (KV). `sicherung.yml` kopiert Verlauf, Favoriten und Korrekturen einmal pro Woche nach `sicherung/`.
 - **Geheimnisse (GitHub, Settings, Secrets):** `CLOUDFLARE_API_TOKEN`, `NTFY_TOPIC`, optional `ZUGANGSCODE`.
 
@@ -26,8 +26,8 @@ In Safari die Seite öffnen, Teilen, „Zum Home-Bildschirm“. Die App startet 
 
 ## Tests
 
-`node --test tests/erkennung.test.mjs tests/alarm.test.mjs tests/zuordnung.test.mjs tests/push.test.mjs` und mit installiertem Playwright `node --test tests/browser/seite.test.mjs` (die echte Seite im Browser gegen den echten Worker-Code, Marktguru nachgebaut). Alles läuft bei jedem Push (Workflow „Tests“); bei Fehlern schreibt die Pipeline die Ausgabe nach `tests/ergebnis/browser.txt`.
+`node --test tests/erkennung.test.mjs tests/alarm.test.mjs tests/zuordnung.test.mjs tests/push.test.mjs tests/sorte.test.mjs tests/penny.test.mjs` und mit installiertem Playwright `node --test tests/browser/seite.test.mjs` (die echte Seite im Browser gegen den echten Worker-Code, Marktguru nachgebaut). Alles läuft bei jedem Push (Workflow „Tests“); bei Fehlern schreibt die Pipeline die Ausgabe nach `tests/ergebnis/browser.txt`.
 
 ## Grenzen
 
-Normalpreise liefert Marktguru nicht (nur selten einen alten Preis, dann steht „statt …“ da), deshalb gibt es eigene Normalpreise. Die Zuordnung von Angeboten zu einem Artikel arbeitet mit dem Namen und ist nicht perfekt. Verpackung und Menge werden aus dem Prospekttext abgeleitet.
+Normalpreise liefert Marktguru nicht (nur selten einen alten Preis, dann steht „statt …“ da), deshalb gibt es eigene Normalpreise. Bei PENNY liefert Marktguru gar keine früheren Preise; die holt der tägliche Lauf deshalb direkt von penny.de (dieselben Daten, die die Angebotsseite dort lädt: `/.rest/offers/by-category/<Woche>/<Kategorie>?region=<Verkaufsregion>`, Region von einem PENNY-Markt in Duisburg bzw. Dinslaken). Ein PENNY-Angebot bekommt den früheren Preis, wenn Preis (oder App-Preis) und Name übereinstimmen; die UVP steht als „UVP …“ statt „statt …“ da, dazu der App-Preis. Bei ALDI SÜD bringt das Prospekt (`prospekt.aldi-sued.de`) nichts dazu, weil Marktguru die früheren Preise dort schon hat; Lidls Prospektdaten haben keine früheren Preise; EDEKA blockt Abrufe vom Server, Netto und Kaufland werden bewusst nicht abgefragt. Die Zuordnung von Angeboten zu einem Artikel arbeitet mit dem Namen und ist nicht perfekt. Verpackung und Menge werden aus dem Prospekttext abgeleitet.

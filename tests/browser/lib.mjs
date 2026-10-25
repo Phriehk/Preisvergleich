@@ -51,7 +51,7 @@ export async function umgebung(opts = {}) {
   } };
   const env = { PV: KV, ZUGANG: "betreiber", NTFY_TOPIC: opts.ntfy ? "test" : undefined, ASSETS };
   const ctx = { exports: { Teil: new W.Teil({}, env) }, waitUntil() {} };
-  const ntfy = [], push = []; push.status = 201;
+  const ntfy = [], push = [], pennyAbrufe = []; push.status = 201;
   globalThis.fetch = async (u, o) => {
     u = String(u);
     if (u === "https://www.marktguru.de") return new Response('..."apiKey":"k","clientKey":"c"...');
@@ -66,10 +66,16 @@ export async function umgebung(opts = {}) {
       return new Response(JSON.stringify({ totalResults: l.length, results: l.slice(+q.get("offset"), +q.get("offset") + +q.get("limit")) }));
     }
     if (u.startsWith("https://api.marktguru.de")) { const q = new URL(u).searchParams; return new Response(JSON.stringify({ results: q.get("offset") === "0" ? (opts.daten || DATEN)[q.get("q").toLowerCase()] || [] : [] })); }
+    if (opts.penny && u.startsWith("https://www.penny.de/")) {   // penny.de nachgebaut: Kategorien der Woche 2026-44, Verkaufsregion eines Marktes
+      const q = new URL(u), m = q.pathname.match(/^\/\.rest\/offers\/by-category\/([^/]+)\/([^/]+)$/);
+      if (q.pathname === "/angebote") return new Response(`<div data-current-week="2026-44" data-next-week="2026-45">${Object.keys(opts.penny).map(k => `<section data-category-name="${k}"></section>`).join("")}</div>`);
+      if (q.pathname.startsWith("/.rest/market/markets/market_")) return new Response(JSON.stringify({ wwIdent: q.pathname.split("_").pop(), sellingRegion: "15A-09-33", nextWeekSellingRegion: "" }));
+      if (m) { pennyAbrufe.push(u); return new Response(JSON.stringify({ offerTiles: m[1] === "2026-44" ? opts.penny[decodeURIComponent(m[2])] || [] : [] })); }
+    }
     return new Response("nf", { status: 404 });
   };
   const A = (p, m = "GET", b) => H.fetch(new Request("https://preise.phriehk.workers.dev" + p, { method: m, headers: { Authorization: "Bearer betreiber", "Content-Type": "application/json" }, body: b }), env, ctx);
-  return { H, env, ctx, KV, store, A, ntfy, push };
+  return { H, env, ctx, KV, store, A, ntfy, push, pennyAbrufe };
 }
 
 /** Browser mit der echten Seite; alle Anfragen an die Worker-Adresse gehen an den echten Worker-Code */

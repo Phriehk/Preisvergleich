@@ -166,7 +166,7 @@ async function maerkteRegion(env, plz) {   // für die eigene Gegend kommen wie 
 async function marktAngebote(env, ctx, sp, ip) {
   const plz = sp.get("plz") || PLZ, id = String(sp.get("id") || "").replace(/\D/g, "");
   if (!plzOk(plz) || !id) throw Object.assign(new Error("Ungültige Anfrage"), { status: 400 });
-  const key = "mk3:" + plz + ":" + id, alt = await env.PV.get(key, "json");
+  const key = "mk4:" + plz + ":" + id, alt = await env.PV.get(key, "json");
   if (alt && Date.now() - alt.t < 6 * 3600e3) return alt;
   if (begrenzt("mk:" + ip, 30) || !(await tagesOk(env, "markt", 400))) { if (alt) return alt; throw zuViel(); }
   const m = (await maerkteRegion(env, plz)).find(x => x.id === id);
@@ -176,38 +176,77 @@ async function marktAngebote(env, ctx, sp, ip) {
   const rest = erste.total > lim && lim < 1000 ? [await teile.marktSeite(m.plz, m.name, id, 0, 1000).catch(e => ({ liste: [], fehler: String(e.message || e).slice(0, 80) }))] : [];
   const ids = new Set(), angebote = [], info = [];
   for (const s of [erste, ...rest]) { let neu = 0; for (const o of s.liste) if (!ids.has(o.id)) { ids.add(o.id); angebote.push(o); neu++; } info.push(s.fehler ? "F:" + s.fehler : s.roh + "/" + s.liste.length + "/" + neu); }
+  if (/^penny\b/i.test(m.name)) try { pennyErgaenzen(angebote, await pennyStand(env), true); } catch (e) { /* nur eine Zugabe */ }
   const erg = { t: Date.now(), id, name: m.name, plz: m.plz, total: erste.total, seiten: info, angebote };
   await env.PV.put(key, JSON.stringify(erg), { expirationTtl: 86400 });
   return erg;
 }
 
-/* Vorübergehende Diagnose: können wir Angebote direkt bei den Ketten abrufen? (nur mit Zugangscode) */
-async function erkunden(env, ctx) {
-  const out = [], H = { ...UA, Accept: "application/json, text/html;q=0.9, */*;q=0.8", "Accept-Language": "de-DE,de;q=0.9" };
-  const hol = async u => { try { const r = await fetch(u, { headers: H, redirect: "follow" }); const t = await r.text(); return { s: r.status, t, ct: r.headers.get("content-type") || "" }; } catch (e) { return { s: 0, t: String(e.message || e) }; } };
-  const kurz = (t, n) => String(t).replace(/\s+/g, " ").slice(0, n);
-  const ov = await hol("https://endpoints.leaflets.schwarz/v4/overview/?client_locale=lidl/de-DE");
-  let j = null; try { j = JSON.parse(ov.t); } catch (e) {}
-  const flyer = []; for (const c of (j && j.categories) || []) for (const sc of c.subcategories || []) for (const f of sc.flyers || []) flyer.push({ ...f, kat: c.name + "/" + sc.name });
-  for (const f of flyer.slice(0, 4)) out.push("  " + kurz(JSON.stringify({ name: f.name, kat: f.kat, url: f.flyerUrlAbsolute, reg: f.regionAliasAbsoluteUrl, json: f.flyerJson, regions: f.regions, target: f.target, start: f.offerStartDate }), 860));
-  out.push("Namen: " + kurz([...new Set(flyer.map(f => f.name + "@" + f.kat))].join(" | "), 860));
-  const f0 = flyer[0] || {};
-  const slug = String(f0.flyerUrlAbsolute || "").split("/").filter(Boolean).pop() || "";
-  const kand = [typeof f0.flyerJson === "string" ? f0.flyerJson : "", `https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=${slug}&client_locale=lidl/de-DE`, `https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=${f0.id}&client_locale=lidl/de-DE`].filter(Boolean);
-  for (const u of kand) {
-    const r = await hol(u); out.push(`${u.slice(0, 150)}: ${r.s} ${r.t.length} · ${kurz(r.t, 300)}`);
-    if (r.s === 200 && r.t.length > 2000) {
-      let x = null; try { x = JSON.parse(r.t); } catch (e) {}
-      const fl = x && (x.flyer || x);
-      out.push("  Schlüssel " + Object.keys(fl || {}).join(","));
-      const prod = []; const such = (v, tiefe) => { if (tiefe > 8 || !v) return; if (Array.isArray(v)) v.forEach(y => such(y, tiefe + 1)); else if (typeof v === "object") { if ((v.price != null || v.prices || v.priceData) && (v.title || v.name)) prod.push(v); else Object.values(v).forEach(y => such(y, tiefe + 1)); } };
-      such(fl, 0);
-      out.push(`  Produkte ${prod.length} · Felder ${[...new Set(prod.flatMap(p => Object.keys(p)))].slice(0, 50).join(",")}`);
-      for (const p of prod.slice(0, 3)) out.push("  Bsp " + kurz(JSON.stringify(p), 850));
-      break;
+/* ---------- PENNY direkt von penny.de: frühere Preise bzw. UVP und App-Preise, die Marktguru bei PENNY nicht mitliefert ----------
+   Die Seite penny.de/angebote lädt ihre Angebote je Kategorie und Woche aus /.rest/offers/by-category/<Woche>/<Kategorie>?region=<Verkaufsregion>.
+   Die Verkaufsregion kommt von einem PENNY-Markt in der Nähe. Einmal am Tag geholt (im täglichen Lauf) und unter "penny" gespeichert. */
+const PENNY = "https://www.penny.de", PENNY_MAERKTE = ["1930406", "1656587"];   // Duisburg, Obermeidericher Straße; Dinslaken, Wallstraße
+const PENNY_KOPF = { ...UA, Accept: "application/json, text/html;q=0.9", "Accept-Language": "de-DE,de;q=0.9" };
+const pZahl = x => { const m = String(x == null ? "" : x).match(/\d+(?:[.,]\d+)?/); const v = m ? +m[0].replace(",", ".") : 0; return v > 0 ? v : null; };
+const pWoche = w => { const m = String(w || "").match(/^(\d{4})-(\d{1,2})$/); return m ? `${m[1]}-${+m[2]}` : ""; };
+function isoWoche(iso) {   // "2026-10-26" -> "2026-44"
+  const d = new Date(String(iso).slice(0, 10) + "T12:00:00Z"); if (isNaN(d)) return "";
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  return `${d.getUTCFullYear()}-${Math.ceil(((d - Date.UTC(d.getUTCFullYear(), 0, 1)) / 864e5 + 1) / 7)}`;
+}
+function pennyKachel(o, kat) {   // eine Kachel von penny.de, verkleinert; früherer Preis wie auf der Seite: UVP, sonst Streichpreis, sonst der angezeigte Originalpreis
+  if (!o || !o.title || !["offer", "promo", "promoPlus"].includes(o.primaryType)) return null;
+  const p = pZahl(o.price); if (!p) return null;
+  let alt = null, uvp = false;
+  if (pZahl(o.listPrice)) { alt = pZahl(o.listPrice); uvp = true; }
+  else if (pZahl(o.crossOutPrice)) alt = pZahl(o.crossOutPrice);
+  else if (String(o.showOriginalPrice) === "true" && pZahl(o.originalPrice)) { alt = pZahl(o.originalPrice); uvp = o.originalPriceType === "uvp"; }
+  const app = pZahl(o.benefitPrice);
+  return { t: String(o.title).replace(/\*+/g, "").replace(/\s+/g, " ").trim(), q: String(o.quantity || "").trim(), p, ...(alt && alt > p ? { alt, ...(uvp ? { uvp: 1 } : {}) } : {}),
+    ...(app && app < p ? { app } : {}), k: kat, ...(o.linkHref ? { l: PENNY + String(o.linkHref).split("~")[0] } : {}) };
+}
+const woerter = t => new Set(flach(t).split(/[^a-z0-9]+/).filter(x => x.length >= 3));
+function pennyErgaenzen(liste, penny, alle) {   // Angebote von PENNY (Marktguru) um früheren Preis bzw. UVP und App-Preis ergänzen; alle = Liste nur aus PENNY (Ansicht „Nach Markt“)
+  if (!penny || !penny.wochen || !Array.isArray(liste)) return 0;
+  const jeWoche = {}, gesamt = [];
+  for (const [w, l] of Object.entries(penny.wochen)) { jeWoche[pWoche(w)] = l.map(o => ({ ...o, w: woerter(o.t) })); gesamt.push(...jeWoche[pWoche(w)]); }
+  let n = 0;
+  for (const x of liste) {
+    if (!x || !x.preis || (!alle && !/^penny\b/i.test(String(x.markt || "")))) continue;
+    const xw = woerter(`${x.marke || ""} ${x.produkt || ""}`); if (!xw.size) continue;
+    const text = flach(`${x.produkt || ""} ${x.beschreibung || ""}`);
+    let best = null, bs = 0, unklar = false;
+    for (const o of jeWoche[isoWoche(x.gueltig_von)] || gesamt) {
+      if (!(Math.abs(o.p - x.preis) < 0.005 || (o.app && Math.abs(o.app - x.preis) < 0.005))) continue;
+      let g = 0; xw.forEach(z => { if (o.w.has(z)) g++; });
+      let s = g / Math.max(1, Math.min(xw.size, o.w.size)); if (s < 0.5) continue;
+      const zahlen = o.q.match(/\d+(?:,\d+)?/g) || [];
+      if (zahlen.length && zahlen.every(z => text.includes(z))) s += 0.2;   // gleiche Menge („je 500 g“)
+      if (s > bs + 1e-9) { best = o; bs = s; unklar = false; }
+      else if (Math.abs(s - bs) < 1e-9 && (o.alt !== best.alt || o.app !== best.app)) unklar = true;
     }
+    if (!best || unklar) continue;
+    let neu = false;
+    if (!(x.preis_alt > x.preis) && best.alt > x.preis) { x.preis_alt = best.alt; if (best.uvp) x.alt_uvp = 1; neu = true; }
+    if (best.app && best.app < x.preis && !x.preis_app) { x.preis_app = best.app; neu = true; }
+    if (neu) n++;
   }
-  return out;
+  return n;
+}
+async function pennyStand(env, ctx, neu) {   // gespeicherte PENNY-Daten; neu = frisch holen, wenn älter als 20 Stunden (klappt das nicht, gelten die alten noch 4 Tage)
+  const alt = await env.PV.get("penny", "json");
+  if (!neu) return alt && Date.now() - alt.t < 8 * 864e5 ? alt : null;
+  if (alt && Date.now() - alt.t < 20 * 3600e3) return alt;
+  try {
+    const teile = ctx.exports.Teil, b = await teile.pennyBasis();
+    if (!b.wochen.length || !b.kats.length) throw new Error("penny.de: keine Wochen oder Kategorien gefunden");
+    const wochen = {};
+    for (const [i, w] of b.wochen.entries()) { const l = await teile.pennyWoche(w, (i && b.naechste) || b.region, b.kats); if (l.length) wochen[w] = l; }
+    if (!Object.keys(wochen).length) throw new Error("penny.de: keine Angebote geliefert");
+    const erg = { t: Date.now(), region: b.region, wochen };
+    await env.PV.put("penny", JSON.stringify(erg));
+    return erg;
+  } catch (e) { if (alt && Date.now() - alt.t < 4 * 864e5) return alt; throw e; }
 }
 
 // Eigener Einstiegspunkt, damit jede Teilabfrage als eigener Aufruf mit eigenen Grenzen läuft.
@@ -218,6 +257,23 @@ export class Teil extends WorkerEntrypoint {
     const j = await mgHole(this.env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: String(limit), offset: String(offset), q: name, retailers: id, zipCode: plz }));
     const alle = j.results || [], passend = alle.filter(o => haendlerId(o) === id);
     return { total: j.totalResults || 0, roh: alle.length, liste: (passend.length || !alle.length ? passend : alle).map(kompakt) };
+  }
+  async pennyBasis() {   // aktuelle und nächste Woche, Kategorien und Verkaufsregion (2–3 Abrufe)
+    const h = await (await fetch(PENNY + "/angebote", { headers: PENNY_KOPF })).text();
+    const wochen = [(h.match(/data-current-week="(\d{4}-\d{1,2})"/) || [])[1], (h.match(/data-next-week="(\d{4}-\d{1,2})"/) || [])[1]].filter(Boolean);
+    const kats = [...new Set([...h.matchAll(/data-category-name="([a-z0-9-]{2,60})"/g)].map(x => x[1]))].slice(0, 24);
+    let region = "", naechste = "";
+    for (const ww of PENNY_MAERKTE) {
+      try { const r = await fetch(`${PENNY}/.rest/market/markets/market_${ww}`, { headers: PENNY_KOPF }); if (r.ok) { const j = await r.json(); region = j.sellingRegion || ""; naechste = j.nextWeekSellingRegion || ""; if (region) break; } } catch (e) {}
+    }
+    return { wochen: [...new Set(wochen)], kats, region, naechste };
+  }
+  async pennyWoche(woche, region, kats) {   // alle Kacheln einer Woche (ein Abruf je Kategorie)
+    const q = region ? "?region=" + encodeURIComponent(region) : "", gesehen = new Set(), aus = [];
+    const listen = await Promise.all(kats.map(k => fetch(`${PENNY}/.rest/offers/by-category/${encodeURIComponent(woche)}/${encodeURIComponent(k)}${q}`, { headers: PENNY_KOPF })
+      .then(r => r.ok ? r.json() : null).catch(() => null)));
+    listen.forEach((j, i) => { for (const o of (j && j.offerTiles) || []) { const x = pennyKachel(o, kats[i]), key = o && (o.uuid || (x && x.t + "|" + x.p)); if (x && !gesehen.has(key)) { gesehen.add(key); aus.push(x); } } });
+    return aus;
   }
   async marktNamen(plz, name, id) {   // nur Marken und Produktnamen eines Marktes (für „Meintest du …?“)
     const j = await mgHole(this.env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "1000", offset: "0", q: name, retailers: id, zipCode: plz }));
@@ -507,6 +563,9 @@ async function aktualisieren(env, ctx) {
   if (!produkte.length) return { anzahl: 0, alarm: [] };
   const { liste, fehler: f, alternativen } = await abfragen(ctx, produkte, info, []);
   if (!liste.length) throw new Error("Marktguru hat für keines der Produkte Angebote geliefert. Die bisherigen Daten bleiben unverändert." + (f.length ? " " + f[0] : ""));
+  let pennyInfo = null;   // frühere Preise bzw. UVP und App-Preise von penny.de (nur eine Zugabe: ohne sie bleibt alles wie von Marktguru)
+  try { const pd = await pennyStand(env, ctx, true); pennyInfo = { angebote: Object.values((pd && pd.wochen) || {}).reduce((s, l) => s + l.length, 0), ergaenzt: pennyErgaenzen(liste, pd) + pennyErgaenzen(alternativen, pd) }; }
+  catch (e) { pennyInfo = { fehler: String(e.message || e).slice(0, 120) }; }
   await env.PV.put("angebote", JSON.stringify(liste));
   await env.PV.put("alternativen", JSON.stringify(alternativen || []));   // für den Spar-Tipp
   // Verlauf: je Monat ein Speicherblock, damit nicht jedes Mal die ganze Datei neu geschrieben wird.
@@ -519,7 +578,7 @@ async function aktualisieren(env, ctx) {
   if (!monate.includes(monat)) { monate.push(monat); await env.PV.put("verlauf:monate", JSON.stringify(monate)); }
   try { await entfernungenPflegen(env, liste.map(x => x.markt)); } catch (e) { /* Entfernungen sind nur eine Zugabe */ }
   const gesendet = await benachrichtige(env, liste, alarm);
-  const stand = { zeit: berlin(new Date(), true), anzahl: liste.length, fehler: f.length };
+  const stand = { zeit: berlin(new Date(), true), anzahl: liste.length, fehler: f.length, penny: pennyInfo };
   await env.PV.put("stand", JSON.stringify(stand));
   return { ...stand, alarm: gesendet };
 }
@@ -655,6 +714,7 @@ async function regionAngebote(env, ctx, sp, ip) {
   if (!besucherOk(ip) || !(await tagesOk(env, "region", 300))) throw zuViel();
   const { info } = favAuswerten(await lade(env, "favoriten", "json"));
   const { liste } = await abfragen(ctx, begriffe, info, [], [plz], streng, locker);
+  try { pennyErgaenzen(liste, await pennyStand(env)); } catch (e) { /* nur eine Zugabe */ }
   await env.PV.put(key, JSON.stringify({ t: Date.now(), liste }), { expirationTtl: 86400 });
   return liste;
 }
@@ -969,7 +1029,6 @@ export default {
     const url = new URL(req.url), p = url.pathname.replace(/\/+$/, "") || "/";
     try {
       if (p.startsWith("/konto/")) return antwort(await kontoRoute(req, env, p));
-      if (p === "/erkunden" && req.method === "POST") { if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401); return antwort(await erkunden(env, ctx)); }
       if (p.startsWith("/push/")) {
         if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401);
         return antwort(await pushRoute(req, env, p));

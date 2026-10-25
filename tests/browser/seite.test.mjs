@@ -639,7 +639,7 @@ t("Nach Markt: nach Rabatt sortieren (größter Nachlass zuerst) und „Neu“ s
     assert.equal(await p.locator(".mk-z .tag.neu").count(), 0, "beim ersten Besuch ist nichts neu");
     // ein neues Angebot bei Lidl
     daten.butter = [...DATEN.butter, O("Lidl", "Butter", "Milsani", "250 g", 1.69)];
-    for (const k of [...u.store.keys()]) if (k.startsWith("mk3:")) u.store.delete(k);
+    for (const k of [...u.store.keys()]) if (/^mk\d:/.test(k)) u.store.delete(k);
     await p.reload(); await p.waitForTimeout(1500); await lidl();
     await p.click('[data-seg="mkSort"][data-wert="neu"]'); await p.waitForTimeout(200);
     const n = await p.$$eval(".mk-z", e => e.map(x => x.innerText.replace(/\s+/g, " ")));
@@ -787,4 +787,27 @@ t("Kassenbon nach „Abgehakte von der Liste nehmen“: ordnet trotzdem zu (abge
     assert.equal(await p.evaluate(() => zettelNamen().length), 0, "nichts wieder auf die Liste gesetzt");
     assert.deepEqual(s.fehler, []);
   } finally { await s.b.close(); }
+});
+
+t("PENNY: UVP, Streichpreis und App-Preis von penny.de auf der Produktseite und unter „Nach Markt“", async () => {
+  const penny = { kuehlregal: [{ title: "WEIHENSTEPHAN Butter*", quantity: "je 250 g", price: "1.79", listPrice: "2.49", benefitPrice: "1.59²", primaryType: "promoPlus", uuid: "b" },
+    { title: "WEIHENSTEPHAN H-Milch*", quantity: "je 1 l", price: "0.95", crossOutPrice: "1.15", primaryType: "offer", uuid: "m" }] };
+  await mitSeite({ penny, favs: [{ name: "Butter", aus: "" }, { name: "Milch", aus: "" }] }, async ({ p, fehler }) => {
+    await p.click('.produkt[data-p="Butter"]'); await p.waitForTimeout(300);
+    const t1 = await p.textContent("#ansicht");
+    assert.match(t1, /UVP\s*2,49/); assert.match(t1, /App-Preis 1,59/);
+    await p.goBack(); await p.waitForTimeout(300);
+    await p.click('.produkt[data-p="Milch"]'); await p.waitForTimeout(300);
+    const t2 = await p.textContent("#ansicht");
+    assert.match(t2, /statt\s*1,15/); assert.match(t2, /statt\s*1,09/, "Lidl behält den Preis von Marktguru"); assert.doesNotMatch(t2, /UVP/);
+    await p.goBack(); await p.waitForTimeout(300);
+    await p.click('[data-seg="aTab"][data-wert="markt"]');
+    await p.waitForSelector(".mk-chips .chip", { timeout: 10000 });
+    await p.click('.mk-chips [data-mk="126765"]');
+    await p.waitForSelector(".mk-gruppe", { timeout: 10000 });
+    await p.click('.mk-gruppe:has-text("Milch, Käse") > summary'); await p.waitForTimeout(300);
+    const t3 = await p.textContent("#ansicht");
+    assert.match(t3, /UVP\s*2,49/); assert.match(t3, /App\s*1,59/); assert.match(t3, /statt\s*1,15/);
+    assert.deepEqual(fehler, []);
+  });
 });
