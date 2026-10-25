@@ -186,33 +186,28 @@ async function erkunden(env, ctx) {
   const out = [], H = { ...UA, Accept: "application/json, text/html;q=0.9, */*;q=0.8", "Accept-Language": "de-DE,de;q=0.9" };
   const hol = async u => { try { const r = await fetch(u, { headers: H, redirect: "follow" }); const t = await r.text(); return { s: r.status, t, ct: r.headers.get("content-type") || "" }; } catch (e) { return { s: 0, t: String(e.message || e) }; } };
   const kurz = (t, n) => String(t).replace(/\s+/g, " ").slice(0, n);
-  const B = "https://www.penny.de/.resources/penny/webresources/js/";
-  const pe = await hol("https://www.penny.de/angebote"), h = pe.t;
-  const pre = (h.match(/<link[^>]*rel="preload"[^>]*href="([^"]*\/offers\/by-category\/[^"]*)"/) || h.match(/href="([^"]*\/offers\/by-category\/[^"]*)"[^>]*rel="preload"/) || [])[1];
-  out.push(`preload ${pre} · weeks ${[...new Set(h.match(/data-(current|next)-week="[^"]*"/g) || [])].join(" ")} · rest ${[...new Set(h.match(/data-rest-uri="[^"]*"/g) || [])].join(" ")}`);
-  out.push("Kategorien: " + [...new Set((h.match(/data-category-name="[^"]*"/g) || []).map(x => x.slice(20, -1)))].join(" "));
-  if (pre) {
-    const r = await hol(new URL(pre.replace(/&amp;/g, "&"), "https://www.penny.de").href);
-    out.push(`by-category: ${r.s} ${r.t.length} ${r.ct} · ${kurz(r.t, 300)}`);
-    let j = null; try { j = JSON.parse(r.t); } catch (e) {}
-    const angebote = []; const such = x => { if (Array.isArray(x)) x.forEach(such); else if (x && typeof x === "object") { if (x.primaryType && x.title) angebote.push(x); else Object.values(x).forEach(such); } };
-    such(j);
-    out.push(`  Angebote ${angebote.length} · Felder ${[...new Set(angebote.flatMap(o => Object.keys(o)))].join(",")}`);
-    for (const o of [...angebote.filter(o => (o.listPrice && o.listPrice !== "0.00") || (o.crossOutPrice && o.crossOutPrice !== "0.00") || o.originalPrice).slice(0, 3), ...angebote.slice(0, 2)]) { const q = { ...o }; delete q.imageRendition; delete q.productData; out.push("  Bsp " + kurz(JSON.stringify(q), 850)); }
-    out.push(`  mit UVP ${angebote.filter(o => o.listPrice && o.listPrice !== "0.00").length} · Streich ${angebote.filter(o => o.crossOutPrice && o.crossOutPrice !== "0.00").length} · showOriginal ${angebote.filter(o => String(o.showOriginalPrice) === "true").length}`);
+  const R = "https://www.penny.de/.rest";
+  const m = await hol(R + "/market"), t0 = Date.now();
+  const re = /\{"wwIdent":"(\d+)","wawi":"(\d+)","sellingRegion":"([^"]*)","nextWeekSellingRegion":"([^"]*)","marketName":"([^"]*)","streetWithHouseNumber":"([^"]*)","slug":"[^"]*","zipCode":"((?:471|465|4705|4713|4714)\d+)","city":"([^"]*)"/g;
+  const nah = [...m.t.matchAll(re)].map(x => ({ ww: x[1], reg: x[3], next: x[4], name: x[5], str: x[6], plz: x[7], ort: x[8] }));
+  out.push(`Märkte nah (${Date.now() - t0} ms): ` + kurz(nah.map(x => `${x.ww} ${x.reg}/${x.next} ${x.str} ${x.plz} ${x.ort}`).join(" | "), 880));
+  const i0 = m.t.indexOf("}"); out.push("Markt-Felder: " + kurz(m.t.slice(0, Math.min(900, m.t.indexOf("},{") + 1)), 880));
+  const mk = nah.find(x => x.plz.startsWith("471")) || nah[0];
+  if (mk) {
+    const rg = await hol(`${R}/market/marketRegion/${mk.ww}`); out.push(`marketRegion ${mk.ww}: ${rg.s} ${kurz(rg.t, 300)}`);
+    const regs = [...new Set(nah.map(x => x.reg))]; out.push("Regionen nah: " + regs.join(" "));
+    for (const u of [`${R}/offers/by-category/2026-44/top-angebote?region=${mk.reg}`, `${R}/offers/2026-44/top-angebote?region=${mk.reg}`, `${R}/offers/by-category/2026-44/kuehlregal`, `${R}/offers/2026-44?region=${mk.reg}`]) {
+      const r = await hol(u); out.push(`${u.slice(R.length)}: ${r.s} ${r.t.length} ${r.ct} · ${kurz(r.t, 200)}`);
+      if (r.s !== 200) continue;
+      let j = null; try { j = JSON.parse(r.t); } catch (e) { continue; }
+      const angebote = []; const such = x => { if (Array.isArray(x)) x.forEach(such); else if (x && typeof x === "object") { if (x.primaryType && x.title) angebote.push(x); else Object.values(x).forEach(such); } };
+      such(j);
+      out.push(`  Angebote ${angebote.length} · Felder ${[...new Set(angebote.flatMap(o => Object.keys(o)))].join(",")}`);
+      out.push(`  mit UVP ${angebote.filter(o => o.listPrice && o.listPrice !== "0.00").length} · Streich ${angebote.filter(o => o.crossOutPrice && o.crossOutPrice !== "0.00").length} · showOriginal ${angebote.filter(o => String(o.showOriginalPrice) === "true").length} · Typen ${[...new Set(angebote.map(o => o.primaryType))].join(",")}`);
+      for (const o of [...angebote.filter(o => (o.listPrice && o.listPrice !== "0.00") || (o.crossOutPrice && o.crossOutPrice !== "0.00") || String(o.showOriginalPrice) === "true").slice(0, 3), ...angebote.slice(0, 2)]) { const q = { ...o }; delete q.imageRendition; delete q.productData; out.push("  Bsp " + kurz(JSON.stringify(q), 850)); }
+      if (angebote.length) break;
+    }
   }
-  // Marktsuche
-  let map = {}; try { const js0 = (h.match(/\/\.resources\/penny\/webresources\/js\/index[^"]+\.js/) || [])[0]; map = JSON.parse((await hol("https://www.penny.de" + js0)).t.match(/assetsMap = (\{.*?\}\});?/)[1]).js; } catch (e) {}
-  const gesehen = new Set(), schlange = ["market-finder", "market-finder-results", "market-finder-form", "zip-search", "market-finder-select"].filter(k => map[k]).map(k => B + "components/" + map[k]);
-  let n = 0;
-  while (schlange.length && n < 22) {
-    const u = schlange.shift(); if (gesehen.has(u)) continue; gesehen.add(u); n++;
-    const r = await hol(u); if (r.s !== 200) continue;
-    const tr = r.t.match(/.{0,160}(fetch\(|\/markets|marketRegion|zip|plz|lat=|latitude).{0,200}/g) || [];
-    if (tr.length && /fetch\(|\/markets/.test(r.t)) { out.push(`${u.slice(B.length)}: ${r.t.length}`); for (const m of tr.filter(x => /fetch|markets|\$\{/.test(x)).slice(0, 4)) out.push("    " + kurz(m, 380)); }
-    for (const x of r.t.match(/["'`]\.\.?\/[^"'`\s]+\.js["'`]/g) || []) { const v = new URL(x.replace(/["'`]/g, ""), u).href; if (!gesehen.has(v) && !/viewport|tracking|input-modality|component-initializer|icon|ripple|sanitize|scroller|pinia|offer\.BKe/.test(v)) schlange.push(v); }
-  }
-  for (const u of ["https://www.penny.de/.rest/market/markets?zipCode=46535", "https://www.penny.de/.rest/market"]) { const r = await hol(u); out.push(`${u}: ${r.s} ${r.t.length} · ${kurz(r.t, 300)}`); }
   return out;
 }
 
