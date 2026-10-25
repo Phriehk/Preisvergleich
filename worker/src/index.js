@@ -367,6 +367,28 @@ async function prospektRoute(req, env, url) {
   return { ...eintrag, normalpreise: np.filter(x => x.quelle === "prospekt" && mSchluessel(x.markt) === k).length, gruppen: new Set(np.filter(x => mSchluessel(x.markt) === k).map(x => x.gruppe)).size, ergaenzt };
 }
 
+/* ---------- Kassenbon: Texterkennung bei Google Cloud Vision ----------
+   Die Seite schickt das verkleinerte Foto (JPEG, Base64), der Server reicht es mit dem geheimen Schlüssel (GOOGLE_VISION_KEY) an Google weiter
+   und gibt nur die Wörter mit ihrer Lage zurück; die Seite setzt daraus die Zeilen zusammen. Höchstens VISION_MAX Bilder im Monat,
+   damit es im kostenlosen Rahmen bleibt (Google: 1.000 im Monat frei). */
+const VISION = "https://vision.googleapis.com/v1/images:annotate", VISION_MAX = 900;
+async function bonText(req, env) {
+  if (!env.GOOGLE_VISION_KEY) throw konto(501, "Die Texterkennung von Google ist nicht eingerichtet.");
+  const bild = (await req.text()).trim();
+  if (bild.length < 200 || bild.length > 8e6 || !/^[A-Za-z0-9+/]+={0,2}$/.test(bild)) throw konto(400, "Das Bild fehlt oder ist zu groß.");
+  const key = "vision:" + heute().slice(0, 7), n = +(await env.PV.get(key)) || 0;
+  if (n >= VISION_MAX) throw konto(429, `Diesen Monat sind schon ${n} Kassenbons bei Google gelesen worden. Damit es kostenlos bleibt, liest die App sie bis zum Monatsende auf dem Gerät.`);
+  await env.PV.put(key, String(n + 1), { expirationTtl: 40 * 86400 });
+  const r = await fetch(VISION + "?key=" + encodeURIComponent(env.GOOGLE_VISION_KEY) + "&fields=responses(textAnnotations(description,boundingPoly),error)", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: '{"requests":[{"image":{"content":"' + bild + '"},"features":[{"type":"DOCUMENT_TEXT_DETECTION"}],"imageContext":{"languageHints":["de"]}}]}' });
+  if (!r.ok) {
+    const t = (await r.text()).slice(0, 400);
+    throw konto(502, `Google Vision antwortet mit ${r.status}${/key|PERMISSION|billing|disabled/i.test(t) ? ": Schlüssel, freigeschaltete Cloud Vision API oder Abrechnung prüfen" : ""}.`);
+  }
+  return new Response(r.body, { headers: { ...CORS, "Content-Type": "application/json; charset=utf-8" } });   // ohne Umweg durch JSON (spart Rechenzeit)
+}
+
 // Eigener Einstiegspunkt, damit jede Teilabfrage als eigener Aufruf mit eigenen Grenzen läuft.
 // Ein Aufruf holt mehrere Artikel in einer Postleitzahl und sortiert unpassende Treffer gleich aus (spart Aufrufe und Rechenzeit im Hauptaufruf).
 export class Teil extends WorkerEntrypoint {
@@ -1156,6 +1178,10 @@ export default {
     const url = new URL(req.url), p = url.pathname.replace(/\/+$/, "") || "/";
     try {
       if (p.startsWith("/konto/")) return antwort(await kontoRoute(req, env, p));
+      if (p === "/bon/text" && req.method === "POST") {
+        if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401);
+        return await bonText(req, env);
+      }
       if (p === "/prospekte" || p === "/prospekt") {
         if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401);
         return antwort(await prospektRoute(req, env, url));
@@ -1193,7 +1219,7 @@ export default {
           return antwort(await namenRegion(env, ctx, plz, req.headers.get("CF-Connecting-IP") || "?"));
         }
         if (p === "/korrekturen.json") return antwort((await env.PV.get("korrekturen", "json")) || {});
-        if (p === "/status") return antwort({ ok: true, dienst: "preisvergleich", stand: await env.PV.get("stand", "json") });
+        if (p === "/status") return antwort({ ok: true, dienst: "preisvergleich", stand: await env.PV.get("stand", "json"), vision: !!env.GOOGLE_VISION_KEY });
         return env.ASSETS.fetch(req);  // die Seite selbst (index.html, Symbole, ...)
       }
       if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401);
@@ -1236,7 +1262,7 @@ export default {
       if (p === "/aktualisieren" && req.method === "POST") return antwort(await aktualisieren(env, ctx));
       return fehler("Unbekannte Adresse", 404);
     } catch (e) {
-      return fehler(e.message || String(e), [400, 401, 404, 409, 429].includes(e.status) ? e.status : 500);
+      return fehler(e.message || String(e), [400, 401, 404, 409, 429, 501, 502].includes(e.status) ? e.status : 500);
     }
   },
   async scheduled(event, env, ctx) {

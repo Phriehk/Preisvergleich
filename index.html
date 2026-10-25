@@ -1395,6 +1395,18 @@ function gruppenInfo(g){
   const min=l=>l.reduce((m,o)=>!m||gp(o)<gp(m)?o:m,null);
   return {b:min(jetzt),n:min(spaeter),anzahl:jetzt.length,art:artG(g)};
 }
+/* Kassenbon von Google Cloud Vision: Wörter mit Rahmen (das erste Element ist der ganze Text) zu Zeilen zusammensetzen.
+   Google ordnet Bons oft spaltenweise (erst alle Namen, dann alle Preise); über die Lage der Wörter kommen Name und Preis wieder in eine Zeile.
+   Ein schräg fotografierter Bon wird über den mittleren Winkel der Wörter gerade gedreht. */
+function bonZeilenAusWoertern(ta){
+  const w=(ta||[]).slice(1).map(x=>{const v=((x.boundingPoly||{}).vertices||[]).map(p=>({x:+p.x||0,y:+p.y||0}));return v.length===4&&x.description?{s:x.description,v}:null}).filter(Boolean);
+  if(!w.length)return ((ta||[])[0]||{}).description||"";
+  const wi=w.map(o=>Math.atan2(o.v[1].y-o.v[0].y,o.v[1].x-o.v[0].x)).sort((a,b)=>a-b),a=wi[wi.length>>1],c=Math.cos(-a),s=Math.sin(-a);
+  for(const o of w){const r=o.v.map(p=>({x:p.x*c-p.y*s,y:p.x*s+p.y*c})),xs=r.map(p=>p.x),ys=r.map(p=>p.y);o.x=Math.min(...xs);o.x2=Math.max(...xs);o.y1=Math.min(...ys);o.y2=Math.max(...ys);o.y=(o.y1+o.y2)/2;o.h=o.y2-o.y1}
+  const hm=w.map(o=>o.h).sort((x,y)=>x-y)[w.length>>1]||10,zeilen=[];
+  for(const o of w.sort((x,y)=>x.y-y.y)){const z=zeilen.find(z=>Math.abs(z.y-o.y)<hm*.5);if(z){z.w.push(o);z.y+=(o.y-z.y)/z.w.length}else zeilen.push({y:o.y,w:[o]})}
+  return zeilen.sort((x,y)=>x.y-y.y).map(z=>{z.w.sort((x,y)=>x.x-y.x);let t="",vor=null;for(const o of z.w){t+=vor&&o.x-vor.x2>hm*.3?" ":"";t+=o.s;vor=o}return t}).join("\n");
+}
 /* ---------- Prospekt als PDF: Angebote aus der Textebene lesen (auf dem Gerät, mit pdf.js) ----------
    Je Seite: Preise („1.69“, „0. 89*“, „1.“ + „69“), daneben kleinere Preise (UVP, statt), Prozentangaben; Textblöcke (Name, Beschreibung, Menge, Grundpreis).
    Ein Preis gehört zu dem Block, dessen Grundpreis zu ihm passt (1,69 € bei 200 g = 8,45 €/kg), sonst zum nächsten Block.
@@ -1981,7 +1993,7 @@ function bonHtmlE(){   // Kassenbon einlesen: Knopf, Fortschritt, Prüfen der Zu
   if(!l.length)return `<div class="banner warn">Auf dem Foto habe ich keine Zeilen mit Preisen gefunden. Am besten den Bon gerade und hell fotografieren, mit allen Zeilen im Bild. <button type="button" class="knopf klein" data-aktion="bonZu">Schließen</button></div>${knopf}`;
   const K=B.kopf||{datum:heuteT(),markt:""},tag=jahrD(K.datum).replace(/\.$/,"");
   const maerkte=[...new Set([...offers.map(o=>mbase(o.markt)),...vd.map(r=>mbase(r[1])),...(K.markt?[K.markt]:[])])].sort((a,b)=>a.localeCompare(b,"de"));
-  return `<section class="karte-box bon-pruefen"><div class="box-kopf"><h2>🧾 Kassenbon</h2><span class="rechts">${l.length} Zeilen</span></div>
+  return `<section class="karte-box bon-pruefen"><div class="box-kopf"><h2>🧾 Kassenbon</h2><span class="rechts">${l.length} Zeilen${B.quelle==="google"?" · gelesen mit Google":""}</span></div>
     <div class="reihe"><label class="rw">Einkauf am <input type="date" id="bonDatum" value="${esc(K.datum)}" max="${heuteT()}"></label>${sel("bonMarkt","",[["","Markt unbekannt"],...maerkte.map(m=>[m,m])],K.markt,"Markt")}</div>
     ${K.datumErkannt?"":`<p class="klein-text" style="margin:0">Das Datum stand nicht lesbar auf dem Bon. Stimmt der Tag nicht, stell ihn oben ein, damit ich die Angebote von damals finde.</p>`}
     <p class="klein-text" style="margin:0">Ob etwas im Angebot war, prüfe ich an deinem Abhaken und am Preisverlauf: ein Angebot, das am ${esc(tag)} galt${K.markt?" bei "+esc(K.markt):""} und genau diesen Preis hatte. Das zählt für die Ersparnis, alles andere wird dein Normalpreis.</p>
@@ -2526,15 +2538,33 @@ async function bildVerkleinern(datei,max=1800){
     return c;
   }finally{URL.revokeObjectURL(url)}
 }
+async function bonGoogle(bild){   // Texterkennung bei Google Cloud Vision über den Server (der Schlüssel bleibt dort)
+  const b64=bild.toDataURL("image/jpeg",.85).split(",")[1];
+  const r=await (await wf("/bon/text",{method:"POST",headers:{"Content-Type":"text/plain"},body:b64})).json(),a=(r&&r.responses&&r.responses[0])||{};
+  if(a.error)throw new Error(a.error.message||"Google konnte das Bild nicht lesen.");
+  return bonZeilenAusWoertern(a.textAnnotations||[]);
+}
+async function bonGeraet(bild){   // Texterkennung auf dem Gerät (Tesseract)
+  S.bon.text="Ich lade die Texterkennung (beim ersten Mal einige MB)";render();
+  const T=await tesseractLaden();
+  S.bon.text="Ich lese den Kassenbon";render();
+  let t=0;const w=await T.createWorker("deu",1,{logger:m=>{if(m.status==="recognizing text"&&S.bon){S.bon.fortschritt=m.progress;if(Date.now()-t>400){t=Date.now();render()}}}});
+  const r=await w.recognize(bild);await w.terminate();
+  return r.data&&r.data.text;
+}
 async function bonLesen(datei){
-  S.bon={stand:"liest",text:"Ich lade die Texterkennung (beim ersten Mal einige MB)",fortschritt:0};render();
+  S.bon={stand:"liest",text:"Ich lese den Kassenbon",fortschritt:0};render();
   try{
-    const T=await tesseractLaden(),bild=await bildVerkleinern(datei);
-    S.bon.text="Ich lese den Kassenbon";render();
-    let t=0;const w=await T.createWorker("deu",1,{logger:m=>{if(m.status==="recognizing text"&&S.bon){S.bon.fortschritt=m.progress;if(Date.now()-t>400){t=Date.now();render()}}}});
-    const r=await w.recognize(bild);await w.terminate();
-    const text=r.data&&r.data.text,kopf=bonKopf(text),zeilen=bonZuordnen(bonZeilen(text),kopf.datum).map(z=>({...z,an:!!z.k}));
-    S.bon={stand:"fertig",zeilen,kopf};
+    const bild=await bildVerkleinern(datei);
+    let text=null,quelle="geraet";
+    // mit Zugangscode zuerst Google (deutlich genauer); ist das nicht eingerichtet, nicht erreichbar oder die Monatsgrenze erreicht: auf dem Gerät
+    if(betreiber()&&!S.ohneGoogle){
+      try{S.bon.text="Ich lese den Kassenbon (Google)";render();text=await bonGoogle(bild);quelle="google"}
+      catch(e){if(e.status===501)S.ohneGoogle=true;else melde("Google konnte den Bon gerade nicht lesen ("+netzFehler(e)+"). Ich lese ihn auf dem Gerät.",true);text=null}
+    }
+    if(text==null)text=await bonGeraet(bild);
+    const kopf=bonKopf(text),zeilen=bonZuordnen(bonZeilen(text),kopf.datum).map(z=>({...z,an:!!z.k}));
+    S.bon={stand:"fertig",zeilen,kopf,quelle};
   }catch(e){S.bon={stand:"fehler",fehler:e.message||String(e)}}
   render();
 }

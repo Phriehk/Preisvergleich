@@ -5,7 +5,8 @@ Private Web-App: Supermarkt-Angebote von Marktguru vergleichen, eine Einkaufslis
 - **Seite:** `index.html` (eine Datei, keine Bibliotheken).
 - **Server:** Cloudflare Worker in `worker/` (Marktguru-Abfragen, alle Angebote je Markt über `/maerkte` und `/markt` mit Zwischenspeicher, täglicher Lauf um 7 Uhr, Preisalarm per Web-Push und ntfy, Konten ohne E-Mail, Entfernungen über OpenStreetMap, PENNY-Zusatzdaten von penny.de, eingelesene Prospekte und Normalpreise über `/prospekt`, `/prospekte`, `/normalpreise.json`). Märkte aus Nachbar-Postleitzahlen: PENNY und Thomas Philipps aus 46535, REWE aus 47053, dm aus 47137 (`NACHBARN`). Nennt Marktguru einen Markt kurz nicht (Kaufland am Sonntag vor dem neuen Prospekt), bleibt er 14 Tage in der Liste, solange er Angebote hat. Hochgeladen wird automatisch über `.github/workflows/worker.yml`.
 - **Daten:** im Cloudflare-Speicher (KV). `sicherung.yml` kopiert Verlauf, Favoriten und Korrekturen einmal pro Woche nach `sicherung/`.
-- **Geheimnisse (GitHub, Settings, Secrets):** `CLOUDFLARE_API_TOKEN`, `NTFY_TOPIC`, optional `ZUGANGSCODE`.
+- **Geheimnisse (GitHub, Settings, Secrets):** `CLOUDFLARE_API_TOKEN`, `NTFY_TOPIC`, optional `ZUGANGSCODE` und `GOOGLE_VISION_KEY`.
+- **Kassenbons mit Google Cloud Vision (optional):** Mit dem Secret `GOOGLE_VISION_KEY` liest der Server Kassenbons über Google (`POST /bon/text`, nur mit Zugangscode; die Seite schickt das verkleinerte Foto, der Schlüssel bleibt auf dem Server). Höchstens 900 Bilder im Monat (Google: 1.000 frei), danach und ohne Schlüssel liest die Seite den Bon wie bisher auf dem Gerät (Tesseract). Einrichten: in der Google Cloud Console ein Projekt anlegen, Abrechnung aktivieren, „Cloud Vision API“ aktivieren, unter „APIs und Dienste → Anmeldedaten“ einen API-Schlüssel erstellen und auf die Cloud Vision API beschränken, ihn als GitHub-Secret `GOOGLE_VISION_KEY` speichern und „Worker hochladen“ neu starten. Google ordnet Bons oft spaltenweise; die Seite setzt die Zeilen deshalb aus der Lage der Wörter zusammen (auch bei schrägem Foto).
 
 ## Aufbau der Seite
 
@@ -26,7 +27,7 @@ In Safari die Seite öffnen, Teilen, „Zum Home-Bildschirm“. Die App startet 
 
 ## Tests
 
-`node --test tests/erkennung.test.mjs tests/alarm.test.mjs tests/zuordnung.test.mjs tests/push.test.mjs tests/sorte.test.mjs tests/penny.test.mjs tests/maerkte.test.mjs tests/prospekt.test.mjs` (für das Lesen von PDFs mit `pdfjs-dist@6.2.108`) und mit installiertem Playwright `node --test tests/browser/seite.test.mjs` (die echte Seite im Browser gegen den echten Worker-Code, Marktguru nachgebaut). Alles läuft bei jedem Push (Workflow „Tests“); bei Fehlern schreibt die Pipeline die Ausgabe nach `tests/ergebnis/browser.txt`.
+`node --test tests/erkennung.test.mjs tests/alarm.test.mjs tests/zuordnung.test.mjs tests/push.test.mjs tests/sorte.test.mjs tests/penny.test.mjs tests/maerkte.test.mjs tests/prospekt.test.mjs tests/bon.test.mjs` (für das Lesen von PDFs mit `pdfjs-dist@6.2.108`) und mit installiertem Playwright `node --test tests/browser/seite.test.mjs` (die echte Seite im Browser gegen den echten Worker-Code, Marktguru nachgebaut). Alles läuft bei jedem Push (Workflow „Tests“); bei Fehlern schreibt die Pipeline die Ausgabe nach `tests/ergebnis/browser.txt`.
 
 ## Grenzen
 

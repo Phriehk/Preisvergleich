@@ -43,6 +43,22 @@ export function pdfMachen(seiten, { breite = 560, hoehe = 800 } = {}) {
   return Buffer.from(out, "latin1");
 }
 
+/** Antwort von Google Cloud Vision für einen Bon: Namen links, Preise rechts (Google liefert sie spaltenweise), leicht schräg */
+export function visionAntwort(zeilen, { schraeg = 0.03 } = {}) {   // zeilen: "NAME|PREIS" (Preis in der rechten Spalte) oder "TEXT"
+  const woerter = [];
+  zeilen.forEach((z, i) => z.split("|").forEach((sp, k) => {
+    let x = k ? 600 : 40;
+    for (const w of sp.trim().split(/\s+/).filter(Boolean)) {
+      const breite = w.length * 18, y = 100 + i * 50 + x * schraeg;
+      woerter.push({ description: w, boundingPoly: { vertices: [{ x, y }, { x: x + breite, y: y + breite * schraeg }, { x: x + breite, y: y + 30 + breite * schraeg }, { x, y: y + 30 }] } });
+      x += breite + 14;
+    }
+  }));
+  // spaltenweise wie bei Google: erst alles links, dann alles rechts
+  woerter.sort((a, b) => (a.boundingPoly.vertices[0].x >= 600) - (b.boundingPoly.vertices[0].x >= 600));
+  return { responses: [{ textAnnotations: [{ description: woerter.map(w => w.description).join("\n") }, ...woerter] }] };
+}
+
 /** Prospektseite wie bei Netto: Name fett, Beschreibung, Menge, Grundpreis links; rechts groß der Preis, klein UVP bzw. statt, darüber die Prozente */
 export function prospektSeiten(markt = "PENNY", von = new Date()) {
   const d = x => { const t = new Date(von.getTime() + x * 864e5); return `${t.getDate()}.${t.getMonth() + 1}.`; };
@@ -90,9 +106,9 @@ export async function umgebung(opts = {}) {
     if (!datei.startsWith(wurzel) || !fs.existsSync(datei) || fs.statSync(datei).isDirectory()) return new Response("Nicht gefunden", { status: 404 });
     return new Response(fs.readFileSync(datei), { headers: { "content-type": TYPEN[path.extname(datei)] || "application/octet-stream" } });
   } };
-  const env = { PV: KV, ZUGANG: "betreiber", NTFY_TOPIC: opts.ntfy ? "test" : undefined, ASSETS };
+  const env = { PV: KV, ZUGANG: "betreiber", NTFY_TOPIC: opts.ntfy ? "test" : undefined, ASSETS, ...(opts.vision ? { GOOGLE_VISION_KEY: "vision-schluessel" } : {}) };
   const ctx = { exports: { Teil: new W.Teil({}, env) }, waitUntil() {} };
-  const ntfy = [], push = [], pennyAbrufe = []; push.status = 201;
+  const ntfy = [], push = [], pennyAbrufe = [], vision = []; push.status = 201;
   globalThis.fetch = async (u, o) => {
     u = String(u);
     if (u === "https://www.marktguru.de") return new Response('..."apiKey":"k","clientKey":"c"...');
@@ -109,6 +125,11 @@ export async function umgebung(opts = {}) {
       return new Response(JSON.stringify({ totalResults: l.length, results: l.slice(+q.get("offset"), +q.get("offset") + +q.get("limit")) }));
     }
     if (u.startsWith("https://api.marktguru.de")) { const q = new URL(u).searchParams, nur = opts.nurPlz || {}; return new Response(JSON.stringify({ results: q.get("offset") === "0" ? ((opts.daten || DATEN)[q.get("q").toLowerCase()] || []).filter(o => !nur[o.advertisers[0].name] || nur[o.advertisers[0].name] === q.get("zipCode")) : [] })); }
+    if (u.startsWith("https://vision.googleapis.com/")) {   // Google Cloud Vision nachgebaut: opts.vision = Antwort (oder Funktion), vision.status für Fehler
+      vision.push({ url: u, body: o.body });
+      if (vision.status) return new Response('{"error":{"message":"API key not valid"}}', { status: vision.status });
+      return new Response(JSON.stringify(typeof opts.vision === "function" ? opts.vision(o.body) : opts.vision));
+    }
     if (opts.penny && u.startsWith("https://www.penny.de/")) {   // penny.de nachgebaut: Kategorien der Woche 2026-44, Verkaufsregion eines Marktes
       const q = new URL(u), m = q.pathname.match(/^\/\.rest\/offers\/by-category\/([^/]+)\/([^/]+)$/);
       if (q.pathname === "/angebote") return new Response(`<div data-current-week="2026-44" data-next-week="2026-45">${Object.keys(opts.penny).map(k => `<section data-category-name="${k}"></section>`).join("")}</div>`);
@@ -118,7 +139,7 @@ export async function umgebung(opts = {}) {
     return new Response("nf", { status: 404 });
   };
   const A = (p, m = "GET", b) => H.fetch(new Request("https://preise.phriehk.workers.dev" + p, { method: m, headers: { Authorization: "Bearer betreiber", "Content-Type": "application/json" }, body: b }), env, ctx);
-  return { H, env, ctx, KV, store, A, ntfy, push, pennyAbrufe };
+  return { H, env, ctx, KV, store, A, ntfy, push, pennyAbrufe, vision };
 }
 
 /** Browser mit der echten Seite; alle Anfragen an die Worker-Adresse gehen an den echten Worker-Code */

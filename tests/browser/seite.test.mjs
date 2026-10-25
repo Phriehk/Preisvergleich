@@ -2,7 +2,7 @@
 // Braucht Playwright mit Chromium (in der Pipeline installiert); ohne wird übersprungen.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { umgebung, browserStarten, playwright, DATEN, O, PDFJS_DIR, pdfMachen, prospektSeiten } from "./lib.mjs";
+import { umgebung, browserStarten, playwright, DATEN, O, PDFJS_DIR, pdfMachen, prospektSeiten, visionAntwort } from "./lib.mjs";
 
 const ok = !!playwright();
 const t = (name, fn) => test(name, { skip: !ok && "Playwright nicht installiert", timeout: 120000 }, fn);
@@ -852,4 +852,31 @@ t("Prospekt einlesen: PDF auf dem Gerät lesen, frühere Preise werden Normalpre
     await p.waitForFunction(() => /Noch kein Prospekt eingelesen/.test(document.querySelector("#prospekte").textContent), null, { timeout: 10000 });
     assert.deepEqual(fehler, []);
   });
+});
+
+t("Kassenbon mit Google: Zeilen aus den Wörtern, ohne Texterkennung auf dem Gerät; klappt Google nicht, liest das Gerät", async () => {
+  const u = await umgebung({ vision: visionAntwort(["ALDI SUED", "KERRYGOLD BUTTER|1,99 A", "FREILAND-EIER M 10ST|2,29 A", "SUMME EUR|4,28"]) });
+  await u.KV.put("favoriten", JSON.stringify(["Butter", "Eier"].map(name => ({ name, aus: "" }))));
+  await u.A("/aktualisieren", "POST");
+  const s = await browserStarten(u, {});
+  try {
+    await s.c.addInitScript(() => { window.Tesseract = { createWorker: async () => { window.__geraet = (window.__geraet || 0) + 1; return { recognize: async () => ({ data: { text: "ALDI SUED\nKERRYGOLD BUTTER 1,99 A" } }), terminate: async () => {} }; } }; });
+    await s.oeffnen("");
+    const p = s.p, png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+    await p.evaluate(() => { aufListeSetzen("Butter"); aufListeSetzen("Eier"); listeSpeichern(); render(); });
+    await p.click('#leiste [data-v="einkaufen"]'); await p.waitForTimeout(300);
+    await p.setInputFiles("#bonFoto", { name: "bon.png", mimeType: "image/png", buffer: png });
+    await p.waitForSelector(".bon-pruefen", { timeout: 10000 });
+    assert.deepEqual(await p.evaluate(() => S.bon.zeilen.map(z => [z.name, z.preis, z.k])), [["KERRYGOLD BUTTER", 1.99, "Butter"], ["FREILAND-EIER M", 2.29, "Eier"]]);
+    assert.match(await p.textContent(".bon-pruefen"), /gelesen mit Google/);
+    assert.equal(await p.evaluate(() => window.__geraet || 0), 0, "Tesseract nicht gebraucht");
+    assert.equal(u.vision.length, 1);
+    // Google lehnt ab (z. B. Schlüssel falsch): das Gerät liest den Bon
+    u.vision.status = 403;
+    await p.evaluate(() => { S.bon = null; render(); });
+    await p.setInputFiles("#bonFoto", { name: "bon.png", mimeType: "image/png", buffer: png });
+    await p.waitForSelector(".bon-pruefen", { timeout: 10000 });
+    assert.equal(await p.evaluate(() => [window.__geraet, S.bon.quelle].join()), "1,geraet");
+    assert.deepEqual(s.fehler, []);
+  } finally { await s.b.close(); }
 });

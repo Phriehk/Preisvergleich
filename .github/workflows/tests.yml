@@ -29,7 +29,7 @@ jobs:
         run: |
           npm install --no-save --no-package-lock playwright pdfjs-dist@6.2.108
           npx playwright install --with-deps chromium
-      - run: node --test tests/alarm.test.mjs tests/zuordnung.test.mjs tests/push.test.mjs tests/sorte.test.mjs tests/penny.test.mjs tests/maerkte.test.mjs tests/prospekt.test.mjs
+      - run: node --test tests/alarm.test.mjs tests/zuordnung.test.mjs tests/push.test.mjs tests/sorte.test.mjs tests/penny.test.mjs tests/maerkte.test.mjs tests/prospekt.test.mjs tests/bon.test.mjs
       - name: Browser-Tests (echte Seite gegen den Worker-Code)
         run: |
           set -o pipefail
