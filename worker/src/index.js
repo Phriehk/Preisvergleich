@@ -249,6 +249,26 @@ async function pennyStand(env, ctx, neu) {   // gespeicherte PENNY-Daten; neu = 
   } catch (e) { if (alt && Date.now() - alt.t < 4 * 864e5) return alt; throw e; }
 }
 
+/* Vorübergehende Diagnose: warum fehlt Kaufland unter „Nach Markt“? (nur mit Zugangscode) */
+async function erkunden(env) {
+  const out = [];
+  for (const plz of ["47178", "47169", "46535"]) {
+    const j = await mgHole(env, PUBLISHERS + "?" + new URLSearchParams({ as: "web", zipCode: plz, limit: "100" }));
+    const l = (j.results || []).map(x => `${String(x.name).trim()}=${String(x.id).replace(/\D/g, "")}`);
+    out.push(`Publishers ${plz}: total ${j.totalResults} · geliefert ${l.length} · Kaufland ${l.filter(x => /kaufland/i.test(x)).join(",") || "-"} · EDEKA ${l.filter(x => /edeka/i.test(x)).join(",") || "-"} · ${l.join(" | ").slice(0, 500)}`);
+  }
+  for (const q of ["Butter", "Kaufland", "Milch"]) {
+    const j = await mgHole(env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "100", offset: "0", q, zipCode: "47178" }));
+    const k = (j.results || []).filter(o => /kaufland|edeka/i.test(((o.advertisers || [])[0] || {}).name || ""));
+    out.push(`Suche ${q} 47178: ${j.totalResults} · Kaufland/EDEKA ${k.length} · ids ${[...new Set(k.map(o => ((o.advertisers || [])[0] || {}).name + "=" + haendlerId(o)))].join(",")} · Beispiel ${k.slice(0, 2).map(o => (o.product || {}).name + " " + o.price + " " + JSON.stringify(o.validityDates || []).slice(0, 80)).join(" | ")}`);
+  }
+  for (const [name, id] of [["Kaufland", "126654"]]) for (const q of ["Kaufland", "Butter", "a"]) {
+    const j = await mgHole(env, SEARCH + "?" + new URLSearchParams({ as: "web", limit: "5", offset: "0", q, retailers: id, zipCode: "47178" }));
+    out.push(`retailers=${id} q=${q}: total ${j.totalResults} · geliefert ${(j.results || []).length} · Händler ${[...new Set((j.results || []).map(o => haendlerId(o)))].join(",")}`);
+  }
+  return out;
+}
+
 // Eigener Einstiegspunkt, damit jede Teilabfrage als eigener Aufruf mit eigenen Grenzen läuft.
 // Ein Aufruf holt mehrere Artikel in einer Postleitzahl und sortiert unpassende Treffer gleich aus (spart Aufrufe und Rechenzeit im Hauptaufruf).
 export class Teil extends WorkerEntrypoint {
@@ -1029,6 +1049,7 @@ export default {
     const url = new URL(req.url), p = url.pathname.replace(/\/+$/, "") || "/";
     try {
       if (p.startsWith("/konto/")) return antwort(await kontoRoute(req, env, p));
+      if (p === "/erkunden" && req.method === "POST") { if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401); return antwort(await erkunden(env)); }
       if (p.startsWith("/push/")) {
         if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401);
         return antwort(await pushRoute(req, env, p));
