@@ -186,36 +186,28 @@ async function erkunden(env, ctx) {
   const out = [], H = { ...UA, Accept: "application/json, text/html;q=0.9, */*;q=0.8", "Accept-Language": "de-DE,de;q=0.9" };
   const hol = async u => { try { const r = await fetch(u, { headers: H, redirect: "follow" }); const t = await r.text(); return { s: r.status, t, ct: r.headers.get("content-type") || "" }; } catch (e) { return { s: 0, t: String(e.message || e) }; } };
   const kurz = (t, n) => String(t).replace(/\s+/g, " ").slice(0, n);
-  const R = "https://www.penny.de/.rest";
-  const mk = await hol(`${R}/market/markets/market_1656587`); out.push(`market_1656587: ${mk.s} ${kurz(mk.t, 260)}`);
-  const pe = await hol("https://www.penny.de/angebote"), h = pe.t;
-  const kats = [...new Set((h.match(/data-category-name="[^"]*"/g) || []).map(x => x.slice(20, -1)))];
-  const woche = (h.match(/data-current-week="([^"]*)"/) || [])[1];
-  const alle = [];
-  await Promise.all(kats.map(async k => { const r = await hol(`${R}/offers/by-category/${woche}/${k}?region=15A-09-33`); try { for (const o of JSON.parse(r.t).offerTiles || []) if (o.title && o.price) alle.push({ ...o, kat: k }); } catch (e) { out.push(`  ${k}: ${r.s}`); } }));
-  const ids = new Set(), pen = alle.filter(o => !ids.has(o.uuid) && ids.add(o.uuid));
-  const zahl = x => x == null ? null : +String(x).replace(/[^\d.]/g, "") || null;
-  out.push(`PENNY ${woche}: ${kats.length} Kategorien · ${alle.length} Kacheln · ${pen.length} verschieden · UVP ${pen.filter(o => zahl(o.listPrice)).length} · Streich ${pen.filter(o => zahl(o.crossOutPrice)).length} · original ${pen.filter(o => zahl(o.originalPrice)).length} · App ${pen.filter(o => zahl(o.benefitPrice)).length} · niedrigster30 ${pen.filter(o => o.lowestPrice30Days).length}`);
-  out.push("  Bsp Streich/original: " + kurz(pen.filter(o => zahl(o.crossOutPrice) || zahl(o.originalPrice)).slice(0, 5).map(o => `${o.title} ${o.price} statt ${o.crossOutPrice || o.originalPrice} (${o.originalPriceType}) ${o.quantity}`).join(" | "), 700));
-  out.push("  Bsp 30 Tage: " + kurz(pen.filter(o => o.lowestPrice30Days).slice(0, 3).map(o => `${o.title} ${o.price} ${o.lowestPrice30Days}`).join(" | "), 400));
-  out.push("  Bsp sonst: " + kurz(pen.filter(o => !zahl(o.listPrice) && !zahl(o.crossOutPrice) && !zahl(o.originalPrice)).slice(0, 6).map(o => `${o.title} ${o.price} ${o.quantity} [${o.kat}] act=${o.actionPrice} disc=${o.discount}/${o.discountPercentage}`).join(" | "), 700));
-  // Gegen Marktguru
-  const ml = await maerkteRegion(env, PLZ);
-  const w = t => new Set(flach(t).split(/[^a-z0-9]+/).filter(x => x.length >= 3));
-  const aehnlich = (a, b) => { const A = w(a), B = w(b); let n = 0; A.forEach(x => { if (B.has(x)) n++; }); return n / Math.max(1, Math.min(A.size, B.size)); };
-  for (const m of ml.filter(m => /penny|lidl|netto|rewe|aldi|handelshof|trinkgut|kaufland|edeka/i.test(m.name))) {
-    let mg = []; try { mg = (await ctx.exports.Teil.marktSeite(m.plz, m.name, m.id, 0, 1000)).liste; } catch (e) { out.push(`MG ${m.name}: ${e.message}`); continue; }
-    let z = `MG ${m.name} (${m.plz}): ${mg.length} · statt ${mg.filter(o => o.preis_alt).length}`;
-    if (/penny/i.test(m.name)) {
-      let tr = 0, neuStatt = 0; const ohne = [];
-      for (const o of pen) {
-        const preise = [zahl(o.price), zahl(o.benefitPrice)].filter(Boolean);
-        const k = mg.filter(x => preise.some(p => Math.abs(x.preis - p) < 0.005) && aehnlich(x.marke + " " + x.produkt, o.title) >= 0.5);
-        if (k.length) { tr++; if (zahl(o.listPrice) || zahl(o.crossOutPrice) || zahl(o.originalPrice)) neuStatt++; } else ohne.push(`${o.title} ${o.price}`);
-      }
-      z += ` · PENNY-Kacheln gefunden ${tr}/${pen.length} · davon mit UVP/statt ${neuStatt} · ohne: ${kurz(ohne.slice(0, 12).join(" | "), 400)}`;
+  for (const u of ["https://www.lidl.de/robots.txt", "https://endpoints.leaflets.schwarz/robots.txt"]) {
+    const r = await hol(u); out.push(`robots ${u}: ${r.s} ${r.t.length}`); let ua = "";
+    for (const z of r.t.split("\n")) { if (/^user-agent/i.test(z)) ua = z.trim(); else if (/^(dis)?allow/i.test(z) && /^.{0,9}:\s*\/\s*$|\/c\/|\/p\/|flyer|prospekt|api|\*$/i.test(z)) out.push(`  ${ua} → ${z.trim()}`); }
+  }
+  const ov = await hol("https://endpoints.leaflets.schwarz/v4/overview/?client_locale=lidl/de-DE");
+  let j = null; try { j = JSON.parse(ov.t); } catch (e) {}
+  const flyer = []; for (const c of (j && j.categories) || []) for (const sc of c.subcategories || []) for (const f of sc.flyers || []) flyer.push({ ...f, kat: c.name + "/" + sc.name });
+  out.push(`Lidl Flyer ${flyer.length} · Felder ${Object.keys(flyer[0] || {}).join(",")}`);
+  for (const f of flyer.slice(0, 6)) out.push("  " + kurz(JSON.stringify({ ...f, thumbnail: undefined, image: undefined, images: undefined, pages: undefined }), 420));
+  const f0 = flyer[0] || {};
+  for (const u of [`https://endpoints.leaflets.schwarz/v4/flyer?flyer_identifier=${f0.slug || f0.identifier || ""}&region_id=0&region_code=0&client_locale=lidl/de-DE`, `https://endpoints.leaflets.schwarz/v4/flyer?flyer_id=${f0.id}&client_locale=lidl/de-DE`, `https://endpoints.leaflets.schwarz/v4/flyer/${f0.id}?client_locale=lidl/de-DE`]) {
+    const r = await hol(u); out.push(`${u.slice(34, 140)}: ${r.s} ${r.t.length} · ${kurz(r.t, 400)}`);
+    if (r.s === 200 && r.t.length > 2000) {
+      let x = null; try { x = JSON.parse(r.t); } catch (e) {}
+      const fl = x && (x.flyer || x);
+      out.push("  Schlüssel " + Object.keys(fl || {}).join(","));
+      const prod = []; const such = (v, tiefe) => { if (tiefe > 6 || !v) return; if (Array.isArray(v)) v.forEach(y => such(y, tiefe + 1)); else if (typeof v === "object") { if ((v.price != null || v.prices) && (v.title || v.name)) prod.push(v); else Object.values(v).forEach(y => such(y, tiefe + 1)); } };
+      such(fl, 0);
+      out.push(`  Produkte ${prod.length} · Felder ${[...new Set(prod.flatMap(p => Object.keys(p)))].slice(0, 40).join(",")}`);
+      for (const p of prod.slice(0, 3)) out.push("  Bsp " + kurz(JSON.stringify(p), 800));
+      break;
     }
-    out.push(kurz(z, 880));
   }
   return out;
 }
