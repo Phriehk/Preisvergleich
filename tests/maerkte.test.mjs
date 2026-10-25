@@ -13,9 +13,14 @@ test("Märkte: ohne Baumärkte, mit dm aus 47137, Kaufland bleibt, wenn Marktgur
   assert.ok(namen(l).includes("Kaufland=2"), namen(l).join(", "));
   // Sonntag: Marktguru nennt Kaufland nicht, die Angebote gibt es aber
   opts.verlagOhne = new Set(["Kaufland"]);
-  u.store.delete("mkl4:47178");
+  u.store.delete("mkl5:47178");
   l = await (await u.A("/maerkte?plz=47178")).json();
   assert.ok(namen(l).includes("Kaufland=2"), "Kaufland bleibt: " + namen(l).join(", "));
+  // ein Markt aus einer Postleitzahl, die nicht mehr Quelle ist, kommt nicht über das Gedächtnis zurück
+  const bek = JSON.parse(u.store.get("mkbek:47178")); bek["47053|126802"] = { name: "REWE", plz: "47053", t: Date.now() }; u.store.set("mkbek:47178", JSON.stringify(bek));
+  u.store.delete("mkl5:47178");
+  l = await (await u.A("/maerkte?plz=47178")).json();
+  assert.ok(!namen(l).some(x => /47053/.test(x)), namen(l).join(", "));
   const r = await (await u.A("/markt?plz=47178&id=126654")).json();
   assert.equal(r.angebote.length, 2);
   // Favoriten finden dm-Angebote aus 47137

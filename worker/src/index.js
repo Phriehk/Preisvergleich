@@ -178,7 +178,7 @@ async function marktListe(env, plz, passt, ohne) {   // Märkte einer Postleitza
   return liste;
 }
 async function maerkteRegion(env, plz) {   // für die eigene Gegend kommen wie bei den Favoriten einzelne Märkte aus den Nachbar-Postleitzahlen dazu
-  const key = "mkl4:" + plz, alt = await env.PV.get(key, "json");
+  const key = "mkl5:" + plz, alt = await env.PV.get(key, "json");
   if (alt && Date.now() - alt.t < 12 * 3600e3) return alt.liste;
   let liste = await marktListe(env, plz);
   if (plz === PLZ) for (const nb of NACHBARN) {
@@ -187,6 +187,8 @@ async function maerkteRegion(env, plz) {   // für die eigene Gegend kommen wie 
   // Marktguru nennt einen Markt manchmal kurz nicht (z. B. Kaufland am Sonntag, bevor das neue Prospekt gilt), obwohl seine Angebote
   // in der Suche schon stehen: Märkte, die in den letzten 14 Tagen genannt wurden, werden dann trotzdem gezählt
   const bk = "mkbek:" + plz, bek = (await env.PV.get(bk, "json")) || {}, jetzt = Date.now();
+  const quelle = v => v.plz === plz || (plz === PLZ && nachbarPasst(v.plz, v.name));   // nur Märkte aus den heutigen Quellen (nicht z. B. REWE aus der alten Postleitzahl)
+  for (const [k, v] of Object.entries(bek)) if (!quelle(v)) delete bek[k];
   const fehlt = Object.entries(bek).filter(([k, v]) => jetzt - v.t < 14 * 864e5 && !liste.some(x => x.plz + "|" + x.id === k)).map(([k, v]) => ({ id: k.split("|")[1], name: v.name, plz: v.plz }));
   if (fehlt.length) { const n = await parallel(fehlt.map(x => () => zaehle(env, x).catch(() => null)), 4); fehlt.forEach((x, i) => { x.n = n[i]; }); liste = liste.concat(fehlt.filter(x => x.n)); }
   liste = liste.filter(x => x.n !== 0);
