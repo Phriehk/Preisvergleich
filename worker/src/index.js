@@ -187,26 +187,35 @@ async function erkunden(env, ctx) {
   const hol = async u => { try { const r = await fetch(u, { headers: H, redirect: "follow" }); const t = await r.text(); return { s: r.status, t, ct: r.headers.get("content-type") || "" }; } catch (e) { return { s: 0, t: String(e.message || e) }; } };
   const kurz = (t, n) => String(t).replace(/\s+/g, " ").slice(0, n);
   const R = "https://www.penny.de/.rest";
-  const m = await hol(R + "/market"), t0 = Date.now();
-  const re = /\{"wwIdent":"(\d+)","wawi":"(\d+)","sellingRegion":"([^"]*)","nextWeekSellingRegion":"([^"]*)","marketName":"([^"]*)","streetWithHouseNumber":"([^"]*)","slug":"[^"]*","zipCode":"((?:471|465|4705|4713|4714)\d+)","city":"([^"]*)"/g;
-  const nah = [...m.t.matchAll(re)].map(x => ({ ww: x[1], reg: x[3], next: x[4], name: x[5], str: x[6], plz: x[7], ort: x[8] }));
-  out.push(`Märkte nah (${Date.now() - t0} ms): ` + kurz(nah.map(x => `${x.ww} ${x.reg}/${x.next} ${x.str} ${x.plz} ${x.ort}`).join(" | "), 880));
-  const i0 = m.t.indexOf("}"); out.push("Markt-Felder: " + kurz(m.t.slice(0, Math.min(900, m.t.indexOf("},{") + 1)), 880));
-  const mk = nah.find(x => x.plz.startsWith("471")) || nah[0];
-  if (mk) {
-    const rg = await hol(`${R}/market/marketRegion/${mk.ww}`); out.push(`marketRegion ${mk.ww}: ${rg.s} ${kurz(rg.t, 300)}`);
-    const regs = [...new Set(nah.map(x => x.reg))]; out.push("Regionen nah: " + regs.join(" "));
-    for (const u of [`${R}/offers/by-category/2026-44/top-angebote?region=${mk.reg}`, `${R}/offers/2026-44/top-angebote?region=${mk.reg}`, `${R}/offers/by-category/2026-44/kuehlregal`, `${R}/offers/2026-44?region=${mk.reg}`]) {
-      const r = await hol(u); out.push(`${u.slice(R.length)}: ${r.s} ${r.t.length} ${r.ct} · ${kurz(r.t, 200)}`);
-      if (r.s !== 200) continue;
-      let j = null; try { j = JSON.parse(r.t); } catch (e) { continue; }
-      const angebote = []; const such = x => { if (Array.isArray(x)) x.forEach(such); else if (x && typeof x === "object") { if (x.primaryType && x.title) angebote.push(x); else Object.values(x).forEach(such); } };
-      such(j);
-      out.push(`  Angebote ${angebote.length} · Felder ${[...new Set(angebote.flatMap(o => Object.keys(o)))].join(",")}`);
-      out.push(`  mit UVP ${angebote.filter(o => o.listPrice && o.listPrice !== "0.00").length} · Streich ${angebote.filter(o => o.crossOutPrice && o.crossOutPrice !== "0.00").length} · showOriginal ${angebote.filter(o => String(o.showOriginalPrice) === "true").length} · Typen ${[...new Set(angebote.map(o => o.primaryType))].join(",")}`);
-      for (const o of [...angebote.filter(o => (o.listPrice && o.listPrice !== "0.00") || (o.crossOutPrice && o.crossOutPrice !== "0.00") || String(o.showOriginalPrice) === "true").slice(0, 3), ...angebote.slice(0, 2)]) { const q = { ...o }; delete q.imageRendition; delete q.productData; out.push("  Bsp " + kurz(JSON.stringify(q), 850)); }
-      if (angebote.length) break;
+  const mk = await hol(`${R}/market/markets/market_1656587`); out.push(`market_1656587: ${mk.s} ${kurz(mk.t, 260)}`);
+  const pe = await hol("https://www.penny.de/angebote"), h = pe.t;
+  const kats = [...new Set((h.match(/data-category-name="[^"]*"/g) || []).map(x => x.slice(20, -1)))];
+  const woche = (h.match(/data-current-week="([^"]*)"/) || [])[1];
+  const alle = [];
+  await Promise.all(kats.map(async k => { const r = await hol(`${R}/offers/by-category/${woche}/${k}?region=15A-09-33`); try { for (const o of JSON.parse(r.t).offerTiles || []) if (o.title && o.price) alle.push({ ...o, kat: k }); } catch (e) { out.push(`  ${k}: ${r.s}`); } }));
+  const ids = new Set(), pen = alle.filter(o => !ids.has(o.uuid) && ids.add(o.uuid));
+  const zahl = x => x == null ? null : +String(x).replace(/[^\d.]/g, "") || null;
+  out.push(`PENNY ${woche}: ${kats.length} Kategorien · ${alle.length} Kacheln · ${pen.length} verschieden · UVP ${pen.filter(o => zahl(o.listPrice)).length} · Streich ${pen.filter(o => zahl(o.crossOutPrice)).length} · original ${pen.filter(o => zahl(o.originalPrice)).length} · App ${pen.filter(o => zahl(o.benefitPrice)).length} · niedrigster30 ${pen.filter(o => o.lowestPrice30Days).length}`);
+  out.push("  Bsp Streich/original: " + kurz(pen.filter(o => zahl(o.crossOutPrice) || zahl(o.originalPrice)).slice(0, 5).map(o => `${o.title} ${o.price} statt ${o.crossOutPrice || o.originalPrice} (${o.originalPriceType}) ${o.quantity}`).join(" | "), 700));
+  out.push("  Bsp 30 Tage: " + kurz(pen.filter(o => o.lowestPrice30Days).slice(0, 3).map(o => `${o.title} ${o.price} ${o.lowestPrice30Days}`).join(" | "), 400));
+  out.push("  Bsp sonst: " + kurz(pen.filter(o => !zahl(o.listPrice) && !zahl(o.crossOutPrice) && !zahl(o.originalPrice)).slice(0, 6).map(o => `${o.title} ${o.price} ${o.quantity} [${o.kat}] act=${o.actionPrice} disc=${o.discount}/${o.discountPercentage}`).join(" | "), 700));
+  // Gegen Marktguru
+  const ml = await maerkteRegion(env, PLZ);
+  const w = t => new Set(flach(t).split(/[^a-z0-9]+/).filter(x => x.length >= 3));
+  const aehnlich = (a, b) => { const A = w(a), B = w(b); let n = 0; A.forEach(x => { if (B.has(x)) n++; }); return n / Math.max(1, Math.min(A.size, B.size)); };
+  for (const m of ml.filter(m => /penny|lidl|netto|rewe|aldi|handelshof|trinkgut|kaufland|edeka/i.test(m.name))) {
+    let mg = []; try { mg = (await ctx.exports.Teil.marktSeite(m.plz, m.name, m.id, 0, 1000)).liste; } catch (e) { out.push(`MG ${m.name}: ${e.message}`); continue; }
+    let z = `MG ${m.name} (${m.plz}): ${mg.length} · statt ${mg.filter(o => o.preis_alt).length}`;
+    if (/penny/i.test(m.name)) {
+      let tr = 0, neuStatt = 0; const ohne = [];
+      for (const o of pen) {
+        const preise = [zahl(o.price), zahl(o.benefitPrice)].filter(Boolean);
+        const k = mg.filter(x => preise.some(p => Math.abs(x.preis - p) < 0.005) && aehnlich(x.marke + " " + x.produkt, o.title) >= 0.5);
+        if (k.length) { tr++; if (zahl(o.listPrice) || zahl(o.crossOutPrice) || zahl(o.originalPrice)) neuStatt++; } else ohne.push(`${o.title} ${o.price}`);
+      }
+      z += ` · PENNY-Kacheln gefunden ${tr}/${pen.length} · davon mit UVP/statt ${neuStatt} · ohne: ${kurz(ohne.slice(0, 12).join(" | "), 400)}`;
     }
+    out.push(kurz(z, 880));
   }
   return out;
 }
