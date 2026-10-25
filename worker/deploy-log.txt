@@ -1,16 +1,16 @@
 workers.dev-Subdomain: phriehk
-Total Upload: 66.23 KiB / gzip: 19.25 KiB
-Worker Startup Time: 2 ms
+Total Upload: 69.71 KiB / gzip: 20.41 KiB
+Worker Startup Time: 1 ms
 Your Worker has access to the following bindings:
 Binding                                            Resource          
 env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
 env.ASSETS                                         Assets            
 
-Uploaded preise (4.92 sec)
-Deployed preise triggers (0.70 sec)
+Uploaded preise (4.18 sec)
+Deployed preise triggers (0.80 sec)
   https://preise.phriehk.workers.dev
   schedule: 0 5 * * *
-Current Version ID: 8259f2f2-6f56-4997-94e4-f89ae21551e1
+Current Version ID: ca714324-da4a-4257-b67c-65f3eefd2866
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
 ✨ Success! Uploaded secret NTFY_TOPIC
@@ -18,7 +18,7 @@ Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
 ✨ Success! Uploaded secret ZUGANG
 ✨ Success! Uploaded secret WARTUNG
 Alten Server entfernt: {"success":false}
-Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-25T10:44","anzahl":30,"fehler":0}}
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-25T10:51","anzahl":30,"fehler":0}}
 Spar-Tipp: {"alternativen":3,"favoriten":2}
 Push ohne Code (erwartet 401): HTTP 401
 Push: Schlüssel 87 Zeichen, {"geraete":1,"ntfy":true,"ntfyAn":false}
@@ -27,7 +27,7 @@ Seite: <title>Preisvergleich</title>
 Ohne Code schreiben: HTTP 401
 Mit Code, leere Suche (erwartet 400): HTTP 400
 Suche Fanta: 0 s, {"anzahl":0}
-Aktualisieren: 4 s, {"zeit":"2026-10-25T10:51","anzahl":30,"fehler":0,"alarm":[]}
+Aktualisieren: 6 s, {"zeit":"2026-10-25T13:19","anzahl":30,"fehler":0,"alarm":[]}
 Angebote: {"anzahl":30,"gruppen":["Ferrero Nutella Brotaufstrich","Heinz Ketchup","Knorr Spaghetteria","Lenor Wäscheparfüm XL","Monster Energy","Red Bull","Zewa Toilettenpapier Ultra Soft","coca cola"]}
 Verlauf: 421 Zeilen
 Korrekturen lesen: {}
@@ -35,7 +35,7 @@ Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
 Korrektur gespeichert und gelesen: true
 Test-Korrektur gelöscht: true
 Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
-Region 40210 ohne Code: 1 s, {"anzahl":4,"maerkte":["ALDI SÜD","Kaufland","Lidl","Thomas Philipps"]}
+Region 40210 ohne Code: 0 s, {"anzahl":4,"maerkte":["ALDI SÜD","Kaufland","Lidl","Thomas Philipps"]}
 Region ungültige PLZ (erwartet 400): HTTP 400
 Lebensmittel-Probe: 0 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl":4,"Nudeln":4}
   Probe: Butter | Netto Marken-Discount | Beste Butter | art=kg liter=0.25 stueck=1 ml=250 preis=0.88 | gekühlt 250 g
@@ -78,19 +78,45 @@ Lebensmittel-Probe: 0 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl
   Probe: Kartoffeln | Netto Marken-Discount | Speisekartoffeln XXL | art=kg liter=4 stueck=1 ml=4000 preis=2.99 | 4 kg Netz Deutschland, versch. Kocheigenschaften
   Probe: Kartoffeln | Kaufland | Speisekartoffeln | art=kg liter=1 stueck=1 ml=1000 preis=0.79 | Dtsch. lose Qualität II je kg
   Probe: Kartoffeln | Lidl | Bio-Speisekartoffeln | art=kg liter=2 stueck=1 ml=2000 preis=2.79 | Bioland Deutsche Qualität I Je 2 kg
+  Erkunden: ALDI llms.txt: 200 13155 Zeichen
+  Erkunden:   llms: - [Prospekte](https://www.aldi-sued.de/prospekte): Digitale ALDI SÜD Prospekte mit aktuellen Angeboten und Aktionen der aktuellen, nächsten und übernächsten Woche.
+  Erkunden:   llms: - [Digitales ALDI SÜD Prospekt](https://prospekt.aldi-sued.de/): Wöchentlich aktualisierte Angebote im Digitalen Prospekt zum Blättern.
+  Erkunden:   llms: - **Aktuelles Prospekt:** `https://prospekt.aldi-sued.de/kwXX-26-op-mp/`
+  Erkunden:   llms: - **Prospekt der nächsten Woche:** `https://prospekt.aldi-sued.de/kwXX-26-op/`
+  Erkunden:   llms: - **Prospekt der übernächsten Woche:** `https://prospekt.aldi-sued.de/kwXX-26-vop/`
+  Erkunden:   llms: # Dynamische Platzhalter für Prospekte (Formatierung & Logik)
+  Erkunden:   llms: * **"aktuelles Prospekt"**: Setze für XX die aktuelle Woche ein ($n$). Beispiel bei KW 8: `kw08-26-op-mp`
+  Erkunden:   llms: * **"Prospekt der nächsten Woche"**: Setze für XX die Folgewoche ein ($n + 1$). Beispiel bei KW 8: `kw09-26-op`
+  Erkunden:   llms: * **"Prospekt der übernächsten Woche"**: Setze für XX die darauf folgende Woche ein ($n + 2$). Beispiel bei KW 8: `kw10-26-vop`
+  Erkunden:   llms: Für die maschinelle Auswertung des Digitalen ALDI SÜD Prospekts sollten strukturierte JSON-Ressourcen gegenüber OCR oder der Auswertung gerenderter Prospektbilder bevorzugt werden. Wenn Nutzer nach spezifischen Produktka
+  Erkunden:   llms: Der Prospekt-Slug identifiziert eine konkrete Prospektausgabe des Jahres 2026 nach folgendem Schema:
+  Erkunden:   llms: * `kwXX-26-op-mp` = aktuelles Prospekt
+  Erkunden:   llms: * `kwXX-26-op` = Prospekt der nächsten Woche
+  Erkunden:   llms: * `kwXX-26-vop` = Prospekt der übernächsten Woche
+  Erkunden: ALDI kw43-26-op-mp spreads: 200 189011 Zeichen application/json; charset=utf-8 · [{"pages":[{"images":{"at2400":"/resize/rev-95488569/StQQHlzZkSTWNqReFubF4s_HlbqDhiGSf-tIKL_UuJM/fit-in/1807x3189/filters:quality(90)/production-revolution-publitas-com/73714/3425233/pages/20b617a7-e4b2-419e-8830-6e107f34cf71-downscaled.jpg","at2000":"/resize/rev-95488569/s2jX8VIA5oygGxkHPhjPKu8l34h
+  Erkunden:   Schlüssel pages,originalPageNumbers · Bereiche 
+  Erkunden:   hotspots 2-3: 200 45229 Zeichen · [{"id":156186174,"type":"product","title":"{first_product_title}","showIndication":true,"showTooltip":true,"coverImageSource":null,"version":null,"position":{"left":0.5,"top":0.67585,"width":0.27482,"height":0.27417,"iconLeft":0.23684,"iconTop":0.91453},"tabIndex":null,"clickable":true,"embeddedContent":false,"dynamic":false,"productThemeId":null,"zIndex":null,"rotation":null,"linksToWebshop":false,"products":[{"id":74568433,"hotspotId":156186174,"title":"Mango","description":"Ursprung: siehe Etikett; Klasse: I; Stück","price":"1.11","removedFromFeed":false,"webshopIdentifier":"457125_kw43","productType":"Obst - Mangos","customLabel1":"19.10.","customLabel6":"new","customLabel8":"je Stück","
+  Erkunden: ALDI kw44-26-op-mp spreads: 200 183775 Zeichen application/json; charset=utf-8 · [{"pages":[{"images":{"at2400":"/resize/rev-95488569/GKvl9fErU1M3q_u6EwT1VMq-dDVEp573cz7iHDsQk2g/fit-in/1807x3189/filters:quality(90)/production-revolution-publitas-com/73714/3449274/pages/bea29c31-a2fa-49a0-9bc4-cf39d960b524-downscaled.jpg","at2000":"/resize/rev-95488569/UMaz8T8KaPvJEN26_OYI0sGQ7Dn
+  Erkunden:   Schlüssel pages,originalPageNumbers · Bereiche 
+  Erkunden:   hotspots 2-3: 200 20746 Zeichen · [{"id":157948242,"type":"product","title":"{first_product_title}","showIndication":true,"showTooltip":true,"coverImageSource":null,"version":null,"position":{"left":0.74865,"top":0.48427,"width":0.24572,"height":0.46746,"iconLeft":0.09741,"iconTop":0.84975},"tabIndex":null,"clickable":true,"embeddedContent":false,"dynamic":false,"productThemeId":null,"zIndex":null,"rotation":null,"linksToWebshop":false,"products":[{"id":75742869,"hotspotId":157948242,"title":"Äpfel, fein säuerlich","description":"Ursprung: Deutschland; Sorte: Elstar; Klasse: I; 1-kg-Schale","price":"1.69","removedFromFeed":false,"webshopIdentifier":"778061_kw44","productType":"Obst - Äpfel","customLabel1":"26.10.","customLab
+  Erkunden: PENNY angebote: 200 301522 Zeichen text/html;charset=UTF-8 · rest-URLs /.rest/market · NEXT false · ld+json 0
+  Erkunden:   PENNY statt:  data-label-uvp-full="Unverbindlichle Preisempfehlung"
+  Erkunden: EDEKA offers: 403 403 Zeichen text/html · <HTML><HEAD> <TITLE>Access Denied</TITLE> </HEAD><BODY> <H1>Access Denied</H1> You don't have permission to access "http&#58;&#47;&#47;www&#46;edeka&#46;de&#47;eh&#47;service&#47;eh&#47;offers&#63;" on this server.<P> Reference&#32;&#35;18&#46;2506d217&#46;1792930757&#46;123193a0 <P>https&#58;&#47;&#47;errors&#46;edgesuite&#46;net&#47;18&#46;2506d217&#46;1792930757&#46;123193a0</P> </BODY> </HTML> 
+  Erkunden: Lidl overview: 200 104544 Zeichen · {"self":"v4/overview?client_locale=lidl%2Fde-DE","version":4,"success":true,"message":"41 flyers in 5 subcategories and 4 categories found.","dateTime":"2026-10-25T12:17:22+00:00","numberOfEntries":4,"isRegionalized":true,"categories":[{"id":"7fcdd790-fb6e-11e7-b1f4-005056ab0fb6","name":"Filial-Angebote","subcategories":[{"id":"f5771509-f19a-11e9-b196-005056ab0fb6","name":"Unsere Aktionsprospekte","flyers":[{"id":"01a16977-db2d-758b-81b6-309bdd45681b","name":"Aktionsprospekt","title":"26.10.2026
+  Erkunden: Lidl Prospekte-Seite: 200 206146 Zeichen · leaflets-URLs https://imgproxy.leaflets.schwarz/1xRxYbeURUWK-B30uzm4q5TB5ckOzrt02Rw_TjLFOLg/rs:fit:400:400:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMTY5NzctZGIyZC03NThiLTgxYjYtMzA5YmRkNDU2ODFiL3BhZ2UtMDFfYmFiNjkxNzAzYjQzZGJlNGQ3ZTY1YmRiNDU0NDliNzIucG5n.jpg https://imgproxy.leaflets.schwarz/0TCcDsqo476BC6usKpM44PsMW8EuZuWTufV7my9gcuI/rs:fit:400:400:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMTY4YzEtNzgwZi03NTBiLTkyNjYtZDYyMDE2N2QwYWMwL3BhZ2UtMDFfOTg3MTk5MWMwZjFhMzkwOGY0YjQ2MWM5MjA2ODEwYTcucG5n.jpg https://imgproxy.leaflets.schwarz/7FuugCp87_tsQiBu3iqah-veQT2ARA0GkRelWvzbvWQ/rs:fit:400:400:1/g:no/czM6Ly9sZWFmbGV0cy9pbWFnZXMvMDFhMTNlNWEtNTAwYi03ZjRhLWJhOTItODVlYjJiMTEyZDBlL3BhZ2UtMDFfNGJmNDU5NzQ1ZDU3MTY4NzZlYzNhMDM1NjgyODllYjEucG5n.jpg https://imgproxy.leaflets.schwarz/W95wPYKuUQjVcKPmYNWhO-lU_FbOYTXgGeqH2GemZJI/rs:fit:400:400:1/g:no/czM6Ly9sZWFmbGV0cy9p
 Märkte 47178: 0 s, ["Lidl=887","PENNY=284","Kabs PolsterWelt=45","Bosch Car Service=10","SCHAFFRATH=267","HORNBACH=198","KiK=50","Opti Wohnwelt=44","ALDI SÜD=468","Thomas Philipps=185","ROSSMANN=7","toom Baumarkt=319","OBI=25","Handelshof=270","XXXLutz=1497","SB-Möbel BOSS=309","Möbel Inhofer=80","Netto Marken-Discount=357","REWE=234 (47053)"]
 Markt 126679: 0 s, {"name":"Lidl","total":885,"seiten":"885/885/885","geladen":885,"ohneMenge":0,"kategorien":65,"ohneKat":0,"kp":"3=21 5=56 6=7 10=6 11=3 12=3 14=10 15=3 16=50 17=1 20=69 23=9 35=6 50=23 53=9 69=15 70=4 83=5 85=14 91=6 94=24 95=8 97=21 101=1 102=17 103=31 104=20 106=6 107=64 108=8 110=24 112=11 113=6 116=2 119=3 120=31 122=3 126=1 129=2 137=6 142=2 143=33 144=26 147=7 149=13 187=2 191=8 193=8 218=1 363=32 364=29 382=3 383=3 384=1 385=4 386=4 398=34 402=3 415=6 427=26 428=7 454=6 473=7 497=8 630=3","beispiel":"Lidl Backshop Kakao Donuts XXL 2.69 kg Kuchen & Feinbackwaren"}
-Markt 126735: 0 s, {"name":"Netto Marken-Discount","total":357,"seiten":"357/357/357","geladen":357,"ohneMenge":0,"kategorien":56,"ohneKat":0,"kp":"3=6 5=7 6=1 10=1 11=1 12=1 14=1 16=3 17=1 20=36 23=5 26=2 50=8 53=7 69=16 70=5 83=2 85=5 97=3 101=1 102=8 103=20 104=18 106=2 107=28 108=4 110=12 112=11 113=4 116=1 119=1 120=15 136=1 142=3 143=18 144=5 147=14 149=14 174=11 187=1 191=8 193=4 363=4 364=4 382=3 383=2 384=2 398=6 402=3 415=3 427=1 428=1 454=1 473=7 497=1 630=4","beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
+Markt 126735: 1 s, {"name":"Netto Marken-Discount","total":357,"seiten":"357/357/357","geladen":357,"ohneMenge":0,"kategorien":56,"ohneKat":0,"kp":"3=6 5=7 6=1 10=1 11=1 12=1 14=1 16=3 17=1 20=36 23=5 26=2 50=8 53=7 69=16 70=5 83=2 85=5 97=3 101=1 102=8 103=20 104=18 106=2 107=28 108=4 110=12 112=11 113=4 116=1 119=1 120=15 136=1 142=3 143=18 144=5 147=14 149=14 174=11 187=1 191=8 193=4 363=4 364=4 382=3 383=2 384=2 398=6 402=3 415=3 427=1 428=1 454=1 473=7 497=1 630=4","beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
 Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
 Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
-Konto anlegen: {"name":"test1792921954","token":true}
+Konto anlegen: {"name":"test1792930802","token":true}
 Konto doppelt (erwartet 409): HTTP 409
 Konto falsches Passwort (erwartet 401): HTTP 401
-Konto Daten: {"name":"test1792921954","daten":{}}
+Konto Daten: {"name":"test1792930802","daten":{}}
 Konto Anfragen ohne Code (erwartet 401): HTTP 401
-Konto Anfragen mit Code: ["test1792921954"]
+Konto Anfragen mit Code: ["test1792930802"]
 Wiederherstellcode erzeugt: 8 Zeichen
-Neues Passwort mit Code: {"name":"test1792921954","token":true}
+Neues Passwort mit Code: {"name":"test1792930802","token":true}
 Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
 Code ein zweites Mal (erwartet Fehler): HTTP 401
 Konto löschen: HTTP 200
