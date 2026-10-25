@@ -425,8 +425,8 @@ t("Einkaufen ohne Netz: Haken bleiben auf dem Gerät und gehen später ins Konto
   });
 });
 
-t("Mitteilungen: im Preisalarm einschalten, Test senden, ntfy abschalten, ausschalten", async () => {
-  const u = await umgebung({ ntfy: true });
+t("Mitteilungen: im Preisalarm einschalten, Test senden, ausschalten", async () => {
+  const u = await umgebung({});
   await u.KV.put("favoriten", JSON.stringify([{ name: "Milch", aus: "" }]));
   await u.A("/aktualisieren", "POST");
   const k = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
@@ -453,8 +453,7 @@ t("Mitteilungen: im Preisalarm einschalten, Test senden, ntfy abschalten, aussch
     assert.match(await p.textContent("#ansicht"), /An auf diesem Gerät/);
     await p.click('[data-aktion="pushTest"]'); await p.waitForFunction(() => !S.push.busy);
     assert.equal(u.push.length, 1); assert.equal(u.push[0].url, "https://push.example/geraet");
-    await p.uncheck("[data-push-ntfy]"); await p.waitForTimeout(300);
-    assert.equal(u.store.get("push:ntfy"), "aus");
+    assert.equal(await p.locator("[data-push-ntfy]").count(), 0, "kein ntfy-Schalter mehr");
     await p.uncheck("[data-push-woche]"); await p.waitForTimeout(300);
     assert.equal(u.store.get("push:woche"), "aus");
     await p.click('[data-aktion="wocheJetzt"]'); await p.waitForTimeout(500);
@@ -735,6 +734,13 @@ t("Kassenbon: Zeilen mit Preisen erkennen, der Liste zuordnen, bezahlte Preise u
     const k = await p.evaluate(() => kaeufe.map(e => e.z + ":" + e.p).sort());
     assert.deepEqual(k, ["Butter:1.99", "Eier:2.29", "Milch:1.78", "Salz:0.19"], "abgehakt, mit den Preisen vom Bon");
     assert.equal(await p.evaluate(() => richt.Salz), 0.19, "ohne Angebot gekauft: Normalpreis je Stück");
+    assert.equal(await p.evaluate(() => richtQ.Salz.q), "bon");
+    // unter „Mehr“: deine Normalpreise mit Herkunft, löschen mit zweimal Tippen
+    await p.click('#leiste [data-v="mehr"]'); await p.waitForTimeout(300);
+    await p.click('#normalpreise details[data-merk="npEigen"] > summary');
+    assert.match(await p.textContent("#normalpreise"), /Salz · 0,19\s€ je Stück vom Kassenbon am/);
+    await p.click('[data-rweg="Salz"]'); await p.click('[data-rweg="Salz"]'); await p.waitForTimeout(200);
+    assert.equal(await p.evaluate(() => [richt.Salz, richtQ.Salz].join()), ",");
     assert.equal(await p.evaluate(() => Object.keys(haken).length), 4);
     assert.deepEqual(s.fehler, []);
   } finally { await s.b.close(); }
@@ -846,8 +852,13 @@ t("Prospekt einlesen: PDF auf dem Gerät lesen, frühere Preise werden Normalpre
     await bereich(p, "angebote");
     await p.click('.produkt[data-p="Butter"]'); await p.waitForTimeout(300);
     assert.match(await p.textContent("#ansicht"), /statt\s*2,49/);
-    // Entfernen (zweimal tippen)
+    // unter „Mehr“: gelernte Normalpreise mit Herkunft; einen falschen löschen
     await bereich(p, "mehr");
+    await p.click('#normalpreise details[data-merk="npGel"] > summary');
+    assert.match(await p.textContent("#normalpreise"), /Schokolade: PENNY · Milka Schokolade 100 g · UVP 1,99\s€ \(19,90\s€\/kg\) Prospekt vom/);
+    await p.click('#normalpreise [data-npweg*="milka"]'); await p.click('#normalpreise [data-npweg*="milka"]');
+    await p.waitForFunction(() => !normalListe.some(e => e.gruppe === "Schokolade"), null, { timeout: 5000 });
+    // Entfernen (zweimal tippen)
     await p.click("[data-prweg]"); await p.click("[data-prweg]");
     await p.waitForFunction(() => /Noch kein Prospekt eingelesen/.test(document.querySelector("#prospekte").textContent), null, { timeout: 10000 });
     assert.deepEqual(fehler, []);
@@ -877,6 +888,22 @@ t("Kassenbon mit Google: Zeilen aus den Wörtern, ohne Texterkennung auf dem Ger
     await p.setInputFiles("#bonFoto", { name: "bon.png", mimeType: "image/png", buffer: png });
     await p.waitForSelector(".bon-pruefen", { timeout: 10000 });
     assert.equal(await p.evaluate(() => [window.__geraet, S.bon.quelle].join()), "1,geraet");
+    assert.deepEqual(s.fehler, []);
+  } finally { await s.b.close(); }
+});
+
+t("REWE kommt jetzt aus Meiderich: gespeicherte Marktwahl, ausgeblendete Märkte und Käufe mit dem alten Namen werden umbenannt", async () => {
+  const u = await umgebung({ nurPlz: { REWE: "47137" } });
+  await u.KV.put("favoriten", JSON.stringify([{ name: "Butter", aus: "" }]));
+  await u.A("/aktualisieren", "POST");
+  const s = await browserStarten(u, {});
+  try {
+    await s.c.addInitScript(() => { if (!sessionStorage.getItem("x")) { sessionStorage.setItem("x", "1"); localStorage.setItem("pv-zettel", JSON.stringify({ Butter: 1 })); localStorage.setItem("pv-wahl", JSON.stringify({ Butter: "REWE (47053)" })); localStorage.setItem("pv-aus", JSON.stringify(["REWE (47053)", "Lidl"])); localStorage.setItem("pv-kaeufe", JSON.stringify([{ k: "Butter", d: "2026-10-20", n: 1, z: "Butter", m: "REWE (47053)", p: 3.49 }])); } });
+    await s.oeffnen("");
+    const p = s.p;
+    assert.deepEqual(await p.evaluate(() => [wahl.Butter, [...aus].sort().join(","), kaeufe[0].m]), ["REWE (47137)", "Lidl,REWE (47137)", "REWE (47137)"]);
+    assert.deepEqual(await p.evaluate(() => JSON.parse(localStorage.getItem("pv-wahl"))), { Butter: "REWE (47137)" });
+    assert.ok(await p.evaluate(() => offers.some(o => o.markt === "REWE (47137)")));
     assert.deepEqual(s.fehler, []);
   } finally { await s.b.close(); }
 });

@@ -19,7 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
       ZUGANGSCODE: ${{ secrets.ZUGANGSCODE }}
       GOOGLE_VISION_KEY: ${{ secrets.GOOGLE_VISION_KEY }}
     steps:
@@ -46,7 +45,7 @@ jobs:
           set -o pipefail
           npx --yes wrangler@4 deploy 2>&1 | tail -n 14 | tee -a $LOG
           # Geheimnisse (nur beim Server hinterlegt, nie im Repository)
-          [ -n "$NTFY_TOPIC" ] && { echo "$NTFY_TOPIC" | npx --yes wrangler@4 secret put NTFY_TOPIC 2>&1 | tail -n 1 | tee -a $LOG; }
+          npx --yes wrangler@4 secret delete NTFY_TOPIC >/dev/null 2>&1 || true   # ntfy gibt es nicht mehr (Mitteilungen nur per Web-Push)
           # Kassenbon-Texterkennung bei Google Cloud Vision: Schlüssel aus dem GitHub-Secret GOOGLE_VISION_KEY (ohne: Texterkennung auf dem Gerät)
           if [ -n "$GOOGLE_VISION_KEY" ]; then echo "$GOOGLE_VISION_KEY" | npx --yes wrangler@4 secret put GOOGLE_VISION_KEY 2>&1 | tail -n 1 | tee -a $LOG; log "Google Vision: Schlüssel gesetzt"; else log "Google Vision: kein Secret GOOGLE_VISION_KEY"; fi
           # Zugangscode: eigenes Passwort aus dem GitHub-Secret ZUGANGSCODE, sonst wie bisher aus dem Cloudflare-Schlüssel abgeleitet
@@ -64,7 +63,7 @@ jobs:
           log "Kassenbon-Texterkennung (ungültiges Bild, erwartet 400 mit Schlüssel, 501 ohne): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 -X POST -H "Authorization: Bearer $ZUG" --data 'kein-bild' "$URL/bon/text")"
           log "Spar-Tipp: $(curl -s -m 30 "$URL/alternativen.json" | jq -c 'if type=="array" then {alternativen: length, favoriten: ([.[].gruppe] | unique | length)} else . end' 2>/dev/null)"
           log "Push ohne Code (erwartet 401): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 "$URL/push/status")"
-          log "Push: Schlüssel $(curl -s -m 30 -H "Authorization: Bearer $ZUG" "$URL/push/schluessel" | jq -r '.key | length') Zeichen, $(curl -s -m 30 -H "Authorization: Bearer $ZUG" "$URL/push/status" | jq -c '{geraete, ntfy, ntfyAn}')"
+          log "Push: Schlüssel $(curl -s -m 30 -H "Authorization: Bearer $ZUG" "$URL/push/schluessel" | jq -r '.key | length') Zeichen, $(curl -s -m 30 -H "Authorization: Bearer $ZUG" "$URL/push/status" | jq -c '{geraete, wocheAn}')"
           log "Hintergrunddienst mit Push: $(curl -s -m 30 "$URL/sw.js" | grep -c 'addEventListener("push"')"
           log "Seite: $(curl -s -m 30 $URL/ | grep -o '<title>[^<]*</title>')"
           log "Ohne Code schreiben: HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 -X POST $URL/aktualisieren)"

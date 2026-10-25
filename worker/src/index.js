@@ -1,4 +1,4 @@
-// Preisvergleich-Server bei Cloudflare: fragt Marktguru direkt ab (Suche, tägliche Aktualisierung, Preisalarm per Web-Push und ntfy).
+// Preisvergleich-Server bei Cloudflare: fragt Marktguru direkt ab (Suche, tägliche Aktualisierung, Preisalarm per Web-Push).
 // Gleiche Logik wie test_marktguru.py. Jede Teilabfrage (ein Suchbegriff in einer Postleitzahl) läuft als eigener
 // Aufruf, damit die Grenzen des kostenlosen Tarifs (10 ms Rechenzeit, 50 Abrufe je Aufruf) eingehalten werden.
 import { WorkerEntrypoint } from "cloudflare:workers";
@@ -8,8 +8,25 @@ const UA = { "User-Agent": "Mozilla/5.0 (privates Testprojekt)" };
 const SEARCH = "https://api.marktguru.de/api/v1/offers/search";
 const PLZ = "47178";
 // Märkte aus Nachbar-Postleitzahlen, die Marktguru für die eigene nicht (oder nicht passend) führt: PENNY und Thomas Philipps aus Dinslaken,
-// REWE aus der Duisburger Innenstadt, dm aus Duisburg-Meiderich (dm-Preise gelten bundesweit)
-const NACHBARN = [{ plz: "46535", maerkte: ["penny", "thomas philipps"] }, { plz: "47053", maerkte: ["rewe"] }, { plz: "47137", maerkte: ["dm-drogerie markt"] }];
+// REWE und dm aus Duisburg-Meiderich (dort ist dein REWE; dm-Preise gelten bundesweit)
+const NACHBARN = [{ plz: "46535", maerkte: ["penny", "thomas philipps"] }, { plz: "47137", maerkte: ["rewe", "dm-drogerie markt"] }];
+// Märkte, deren Quelle umgezogen ist: alte Namen im Verlauf und in den Korrekturen einmal umbenennen (die Seite macht dasselbe mit ihren Daten)
+const MARKT_UMZUG = { "REWE (47053)": "REWE (47137)" };
+async function umzugAnwenden(env) {
+  const marke = "umzug:" + Object.values(MARKT_UMZUG).join("|");
+  if (await env.PV.get(marke)) return 0;
+  let n = 0;
+  for (const monat of await verlaufMonate(env)) {
+    const alt = (await env.PV.get("verlauf:" + monat)) || "";
+    const neu = alt.split("\n").map(z => { const m = z.match(/^(\d{4}-\d{2}-\d{2});([^;]*);/); return m && MARKT_UMZUG[m[2]] ? (n++, m[1] + ";" + MARKT_UMZUG[m[2]] + z.slice(m[0].length - 1)) : z; }).join("\n");
+    if (neu !== alt) await env.PV.put("verlauf:" + monat, neu);
+  }
+  const k = (await env.PV.get("korrekturen", "json")) || {}, k2 = {};
+  for (const [key, v] of Object.entries(k)) k2[key.split("|").map(t => MARKT_UMZUG[t] || t).join("|")] = v;
+  if (JSON.stringify(k2) !== JSON.stringify(k)) await env.PV.put("korrekturen", JSON.stringify(k2));
+  await env.PV.put(marke, "1");
+  return n;
+}
 const nachbarPasst = (plz, name) => ((NACHBARN.find(n => n.plz === plz) || {}).maerkte || []).includes(String(name || "").trim().toLowerCase());
 // Nur Märkte mit Lebensmitteln und Drogerie (dieselbe Liste wie auf der Seite); Möbel-, Bau- und Modemärkte werden gar nicht erst gezählt
 const LM_MAERKTE = ["lidl", "aldi", "kaufland", "rewe", "penny", "netto", "edeka", "trinkgut", "thomas philipps", "handelshof", "rossmann", "dm", "norma", "globus", "marktkauf", "famila", "getränke", "nahkauf", "hit ", "real", "müller", "combi", "np ", "mix markt", "metro", "denns", "alnatura", "budni", "tegut", "v-markt", "wasgau"];
@@ -308,15 +325,15 @@ function nurLocker(nur) {   // wie nurPruefer, aber Namen aus Prospekten enthalt
 async function normalpreiseBerechnen(env, mem) {   // Normalpreise je Favorit (für den Vorschlag in der Liste)
   mem = mem || (await env.PV.get("normal", "json")) || {};
   const { info } = favAuswerten(await lade(env, "favoriten", "json"));
-  const aus = [], eintraege = Object.values(mem);
+  const aus = [], eintraege = Object.entries(mem);
   for (const [gruppe, f] of Object.entries(info)) {
     const wort = f.suche || gruppe, nurOk = nurLocker(f.nur);
-    for (const e of eintraege) {
+    for (const [k, e] of eintraege) {
       const o = { name: e.n, brand: e.b || "", desc: e.q || "" };
       if (!istProdukt(wort, o, f.aus) && !(f.nur && f.nur.size && passtLocker(wort, o, f.aus))) continue;
       if (!nurOk(o)) continue;
       const mg = mengenangabe(o); if (!mg || !(mg[1] > 0)) continue;
-      aus.push({ gruppe, markt: e.m, marke: e.b || "", produkt: e.n, beschreibung: e.q || "", preis: e.p, ...(e.u ? { uvp: 1 } : {}), quelle: e.s, datum: e.d,
+      aus.push({ k, gruppe, markt: e.m, marke: e.b || "", produkt: e.n, beschreibung: e.q || "", preis: e.p, ...(e.u ? { uvp: 1 } : {}), quelle: e.s, datum: e.d,
         art: mg[2], liter: mg[1], stueck: mg[0], ml: Math.round(mg[1] * 1000 / mg[0]) });
     }
   }
@@ -337,7 +354,15 @@ function prospekteErgaenzen(liste, prospekte, alle) {   // alle = Name des Markt
   }
   return n;
 }
-async function prospektRoute(req, env, url) {
+async function prospektRoute(req, env, url, p) {
+  if (p === "/normal") {   // einen gelernten Normalpreis löschen (z. B. falsch erkannt); kommt mit einem neuen Prospekt oder Angebot wieder
+    if (req.method !== "DELETE") throw konto(405, "Nur Löschen");
+    const mem = (await env.PV.get("normal", "json")) || {}, k = String(url.searchParams.get("k") || "");
+    if (!mem[k]) throw konto(404, "Diesen Normalpreis gibt es nicht (mehr)");
+    delete mem[k];
+    await normalSpeichern(env, mem);
+    return normalpreiseBerechnen(env, mem);
+  }
   if (req.method === "GET") return (await env.PV.get("prospekte", "json")) || [];
   const idx = (await env.PV.get("prospekte", "json")) || [], mem = (await env.PV.get("normal", "json")) || {};
   if (req.method === "DELETE") {
@@ -611,7 +636,7 @@ const abgelaufen = x => x.gueltig_bis && tageBis(x.gueltig_bis) < 0;
 
 async function benachrichtige(env, liste, alarm) {
   if (!Object.keys(alarm).length) return [];
-  if (!(env.NTFY_TOPIC || "").trim() && !(await pushAbos(env)).length) return [];   // kein Weg für Mitteilungen eingerichtet
+  if (!(await pushAbos(env)).length) return [];   // kein Gerät für Mitteilungen angemeldet
   let gemeldet = await lade(env, "benachrichtigt", "json");
   const grenze = berlin(new Date(Date.now() - 60 * 864e5));
   gemeldet = Object.fromEntries(Object.entries(gemeldet || {}).filter(([, d]) => d >= grenze));
@@ -636,7 +661,7 @@ async function benachrichtige(env, liste, alarm) {
     const gr = al.einheit === "kg" ? (x.ml ? ", " + x.ml + " g" : "") : al.einheit === "st" ? "" : (x.ml ? ", " + x.ml + " ml" : "");
     const wann = nochNicht(x) ? `Ab ${kurz(x.gueltig_von)}` : x.gueltig_bis ? `Bis ${kurz(x.gueltig_bis)}` : "";
     const text = `${x.markt}: ${de(wert)} ${einheit} (${x.stueck > 1 ? x.stueck + " × " : ""}${x.produkt}${gr} für ${de(x.preis)} €). ${wann}`.trim();
-    if (await melden(env, { titel: `Preisalarm ${gruppe}: ${de(wert)} ${einheit}`, text, tag: "alarm:" + gruppe, url: "./#produkt/" + encodeURIComponent(gruppe), ntfyTag: "moneybag" })) { gemeldet[sch] = heute(); gesendet.push(text); }
+    if (await melden(env, { titel: `Preisalarm ${gruppe}: ${de(wert)} ${einheit}`, text, tag: "alarm:" + gruppe, url: "./#produkt/" + encodeURIComponent(gruppe) })) { gemeldet[sch] = heute(); gesendet.push(text); }
   }
   await env.PV.put("benachrichtigt", JSON.stringify(gemeldet));
   return gesendet;
@@ -679,7 +704,7 @@ async function wochenUeberblick(env, liste, jetzt) {
   const teil = ({ g, x, r, statt }) => `${g} ${de(x.preis)} € bei ${markenKern(x.markt)}` + (r != null && r <= -0.08 ? ` (−${Math.round(-r * 100)} %)` : statt ? ` (statt ${de(statt)} €)` : "");
   const text = gut.length ? gut.slice(0, 6).map(teil).join(" · ") + (gut.length > 6 ? ` · und ${gut.length - 6} weitere` : "") : "Diese Woche ist bei deinen Favoriten nichts besonders günstig.";
   const titel = gut.length ? `Diese Woche günstig: ${gut.length} ${gut.length === 1 ? "Favorit" : "Favoriten"}` : "Wochenüberblick";
-  const ok = await melden(env, { titel, text, tag: "woche", url: "./#angebote", ntfyTag: "shopping_cart" });
+  const ok = await melden(env, { titel, text, tag: "woche", url: "./#angebote" });
   if (ok && !jetzt) await env.PV.put("woche:gesendet", heute(), { expirationTtl: 8 * 864e5 });
   return ok ? text : null;
 }
@@ -697,6 +722,7 @@ async function verlaufCsv(env) {
 }
 
 async function aktualisieren(env, ctx) {
+  try { await umzugAnwenden(env); } catch (e) { /* beim nächsten Lauf noch einmal */ }
   const favs = await lade(env, "favoriten", "json");
   const { info, alarm } = favAuswerten(favs);
   const produkte = Object.keys(info);
@@ -885,7 +911,7 @@ async function namenRegion(env, ctx, plz, ip, neu) {
 
 /* ---------- Benutzerkonten (ohne E-Mail) ----------
    Der Browser rechnet aus Passwort und Benutzername mit PBKDF2 einen Schlüssel aus (dk); der Server speichert nur eine Prüfsumme davon.
-   Vergisst jemand das Passwort, bekommt der Betreiber eine Nachricht (ntfy) und erzeugt in der Seite einen Einmal-Code. */
+   Vergisst jemand das Passwort, bekommt der Betreiber eine Mitteilung (Web-Push) und erzeugt in der Seite einen Einmal-Code. */
 const sha256hex = async t => [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)))].map(b => b.toString(16).padStart(2, "0")).join("");
 const zufallHex = n => [...crypto.getRandomValues(new Uint8Array(n))].map(b => b.toString(16).padStart(2, "0")).join("");
 const gleich = (a, b) => { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; };
@@ -913,7 +939,7 @@ async function sitzungPruefen(env, req) {
   if (!u || u.gen !== s.gen) throw konto(401, "Bitte neu anmelden");
   return { name: s.name, u, token };
 }
-const FELDER = ["ort", "km", "zettel", "richt", "frei", "extra", "haken", "wahl", "kaeufe", "aus", "favs"];
+const FELDER = ["ort", "km", "zettel", "richt", "richtq", "frei", "extra", "haken", "wahl", "kaeufe", "aus", "favs"];
 function datenPruefen(d) {   // nur erwartete Felder und Größen werden gespeichert
   const o = {}, obj = x => x && typeof x === "object" && !Array.isArray(x), text = (x, n) => typeof x === "string" && x.length > 0 && x.length <= n;
   if (!obj(d)) return o;
@@ -926,6 +952,10 @@ function datenPruefen(d) {   // nur erwartete Felder und Größen werden gespeic
   if (obj(d.richt)) {   // Normalpreise: Artikel -> Euro je Liter / kg / Stück
     o.richt = {};
     for (const [k, v] of Object.entries(d.richt).slice(0, 150)) if (k.length <= 60 && Number.isFinite(+v) && +v > 0 && +v <= 1000) o.richt[k] = Math.round(+v * 1e4) / 1e4;
+  }
+  if (obj(d.richtq)) {   // woher ein Normalpreis kommt: Artikel -> {q: eingetragen oder vom Kassenbon, d: Tag}
+    o.richtq = {};
+    for (const [k, v] of Object.entries(d.richtq).slice(0, 150)) if (k.length <= 60 && v && ["bon", "hand"].includes(v.q) && /^\d{4}-\d{2}-\d{2}$/.test(String(v.d || ""))) o.richtq[k] = { q: v.q, d: v.d };
   }
   if (obj(d.frei)) {   // Artikel ohne Angebot: Name -> Einheit
     o.frei = {};
@@ -1004,7 +1034,7 @@ async function kontoRoute(req, env, p) {
     await env.PV.put("anfragen", JSON.stringify(liste));
     // der automatische Test nach dem Hochladen (X-Wartung) prüft nur den Ablauf und soll keine Mitteilung auslösen
     const test = req.headers.get("X-Wartung") && env.WARTUNG && req.headers.get("X-Wartung") === env.WARTUNG;
-    if (!test) await ntfy(env, "Passwort vergessen", `Benutzer „${name}“ möchte ein neues Passwort. Prüfe, ob die Person wirklich du kennst, und erzeuge in der Seite unter Konto einen Code.`, "key");
+    if (!test) await hinweis(env, "Passwort vergessen", `Benutzer „${name}“ möchte ein neues Passwort. Prüfe, ob die Person wirklich du kennst, und erzeuge in der Seite unter Konto einen Code.`, "key");
     return antwortText;
   }
   if (p === "/konto/anfragen" && req.method === "GET") {
@@ -1052,7 +1082,7 @@ async function berechtigt(req, env) {
   return d === 0;
 }
 
-/* ---------- Mitteilungen: Web-Push (App auf dem Home-Bildschirm, iPhone ab iOS 16.4) und ntfy ----------
+/* ---------- Mitteilungen: Web-Push (App auf dem Home-Bildschirm, iPhone ab iOS 16.4) ----------
    Web-Push nach RFC 8291 (Inhalt verschlüsselt, aes128gcm) und RFC 8292 (VAPID). Das Schlüsselpaar entsteht beim ersten Mal und liegt im Speicher (KV). */
 const b64u = b => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const vonB64u = t => Uint8Array.from(atob(String(t).replace(/-/g, "+").replace(/_/g, "/") + "===".slice((String(t).length + 3) % 4)), c => c.charCodeAt(0));
@@ -1106,27 +1136,16 @@ async function pushAlle(env, nachricht) {   // an alle Geräte; abgemeldete (404
   if (weg.length) await env.PV.put("push:abos", JSON.stringify(abos.filter(a => !weg.includes(a))));
   return st.some(x => x >= 200 && x < 300);
 }
-async function ntfyAn(env) { return (await env.PV.get("push:ntfy")) !== "aus"; }
-// eine Mitteilung über alle eingerichteten Wege; true, wenn mindestens einer sie angenommen hat
-async function melden(env, { titel, text, tag, prio, url, ntfyTag }) {
-  let ok = false;
-  try { ok = await pushAlle(env, { titel, text: text.slice(0, 300), tag, url: url || "./" }); } catch (e) { /* ntfy versucht es trotzdem */ }
-  const thema = (env.NTFY_TOPIC || "").trim();
-  if (thema && await ntfyAn(env)) {
-    try {
-      const r = await fetch("https://ntfy.sh", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic: thema, title: titel, message: text.slice(0, 300), tags: [ntfyTag || "bell"], priority: prio || 3, click: new URL(url || "./", APP_URL).href }) });
-      ok = ok || r.ok;
-    } catch (e) { /* nächster Versuch beim nächsten Lauf */ }
-  }
-  return ok;
+// eine Mitteilung an alle angemeldeten Geräte (Web-Push); true, wenn mindestens eines sie angenommen hat
+async function melden(env, { titel, text, tag, url }) {
+  try { return await pushAlle(env, { titel, text: String(text || "").slice(0, 300), tag, url: url || "./" }); } catch (e) { return false; }
 }
 async function pushRoute(req, env, p) {
   const ohne = x => x && typeof x.endpoint === "string" && /^https:\/\//.test(x.endpoint) && x.endpoint.length < 1000;
   if (p === "/push/schluessel") return { key: (await vapid(env)).pub };
   if (p === "/push/status") {
     const abos = await pushAbos(env);
-    return { geraete: abos.length, namen: abos.map(a => a.geraet || "Gerät"), ntfy: !!(env.NTFY_TOPIC || "").trim(), ntfyAn: await ntfyAn(env), wocheAn: (await env.PV.get("push:woche")) !== "aus" };
+    return { geraete: abos.length, namen: abos.map(a => a.geraet || "Gerät"), wocheAn: (await env.PV.get("push:woche")) !== "aus" };
   }
   if (p === "/push/abo" && req.method === "POST") {
     const b = await req.json().catch(() => null);
@@ -1158,18 +1177,13 @@ async function pushRoute(req, env, p) {
     await env.PV.put("push:woche", b && b.an === false ? "aus" : "an");
     return { wocheAn: b && b.an !== false };
   }
-  if (p === "/push/ntfy" && req.method === "POST") {
-    const b = await req.json().catch(() => ({}));
-    await env.PV.put("push:ntfy", b && b.an === false ? "aus" : "an");
-    return { ntfyAn: await ntfyAn(env) };
-  }
   throw konto(404, "Unbekannte Adresse");
 }
-async function ntfy(env, titel, text, tag) {   // Hinweise an den Betreiber (z. B. Passwort vergessen): über alle Wege
-  await melden(env, { titel, text, tag: "hinweis", ntfyTag: tag || "bell", url: "./#mehr" });
+async function hinweis(env, titel, text) {   // Hinweise an den Betreiber (z. B. Passwort vergessen)
+  await melden(env, { titel, text, tag: "hinweis", url: "./#mehr" });
 }
 async function meldeFehler(env, text) {
-  await melden(env, { titel: "Preislauf fehlgeschlagen", text, tag: "fehler", prio: 4, ntfyTag: "warning" });
+  await melden(env, { titel: "Preislauf fehlgeschlagen", text, tag: "fehler" });
 }
 
 export default {
@@ -1182,9 +1196,9 @@ export default {
         if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401);
         return await bonText(req, env);
       }
-      if (p === "/prospekte" || p === "/prospekt") {
+      if (p === "/prospekte" || p === "/prospekt" || p === "/normal") {
         if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401);
-        return antwort(await prospektRoute(req, env, url));
+        return antwort(await prospektRoute(req, env, url, p));
       }
       if (p.startsWith("/push/")) {
         if (!(await berechtigt(req, env))) return fehler("Zugangscode fehlt oder ist falsch", 401);
@@ -1262,7 +1276,7 @@ export default {
       if (p === "/aktualisieren" && req.method === "POST") return antwort(await aktualisieren(env, ctx));
       return fehler("Unbekannte Adresse", 404);
     } catch (e) {
-      return fehler(e.message || String(e), [400, 401, 404, 409, 429, 501, 502].includes(e.status) ? e.status : 500);
+      return fehler(e.message || String(e), [400, 401, 404, 405, 409, 429, 501, 502].includes(e.status) ? e.status : 500);
     }
   },
   async scheduled(event, env, ctx) {

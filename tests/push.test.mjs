@@ -5,34 +5,10 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { umgebung, wurzel } from "./browser/lib.mjs";
+import { umgebung, wurzel, geraet, entschluesseln } from "./browser/lib.mjs";
 
 const b64u = b => Buffer.from(b).toString("base64url");
 const vonB64u = t => new Uint8Array(Buffer.from(t, "base64url"));
-const verbinde = (...l) => new Uint8Array(Buffer.concat(l.map(x => Buffer.from(x))));
-async function hkdf(salt, ikm, info, n) {
-  const k = await crypto.subtle.importKey("raw", ikm, "HKDF", false, ["deriveBits"]);
-  return new Uint8Array(await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt, info }, k, n * 8));
-}
-// So wie ein Browser: eigenes Schlüsselpaar und Geheimnis, damit die Nachricht entschlüsselt werden kann
-async function geraet() {
-  const k = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
-  const pub = new Uint8Array(await crypto.subtle.exportKey("raw", k.publicKey)), auth = crypto.getRandomValues(new Uint8Array(16));
-  return { k, pub, auth, abo: { endpoint: "https://push.example/" + b64u(auth), keys: { p256dh: b64u(pub), auth: b64u(auth) } } };
-}
-async function entschluesseln(g, body) {
-  body = new Uint8Array(body);
-  const salz = body.slice(0, 16), rs = new DataView(body.buffer, body.byteOffset).getUint32(16), idlen = body[20], serverPub = body.slice(21, 21 + idlen), chiffre = body.slice(21 + idlen);
-  assert.equal(rs, 4096); assert.equal(idlen, 65);
-  const sk = await crypto.subtle.importKey("raw", serverPub, { name: "ECDH", namedCurve: "P-256" }, false, []);
-  const geheim = new Uint8Array(await crypto.subtle.deriveBits({ name: "ECDH", public: sk }, g.k.privateKey, 256));
-  const ikm = await hkdf(g.auth, geheim, verbinde(Buffer.from("WebPush: info\0"), g.pub, serverPub), 32);
-  const cek = await hkdf(salz, ikm, Buffer.from("Content-Encoding: aes128gcm\0"), 16), nonce = await hkdf(salz, ikm, Buffer.from("Content-Encoding: nonce\0"), 12);
-  const k = await crypto.subtle.importKey("raw", cek, "AES-GCM", false, ["decrypt"]);
-  const klar = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: nonce }, k, chiffre));
-  assert.equal(klar[klar.length - 1], 2, "Trennzeichen für den letzten Datensatz");
-  return JSON.parse(Buffer.from(klar.slice(0, -1)).toString("utf8"));
-}
 async function tokenPruefen(kopf, endpoint) {
   const m = kopf.match(/^vapid t=([^,]+), k=(.+)$/); assert.ok(m, kopf);
   const [h, c, sig] = m[1].split("."), claims = JSON.parse(Buffer.from(c, "base64url").toString());
@@ -65,25 +41,24 @@ test("Gerät anmelden, Testmitteilung kommt verschlüsselt und signiert an", asy
   assert.equal((await (await u.A("/push/status")).json()).geraete, 0);
 });
 
-test("Preisalarm geht per Push an alle Geräte, ntfy lässt sich abschalten, abgemeldete Geräte fliegen raus", async () => {
-  const u = await umgebung({ ntfy: true }), a = await geraet(), b = await geraet();
+test("Preisalarm geht per Push an alle Geräte, abgemeldete Geräte fliegen raus, nichts geht an ntfy", async () => {
+  const u = await umgebung({}), a = await geraet(), b = await geraet();
   for (const g of [a, b]) await u.A("/push/abo", "POST", JSON.stringify(g.abo));
-  await u.A("/push/ntfy", "POST", JSON.stringify({ an: false }));
   await u.KV.put("favoriten", JSON.stringify([{ name: "Milch", aus: "", alarm: { wert: 9999, einheit: "l", ml: null } }]));
   await u.A("/aktualisieren", "POST");
-  assert.equal(u.ntfy.length, 0, "ntfy ist aus");
   assert.equal(u.push.length, 2);
   const n = await entschluesseln(a, u.push.find(x => x.url === a.abo.endpoint).body);
   assert.match(n.titel, /^Preisalarm Milch: 0,89 €\/l/); assert.match(n.text, /Lidl/); assert.equal(n.url, "./#produkt/Milch"); assert.equal(n.tag, "alarm:Milch");
-  // ein Gerät hat sich abgemeldet (410): es wird entfernt, ntfy wieder an
-  u.push.status = 410; await u.A("/push/ntfy", "POST", JSON.stringify({ an: true }));
+  // die Geräte haben sich abgemeldet (410): sie werden entfernt
+  u.push.status = 410;
   await u.KV.put("favoriten", JSON.stringify([{ name: "Eier", aus: "", alarm: { wert: 9999, einheit: "st", ml: null } }]));
   await u.A("/aktualisieren", "POST");
-  assert.equal(u.ntfy.length, 1, "ntfy wieder an");
   assert.equal((await (await u.A("/push/status")).json()).geraete, 0, "abgemeldete Geräte entfernt");
+  assert.equal((await u.A("/push/ntfy", "POST", "{}")).status, 404, "ntfy gibt es nicht mehr");
+  assert.equal(u.ntfy.length, 0);
 });
 
-test("Ohne Push-Geräte und ohne ntfy wird nichts als gemeldet vermerkt", async () => {
+test("Ohne Push-Geräte wird nichts als gemeldet vermerkt", async () => {
   const u = await umgebung();
   await u.KV.put("favoriten", JSON.stringify([{ name: "Milch", aus: "", alarm: { wert: 9999, einheit: "l", ml: null } }]));
   const r = await (await u.A("/aktualisieren", "POST")).json();
@@ -130,13 +105,14 @@ test("Hintergrunddienst (sw.js): Mitteilung zeigen, Tipp darauf öffnet die App 
 });
 
 test("„Passwort vergessen“ meldet sich beim Betreiber, nur nicht beim automatischen Test nach dem Hochladen", async () => {
-  const u = await umgebung({ ntfy: true }); u.env.WARTUNG = "testschluessel";
+  const u = await umgebung({ geraet: true }); u.env.WARTUNG = "testschluessel";
   const R = (pfad, body, kopf = {}) => u.H.fetch(new Request("https://preise.phriehk.workers.dev" + pfad, { method: "POST", headers: { "Content-Type": "application/json", ...kopf }, body: JSON.stringify(body) }), u.env, u.ctx);
   for (const n of ["test1", "anna"]) assert.equal((await R("/konto/neu", { name: n, dk: "a".repeat(64) })).status, 200);
   await R("/konto/vergessen", { name: "test1" }, { "X-Wartung": "testschluessel" });
-  assert.equal(u.ntfy.length, 0, "Test: keine Mitteilung");
+  assert.equal((await u.mitteilungen()).length, 0, "Test: keine Mitteilung");
   await R("/konto/vergessen", { name: "anna" });
-  assert.equal(u.ntfy.length, 1); assert.match(u.ntfy[0].message, /anna/);
+  const m = await u.mitteilungen();
+  assert.equal(m.length, 1); assert.equal(m[0].titel, "Passwort vergessen"); assert.match(m[0].text, /anna/); assert.equal(m[0].url, "./#mehr");
 });
 
 test("Wochenüberblick: montags einmal die guten Angebote (unter dem Durchschnitt oder mit „statt“-Preis), abschaltbar", async () => {

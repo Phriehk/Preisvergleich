@@ -505,6 +505,7 @@ const bildHtml=(url,text)=>`<span class="bild"><span class="ph">${esc((String(te
 let zettel=objekt(ls.get("pv-zettel",{}));    // Einkaufsliste: "Name" oder "Name|ml" -> Menge in l / kg / Stück
 let frei=objekt(ls.get("pv-frei",{}));        // Artikel ohne Angebot: Name -> Einheit
 let richt=objekt(ls.get("pv-richt",{}));      // Richtwert (Normalpreis): Name -> € je Einheit
+let richtQ=objekt(ls.get("pv-richtq",{}));    // woher dein Normalpreis kommt: Name -> {q: "hand" (eingetragen) oder "bon" (Kassenbon), d: Tag}
 let haken=objekt(ls.get("pv-haken",{}));      // abgehakt beim Einkaufen
 let extra=(ls.get("pv-extra",[])||[]).filter(x=>typeof x==="string");   // von Hand notierte Artikel
 let kaeufe=(ls.get("pv-kaeufe",[])||[]).filter(x=>x&&x.k&&x.d);   // abgehakte Einkäufe: {k, d (Tag), n (Name), m (Markt), p (bezahlt), r (normal, falls bekannt)}
@@ -519,8 +520,19 @@ let zugang=ls.raw("pv-code")||"";             // Zugangscode des Betreibers
 let konto=ls.get("pv-konto",null);
 let favsLokal=(ls.get("pv-favs",[])||[]).filter(f=>f&&typeof f.name==="string");   // eigene Favoriten ohne Zugangscode
 let vd=ls.get("pv-verlauf",[])||[];           // Preisverlauf: [datum, markt, preis je Einheit, bis, von, gruppe, menge]
+// Märkte, deren Quelle umgezogen ist (REWE kommt jetzt aus Meiderich): alte Namen in den gespeicherten Daten ersetzen, auch in Daten aus dem Konto
+const MARKT_UMZUG={"REWE (47053)":"REWE (47137)"},umzug=m=>MARKT_UMZUG[m]||m;
+function umzugAnwenden(){
+  let neu=false;
+  for(const k in wahl)if(MARKT_UMZUG[wahl[k]]){wahl[k]=umzug(wahl[k]);neu=true}
+  if([...aus].some(m=>MARKT_UMZUG[m])){aus=new Set([...aus].map(umzug));neu=true}
+  for(const e of kaeufe)if(e&&MARKT_UMZUG[e.m]){e.m=umzug(e.m);neu=true}
+  for(const r of vd)if(Array.isArray(r)&&MARKT_UMZUG[r[1]])r[1]=umzug(r[1]);
+  return neu;
+}
+if(umzugAnwenden()){ls.set("pv-wahl",wahl);ls.set("pv-aus",[...aus]);ls.set("pv-kaeufe",kaeufe)}
 let kurzName=ls.raw("pv-kurz")||"Einkaufsliste in Erinnerungen";
-function listeSpeichern(ohneSync){ls.set("pv-kaeufe",kaeufe);Object.keys(wahl).forEach(k=>{if(!(zettel[k]>0))delete wahl[k]});ls.set("pv-wahl",wahl);ls.set("pv-zettel",zettel);ls.set("pv-frei",frei);ls.set("pv-richt",richt);ls.set("pv-extra",extra);ls.set("pv-haken",haken);if(!ohneSync)kontoSync()}
+function listeSpeichern(ohneSync){ls.set("pv-kaeufe",kaeufe);Object.keys(wahl).forEach(k=>{if(!(zettel[k]>0))delete wahl[k]});ls.set("pv-wahl",wahl);ls.set("pv-zettel",zettel);ls.set("pv-frei",frei);ls.set("pv-richt",richt);ls.set("pv-richtq",richtQ);ls.set("pv-extra",extra);ls.set("pv-haken",haken);if(!ohneSync)kontoSync()}
 
 /* ---------- Server ---------- */
 const SERVER="https://preise.phriehk.workers.dev";
@@ -528,7 +540,7 @@ const cf=/\.workers\.dev$/.test(location.hostname);   // die Seite läuft beim e
 if(/\.github\.io$/.test(location.hostname))location.replace(SERVER+"/"+(zugang?"#code="+zugang:""));   // alte Adresse
 const wUrl=cf?location.origin:SERVER;
 const betreiber=()=>!!zugang;
-const HEIM=["47178","46535","47053","47137"];   // für diese Postleitzahlen holt der Server die Angebote täglich
+const HEIM=["47178","46535","47137"];   // für diese Postleitzahlen holt der Server die Angebote täglich
 function regionPlz(){return ort&&ort.angebote!==false&&ort.plz&&!HEIM.includes(ort.plz)?ort.plz:""}
 const lokalModus=()=>!betreiber()||!!regionPlz();   // Angebote über die öffentliche Abfrage statt der täglichen Liste
 const quellPlz=()=>regionPlz()||(ort&&ort.plz&&HEIM.includes(ort.plz)?ort.plz:"47178");
@@ -750,11 +762,6 @@ async function pushWoche(an,jetzt){
   }catch(e){melde(netzFehler(e),true)}
   render();
 }
-async function pushNtfy(an){
-  try{const j=await (await wf("/push/ntfy",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({an})})).json();if(S.push.server)S.push.server.ntfyAn=j.ntfyAn}
-  catch(e){melde(netzFehler(e),true)}
-  render();
-}
 
 /* ---------- Angebote je Markt: erst die Märkte der Gegend, dann alle Angebote des gewählten Marktes ---------- */
 function mkAuto(){
@@ -962,7 +969,7 @@ async function kFetch(pfad,methode,body,token){
   return j;
 }
 function kontoMerken(k){konto=k;k?ls.set("pv-konto",k):ls.setRaw("pv-konto",null)}
-const kontoDaten=()=>({ort,km:kmSatz,zettel,richt,frei,extra,haken,wahl,kaeufe,aus:[...aus],...(betreiber()?{}:{favs:favsLokal})});
+const kontoDaten=()=>({ort,km:kmSatz,zettel,richt,richtq:richtQ,frei,extra,haken,wahl,kaeufe,aus:[...aus],...(betreiber()?{}:{favs:favsLokal})});
 /* Ohne Netz (z. B. im Markt) bleibt die Änderung auf dem Gerät und wird nachgereicht; bis dahin gilt beim Start dieses Gerät, nicht das Konto */
 let kOffen=ls.raw("pv-konto-offen")==="1";
 function kOffenSetzen(v){if(v!==kOffen){kOffen=v;ls.setRaw("pv-konto-offen",v?"1":null);if(S.v==="einkaufen")render()}}
@@ -988,6 +995,7 @@ async function kontoLaden(start,erstmals){
     if(typeof d.km==="number"){kmSatz=d.km;ls.setRaw("pv-km",String(d.km))}
     if(d.zettel)zettel=nimm(objekt(d.zettel),zettel);
     if(d.richt)richt=nimm(objekt(d.richt),richt);
+    if(d.richtq)richtQ=nimm(objekt(d.richtq),richtQ);
     if(d.frei)frei=nimm(objekt(d.frei),frei);
     if(d.haken)haken=nimm(objekt(d.haken),haken);
     if(d.wahl){wahl=nimm(objekt(d.wahl),wahl);ls.set("pv-wahl",wahl)}
@@ -998,6 +1006,7 @@ async function kontoLaden(start,erstmals){
       const n=new Map();((start&&!erstmals)?d.favs:[...d.favs,...favsLokal]).forEach(f=>{if(f&&f.name&&!n.has(f.name))n.set(f.name,f)});
       favsLokal=[...n.values()];ls.set("pv-favs",favsLokal);
     }
+    umzugAnwenden();ls.set("pv-aus",[...aus]);
     listeSpeichern(true);
     if(JSON.stringify(kontoDaten())!==JSON.stringify({...kontoDaten(),...d}))kontoSync();   // nur hochladen, wenn dieses Gerät etwas anderes hat
   }catch(e){if(e.status===401)kontoAbgelaufen()}
@@ -1313,7 +1322,7 @@ function bonUebernehmen(zeilen,kopf){
     if(!ang){   // ohne Angebot gekauft: der Preis vom Bon wird dein Normalpreis (je kg, Liter oder Stück)
       const ref=zRef(z.k),stk=z.preis/(z.n||1),art=artG(zk(z.k).g);
       const v=ref?stk/ref:art==="st"?stk:zettel[z.k]>0?z.preis/zettel[z.k]:null;   // ohne bekannte Menge (nicht mehr auf der Liste, lose Ware) lässt sich kein Preis je kg ableiten
-      if(v){zMitglieder(z.k).forEach(m=>{delete richt[zk(m).g]});richt[zk(z.k).g]=Math.round(v*1e4)/1e4;rw++;vCache=null;rwC={}}
+      if(v){zMitglieder(z.k).forEach(m=>{delete richt[zk(m).g];delete richtQ[zk(m).g]});richt[zk(z.k).g]=Math.round(v*1e4)/1e4;richtQ[zk(z.k).g]={q:"bon",d};rw++;vCache=null;rwC={}}
     }
     if(x&&!haken[x.k]){haken[x.k]=1;if(heute)kaufMerken(x,true)}
     let e=kaeufe.find(e=>e.d===d&&(e.z===z.k||(x&&e.k===x.k)));
@@ -1437,21 +1446,25 @@ function prospektSeite(it,s){   // it: Textstücke einer Seite {s,x,y(oben),h,w,
   const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),preise=[],benutzt=new Set(),aus=[];
   it.forEach((a,i)=>{
     if(benutzt.has(i))return;
-    const m=a.s.match(PR_P1)||a.s.match(PR_PS);
-    if(m&&a.h>=8){preise.push({p:+(m[1]+"."+(/\d/.test(m[2])?m[2]:"00")),x:a.x,y:a.y-a.h*.35,h:a.h,i});benutzt.add(i);return}
+    const m=a.s.match(PR_P1)||a.s.match(PR_PS),mu=a.s.match(/^UVP\s*(\d{1,3})[.,](\d{2})\s?\*?$/i);
+    // kleine Preise (unter 8 pt, z. B. der durchgestrichene bei Kaufland) zählen nur als früherer Preis neben einem großen
+    // (sie bleiben auch Text: steht so eine Zahl in einer Beschreibung, z. B. das Pfand, fehlt sie dort sonst)
+    if(mu&&a.h>=5.5){preise.push({p:+(mu[1]+"."+mu[2]),x:a.x,y:a.y-a.h*.35,h:a.h,i,klein:true,uvpL:true});if(a.h>=8)benutzt.add(i);return}
+    if(m&&a.h>=5.5){preise.push({p:+(m[1]+"."+(/\d/.test(m[2])?m[2]:"00")),x:a.x,y:a.y-a.h*.35,h:a.h,i,klein:a.h<8});if(a.h>=8)benutzt.add(i);return}
     if(PR_G.test(a.s)&&a.h>=12){
       const j=it.findIndex((b,k)=>!benutzt.has(k)&&k!==i&&PR_C.test(b.s)&&b.x>=a.x+a.w*.5&&b.x<=a.x+a.w+a.h*.6&&b.y<=a.y+2&&b.y>=a.y-a.h*.9);
       if(j>=0){const c=it[j].s.match(PR_C)[1];preise.push({p:+(a.s.match(PR_G)[1]+"."+(/\d/.test(c)?c:"00")),x:a.x,y:a.y-a.h*.35,h:a.h,i});benutzt.add(i);benutzt.add(j)}
     }
   });
   for(let k=preise.length-1;k>=0;k--){const a=it[preise[k].i];if(it.some(b=>/^Bonus$/i.test(b.s)&&Math.abs(b.x-a.x)<25&&b.y>a.y&&b.y<a.y+a.h*1.6))preise.splice(k,1)}   // REWE-Bonus ist kein Preis
+  for(let k=preise.length-1;k>0;k--){const p=preise[k];if(preise.slice(0,k).some(q=>q.p===p.p&&Math.abs(q.x-p.x)<1.5&&Math.abs(q.y-p.y)<1.5))preise.splice(k,1)}   // doppelt gedruckt (Füllung und Kontur): einmal
   for(const p of preise){   // kleiner Preis neben einem deutlich größeren: UVP, statt, Einzelpreis
-    const g=preise.filter(q=>q!==p&&q.h>=p.h*1.5&&dist(q,p)<q.h*2.8).sort((a,c)=>dist(a,p)-dist(c,p))[0];
+    const g=preise.filter(q=>q!==p&&q.h>=p.h*1.5&&dist(q,p)<Math.max(q.h*2.8,p.klein?p.h*6:0)).sort((a,c)=>dist(a,p)-dist(c,p))[0];
     if(g){p.neben=g;(g.kl=g.kl||[]).push(p)}
-    p.uvp=it.some(b=>/^UVP$/i.test(b.s)&&Math.abs(b.y-it[p.i].y)<4&&b.x<p.x&&b.x>p.x-30);
+    p.uvp=!!p.uvpL||it.some(b=>/^UVP$/i.test(b.s)&&Math.abs(b.y-it[p.i].y)<4&&b.x<p.x&&b.x>p.x-30);
     p.pz=it.filter(b=>/^[–-]\s?\d{1,2}\s?%$/.test(b.s)&&dist(b,p)<p.h*3).map(b=>+b.s.replace(/\D/g,""));
   }
-  const haupt=preise.filter(p=>!p.neben);
+  const haupt=preise.filter(p=>!p.neben&&!p.klein);
   // Zeilen: Stücke auf derselben Grundlinie dicht nebeneinander (ein unsichtbarer Strich dazwischen: „je 750“ + „ml“ = „je 750-ml“)
   const roh=it.filter((a,k)=>!benutzt.has(k)&&a.h>=5&&a.h<=12.5).sort((a,b)=>a.y-b.y||a.x-b.x),txt=[];
   for(const a of roh){
@@ -1494,7 +1507,7 @@ function prospektSeite(it,s){   // it: Textstücke einer Seite {s,x,y(oben),h,w,
   for(const q of paare){if(vergeben.has(q.p))continue;const l=zu.get(q.b);if(l&&!(q.ok&&l.length===1&&l[0].ok&&q.ok!==l[0].ok))continue;if(l)l.push(q);else zu.set(q.b,[q]);vergeben.add(q.p)}
   for(const [b,l] of zu){
     const h=l.find(q=>q.ok==="normal")||l.find(q=>!q.ok)||l[0],karte=l.find(q=>q.ok&&q.ok!=="normal"&&q!==h),gross=h.p.neben||h.p;
-    const kl=(gross.kl||[]).concat(gross!==h.p?[gross]:[]).filter(q=>q!==h.p&&q.p>h.p.p&&!vergeben.has(q)),pz=[...(h.p.pz||[]),...(gross.pz||[])];
+    const kl=[...new Set([...(gross.kl||[]),...(h.p.kl||[]),...(gross!==h.p?[gross]:[])])].filter(q=>q!==h.p&&q.p>h.p.p&&!vergeben.has(q)),pz=[...(h.p.pz||[]),...(gross.pz||[])];
     const passt=q=>pz.some(z=>Math.abs((1-h.p.p/q.p)*100-z)<1.6),statt=kl.find(passt)||(kl.length===1?kl[0]:null);
     const zweifel=!h.ok&&b.menge&&b.gp.length;   // Block hat Menge und Grundpreis, der Preis passt aber nicht dazu: wohl der Preis des Nachbarn
     if(statt)vergeben.add(statt);
@@ -2054,6 +2067,7 @@ function vMehr(){
     ${alleMaerkte.length?`<p class="leise-text" style="margin:0">Märkte, in die du nicht gehst, blende ich überall aus.</p><div class="chips">${alleMaerkte.map(m=>`<label class="chip${aus.has(m)?" aus":""}"><input type="checkbox" data-markt="${esc(m)}"${aus.has(m)?"":" checked"}>${mlogo(m)}${esc(m)}</label>`).join("")}</div>`:""}
     <label class="schalter"><input type="checkbox" id="appFeld" data-aktion-change="app"${appPreise?" checked":""}> App-Preise einrechnen (z. B. Lidl Plus)</label></section>`;
   if(betreiber())h+=prospektHtml();
+  h+=normalHtml();
   h+=`<section class="karte-box formular"><div class="box-kopf"><h2>Darstellung</h2></div>${segment("theme",[["auto","Wie das Gerät"],["light","Hell"],["dark","Dunkel"]],theme)}
     <div class="klein-text">Zahl auf dem App-Symbol</div>${segment("badge",[["neu","Neue Angebote"],["liste","Offene Artikel"],["aus","Keine"]],S.badge)}
     ${badgeGeht()?"":`<p class="klein-text" style="margin:0">Hier erscheint keine Zahl am Symbol. Auf dem iPhone geht das nur in der App vom Home-Bildschirm und wenn Mitteilungen erlaubt sind (unter „Alarm“).</p>`}</section>`;
@@ -2063,6 +2077,20 @@ function vMehr(){
   h+=`<section class="karte-box"><div class="box-kopf"><h2>Über die Daten</h2></div>
     <p class="leise-text" style="margin:0">Die Angebote kommen aus den Prospekten bei Marktguru und werden jeden Morgen neu geholt. Verpackung und Menge leite ich aus dem Prospekttext ab, das klappt meistens, aber nicht immer. Auffällige Preise kannst du auf der Produktseite prüfen und korrigieren.</p></section>`;
   return h;
+}
+/* Normalpreise: deine eigenen (eingetragen oder vom Kassenbon) und die gelernten (Prospekte, frühere Angebote) mit Herkunft; Falsches löschen */
+function normalHtml(){
+  const eigen=Object.keys(richt).filter(g=>richt[g]>0).sort((a,b)=>a.localeCompare(b,"de"));
+  const gel=normalListe.slice().sort((a,b)=>a.gruppe.localeCompare(b.gruppe,"de")||a.preis/(a.stueck*a.ml/1000)-b.preis/(b.stueck*b.ml/1000));
+  if(!eigen.length&&!gel.length)return "";
+  const einheit=g=>ARTEN[artG(g)].u,q=g=>{const x=richtQ[g];return x?(x.q==="bon"?"vom Kassenbon am ":"eingetragen am ")+tagD(x.d):"eingetragen"};
+  const zE=g=>`<div class="pr-z"><span><b>${esc(g)}</b> · ${eur(richt[g])} je ${esc(einheit(g))} <small class="klein-text">${esc(q(g))}</small></span><button type="button" class="knopf klein leise" data-rweg="${esc(g)}">${S.wegFrage==="rw:"+g?"Wirklich löschen?":"Löschen"}</button></div>`;
+  const zG=e=>{const v=e.preis/(e.stueck*e.ml/1000),u=e.art==="l"?"l":e.art==="kg"?"kg":"Stück";
+    return `<div class="pr-z"><span><b>${esc(e.gruppe)}</b>: ${esc(mbase(e.markt))} · ${esc([e.marke,e.produkt].filter(Boolean).join(" "))} ${esc(mengeText({...e,art:e.art}))} · ${e.uvp?"UVP":"früher"} ${eur(e.preis)} (${eur(v)}/${u}) <small class="klein-text">${e.quelle==="prospekt"?"Prospekt vom ":"Angebot, gesehen am "}${esc(tagD(e.datum))}</small></span>${betreiber()&&e.k?`<button type="button" class="knopf klein leise" data-npweg="${esc(e.k)}">${S.wegFrage==="np:"+e.k?"Wirklich löschen?":"Löschen"}</button>`:""}</div>`};
+  return `<section class="karte-box" id="normalpreise"><div class="box-kopf"><h2>Normalpreise</h2></div>
+    <p class="leise-text" style="margin:0">Was ein Artikel normalerweise kostet. Dein eigener Preis gilt immer. Ohne ihn schlage ich den niedrigsten früheren Preis aus Prospekten und früheren Angeboten vor. Falsch erkannte kannst du hier löschen.</p>
+    ${eigen.length?`<details data-merk="npEigen"${S.form.npEigen?" open":""}><summary><b>Deine</b> <span class="km">${eigen.length}</span></summary><div class="pr-liste">${eigen.map(zE).join("")}</div></details>`:""}
+    ${gel.length?`<details data-merk="npGel"${S.form.npGel?" open":""}><summary><b>Gelernt</b> <span class="km">${gel.length}</span></summary><div class="pr-liste">${gel.map(zG).join("")}</div></details>`:""}</section>`;
 }
 /* Prospekte als PDF einlesen: die früheren Preise („statt“, UVP) werden zum Vorschlag für den Normalpreis */
 function prospektHtml(){
@@ -2164,9 +2192,8 @@ function pushHtml(){   // Mitteilungen auf diesem Gerät (nur mit Zugangscode, w
   if(P.stand==="an")k=`<button type="button" class="knopf" data-aktion="pushTest"${dis}>Test senden</button><button type="button" class="knopf leise" data-aktion="pushAus"${dis}>Ausschalten</button>`;
   const sv=P.server;
   const geraete=sv&&sv.geraete?`<p class="klein-text" style="margin:0">Angemeldet: ${sv.namen.map(esc).join(", ")}.</p>`:"";
-  const ntfy=sv&&sv.ntfy?`<label class="schalter klein-text"><input type="checkbox" data-push-ntfy${sv.ntfyAn?" checked":""}> Zusätzlich über die ntfy-App schicken</label>`:"";
-  const woche=sv&&(sv.geraete||sv.ntfy)?`<div class="reihe"><label class="schalter klein-text"><input type="checkbox" data-push-woche${sv.wocheAn!==false?" checked":""}> Wochenüberblick montags um 7 Uhr: die guten Angebote deiner Favoriten</label><button type="button" class="knopf klein leise" data-aktion="wocheJetzt"${dis}>Jetzt senden</button></div>`:"";
-  return `<section class="karte-box"><div class="box-kopf"><h2>🔔 Mitteilungen</h2>${P.stand==="an"?`<span class="tag gruen">an</span>`:""}</div><p class="leise-text" style="margin:0">${t}</p>${k?`<div class="reihe">${k}</div>`:""}${geraete}${woche}${ntfy}</section>`;
+  const woche=sv&&sv.geraete?`<div class="reihe"><label class="schalter klein-text"><input type="checkbox" data-push-woche${sv.wocheAn!==false?" checked":""}> Wochenüberblick montags früh: die guten Angebote deiner Favoriten</label><button type="button" class="knopf klein leise" data-aktion="wocheJetzt"${dis}>Jetzt senden</button></div>`:"";
+  return `<section class="karte-box"><div class="box-kopf"><h2>🔔 Mitteilungen</h2>${P.stand==="an"?`<span class="tag gruen">an</span>`:""}</div><p class="leise-text" style="margin:0">${t}</p>${k?`<div class="reihe">${k}</div>`:""}${geraete}${woche}</section>`;
 }
 function vAlarm(){
   const sperre=alarmSperre();if(sperre)return sperre;
@@ -2517,6 +2544,11 @@ async function prospektSenden(){
     S.pr={liste:P.liste};await prListeLaden();
     try{await angeboteLaden()}catch(e){}
   }catch(e){P.busy=false;melde(netzFehler(e),true)}
+  render();
+}
+async function normalWeg(k){   // einen gelernten Normalpreis auf dem Server löschen
+  try{normalSetzen(await (await wf("/normal?k="+encodeURIComponent(k),{method:"DELETE"})).json());melde("Der Normalpreis ist gelöscht.")}
+  catch(e){melde(netzFehler(e),true)}
   render();
 }
 async function prospektWeg(markt){
@@ -2959,6 +2991,8 @@ $("ansicht").addEventListener("click",e=>{
   if(b=t.closest("[data-go]")){zeige(b.dataset.go);return}
   if(b=t.closest("[data-favweg]")){e.stopPropagation();favEntfernen(b.dataset.favweg);return}
   if(b=t.closest("[data-prweg]")){if(wegFragen("pr:"+b.dataset.prweg))prospektWeg(b.dataset.prweg);return}
+  if(b=t.closest("[data-rweg]")){const g=b.dataset.rweg;if(wegFragen("rw:"+g)){delete richt[g];delete richtQ[g];rwC={};vCache=null;listeSpeichern();melde("Dein Normalpreis für „"+g+"“ ist gelöscht.");render()}return}
+  if(b=t.closest("[data-npweg]")){const k=b.dataset.npweg;if(wegFragen("np:"+k))normalWeg(k);return}
   if(b=t.closest("[data-favpause]")){e.stopPropagation();favPause(b.dataset.favpause,true);return}
   if(b=t.closest("[data-favweiter]")){e.stopPropagation();favPause(b.dataset.favweiter,false);return}
   if(b=t.closest("[data-liste]")){e.stopPropagation();listeUmschalten(b.dataset.liste);return}
@@ -3063,7 +3097,6 @@ $("ansicht").addEventListener("change",e=>{
     const k=t.dataset.wahl;zMitglieder(k).forEach(m=>delete wahl[m]);if(t.value)wahl[k]=t.value;else delete wahl[k];
     listeSpeichern();render();return;
   }
-  if(t.matches("[data-push-ntfy]")){pushNtfy(t.checked);return}
   if(t.id==="bonFoto"){const f=t.files&&t.files[0];t.value="";if(f)bonLesen(f);return}
   if(t.id==="prospektDatei"){const f=t.files&&t.files[0];t.value="";if(f)prospektLesen(f);return}
   if(S.pr&&S.pr.erg&&(t.id==="prMarkt"||t.id==="prVon"||t.id==="prBis")){S.pr.erg[{prMarkt:"markt",prVon:"von",prBis:"bis"}[t.id]]=t.value;return}
@@ -3095,8 +3128,8 @@ $("ansicht").addEventListener("change",e=>{
   if(t.dataset.r){
     let v=parseFloat(String(t.value).replace(",","."));const rf=parseFloat(t.dataset.ref);
     if(rf>0)v=v/rf;   // Eingabe je Stück, gespeichert je kg bzw. Liter
-    zMitglieder(t.dataset.r).forEach(m=>{delete richt[zk(m).g]});
-    if(v>0&&v<=1000)richt[zk(t.dataset.r).g]=Math.round(v*10000)/10000;
+    zMitglieder(t.dataset.r).forEach(m=>{delete richt[zk(m).g];delete richtQ[zk(m).g]});
+    if(v>0&&v<=1000){richt[zk(t.dataset.r).g]=Math.round(v*10000)/10000;richtQ[zk(t.dataset.r).g]={q:"hand",d:heuteT()}}
     listeSpeichern();render();return;
   }
 });

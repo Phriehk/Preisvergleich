@@ -72,6 +72,13 @@ test("Server: Prospekt speichern, Normalpreise je Favorit, Angebote ergänzen, e
   const st = await (await u.A("/aktualisieren", "POST")).json();
   assert.ok(st.normal && st.normal.prospekte === 1, JSON.stringify(st.normal));
   assert.equal(JSON.parse(u.store.get("angebote")).find(x => x.markt === "PENNY" && x.produkt === "Butter").preis_alt, 2.49);
+  // einen gelernten Normalpreis löschen (nur mit Code)
+  const k = JSON.parse(u.store.get("normalpreise")).find(x => x.gruppe === "Schokolade").k;
+  assert.ok(k);
+  assert.equal((await u.H.fetch(new Request("https://preise.phriehk.workers.dev/normal?k=" + encodeURIComponent(k), { method: "DELETE" }), u.env, u.ctx)).status, 401);
+  const nach = await (await u.A("/normal?k=" + encodeURIComponent(k), "DELETE")).json();
+  assert.ok(!nach.some(x => x.gruppe === "Schokolade") && nach.some(x => x.gruppe === "Butter"));
+  assert.equal((await u.A("/normal?k=gibtsnicht", "DELETE")).status, 404);
   // Liste der Prospekte, Entfernen
   const l = await (await u.A("/prospekte")).json();
   assert.deepEqual(l.map(x => [x.markt, x.statt, x.von]), [["PENNY", 2, h]]);
@@ -81,4 +88,13 @@ test("Server: Prospekt speichern, Normalpreise je Favorit, Angebote ergänzen, e
   // ungültige Daten
   const f = await u.A("/prospekt", "POST", JSON.stringify({ markt: "", angebote: [] }));
   assert.equal(f.status, 400);
+});
+
+test("Konto: die Herkunft deiner Normalpreise (eingetragen, Kassenbon) wird mit abgeglichen, nur in erwarteter Form", async () => {
+  const os = await import("node:os");
+  const q = fs.readFileSync(path.join(wurzel, "worker/src/index.js"), "utf8").replace(/^import \{ WorkerEntrypoint \} from "cloudflare:workers";/m, "class WorkerEntrypoint{}") + "\nexport { datenPruefen };";
+  const datei = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "pv-konto-")), "w.mjs"); fs.writeFileSync(datei, q);
+  const { datenPruefen } = await import(pathToFileURL(datei).href);
+  const d = datenPruefen({ richt: { Salz: 0.19 }, richtq: { Salz: { q: "bon", d: "2026-10-20" }, Zucker: { q: "hand", d: "2026-10-21", x: 1 }, Mehl: { q: "erfunden", d: "2026-10-21" }, Reis: { q: "hand", d: "gestern" } } });
+  assert.deepEqual(d.richtq, { Salz: { q: "bon", d: "2026-10-20" }, Zucker: { q: "hand", d: "2026-10-21" } });
 });

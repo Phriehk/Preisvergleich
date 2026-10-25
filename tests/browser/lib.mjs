@@ -95,7 +95,33 @@ export const DATEN = {
 const KAT = { butter: [102, "Butter", 107], eier: [104, "Eier", 107], milch: [101, "Milch", 107], "äpfel": [300, "Äpfel", 149], reis: [400, "Reis", 116], akkuschrauber: [500, "Akkuschrauber", 382] };
 for (const [k, l] of Object.entries(DATEN)) for (const o of l) o.categories = [{ id: KAT[k][0], name: KAT[k][1], parentId: KAT[k][2] }];
 
-/** Umgebung: Speicher, Marktguru-Nachbau, ntfy-Protokoll */
+/* Web-Push wie ein Browser: eigenes Schlüsselpaar und Geheimnis, damit die Nachricht entschlüsselt werden kann (RFC 8291) */
+const b64u = b => Buffer.from(b).toString("base64url");
+const verbindeB = (...l) => new Uint8Array(Buffer.concat(l.map(x => Buffer.from(x))));
+async function hkdfT(salt, ikm, info, n) {
+  const k = await crypto.subtle.importKey("raw", ikm, "HKDF", false, ["deriveBits"]);
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt, info }, k, n * 8));
+}
+export async function geraet() {
+  const k = await crypto.subtle.generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]);
+  const pub = new Uint8Array(await crypto.subtle.exportKey("raw", k.publicKey)), auth = crypto.getRandomValues(new Uint8Array(16));
+  return { k, pub, auth, abo: { endpoint: "https://push.example/" + b64u(auth), keys: { p256dh: b64u(pub), auth: b64u(auth) } } };
+}
+export async function entschluesseln(g, body) {
+  body = new Uint8Array(body);
+  const salz = body.slice(0, 16), rs = new DataView(body.buffer, body.byteOffset).getUint32(16), idlen = body[20], serverPub = body.slice(21, 21 + idlen), chiffre = body.slice(21 + idlen);
+  if (rs !== 4096 || idlen !== 65) throw new Error("Kopf der Push-Nachricht stimmt nicht");
+  const sk = await crypto.subtle.importKey("raw", serverPub, { name: "ECDH", namedCurve: "P-256" }, false, []);
+  const geheim = new Uint8Array(await crypto.subtle.deriveBits({ name: "ECDH", public: sk }, g.k.privateKey, 256));
+  const ikm = await hkdfT(g.auth, geheim, verbindeB(Buffer.from("WebPush: info\0"), g.pub, serverPub), 32);
+  const cek = await hkdfT(salz, ikm, Buffer.from("Content-Encoding: aes128gcm\0"), 16), nonce = await hkdfT(salz, ikm, Buffer.from("Content-Encoding: nonce\0"), 12);
+  const k = await crypto.subtle.importKey("raw", cek, "AES-GCM", false, ["decrypt"]);
+  const klar = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: nonce }, k, chiffre));
+  if (klar[klar.length - 1] !== 2) throw new Error("Trennzeichen für den letzten Datensatz fehlt");
+  return JSON.parse(Buffer.from(klar.slice(0, -1)).toString("utf8"));
+}
+
+/** Umgebung: Speicher, Marktguru-Nachbau, Push-Protokoll; opts.geraet: ein Gerät für Mitteilungen anmelden (u.mitteilungen() entschlüsselt, was ankam) */
 export async function umgebung(opts = {}) {
   const W = await ladeWorker(), H = W.default;
   const store = new Map();
@@ -106,13 +132,13 @@ export async function umgebung(opts = {}) {
     if (!datei.startsWith(wurzel) || !fs.existsSync(datei) || fs.statSync(datei).isDirectory()) return new Response("Nicht gefunden", { status: 404 });
     return new Response(fs.readFileSync(datei), { headers: { "content-type": TYPEN[path.extname(datei)] || "application/octet-stream" } });
   } };
-  const env = { PV: KV, ZUGANG: "betreiber", NTFY_TOPIC: opts.ntfy ? "test" : undefined, ASSETS, ...(opts.vision ? { GOOGLE_VISION_KEY: "vision-schluessel" } : {}) };
+  const env = { PV: KV, ZUGANG: "betreiber", ASSETS, ...(opts.vision ? { GOOGLE_VISION_KEY: "vision-schluessel" } : {}) };
   const ctx = { exports: { Teil: new W.Teil({}, env) }, waitUntil() {} };
   const ntfy = [], push = [], pennyAbrufe = [], vision = []; push.status = 201;
   globalThis.fetch = async (u, o) => {
     u = String(u);
     if (u === "https://www.marktguru.de") return new Response('..."apiKey":"k","clientKey":"c"...');
-    if (u === "https://ntfy.sh") { ntfy.push(JSON.parse(o.body)); return new Response("{}"); }
+    if (u.startsWith("https://ntfy.sh")) { ntfy.push(o.body); return new Response("{}"); }   // darf nicht mehr vorkommen
     if (u.startsWith("https://push.example/")) { push.push({ url: u, headers: o.headers, body: o.body }); return new Response("", { status: push.status }); }   // Push-Dienst (Web-Push)
     if (u.startsWith("https://api.marktguru.de/api/v1/offers/publishers")) {   // Märkte der Gegend
       const m = new Map(), zip = new URL(u).searchParams.get("zipCode");
@@ -139,7 +165,10 @@ export async function umgebung(opts = {}) {
     return new Response("nf", { status: 404 });
   };
   const A = (p, m = "GET", b) => H.fetch(new Request("https://preise.phriehk.workers.dev" + p, { method: m, headers: { Authorization: "Bearer betreiber", "Content-Type": "application/json" }, body: b }), env, ctx);
-  return { H, env, ctx, KV, store, A, ntfy, push, pennyAbrufe, vision };
+  let g = null;
+  if (opts.geraet) { g = await geraet(); await A("/push/abo", "POST", JSON.stringify({ ...g.abo, geraet: "Test-iPhone" })); }
+  const mitteilungen = async () => Promise.all(push.filter(x => g && x.url === g.abo.endpoint).map(x => entschluesseln(g, x.body)));
+  return { H, env, ctx, KV, store, A, ntfy, push, pennyAbrufe, vision, mitteilungen };
 }
 
 /** Browser mit der echten Seite; alle Anfragen an die Worker-Adresse gehen an den echten Worker-Code */
