@@ -188,23 +188,31 @@ async function erkunden(env, ctx) {
   const kurz = (t, n) => String(t).replace(/\s+/g, " ").slice(0, n);
   const B = "https://www.penny.de/.resources/penny/webresources/js/";
   const pe = await hol("https://www.penny.de/angebote"), h = pe.t;
-  const js0 = (h.match(/\/\.resources\/penny\/webresources\/js\/index[^"]+\.js/) || [])[0], js = await hol("https://www.penny.de" + js0);
-  let map = {}; try { map = JSON.parse(js.t.match(/assetsMap = (\{.*?\}\});?/)[1]).js; } catch (e) {}
-  out.push("Komponenten: " + kurz(Object.keys(map).join(" "), 880));
-  out.push("Komponenten 2: " + kurz(Object.keys(map).join(" ").slice(870), 880));
-  const imSeite = [...new Set(h.match(/data-js-component="[^"]+"/g) || [])].map(x => x.slice(19, -1)); out.push("Auf der Seite: " + kurz(imSeite.join(" "), 880));
-  const pruef = Object.keys(map).filter(k => /offer|categor|week|list|angebot|product|tile/i.test(k) && imSeite.some(x => x.split("|").includes(k)));
-  out.push("Prüfe: " + pruef.join(" "));
-  const gesehen = new Set(), schlange = pruef.map(k => B + "components/" + map[k]);
+  const pre = (h.match(/<link[^>]*rel="preload"[^>]*href="([^"]*\/offers\/by-category\/[^"]*)"/) || h.match(/href="([^"]*\/offers\/by-category\/[^"]*)"[^>]*rel="preload"/) || [])[1];
+  out.push(`preload ${pre} · weeks ${[...new Set(h.match(/data-(current|next)-week="[^"]*"/g) || [])].join(" ")} · rest ${[...new Set(h.match(/data-rest-uri="[^"]*"/g) || [])].join(" ")}`);
+  out.push("Kategorien: " + [...new Set((h.match(/data-category-name="[^"]*"/g) || []).map(x => x.slice(20, -1)))].join(" "));
+  if (pre) {
+    const r = await hol(new URL(pre.replace(/&amp;/g, "&"), "https://www.penny.de").href);
+    out.push(`by-category: ${r.s} ${r.t.length} ${r.ct} · ${kurz(r.t, 300)}`);
+    let j = null; try { j = JSON.parse(r.t); } catch (e) {}
+    const angebote = []; const such = x => { if (Array.isArray(x)) x.forEach(such); else if (x && typeof x === "object") { if (x.primaryType && x.title) angebote.push(x); else Object.values(x).forEach(such); } };
+    such(j);
+    out.push(`  Angebote ${angebote.length} · Felder ${[...new Set(angebote.flatMap(o => Object.keys(o)))].join(",")}`);
+    for (const o of [...angebote.filter(o => (o.listPrice && o.listPrice !== "0.00") || (o.crossOutPrice && o.crossOutPrice !== "0.00") || o.originalPrice).slice(0, 3), ...angebote.slice(0, 2)]) { const q = { ...o }; delete q.imageRendition; delete q.productData; out.push("  Bsp " + kurz(JSON.stringify(q), 850)); }
+    out.push(`  mit UVP ${angebote.filter(o => o.listPrice && o.listPrice !== "0.00").length} · Streich ${angebote.filter(o => o.crossOutPrice && o.crossOutPrice !== "0.00").length} · showOriginal ${angebote.filter(o => String(o.showOriginalPrice) === "true").length}`);
+  }
+  // Marktsuche
+  let map = {}; try { const js0 = (h.match(/\/\.resources\/penny\/webresources\/js\/index[^"]+\.js/) || [])[0]; map = JSON.parse((await hol("https://www.penny.de" + js0)).t.match(/assetsMap = (\{.*?\}\});?/)[1]).js; } catch (e) {}
+  const gesehen = new Set(), schlange = ["market-finder", "market-finder-results", "market-finder-form", "zip-search", "market-finder-select"].filter(k => map[k]).map(k => B + "components/" + map[k]);
   let n = 0;
-  while (schlange.length && n < 40) {
+  while (schlange.length && n < 22) {
     const u = schlange.shift(); if (gesehen.has(u)) continue; gesehen.add(u); n++;
     const r = await hol(u); if (r.s !== 200) continue;
-    const tr = r.t.match(/.{0,200}(fetch\(|XMLHttpRequest|\.rest|restApi|\/offers|generateOffer).{0,260}/g) || [];
-    if (tr.length) { out.push(`${u.slice(B.length)}: ${r.t.length}`); for (const m of tr.slice(0, 5)) out.push("    " + kurz(m, 480)); }
-    for (const x of r.t.match(/["'`]\.\.?\/[^"'`\s]+\.js["'`]/g) || []) { const v = new URL(x.replace(/["'`]/g, ""), u).href; if (!gesehen.has(v) && !/viewport|tracking|input-modality|component-initializer|icon|ripple|sanitize|scroller|market-locator|offer\.BKe/.test(v)) schlange.push(v); }
+    const tr = r.t.match(/.{0,160}(fetch\(|\/markets|marketRegion|zip|plz|lat=|latitude).{0,200}/g) || [];
+    if (tr.length && /fetch\(|\/markets/.test(r.t)) { out.push(`${u.slice(B.length)}: ${r.t.length}`); for (const m of tr.filter(x => /fetch|markets|\$\{/.test(x)).slice(0, 4)) out.push("    " + kurz(m, 380)); }
+    for (const x of r.t.match(/["'`]\.\.?\/[^"'`\s]+\.js["'`]/g) || []) { const v = new URL(x.replace(/["'`]/g, ""), u).href; if (!gesehen.has(v) && !/viewport|tracking|input-modality|component-initializer|icon|ripple|sanitize|scroller|pinia|offer\.BKe/.test(v)) schlange.push(v); }
   }
-  out.push(`geprüft ${n}`);
+  for (const u of ["https://www.penny.de/.rest/market/markets?zipCode=46535", "https://www.penny.de/.rest/market"]) { const r = await hol(u); out.push(`${u}: ${r.s} ${r.t.length} · ${kurz(r.t, 300)}`); }
   return out;
 }
 
