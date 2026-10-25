@@ -187,20 +187,13 @@ async function erkunden(env, ctx) {
   const hol = async u => { try { const r = await fetch(u, { headers: H, redirect: "follow" }); const t = await r.text(); return { s: r.status, t, ct: r.headers.get("content-type") || "" }; } catch (e) { return { s: 0, t: String(e.message || e) }; } };
   const kurz = (t, n) => String(t).replace(/\s+/g, " ").slice(0, n);
   const B = "https://www.penny.de/.resources/penny/webresources/js/";
-  const pe = await hol("https://www.penny.de/angebote");
-  const js0 = (pe.t.match(/\/\.resources\/penny\/webresources\/js\/index[^"]+\.js/) || [])[0], js = await hol("https://www.penny.de" + js0);
-  let map = {}; try { map = JSON.parse(js.t.match(/assetsMap = (\{.*?\}\});?/)[1]).js; } catch (e) { out.push("map? " + e.message); }
-  const gesehen = new Set(), schlange = [];
-  for (const k of ["tabs-offers", "content-tile-list", "bubble-price", "content-tile-region-filter"]) if (map[k]) schlange.push(B + "components/" + map[k]);
-  let n = 0;
-  while (schlange.length && n < 14) {
-    const u = schlange.shift(); if (gesehen.has(u)) continue; gesehen.add(u); n++;
-    const r = await hol(u); if (r.s !== 200) { out.push(`${u.slice(B.length)}: ${r.s}`); continue; }
-    const tr = (r.t.match(/.{0,160}(fetch\(|\.rest|restApi|rest-api|\/offers|offers\?|weekRegion|apiUrl|categor).{0,220}/g) || []);
-    out.push(`${u.slice(B.length)}: ${r.t.length} · Treffer ${tr.length}`);
-    for (const m of tr.slice(0, 6)) out.push("    " + kurz(m, 400));
-    for (const x of r.t.match(/["'`]\.\.?\/[^"'`\s]+\.js["'`]/g) || []) { const v = new URL(x.replace(/["'`]/g, ""), u).href; if (!gesehen.has(v) && !/viewport|tracking|input-modality|component-initializer|icon|ripple/.test(v)) schlange.push(v); }
-  }
+  const pe = await hol("https://www.penny.de/angebote"), t = pe.t;
+  const m = t.match(/offer-tile__headline"?[^>]*>\s*[^<\s][\s\S]{0,40}/); 
+  if (m) { const i = t.lastIndexOf("<li", m.index); const st = t.slice(i, i + 6000).replace(/<svg[\s\S]*?<\/svg>/g, "").replace(/\s+/g, " "); for (let k = 0; k < 3; k++) out.push(`PENNY echte Kachel ${k}: ` + st.slice(k * 850, (k + 1) * 850)); }
+  else out.push("PENNY keine gefüllte Überschrift");
+  out.push("PENNY Region-Attribute: " + [...new Set(t.match(/data-[a-z-]*region[a-z-]*="[^"]{0,60}"/g) || [])].slice(0, 15).join(" "));
+  out.push("PENNY Preis-Attribute: " + [...new Set(t.match(/data-[a-z-]*(price|preis|uvp|cross)[a-z-]*="[^"]{0,40}"/g) || [])].slice(0, 25).join(" "));
+  for (const f of ["chunks/region.guPd0Cq1.js", "components/content-tile-region-filter.BZDI6S1j.js", "chunks/offer.BKe7i0_u.js"]) { const r = await hol(B + f); for (let k = 0; k < (f.includes("offer") ? 4 : 1); k++) out.push(`${f} ${k}: ` + kurz(r.t.slice(k * 860, (k + 1) * 860), 870)); }
   return out;
 }
 
