@@ -186,39 +186,22 @@ async function erkunden(env, ctx) {
   const out = [], H = { ...UA, Accept: "application/json, text/html;q=0.9, */*;q=0.8", "Accept-Language": "de-DE,de;q=0.9" };
   const hol = async u => { try { const r = await fetch(u, { headers: H, redirect: "follow" }); const t = await r.text(); return { s: r.status, t, ct: r.headers.get("content-type") || "" }; } catch (e) { return { s: 0, t: String(e.message || e) }; } };
   const kurz = (t, n) => String(t).replace(/\s+/g, " ").slice(0, n);
-  // ALDI: Prospekt gegen Marktguru
-  const prod = [];
-  for (const slug of ["kw44-26-op-mp", "kw44-26-op", "kw45-26-op", "kw45-26-op-mp", "kw46-26-vop"]) {
-    const sp = await hol(`https://prospekt.aldi-sued.de/${slug}/spreads.json`); let spreads = []; try { spreads = JSON.parse(sp.t); } catch (e) {}
-    let n0 = prod.length, mitPreis = 0;
-    if (slug === "kw44-26-op-mp") for (const x of spreads) {
-      const n = (x.originalPageNumbers || []).join("-"); if (!n) continue;
-      const h = await hol(`https://prospekt.aldi-sued.de/${slug}/page/${n}/hotspots_data.json`);
-      try { for (const hs of JSON.parse(h.t)) for (const pr of hs.products || []) prod.push(pr); } catch (e) {}
-    } else if (spreads.length) { const n = (spreads[1] && spreads[1].originalPageNumbers || []).join("-"); const h = await hol(`https://prospekt.aldi-sued.de/${slug}/page/${n}/hotspots_data.json`); try { const pp = JSON.parse(h.t).flatMap(hs => hs.products || []); mitPreis = pp.filter(p => p.price).length + "/" + pp.length; } catch (e) { mitPreis = "kein JSON " + h.s; } }
-    out.push(`ALDI ${slug}: ${sp.s} · ${spreads.length} Doppelseiten · Produkte ${prod.length - n0} · Probe ${mitPreis} · Text ${kurz(((spreads[0] || {}).pages || [{}])[0].text || "", 160)}`);
+  const pe = await hol("https://www.penny.de/angebote");
+  const js0 = (pe.t.match(/\/\.resources\/penny\/webresources\/js\/index[^"]+\.js/) || [])[0];
+  const js = await hol("https://www.penny.de" + js0);
+  out.push(`PENNY JS ${js0}: ${js.s} ${js.t.length}`);
+  const imp = [...new Set(js.t.match(/["'`][^"'`\s]{0,80}\.js["'`]/g) || [])]; out.push("  Teile: " + kurz(imp.slice(0, 40).join(" "), 880));
+  let quellen = [{ n: "index", t: js.t }];
+  for (const x of imp.filter(x => /offer|angebot|tile|market|week|list/i.test(x)).slice(0, 8)) { const u = x.replace(/["'`]/g, ""), url = /^http/.test(u) ? u : new URL(u, "https://www.penny.de" + js0).href; const r = await hol(url); quellen.push({ n: u, t: r.t }); out.push(`  ${u}: ${r.s} ${r.t.length}`); }
+  for (const q of quellen) for (const m of (q.t.match(/.{0,120}(\/offers|offers\/|rest\}\/|\/market\/|weekRegion|categoryOffers|wwIdent).{0,160}/g) || []).slice(0, 6)) out.push(`  [${q.n.slice(-30)}] ` + kurz(m, 300));
+  // Marktguru PENNY: wie oft schon ein statt-Preis?
+  for (const plz of [PLZ, PLZ2]) {
+    const ml = await maerkteRegion(env, PLZ), pm = ml.find(m => /penny/i.test(m.name));
+    if (!pm) { out.push("MG PENNY fehlt"); break; }
+    const mg = (await ctx.exports.Teil.marktSeite(pm.plz, pm.name, pm.id, 0, 1000)).liste;
+    out.push(`MG PENNY ${pm.plz}: ${mg.length} Angebote · statt ${mg.filter(o => o.preis_alt).length} · Bsp ${kurz(mg.filter(o => !o.preis_alt).slice(0, 6).map(o => `${o.marke} ${o.produkt} ${o.preis} [${o.beschreibung.slice(0, 50)}]`).join(" | "), 700)}`);
+    break;
   }
-  const ml = await maerkteRegion(env, PLZ), al = ml.find(m => m.name === "ALDI SÜD");
-  const mg = al ? (await ctx.exports.Teil.marktSeite(al.plz, al.name, al.id, 0, 1000)).liste : [];
-  const w = t => new Set(flach(t).split(/[^a-z0-9]+/).filter(x => x.length >= 3));
-  const aehnlich = (a, b) => { const A = w(a), B = w(b); let n = 0; A.forEach(x => { if (B.has(x)) n++; }); return n / Math.max(1, Math.min(A.size, B.size)); };
-  let treffer = 0, mitAlt = 0, neuAlt = 0, ohne = [];
-  const preisAkt = p => +(p.discountedPrice || p.price);
-  for (const p of prod) {
-    const k = mg.filter(o => Math.abs(o.preis - preisAkt(p)) < 0.005 && aehnlich(o.produkt + " " + o.marke, p.title + " " + (p.brand || "")) >= 0.5);
-    if (k.length) { treffer++; if (k.some(o => o.preis_alt)) mitAlt++; else if (p.discountedPrice) neuAlt++; } else ohne.push(`${p.title} ${p.brand || ""} ${preisAkt(p)} ${p.customLabel1 || ""}`);
-  }
-  out.push(`ALDI Marktguru ${mg.length} Angebote (preis_alt ${mg.filter(o => o.preis_alt).length}) · Prospekt ${prod.length} · gefunden ${treffer} · dort schon statt-Preis ${mitAlt} · neu statt-Preis ${neuAlt} · ohne Gegenstück ${ohne.length}`);
-  out.push("  ohne: " + kurz(ohne.slice(0, 25).join(" | "), 880));
-  out.push("  MG-Bsp: " + kurz(mg.filter(o => /26\.10|2026-10-26/.test(o.gueltig_von)).slice(0, 8).map(o => `${o.marke} ${o.produkt} ${o.preis} ${o.preis_alt || ""} ${o.gueltig_von}`).join(" | "), 880));
-  // PENNY
-  const pe = await hol("https://www.penny.de/angebote"), t = pe.t;
-  out.push("PENNY Datenquellen: " + [...new Set(t.match(/data-[a-z-]*(api|url|endpoint|src|week|region|market)[a-z-]*="[^"]{1,120}"/g) || [])].slice(0, 25).join(" "));
-  out.push("PENNY Skripte: " + [...new Set(t.match(/<script[^>]*src="[^"]+"/g) || [])].slice(0, 10).join(" "));
-  out.push("PENNY Preise: " + kurz((t.match(/.{0,60}\d+[,.]\d\d.{0,60}/g) || []).slice(0, 6).join(" || "), 880));
-  const arts = t.split('<article class="offer-tile">');
-  for (const i of [3, 4]) out.push(`PENNY Kachel ${i}: ` + kurz((arts[i] || "").replace(/<svg.*?<\/svg>/g, "").replace(/class="[^"]*"/g, "").slice(0, 3000), 880));
-  const wi = t.indexOf("wwIdent"); if (wi >= 0) out.push("PENNY wwIdent: " + kurz(t.slice(wi - 300, wi + 300), 700));
   return out;
 }
 
