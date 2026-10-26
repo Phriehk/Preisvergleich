@@ -892,18 +892,18 @@ t("Kassenbon mit Google: Zeilen aus den Wörtern, ohne Texterkennung auf dem Ger
   } finally { await s.b.close(); }
 });
 
-t("REWE kommt jetzt aus Meiderich: gespeicherte Marktwahl, ausgeblendete Märkte und Käufe mit dem alten Namen werden umbenannt", async () => {
-  const u = await umgebung({ nurPlz: { REWE: "47137" } });
+t("REWE kommt wieder aus 47053: gespeicherte Marktwahl, ausgeblendete Märkte und Käufe mit „REWE (47137)“ werden umbenannt", async () => {
+  const u = await umgebung({ nurPlz: { REWE: "47053" } });
   await u.KV.put("favoriten", JSON.stringify([{ name: "Butter", aus: "" }]));
   await u.A("/aktualisieren", "POST");
   const s = await browserStarten(u, {});
   try {
-    await s.c.addInitScript(() => { if (!sessionStorage.getItem("x")) { sessionStorage.setItem("x", "1"); localStorage.setItem("pv-zettel", JSON.stringify({ Butter: 1 })); localStorage.setItem("pv-wahl", JSON.stringify({ Butter: "REWE (47053)" })); localStorage.setItem("pv-aus", JSON.stringify(["REWE (47053)", "Lidl"])); localStorage.setItem("pv-kaeufe", JSON.stringify([{ k: "Butter", d: "2026-10-20", n: 1, z: "Butter", m: "REWE (47053)", p: 3.49 }])); } });
+    await s.c.addInitScript(() => { if (!sessionStorage.getItem("x")) { sessionStorage.setItem("x", "1"); localStorage.setItem("pv-zettel", JSON.stringify({ Butter: 1 })); localStorage.setItem("pv-wahl", JSON.stringify({ Butter: "REWE (47137)" })); localStorage.setItem("pv-aus", JSON.stringify(["REWE (47137)", "Lidl"])); localStorage.setItem("pv-kaeufe", JSON.stringify([{ k: "Butter", d: "2026-10-20", n: 1, z: "Butter", m: "REWE (47137)", p: 3.49 }])); } });
     await s.oeffnen("");
     const p = s.p;
-    assert.deepEqual(await p.evaluate(() => [wahl.Butter, [...aus].sort().join(","), kaeufe[0].m]), ["REWE (47137)", "Lidl,REWE (47137)", "REWE (47137)"]);
-    assert.deepEqual(await p.evaluate(() => JSON.parse(localStorage.getItem("pv-wahl"))), { Butter: "REWE (47137)" });
-    assert.ok(await p.evaluate(() => offers.some(o => o.markt === "REWE (47137)")));
+    assert.deepEqual(await p.evaluate(() => [wahl.Butter, [...aus].sort().join(","), kaeufe[0].m]), ["REWE (47053)", "Lidl,REWE (47053)", "REWE (47053)"]);
+    assert.deepEqual(await p.evaluate(() => JSON.parse(localStorage.getItem("pv-wahl"))), { Butter: "REWE (47053)" });
+    assert.ok(await p.evaluate(() => offers.some(o => o.markt === "REWE (47053)")));
     assert.deepEqual(s.fehler, []);
   } finally { await s.b.close(); }
 });

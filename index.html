@@ -520,8 +520,8 @@ let zugang=ls.raw("pv-code")||"";             // Zugangscode des Betreibers
 let konto=ls.get("pv-konto",null);
 let favsLokal=(ls.get("pv-favs",[])||[]).filter(f=>f&&typeof f.name==="string");   // eigene Favoriten ohne Zugangscode
 let vd=ls.get("pv-verlauf",[])||[];           // Preisverlauf: [datum, markt, preis je Einheit, bis, von, gruppe, menge]
-// Märkte, deren Quelle umgezogen ist (REWE kommt jetzt aus Meiderich): alte Namen in den gespeicherten Daten ersetzen, auch in Daten aus dem Konto
-const MARKT_UMZUG={"REWE (47053)":"REWE (47137)"},umzug=m=>MARKT_UMZUG[m]||m;
+// Märkte, deren Quelle umgezogen ist (REWE kam einen Tag lang aus Meiderich, jetzt wieder aus 47053): Namen in den gespeicherten Daten ersetzen, auch in Daten aus dem Konto
+const MARKT_UMZUG={"REWE (47137)":"REWE (47053)"},umzug=m=>MARKT_UMZUG[m]||m;
 function umzugAnwenden(){
   let neu=false;
   for(const k in wahl)if(MARKT_UMZUG[wahl[k]]){wahl[k]=umzug(wahl[k]);neu=true}
@@ -540,7 +540,7 @@ const cf=/\.workers\.dev$/.test(location.hostname);   // die Seite läuft beim e
 if(/\.github\.io$/.test(location.hostname))location.replace(SERVER+"/"+(zugang?"#code="+zugang:""));   // alte Adresse
 const wUrl=cf?location.origin:SERVER;
 const betreiber=()=>!!zugang;
-const HEIM=["47178","46535","47137"];   // für diese Postleitzahlen holt der Server die Angebote täglich
+const HEIM=["47178","46535","47053","47137"];   // für diese Postleitzahlen holt der Server die Angebote täglich
 function regionPlz(){return ort&&ort.angebote!==false&&ort.plz&&!HEIM.includes(ort.plz)?ort.plz:""}
 const lokalModus=()=>!betreiber()||!!regionPlz();   // Angebote über die öffentliche Abfrage statt der täglichen Liste
 const quellPlz=()=>regionPlz()||(ort&&ort.plz&&HEIM.includes(ort.plz)?ort.plz:"47178");

@@ -13,14 +13,14 @@ test("Märkte: ohne Baumärkte, mit dm aus 47137, Kaufland bleibt, wenn Marktgur
   assert.ok(namen(l).includes("Kaufland=2"), namen(l).join(", "));
   // Sonntag: Marktguru nennt Kaufland nicht, die Angebote gibt es aber
   opts.verlagOhne = new Set(["Kaufland"]);
-  u.store.delete("mkl5:47178");
+  u.store.delete("mkl6:47178");
   l = await (await u.A("/maerkte?plz=47178")).json();
   assert.ok(namen(l).includes("Kaufland=2"), "Kaufland bleibt: " + namen(l).join(", "));
   // ein Markt aus einer Postleitzahl, die nicht mehr Quelle ist, kommt nicht über das Gedächtnis zurück
-  const bek = JSON.parse(u.store.get("mkbek:47178")); bek["47053|126802"] = { name: "REWE", plz: "47053", t: Date.now() }; u.store.set("mkbek:47178", JSON.stringify(bek));
-  u.store.delete("mkl5:47178");
+  const bek = JSON.parse(u.store.get("mkbek:47178")); bek["47137|126802"] = { name: "REWE", plz: "47137", t: Date.now() }; u.store.set("mkbek:47178", JSON.stringify(bek));
+  u.store.delete("mkl6:47178");
   l = await (await u.A("/maerkte?plz=47178")).json();
-  assert.ok(!namen(l).some(x => /47053/.test(x)), namen(l).join(", "));
+  assert.ok(!namen(l).some(x => /^REWE \(47137\)/.test(x)), namen(l).join(", "));
   const r = await (await u.A("/markt?plz=47178&id=126654")).json();
   assert.equal(r.angebote.length, 2);
   // Favoriten finden dm-Angebote aus 47137
@@ -30,21 +30,21 @@ test("Märkte: ohne Baumärkte, mit dm aus 47137, Kaufland bleibt, wenn Marktgur
   assert.deepEqual(a.map(x => x.markt), ["dm-drogerie markt (47137)"]);
 });
 
-test("REWE kommt aus Meiderich (47137): Verlauf und Korrekturen mit dem alten Namen werden einmal umbenannt", async () => {
-  const u = await umgebung({ nurPlz: { REWE: "47137" } });
+test("REWE kommt wieder aus 47053: Verlauf und Korrekturen mit „REWE (47137)“ werden einmal umbenannt", async () => {
+  const u = await umgebung({ nurPlz: { REWE: "47053" } });
   await u.KV.put("favoriten", JSON.stringify([{ name: "Butter", aus: "" }]));
   await u.KV.put("verlauf:monate", JSON.stringify(["2026-10"]));
-  await u.KV.put("verlauf:2026-10", "2026-10-20;REWE (47053);Butter;0.5;3.49;6.98;2026-10-25;2026-10-19;Butter\n2026-10-20;Lidl;Butter;0.25;1.99;7.96;;;Butter");
-  await u.KV.put("korrekturen", JSON.stringify({ "Butter|REWE (47053)|Butter|||3.49|2|250": { ok: true, t: Date.now() } }));
+  await u.KV.put("verlauf:2026-10", "2026-10-20;REWE (47137);Butter;0.5;3.49;6.98;2026-10-25;2026-10-19;Butter\n2026-10-20;Lidl;Butter;0.25;1.99;7.96;;;Butter");
+  await u.KV.put("korrekturen", JSON.stringify({ "Butter|REWE (47137)|Butter|||3.49|2|250": { ok: true, t: Date.now() } }));
   await u.A("/aktualisieren", "POST");
   const v = u.store.get("verlauf:2026-10").split("\n");
-  assert.equal(v[0], "2026-10-20;REWE (47137);Butter;0.5;3.49;6.98;2026-10-25;2026-10-19;Butter");
+  assert.equal(v[0], "2026-10-20;REWE (47053);Butter;0.5;3.49;6.98;2026-10-25;2026-10-19;Butter");
   assert.ok(v.some(z => z.startsWith("2026-10-20;Lidl;")));
-  assert.deepEqual(Object.keys(JSON.parse(u.store.get("korrekturen"))), ["Butter|REWE (47137)|Butter|||3.49|2|250"]);
-  assert.ok(JSON.parse(u.store.get("angebote")).some(x => x.markt === "REWE (47137)"), "REWE-Angebote aus 47137");
-  assert.ok(!JSON.parse(u.store.get("angebote")).some(x => /47053/.test(x.markt)));
-  // nur einmal: ein späterer alter Eintrag (z. B. aus einer Sicherung) bleibt, wie er ist
-  await u.KV.put("verlauf:2026-10", "2026-10-21;REWE (47053);Butter");
+  assert.deepEqual(Object.keys(JSON.parse(u.store.get("korrekturen"))), ["Butter|REWE (47053)|Butter|||3.49|2|250"]);
+  assert.ok(JSON.parse(u.store.get("angebote")).some(x => x.markt === "REWE (47053)"), "REWE-Angebote aus 47053");
+  assert.ok(!JSON.parse(u.store.get("angebote")).some(x => /47137/.test(x.markt)));
+  // nur einmal: ein späterer Eintrag mit dem anderen Namen bleibt, wie er ist
+  await u.KV.put("verlauf:2026-10", "2026-10-21;REWE (47137);Butter");
   await u.A("/aktualisieren", "POST");
-  assert.match(u.store.get("verlauf:2026-10"), /^2026-10-21;REWE \(47053\);Butter/);
+  assert.match(u.store.get("verlauf:2026-10"), /^2026-10-21;REWE \(47137\);Butter/);
 });

@@ -8,10 +8,10 @@ const UA = { "User-Agent": "Mozilla/5.0 (privates Testprojekt)" };
 const SEARCH = "https://api.marktguru.de/api/v1/offers/search";
 const PLZ = "47178";
 // Märkte aus Nachbar-Postleitzahlen, die Marktguru für die eigene nicht (oder nicht passend) führt: PENNY und Thomas Philipps aus Dinslaken,
-// REWE und dm aus Duisburg-Meiderich (dort ist dein REWE; dm-Preise gelten bundesweit)
-const NACHBARN = [{ plz: "46535", maerkte: ["penny", "thomas philipps"] }, { plz: "47137", maerkte: ["rewe", "dm-drogerie markt"] }];
+// REWE aus der Duisburger Innenstadt (für Meiderich hat Marktguru nur etwa die Hälfte der REWE-Angebote), dm aus Meiderich (dm-Preise gelten bundesweit)
+const NACHBARN = [{ plz: "46535", maerkte: ["penny", "thomas philipps"] }, { plz: "47053", maerkte: ["rewe"] }, { plz: "47137", maerkte: ["dm-drogerie markt"] }];
 // Märkte, deren Quelle umgezogen ist: alte Namen im Verlauf und in den Korrekturen einmal umbenennen (die Seite macht dasselbe mit ihren Daten)
-const MARKT_UMZUG = { "REWE (47053)": "REWE (47137)" };
+const MARKT_UMZUG = { "REWE (47137)": "REWE (47053)" };   // REWE kam einen Tag lang aus 47137, jetzt wieder aus 47053
 async function umzugAnwenden(env) {
   const marke = "umzug:" + Object.values(MARKT_UMZUG).join("|");
   if (await env.PV.get(marke)) return 0;
@@ -178,7 +178,7 @@ async function marktListe(env, plz, passt, ohne) {   // Märkte einer Postleitza
   return liste;
 }
 async function maerkteRegion(env, plz) {   // für die eigene Gegend kommen wie bei den Favoriten einzelne Märkte aus den Nachbar-Postleitzahlen dazu
-  const key = "mkl5:" + plz, alt = await env.PV.get(key, "json");
+  const key = "mkl6:" + plz, alt = await env.PV.get(key, "json");
   if (alt && Date.now() - alt.t < 12 * 3600e3) return alt.liste;
   let liste = await marktListe(env, plz);
   if (plz === PLZ) for (const nb of NACHBARN) {
