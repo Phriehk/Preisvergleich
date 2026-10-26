@@ -22,13 +22,37 @@ const marktWahl = async (p, id) => {   // „Nach Markt“: Liste der Märkte au
   await p.click(`.mk-liste [data-mk="${id}"]`);
 };
 const klick = async (p, sel) => { await p.evaluate(s => document.querySelector(s).click(), sel); await p.waitForTimeout(900); };
-const bereich = async (p, v) => { await p.click(`#leiste [data-v="${v}"]`); await p.waitForTimeout(300); };
+const bereich = async (p, v) => {   // unten vier Bereiche; „Liste“ hat oben Planen | Im Laden, Preisalarm liegt unter „Mehr“
+  if (v === "alarm") return einst(p, "alarm");
+  await p.click(`#leiste [data-v="${v === "einkaufen" ? "liste" : v}"]`); await p.waitForTimeout(200);
+  if (v === "liste" || v === "einkaufen") {
+    const seg = p.locator(`[data-seg="lTab"][data-wert="${v}"]`);
+    if (!(await seg.evaluate(e => e.classList.contains("an")))) { await seg.click(); await p.waitForTimeout(200); }
+  }
+  await p.waitForTimeout(100);
+};
+const einst = async (p, k) => { await p.click('#leiste [data-v="mehr"]'); await p.waitForTimeout(200); await p.click(`[data-einst="${k}"]`); await p.waitForTimeout(300); };
+const zeileAuf = async (p, name) => {   // Liste: Zeile antippen klappt Normalpreis, Markt und Entfernen auf
+  const z = p.locator(".zeile", { hasText: name }).first();
+  if (!(await z.evaluate(e => e.classList.contains("offen")))) { await z.locator(".z-kopf").click(); await p.waitForTimeout(200); }
+  return p.locator(".zeile.offen", { hasText: name }).first();
+};
+const empfAuf = async p => { if (!(await p.locator(".empf.offen").count())) { await p.click(".empf .e-kopf"); await p.waitForTimeout(200); } };
 const suche = async (p, text) => { await bereich(p, "suchen"); await p.fill("#sucheText", text); await p.click('[data-aktion="suchen"]'); await p.waitForFunction(() => !S.suche.laeuft, null, { timeout: 15000 }); await p.waitForTimeout(200); };
 
 t("Alle Bereiche laden ohne Fehler, auch die Produktseite", async () => {
   await mitSeite({}, async ({ p, fehler }) => {
     assert.deepEqual(await p.$$eval(".produkt h3", e => e.map(x => x.textContent)), ["Äpfel", "Eier", "Reis"]);
+    assert.deepEqual(await p.$$eval("#leiste button", e => e.map(x => x.dataset.v)), ["angebote", "suchen", "liste", "mehr"]);
     for (const v of ["suchen", "liste", "einkaufen", "mehr", "angebote"]) await bereich(p, v);
+    for (const [k, titel] of [["standort", "Standort und Fahrt"], ["maerkte", "Märkte"], ["normal", "Normalpreise"], ["alarm", "Preisalarm"], ["darstellung", "Darstellung"], ["ersparnis", "Ersparnis"], ["konto", "Konto"], ["betreiber", "Betreiber"], ["ueber", "Über die Daten"]]) {
+      await einst(p, k);
+      assert.equal(await p.textContent("#titel"), titel); assert.equal(await p.evaluate(() => location.hash), "#mehr/" + k);
+      assert.equal(await p.locator('#leiste [data-v="mehr"].an').count(), 1); assert.equal(await p.locator("#zurueck").isVisible(), true);
+    }
+    await p.click("#zurueck"); await p.waitForTimeout(300);
+    assert.equal(await p.textContent("#titel"), "Mehr");
+    await bereich(p, "angebote");
     await p.click('.produkt[data-p="Eier"]'); await p.waitForTimeout(300);
     assert.equal(await p.textContent("#titel"), "Eier");
     assert.ok(await p.$$eval("tbody tr", e => e.length) >= 2);
@@ -41,7 +65,7 @@ t("Alle Bereiche laden ohne Fehler, auch die Produktseite", async () => {
 
 t("Konto anlegen: Passwortprüfung, Anmeldung, Abgleich ohne Datenverlust (auch wenn ein Gerät nur einen Teil schickt)", async () => {
   await mitSeite({ code: "" }, async ({ p, fehler }, u) => {
-    await bereich(p, "mehr");
+    await einst(p, "konto");
     await p.click('[data-seg="kMode"][data-wert="neu"]');
     await p.fill("#kName", "Anna"); await p.fill("#kPw", "geheim123"); await p.fill("#kPw2", "falsch123"); await p.click("#kGo");
     assert.match(await p.textContent("#kInfo"), /nicht gleich/);
@@ -115,19 +139,28 @@ t("Suche: Name führt zu allen Angeboten nach Markt, dort im Markt kaufen; Markt
     // Liste: Markt selbst wählen
     await p.click('#leiste [data-v="angebote"]'); await p.waitForTimeout(300);
     await p.click('.produkt[data-p="Eier"] .p-plus');
-    await p.click('#leiste [data-v="liste"]'); await p.waitForTimeout(300);
-    const eier = p.locator(".zeile", { hasText: "Eier" }).first();
+    await bereich(p, "liste");
+    assert.match(await p.locator(".zeile", { hasText: "Eier" }).first().locator(".z-info").textContent(), /ALDI SÜD|PENNY/, "eine Zeile: Markt und Preis");
+    assert.equal(await p.locator(".zeile select[data-wahl]").count(), 0, "Marktwahl erst nach dem Antippen");
+    const eier = await zeileAuf(p, "Eier");
     assert.match(await eier.locator(".posten-info").textContent(), /ALDI SÜD|PENNY/);
     await eier.locator("select[data-wahl]").selectOption("Kaufland"); await p.waitForTimeout(300);
     assert.equal(await p.evaluate(() => wahl.Eier), "Kaufland");
     assert.match(await p.locator(".zeile", { hasText: "Eier" }).first().locator(".posten-info").textContent(), /📌[\s\S]*Kaufland/);
+    assert.match(await p.locator(".zeile", { hasText: "Eier" }).first().locator(".z-info").textContent(), /📌[\s\S]*Kaufland/);
+    assert.match(await p.textContent(".empf .e-kopf"), /Kaufland/);
+    await empfAuf(p);
     assert.match(await p.textContent(".bon"), /Selbst gewählt: Eier bei Kaufland, Weihenstephan Butter bei PENNY/);
     assert.match(await p.textContent(".bon-kopf"), /Kaufland/);
-    await p.click('#leiste [data-v="einkaufen"]'); await p.waitForTimeout(300);
+    await bereich(p, "einkaufen");
+    assert.equal(await p.evaluate(() => location.hash), "#einkaufen");
+    assert.equal(await p.locator('#leiste [data-v="liste"].an').count(), 1);
     const gr = await p.evaluate(() => expGruppen().map(g => g.kopf + ":" + g.namen.map(x => x.name).join(",")));
     assert.ok(gr.includes("Kaufland:Eier") && gr.includes("PENNY:Weihenstephan Butter"), JSON.stringify(gr));
     await p.click('#leiste [data-v="liste"]'); await p.waitForTimeout(300);
-    await p.locator(".zeile", { hasText: "Eier" }).first().locator("select[data-wahl]").selectOption(""); await p.waitForTimeout(300);
+    assert.equal(await p.evaluate(() => S.v), "einkaufen", "die Liste öffnet, was zuletzt offen war");
+    await bereich(p, "liste");
+    await (await zeileAuf(p, "Eier")).locator("select[data-wahl]").selectOption(""); await p.waitForTimeout(300);
     assert.equal(await p.evaluate(() => wahl.Eier), undefined);
     assert.equal(JSON.parse(await p.evaluate(() => localStorage.getItem("pv-wahl")))["Weihenstephan Butter"], "PENNY");
     assert.deepEqual(fehler, []);
@@ -150,7 +183,7 @@ t("Einkaufen: nach Markt, abhaken bleibt nach Neuladen, eigene Artikel, Abgehakt
     await bereich(p, "einkaufen");
     assert.match(await p.textContent(".box-kopf h2"), /1 von 4/, "Haken bleibt nach Neuladen");
     await bereich(p, "liste");
-    await p.click("details[data-merk] summary"); await p.waitForTimeout(200);
+    await p.click('details[data-merk="exportOffen"] summary'); await p.waitForTimeout(200);
     const text = await p.$eval("#expText", e => e.value);
     assert.match(text, /^Äpfel \(\w+\)$/m); assert.match(text, /^Salz$/m); assert.match(text, /^Batterien$/m);
     assert.doesNotMatch(text, /×|\d\s?(kg|l|g)\b/, "keine Mengen im Export");
@@ -203,9 +236,10 @@ t("Liste: alte Mengen werden ganze Stück, Vergleich auch ohne Markt mit allen A
     await p.reload(); await p.waitForTimeout(1500); await bereich(p, "liste");
     assert.equal(await p.evaluate(() => zettel.Butter), 0.5, "0,6 kg werden 2 Stück à 250 g");
     assert.match(await p.textContent("#ansicht"), /alter Eintrag ohne Favorit \(Alt\)/);
+    await empfAuf(p);
     const bon = (await p.textContent(".bon")).replace(/\s+/g, " ");
     assert.match(bon, /Beste Wahl/); assert.match(bon, /von 3 Artikeln im Angebot/);
-    const zeilen = await p.$$eval(".zeile .posten-info", e => e.map(x => x.textContent.replace(/\s+/g, " ")));
+    const zeilen = await p.$$eval(".zeile .z-info", e => e.map(x => x.textContent.replace(/\s+/g, " ")));
     assert.ok(zeilen.length === 3 && zeilen.every(z => /€/.test(z)), JSON.stringify(zeilen));
     await p.click('[data-aktion="alteWeg"]'); await p.waitForTimeout(200);
     assert.equal(await p.evaluate(() => "Alt|1250" in zettel), false);
@@ -217,13 +251,19 @@ t("Liste: Menge in Stück, Normalpreis je Stück, Vergleich mit bester Wahl", as
   await mitSeite({ favs: [{ name: "Butter", aus: "" }, { name: "Eier", aus: "" }] }, async ({ p, fehler }) => {
     await p.click('.produkt[data-p="Butter"] .p-plus'); await p.click('.produkt[data-p="Eier"] .p-plus');
     await bereich(p, "liste");
-    assert.match(await p.textContent(".zeile"), /Stück à 250 g/);
     await p.click('.zeile [data-schritt="1"] >> nth=0'); await p.waitForTimeout(200);
     assert.equal(await p.evaluate(() => zettel.Butter), 0.5);
-    const rw = p.locator(".zeile >> nth=0").locator("input[data-r]");
+    const butter = await zeileAuf(p, "Butter");
+    assert.match(await butter.textContent(), /Stück à 250 g/);
+    const rw = butter.locator("input[data-r]");
     await rw.fill("2,29"); await rw.press("Tab"); await p.waitForTimeout(200);
     assert.equal(await p.evaluate(() => richt.Butter), 9.16);
-    assert.match(await p.textContent(".bon"), /Beste Wahl/);
+    assert.match(await p.textContent(".empf"), /Beste Wahl/);
+    // eine Zeile je Artikel: Name, Markt mit Preis und die Menge nebeneinander
+    await p.setViewportSize({ width: 390, height: 800 });
+    const eier = p.locator(".zeile", { hasText: "Eier" }).first();
+    const [k, m] = await Promise.all([eier.locator(".z-kopf").boundingBox(), eier.locator(".stepper").boundingBox()]);
+    assert.ok(Math.abs((k.y + k.height / 2) - (m.y + m.height / 2)) < 12 && k.height < 60, JSON.stringify([k, m]));
     assert.deepEqual(fehler, []);
   });
 });
@@ -233,7 +273,7 @@ t("Liste: Name führt zur Produktseite (mit Marktguru-Link), Zurück an dieselbe
     for (const n of ["Butter", "Eier", "Milch"]) await p.click(`.produkt[data-p="${n}"] .p-plus`);
     await bereich(p, "liste");
     await p.setViewportSize({ width: 390, height: 420 });
-    const link = p.locator(".zeile a.plink", { hasText: "Milch" }).first();
+    const link = (await zeileAuf(p, "Milch")).locator("a[data-zp]");
     await link.scrollIntoViewIfNeeded(); await p.waitForTimeout(100);
     const y = await p.evaluate(() => scrollY);
     assert.ok(y > 50, "Liste ist gescrollt: " + y);
@@ -270,7 +310,8 @@ t("Alle Angebote je Markt: Märkte untereinander (ohne Baumärkte), Gruppen, Suc
     const gruppen = async () => p.$$eval(".mk-gruppe > summary", e => e.map(x => x.textContent.replace(/\s+/g, " ").trim()));
     let g = await gruppen();
     assert.ok(g.includes("Milch, Käse & Eier 2") && g.includes("Nudeln, Reis & Spezialitäten 1") && !g.some(x => /Garten/.test(x)), JSON.stringify(g));
-    assert.equal(await p.locator(".mk-z").count(), 0, "Gruppen sind zu, bis man sie öffnet");
+    assert.equal(await p.locator(".mk-fav").count(), 0, "Eier gibt es bei Lidl nicht");
+    assert.equal(await p.locator(".mk-gruppe:not(.mk-fav) .mk-z").count(), 0, "Gruppen sind zu, bis man sie öffnet");
     await p.click('[data-seg="mkBereich"][data-wert="alle"]');
     g = await gruppen(); assert.ok(g.some(x => /^Garten & Heimwerken 1/.test(x)), JSON.stringify(g));
     await p.click('.mk-gruppe:has-text("Milch, Käse") > summary'); await p.waitForTimeout(300);
@@ -293,6 +334,60 @@ t("Alle Angebote je Markt: Märkte untereinander (ohne Baumärkte), Gruppen, Suc
   });
 });
 
+t("Nach Markt: oben „Meine Favoriten“ mit den Angeboten deiner Favoriten in diesem Markt", async () => {
+  await mitSeite({ favs: [{ name: "Milch", aus: "" }, { name: "Eier", aus: "" }], hash: "#markt" }, async ({ p, fehler }) => {
+    await marktWahl(p, "126679");
+    await p.waitForSelector(".mk-gruppe", { timeout: 10000 });
+    const g = await p.$$eval(".mk-gruppe > summary", e => e.map(x => x.textContent.replace(/\s+/g, " ").trim()));
+    assert.equal(g[0], "★ Meine Favoriten 1", JSON.stringify(g));
+    assert.equal(await p.$eval(".mk-fav", d => d.open), true, "von Anfang an offen");
+    const z = p.locator(".mk-fav .mk-z").first();
+    assert.match(await z.textContent(), /Milbona Milch[\s\S]*★ Milch[\s\S]*0,89/);
+    await z.locator("[data-liste]").click(); await p.waitForTimeout(300);
+    assert.equal(await p.evaluate(() => aufListe("Milch")), true, "+ setzt den Favoriten auf die Liste");
+    assert.match(await p.textContent(".mk-fav [data-liste]"), /✓/);
+    // zugeklappt bleibt zu
+    await p.click(".mk-fav > summary"); await p.waitForTimeout(200);
+    await marktWahl(p, "126765"); await p.waitForTimeout(500); await marktWahl(p, "126679"); await p.waitForTimeout(500);
+    assert.equal(await p.$eval(".mk-fav", d => d.open), false);
+    await p.click(".mk-fav > summary"); await p.waitForTimeout(300);
+    await p.click(".mk-fav a[data-zp]"); await p.waitForTimeout(300);
+    assert.equal(await p.evaluate(() => S.v + "|" + S.p), "produkt|Milch", "der Name führt zum Preisvergleich des Favoriten");
+    // die Wahl des Marktes hat kein „▾“ davor
+    await p.goBack(); await p.waitForTimeout(300);
+    await p.click(".mk-wahl > summary"); await p.waitForTimeout(100);
+    assert.equal(await p.$eval(".mk-wahl > summary", e => getComputedStyle(e, "::before").content), "none");
+    assert.deepEqual(fehler, []);
+  });
+});
+
+t("Suchen ohne Eingabe: zuletzt gesucht und Favoriten zum Antippen; Produktseite: Produkte untereinander", async () => {
+  await mitSeite({ favs: [{ name: "Milch", aus: "" }, { name: "Butter", aus: "" }] }, async ({ p, fehler }) => {
+    await bereich(p, "suchen");
+    assert.match(await p.textContent("#ansicht"), /Deine Favoriten[\s\S]*Butter[\s\S]*Milch/);
+    assert.equal(await p.locator("[data-zul]").count(), 0);
+    await suche(p, "Reis");
+    await p.click('[data-aktion="sucheLeeren"]'); await p.waitForTimeout(200);
+    assert.deepEqual(await p.$$eval("[data-zul]", e => e.map(x => x.textContent)), ["Reis"]);
+    await p.click('[data-zul="Reis"]'); await p.waitForFunction(() => !S.suche.laeuft && S.suche.items.length === 1 && S.suche.items[0].status === "fertig", null, { timeout: 10000 });
+    await p.click('[data-aktion="sucheLeeren"]'); await p.waitForTimeout(200);
+    await p.click('.chip[data-p="Milch"]'); await p.waitForTimeout(300);
+    assert.equal(await p.evaluate(() => S.v + "|" + S.p), "produkt|Milch");
+    // Produkte untereinander statt seitwärts
+    await p.setViewportSize({ width: 390, height: 800 });
+    assert.match(await p.textContent(".p-wahl > summary"), /Alle Produkte[\s\S]*3 Produkte/);
+    await p.click(".p-wahl > summary"); await p.waitForTimeout(100);
+    const lage = await p.$$eval(".p-wahl .mk-m", e => e.map(x => x.getBoundingClientRect()).map(r => [Math.round(r.left), Math.round(r.top)]));
+    assert.ok(lage.length === 4 && lage.every((r, i) => i === 0 || (r[0] === lage[0][0] && r[1] > lage[i - 1][1])), JSON.stringify(lage));
+    await p.click('.p-wahl [data-marke]:has-text("Milbona")'); await p.waitForTimeout(300);
+    assert.equal(await p.$eval(".p-wahl", d => d.open), false);
+    assert.match(await p.textContent(".p-wahl > summary"), /Milbona[\s\S]*Produkt wechseln/);
+    assert.equal(await p.locator("tbody tr").count(), 1);
+    assert.equal(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+    assert.deepEqual(fehler, []);
+  });
+});
+
 t("Alter Preis (oldPrice) wird als „statt …“ angezeigt", async () => {
   await mitSeite({ favs: [{ name: "Milch", aus: "" }] }, async ({ p }) => {
     assert.match(await p.textContent('.produkt[data-p="Milch"]'), /statt 1,09/);
@@ -305,19 +400,19 @@ t("Normalpreis: Vorschlag aus „statt …“, eigener Preis ersetzt ihn, sonst 
   await mitSeite({ favs: [{ name: "Milch", aus: "" }, { name: "Butter", aus: "" }] }, async ({ p, fehler }) => {
     await p.click('.produkt[data-p="Milch"] .p-plus'); await p.click('.produkt[data-p="Butter"] .p-plus');
     await bereich(p, "liste");
-    const feld = n => p.locator(".zeile", { hasText: n }).first().locator("input[data-r]");
-    assert.equal(await feld("Milch").inputValue(), "1,09");
-    assert.equal(await feld("Milch").getAttribute("class"), "vorschlag");
+    const feld = async n => (await zeileAuf(p, n)).locator("input[data-r]");
+    assert.equal(await (await feld("Milch")).inputValue(), "1,09");
+    assert.equal(await (await feld("Milch")).getAttribute("class"), "vorschlag");
     assert.match(await p.locator(".zeile", { hasText: "Milch" }).first().textContent(), /Vorschlag aus dem früheren Preis \(„statt“\) bei Lidl/);
-    assert.equal(await feld("Butter").inputValue(), "", "ohne „statt“-Preis und ohne eigenen Preis leer");
+    assert.equal(await (await feld("Butter")).inputValue(), "", "ohne „statt“-Preis und ohne eigenen Preis leer");
     assert.equal(await p.evaluate(() => richt.Milch), undefined, "der Vorschlag wird nicht gespeichert");
-    await feld("Milch").fill("1,19"); await feld("Milch").press("Tab"); await p.waitForTimeout(200);
+    let f = await feld("Milch"); await f.fill("1,19"); await f.press("Tab"); await p.waitForTimeout(200);
     assert.equal(await p.evaluate(() => richt.Milch), 1.19);
-    assert.equal(await feld("Milch").getAttribute("class"), null);
-    assert.equal(await feld("Milch").inputValue(), "1,19");
-    await feld("Milch").fill(""); await feld("Milch").press("Tab"); await p.waitForTimeout(200);
+    assert.equal(await (await feld("Milch")).getAttribute("class"), null);
+    assert.equal(await (await feld("Milch")).inputValue(), "1,19");
+    f = await feld("Milch"); await f.fill(""); await f.press("Tab"); await p.waitForTimeout(200);
     assert.equal(await p.evaluate(() => richt.Milch), undefined);
-    assert.equal(await feld("Milch").inputValue(), "1,09", "ohne eigenen Preis wieder der Vorschlag");
+    assert.equal(await (await feld("Milch")).inputValue(), "1,09", "ohne eigenen Preis wieder der Vorschlag");
     assert.deepEqual(fehler, []);
   });
 });
@@ -405,7 +500,7 @@ t("Vorrat: Tiefstpreis seit Beginn der Aufzeichnung bekommt einen Hinweis", asyn
 
 t("Einkaufen ohne Netz: Haken bleiben auf dem Gerät und gehen später ins Konto", async () => {
   await mitSeite({ code: "" }, async ({ p, fehler }, u) => {
-    await bereich(p, "mehr");
+    await einst(p, "konto");
     await p.click('[data-seg="kMode"][data-wert="neu"]');
     await p.fill("#kName", "ben"); await p.fill("#kPw", "geheim123"); await p.fill("#kPw2", "geheim123"); await p.click("#kGo");
     await p.waitForSelector("#kWer", { timeout: 15000 });
@@ -492,7 +587,7 @@ t("Favoriten entfernen: unter Angebote mit „Bearbeiten“, in der Suche und un
     const namen = () => JSON.parse(u.store.get("favoriten")).map(f => f.name).sort();
     // Angebote: Bearbeiten, ✕ entfernt (auch von der Liste)
     await p.click('.produkt[data-p="Milch"] .p-plus');
-    await p.click('[data-aktion="favEdit"]'); await p.waitForTimeout(200);
+    await p.click('[data-aktion="sfUm"]'); await p.click('[data-aktion="favEdit"]'); await p.waitForTimeout(200);
     assert.equal(await p.locator(".produkt [data-favweg]").count(), 2);
     await p.click('[data-favweg="Milch"]'); await p.waitForTimeout(500);
     assert.deepEqual(namen(), ["Eier"]);
@@ -598,9 +693,9 @@ t("„Neu“: beim ersten Öffnen nichts, ein später dazugekommenes bestes Ange
 t("Ersparnis: Abhaken merkt Preis und Normalpreis, Übersicht beim Einkaufen und unter „Mehr“, Haken weg nimmt es zurück", async () => {
   await mitSeite({ favs: [{ name: "Milch", aus: "" }, { name: "Butter", aus: "" }] }, async ({ p, fehler }) => {
     await p.click('.produkt[data-p="Milch"] .p-plus'); await p.click('.produkt[data-p="Butter"] .p-plus');
-    await p.click('#leiste [data-v="liste"]'); await p.waitForTimeout(300);
-    const rw = p.locator(".zeile", { hasText: "Butter" }).first().locator("input[data-r]"); await rw.fill("2,29"); await rw.press("Tab"); await p.waitForTimeout(200);
-    await p.click('#leiste [data-v="einkaufen"]'); await p.waitForTimeout(300);
+    await bereich(p, "liste");
+    const rw = (await zeileAuf(p, "Butter")).locator("input[data-r]"); await rw.fill("2,29"); await rw.press("Tab"); await p.waitForTimeout(200);
+    await bereich(p, "einkaufen");
     const haken = n => p.locator(".haken", { hasText: n }).first().locator("input[type=checkbox]");
     await haken("Milch").check(); await p.waitForTimeout(150); await haken("Butter").check(); await p.waitForTimeout(200);
     const k = await p.evaluate(() => kaeufe.map(e => [e.n, e.m, e.p, e.r]));
@@ -608,7 +703,9 @@ t("Ersparnis: Abhaken merkt Preis und Normalpreis, Übersicht beim Einkaufen und
     assert.match(await p.textContent("#ansicht"), /2 Artikel für 2,68\s€, 0,70\s€ gespart/);
     await haken("Butter").uncheck(); await p.waitForTimeout(200);
     assert.equal(await p.evaluate(() => kaeufe.length), 1, "Haken weg: zählt nicht mehr");
-    await p.click('#leiste [data-v="mehr"]'); await p.waitForTimeout(300);
+    await bereich(p, "mehr");
+    assert.match(await p.textContent('[data-einst="ersparnis"]'), /0,20\s€ gespart/);
+    await einst(p, "ersparnis");
     assert.match(await p.textContent("#ansicht"), /Ersparnis[\s\S]*0,20\s€ insgesamt[\s\S]*1 Artikel für 0,89\s€ · meist bei Lidl/);
     await p.click('[data-aktion="ersparnisWeg"]'); await p.click('[data-aktion="ersparnisWeg"]'); await p.waitForTimeout(200);
     assert.equal(await p.evaluate(() => JSON.parse(localStorage.getItem("pv-kaeufe")).length), 0);
@@ -620,11 +717,19 @@ t("Angebote nach Abteilungen (abschaltbar) und Favorit pausieren: nicht abgefrag
   await mitSeite({ favs: ["Milch", "Butter", "Äpfel", "Reis"].map(name => ({ name, aus: "" })) }, async ({ p, fehler }, u) => {
     const koepfe = () => p.$$eval(".abt-kopf h2", e => e.map(x => x.textContent));
     assert.deepEqual(await koepfe(), ["Obst & Gemüse", "Milch, Käse & Eier", "Vorrat"]);
-    await p.click('[data-aktion="gruppenUm"]'); await p.waitForTimeout(200);
+    assert.equal(await p.locator(".sf-panel").count(), 0, "Sortieren und Gruppen stecken in einem Knopf");
+    await p.click('[data-aktion="sfUm"]'); await p.waitForTimeout(200);
+    await p.click('[data-seg="gruppen"][data-wert="aus"]'); await p.waitForTimeout(200);
     assert.deepEqual(await koepfe(), [], "ohne Gruppen");
-    await p.click('[data-aktion="gruppenUm"]'); await p.waitForTimeout(200);
+    assert.doesNotMatch(await p.getAttribute('[data-aktion="sfUm"]', "aria-label"), /Abteilungen/);
+    await p.click('[data-seg="gruppen"][data-wert="an"]'); await p.waitForTimeout(200);
+    assert.match(await p.getAttribute('[data-aktion="sfUm"]', "aria-label"), /jetzt: A–Z, nach Abteilungen/);
+    await p.click('[data-seg="sort"][data-wert="preis"]'); await p.waitForTimeout(200);
+    assert.equal((await p.textContent('[data-aktion="sfUm"]')).trim(), "Preis");
+    await p.click('[data-seg="sort"][data-wert="name"]'); await p.waitForTimeout(200);
     // pausieren
     await p.click('[data-aktion="favEdit"]'); await p.waitForTimeout(200);
+    assert.equal(await p.locator(".sf-panel").count(), 0, "beim Bearbeiten zu, oben steht „Fertig“");
     await p.click('[data-favpause="Reis"]'); await p.waitForTimeout(500);
     assert.equal(JSON.parse(u.store.get("favoriten")).find(f => f.name === "Reis").pause, true);
     assert.equal(await p.locator('.produkt[data-p="Reis"]').count(), 0, "nicht mehr bei den Angeboten");
@@ -662,7 +767,7 @@ t("Nach Markt: nach Rabatt sortieren (größter Nachlass zuerst) und „Neu“ s
 t("Einkaufen: je Markt in der Reihenfolge des Laufwegs (Obst zuerst), mit Abteilungen als Zwischenüberschrift", async () => {
   await mitSeite({ favs: ["Reis", "Butter", "Äpfel", "Eier"].map(name => ({ name, aus: "" })) }, async ({ p, fehler }) => {
     await p.evaluate(() => { for (const n of ["Reis", "Butter", "Äpfel", "Eier"]) { aufListeSetzen(n); wahl[n] = "ALDI SÜD"; } listeSpeichern(); render(); });
-    await p.click('#leiste [data-v="einkaufen"]'); await p.waitForTimeout(300);
+    await bereich(p, "einkaufen");
     const aldi = p.locator(".haken-gruppe", { hasText: "ALDI SÜD" }).first();
     const reihe = await aldi.evaluate(g => [...g.querySelectorAll(".gang, .haken span")].map(x => (x.classList.contains("gang") ? "# " : "") + x.textContent.trim()));
     assert.deepEqual(reihe, ["# Obst & Gemüse", "Äpfel", "# Milch, Käse & Eier", "Butter", "Eier", "# Vorrat", "Reis"]);
@@ -703,7 +808,7 @@ t("Zahl auf dem App-Symbol: neue Angebote, offene Artikel oder keine", async () 
     await u.A("/aktualisieren", "POST"); await p.reload(); await p.waitForTimeout(1500);
     assert.equal(await letzte(), 1, "ein Favorit mit neuem Angebot");
     await p.click('.produkt[data-p="Eier"] .p-plus'); await p.click('.produkt[data-p="Milch"] .p-plus');
-    await p.click('#leiste [data-v="mehr"]'); await p.waitForTimeout(200);
+    await einst(p, "darstellung");
     await p.click('[data-seg="badge"][data-wert="liste"]'); await p.waitForTimeout(200);
     assert.equal(await letzte(), 2, "zwei offene Artikel");
     await p.click('[data-seg="badge"][data-wert="aus"]'); await p.waitForTimeout(200);
@@ -724,7 +829,7 @@ t("Kassenbon: Zeilen mit Preisen erkennen, der Liste zuordnen, bezahlte Preise u
     const p = s.p;
     await p.evaluate(() => { for (const n of ["Butter", "Eier", "Milch"]) { aufListeSetzen(n); wahl[n] = "ALDI SÜD"; } wahl.Milch = "Lidl"; frei.Salz = "st"; aufListeSetzen("Salz", 1); listeSpeichern(); render(); });
     assert.deepEqual(await p.evaluate(() => bonZeilen("KERRYGOLD BUTTER 1,99 A\n2 x 0,89\nH-MILCH 3,5% 1,78 A\nRabatt -0,20\nSUMME 3,57").map(z => [z.name, z.preis, z.n])), [["KERRYGOLD BUTTER", 1.99, 1], ["H-MILCH", 1.58, 2]]);
-    await p.click('#leiste [data-v="einkaufen"]'); await p.waitForTimeout(300);
+    await bereich(p, "einkaufen");
     const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
     await p.setInputFiles("#bonFoto", { name: "bon.png", mimeType: "image/png", buffer: png });
     await p.waitForSelector(".bon-pruefen", { timeout: 10000 });
@@ -736,7 +841,7 @@ t("Kassenbon: Zeilen mit Preisen erkennen, der Liste zuordnen, bezahlte Preise u
     assert.equal(await p.evaluate(() => richt.Salz), 0.19, "ohne Angebot gekauft: Normalpreis je Stück");
     assert.equal(await p.evaluate(() => richtQ.Salz.q), "bon");
     // unter „Mehr“: deine Normalpreise mit Herkunft, löschen mit zweimal Tippen
-    await p.click('#leiste [data-v="mehr"]'); await p.waitForTimeout(300);
+    await einst(p, "normal");
     await p.click('#normalpreise details[data-merk="npEigen"] > summary');
     assert.match(await p.textContent("#normalpreise"), /Salz · 0,19\s€ je Stück vom Kassenbon am/);
     await p.click('[data-rweg="Salz"]'); await p.click('[data-rweg="Salz"]'); await p.waitForTimeout(200);
@@ -761,7 +866,7 @@ t("Kassenbon später eingelesen: Einkaufstag vom Bon, Angebot von damals aus dem
     const p = s.p;
     await p.waitForFunction(() => vd.length > 0, null, { timeout: 5000 });
     await p.evaluate(() => { aufListeSetzen("Butter"); aufListeSetzen("Eier"); listeSpeichern(); render(); });
-    await p.click('#leiste [data-v="einkaufen"]'); await p.waitForTimeout(300);
+    await bereich(p, "einkaufen");
     const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
     await p.setInputFiles("#bonFoto", { name: "bon.png", mimeType: "image/png", buffer: png });
     await p.waitForSelector(".bon-pruefen", { timeout: 10000 });
@@ -788,7 +893,7 @@ t("Kassenbon nach „Abgehakte von der Liste nehmen“: ordnet trotzdem zu (abge
     await s.oeffnen("");
     const p = s.p;
     await p.evaluate(() => { for (const n of ["Butter", "Eier"]) { aufListeSetzen(n); wahl[n] = "ALDI SÜD"; } listeSpeichern(); render(); });
-    await p.click('#leiste [data-v="einkaufen"]'); await p.waitForTimeout(300);
+    await bereich(p, "einkaufen");
     for (const n of ["Butter", "Eier"]) { await p.locator(".haken", { hasText: n }).first().locator("input[type=checkbox]").check(); await p.waitForTimeout(150); }
     await p.click('[data-aktion="abgehakteWeg"]'); await p.waitForTimeout(300);
     assert.equal(await p.evaluate(() => zettelNamen().length), 0, "Liste ist leer");
@@ -830,7 +935,7 @@ t("PENNY: UVP, Streichpreis und App-Preis von penny.de auf der Produktseite und 
 
 t("Prospekt einlesen: PDF auf dem Gerät lesen, frühere Preise werden Normalpreis-Vorschlag, das PENNY-Angebot bekommt „statt“", async () => {
   if (!PDFJS_DIR) return;
-  await mitSeite({ favs: [{ name: "Butter", aus: "" }, { name: "Schokolade", aus: "" }], hash: "#mehr" }, async ({ p, fehler }, u) => {
+  await mitSeite({ favs: [{ name: "Butter", aus: "" }, { name: "Schokolade", aus: "" }], hash: "#mehr/normal" }, async ({ p, fehler }, u) => {
     await p.waitForSelector("#prospektDatei", { state: "attached", timeout: 5000 });
     assert.match(await p.textContent("#prospekte"), /Noch kein Prospekt eingelesen/);
     await p.setInputFiles("#prospektDatei", { name: "Prospekt.pdf", mimeType: "application/pdf", buffer: pdfMachen(prospektSeiten("PENNY")) });
@@ -845,15 +950,14 @@ t("Prospekt einlesen: PDF auf dem Gerät lesen, frühere Preise werden Normalpre
     // Liste: Schokolade hat kein Angebot, der Normalpreis kommt aus dem Prospekt (UVP)
     await p.evaluate(() => { aufListeSetzen("Schokolade"); aufListeSetzen("Butter"); listeSpeichern(); render(); });
     await bereich(p, "liste");
-    const liste = await p.textContent("#ansicht");
-    assert.match(liste, /Vorschlag aus der UVP bei PENNY \(Prospekt\)/);
-    assert.match(liste, /Vorschlag aus dem früheren Preis \(„statt“\) bei PENNY/);
+    assert.match(await (await zeileAuf(p, "Schokolade")).textContent(), /Vorschlag aus der UVP bei PENNY \(Prospekt\)/);
+    assert.match(await (await zeileAuf(p, "Butter")).textContent(), /Vorschlag aus dem früheren Preis \(„statt“\) bei PENNY/);
     // Produktseite: das PENNY-Angebot von Marktguru hat jetzt den früheren Preis
     await bereich(p, "angebote");
     await p.click('.produkt[data-p="Butter"]'); await p.waitForTimeout(300);
     assert.match(await p.textContent("#ansicht"), /statt\s*2,49/);
     // unter „Mehr“: gelernte Normalpreise mit Herkunft; einen falschen löschen
-    await bereich(p, "mehr");
+    await einst(p, "normal");
     await p.click('#normalpreise details[data-merk="npGel"] > summary');
     assert.match(await p.textContent("#normalpreise"), /Schokolade: PENNY · Milka Schokolade 100 g · UVP 1,99\s€ \(19,90\s€\/kg\) Prospekt vom/);
     await p.click('#normalpreise [data-npweg*="milka"]'); await p.click('#normalpreise [data-npweg*="milka"]');
@@ -875,7 +979,7 @@ t("Kassenbon mit Google: Zeilen aus den Wörtern, ohne Texterkennung auf dem Ger
     await s.oeffnen("");
     const p = s.p, png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
     await p.evaluate(() => { aufListeSetzen("Butter"); aufListeSetzen("Eier"); listeSpeichern(); render(); });
-    await p.click('#leiste [data-v="einkaufen"]'); await p.waitForTimeout(300);
+    await bereich(p, "einkaufen");
     await p.setInputFiles("#bonFoto", { name: "bon.png", mimeType: "image/png", buffer: png });
     await p.waitForSelector(".bon-pruefen", { timeout: 10000 });
     assert.deepEqual(await p.evaluate(() => S.bon.zeilen.map(z => [z.name, z.preis, z.k])), [["KERRYGOLD BUTTER", 1.99, "Butter"], ["FREILAND-EIER M", 2.29, "Eier"]]);

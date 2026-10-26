@@ -112,7 +112,7 @@ test("„Passwort vergessen“ meldet sich beim Betreiber, nur nicht beim automa
   assert.equal((await u.mitteilungen()).length, 0, "Test: keine Mitteilung");
   await R("/konto/vergessen", { name: "anna" });
   const m = await u.mitteilungen();
-  assert.equal(m.length, 1); assert.equal(m[0].titel, "Passwort vergessen"); assert.match(m[0].text, /anna/); assert.equal(m[0].url, "./#mehr");
+  assert.equal(m.length, 1); assert.equal(m[0].titel, "Passwort vergessen"); assert.match(m[0].text, /anna/); assert.equal(m[0].url, "./#mehr/betreiber");
 });
 
 test("Wochenüberblick: montags einmal die guten Angebote (unter dem Durchschnitt oder mit „statt“-Preis), abschaltbar", async () => {

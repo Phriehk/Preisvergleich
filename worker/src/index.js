@@ -1182,7 +1182,7 @@ async function pushRoute(req, env, p) {
   throw konto(404, "Unbekannte Adresse");
 }
 async function hinweis(env, titel, text) {   // Hinweise an den Betreiber (z. B. Passwort vergessen)
-  await melden(env, { titel, text, tag: "hinweis", url: "./#mehr" });
+  await melden(env, { titel, text, tag: "hinweis", url: "./#mehr/betreiber" });
 }
 async function meldeFehler(env, text) {
   await melden(env, { titel: "Preislauf fehlgeschlagen", text, tag: "fehler" });
