@@ -39,13 +39,8 @@ jobs:
           export CLOUDFLARE_ACCOUNT_ID=$ACC
           SUB=$(curl -s -H "$H" "$API/accounts/$ACC/workers/subdomain" | jq -r '.result.subdomain // empty')
           log "workers.dev-Subdomain: $SUB"
-          # Name in der Adresse: https://preise.<WUNSCH>.workers.dev (gilt für das ganze Cloudflare-Konto; die alte Adresse geht danach nicht mehr)
-          WUNSCH=angebote-vergleichen; ALT=""
-          if [ -n "$SUB" ] && [ "$SUB" != "$WUNSCH" ]; then
-            R=$(curl -s -X PUT -H "$H" -H "Content-Type: application/json" --data "{\"subdomain\":\"$WUNSCH\"}" "$API/accounts/$ACC/workers/subdomain")
-            if [ "$(echo "$R" | jq -r '.success')" = "true" ]; then log "Adresse geändert: $SUB.workers.dev → $WUNSCH.workers.dev"; ALT=$SUB; SUB=$WUNSCH
-            else log "FEHLER: Adresse nicht geändert: $(echo "$R" | jq -c '.errors')"; fi
-          fi
+          # Adresse geändert (Subdomain im Cloudflare-Dashboard umbenannt)? Dann gehören die Mitteilungen noch zur alten Adresse
+          ALT=$(jq -r '.url // empty' ../worker.json 2>/dev/null)
           # die Seite wird zusammen mit dem Server ausgeliefert
           mkdir -p public
           cp ../index.html ../sw.js ../manifest.webmanifest ../icon-192.png ../icon-512.png ../icon-maskable-192.png ../icon-maskable-512.png ../apple-touch-icon.png public/
@@ -63,8 +58,8 @@ jobs:
           # alter Server mit dem langen Namen wird nicht mehr gebraucht
           log "Alten Server entfernt: $(curl -s -X DELETE -H "$H" "$API/accounts/$ACC/workers/scripts/preisvergleich" | jq -c '{success}')"
           # nach dem Umzug: die Mitteilungen gehörten zur alten Adresse (ein Tipp darauf führte ins Leere), auf dem Gerät neu einschalten
-          if [ -n "$ALT" ]; then log "Alte Anmeldungen für Mitteilungen entfernt: $(npx --yes wrangler@4 kv key delete push:abos --binding PV --remote 2>&1 | tail -n 1)"; fi
           URL="https://preise.$SUB.workers.dev"
+          if [ -n "$ALT" ] && [ -n "$SUB" ] && [ "$ALT" != "$URL" ]; then log "Neue Adresse: $ALT → $URL"; log "Alte Anmeldungen für Mitteilungen entfernt (ein Tipp darauf führte ins Leere): $(npx --yes wrangler@4 kv key delete push:abos --binding PV --remote 2>&1 | tail -n 1)"; fi
           echo "{\"url\": \"$URL\"}" > ../worker.json
           set +e
           for i in $(seq 1 24); do curl -sf -m 20 "$URL/status" >/dev/null && break; sleep 10; done
