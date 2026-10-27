@@ -1,6 +1,6 @@
 {
-  "name": "Preisvergleich",
-  "short_name": "Preise",
+  "name": "Angebote vergleichen",
+  "short_name": "Angebote",
   "description": "Supermarkt-Angebote vergleichen, Einkaufsliste planen und abhaken",
   "start_url": "./",
   "scope": "./",
