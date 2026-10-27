@@ -58,12 +58,15 @@ jobs:
           # alter Server mit dem langen Namen wird nicht mehr gebraucht
           log "Alten Server entfernt: $(curl -s -X DELETE -H "$H" "$API/accounts/$ACC/workers/scripts/preisvergleich" | jq -c '{success}')"
           # nach dem Umzug: die Mitteilungen gehörten zur alten Adresse (ein Tipp darauf führte ins Leere), auf dem Gerät neu einschalten
-          URL="https://preise.$SUB.workers.dev"
+          NAME=$(sed -n 's/^name *= *"\([^"]*\)".*/\1/p' wrangler.toml | head -n 1)
+          URL="https://$NAME.$SUB.workers.dev"
           if [ -n "$ALT" ] && [ -n "$SUB" ] && [ "$ALT" != "$URL" ]; then log "Neue Adresse: $ALT → $URL"; log "Alte Anmeldungen für Mitteilungen entfernt (ein Tipp darauf führte ins Leere): $(npx --yes wrangler@4 kv key delete push:abos --binding PV --remote 2>&1 | tail -n 1)"; fi
           echo "{\"url\": \"$URL\"}" > ../worker.json
           set +e
           for i in $(seq 1 24); do curl -sf -m 20 "$URL/status" >/dev/null && break; sleep 10; done
           log "Status: $(curl -s -m 30 $URL/status)"
+          # umbenannt (früher „preise“): der alte Server liefe sonst mit eigenem Zeitplan weiter; erst entfernen, wenn der neue antwortet
+          if [ "$NAME" != "preise" ] && curl -sf -m 20 "$URL/status" >/dev/null; then log "Alten Server „preise“ entfernt: $(curl -s -X DELETE -H "$H" "$API/accounts/$ACC/workers/scripts/preise" | jq -c '{success}')"; fi
           log "Kassenbon-Texterkennung (ungültiges Bild, erwartet 400 mit Schlüssel, 501 ohne): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 -X POST -H "Authorization: Bearer $ZUG" --data 'kein-bild' "$URL/bon/text")"
           log "Spar-Tipp: $(curl -s -m 30 "$URL/alternativen.json" | jq -c 'if type=="array" then {alternativen: length, favoriten: ([.[].gruppe] | unique | length)} else . end' 2>/dev/null)"
           log "Push ohne Code (erwartet 401): HTTP $(curl -s -o /dev/null -w '%{http_code}' -m 30 "$URL/push/status")"

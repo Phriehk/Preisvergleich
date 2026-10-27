@@ -3,7 +3,7 @@
 // Aufruf, damit die Grenzen des kostenlosen Tarifs (10 ms Rechenzeit, 50 Abrufe je Aufruf) eingehalten werden.
 import { WorkerEntrypoint } from "cloudflare:workers";
 
-const APP_URL = "https://preise.angebote-vergleichen.workers.dev/";
+const APP_URL = "https://angebote.vergleichen.workers.dev/";
 const UA = { "User-Agent": "Mozilla/5.0 (privates Testprojekt)" };
 const SEARCH = "https://api.marktguru.de/api/v1/offers/search";
 const PLZ = "47178";

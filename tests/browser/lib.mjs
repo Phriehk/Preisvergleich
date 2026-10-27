@@ -164,7 +164,7 @@ export async function umgebung(opts = {}) {
     }
     return new Response("nf", { status: 404 });
   };
-  const A = (p, m = "GET", b) => H.fetch(new Request("https://preise.angebote-vergleichen.workers.dev" + p, { method: m, headers: { Authorization: "Bearer betreiber", "Content-Type": "application/json" }, body: b }), env, ctx);
+  const A = (p, m = "GET", b) => H.fetch(new Request("https://angebote.vergleichen.workers.dev" + p, { method: m, headers: { Authorization: "Bearer betreiber", "Content-Type": "application/json" }, body: b }), env, ctx);
   let g = null;
   if (opts.geraet) { g = await geraet(); await A("/push/abo", "POST", JSON.stringify({ ...g.abo, geraet: "Test-iPhone" })); }
   const mitteilungen = async () => Promise.all(push.filter(x => g && x.url === g.abo.endpoint).map(x => entschluesseln(g, x.body)));
@@ -189,10 +189,10 @@ export async function browserStarten(u, { breite = 390, hoehe = 844, code = "bet
   await p.route("https://fonts.googleapis.com/**", r => r.fulfill({ body: "" }));
   await p.route("https://nominatim.openstreetmap.org/**", r => r.fulfill({ body: "[]", headers: { "access-control-allow-origin": "*", "content-type": "application/json" } }));
   await p.route("https://router.project-osrm.org/**", r => r.abort());
-  await p.route("https://preise.angebote-vergleichen.workers.dev/**", async r => {
+  await p.route("https://angebote.vergleichen.workers.dev/**", async r => {
     const q = r.request();
     const resp = await u.H.fetch(new Request(q.url(), { method: q.method(), headers: q.headers(), body: q.postData() || undefined }), u.env, u.ctx);
     await r.fulfill({ status: resp.status, headers: Object.fromEntries(resp.headers), body: Buffer.from(await resp.arrayBuffer()) });
   });
-  return { b, c, p, fehler, oeffnen: async (hash = "") => { await p.goto("https://preise.angebote-vergleichen.workers.dev/" + hash); await p.waitForTimeout(1500); } };
+  return { b, c, p, fehler, oeffnen: async (hash = "") => { await p.goto("https://angebote.vergleichen.workers.dev/" + hash); await p.waitForTimeout(1500); } };
 }

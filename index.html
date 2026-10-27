@@ -597,7 +597,7 @@ let kurzName=ls.raw("pv-kurz")||"Einkaufsliste in Erinnerungen";
 function listeSpeichern(ohneSync){ls.set("pv-kaeufe",kaeufe);Object.keys(wahl).forEach(k=>{if(!(zettel[k]>0))delete wahl[k]});ls.set("pv-wahl",wahl);ls.set("pv-zettel",zettel);ls.set("pv-frei",frei);ls.set("pv-richt",richt);ls.set("pv-richtq",richtQ);ls.set("pv-extra",extra);ls.set("pv-haken",haken);if(!ohneSync)kontoSync()}
 
 /* ---------- Server ---------- */
-const SERVER=/\.workers\.dev$/.test(location.hostname)?location.origin:"https://preise.angebote-vergleichen.workers.dev";   // Adresse der App (beim eigenen Server immer die, unter der sie gerade läuft)
+const SERVER=/\.workers\.dev$/.test(location.hostname)?location.origin:"https://angebote.vergleichen.workers.dev";   // Adresse der App (beim eigenen Server immer die, unter der sie gerade läuft)
 const cf=/\.workers\.dev$/.test(location.hostname);   // die Seite läuft beim eigenen Server
 if(/\.github\.io$/.test(location.hostname))location.replace(SERVER+"/"+(zugang?"#code="+zugang:""));   // alte Adresse
 const wUrl=cf?location.origin:SERVER;

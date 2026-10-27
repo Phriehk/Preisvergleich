@@ -23,7 +23,7 @@ async function tokenPruefen(kopf, endpoint) {
 
 test("Gerät anmelden, Testmitteilung kommt verschlüsselt und signiert an", async () => {
   const u = await umgebung(), g = await geraet();
-  assert.equal((await u.H.fetch(new Request("https://preise.angebote-vergleichen.workers.dev/push/schluessel"), u.env, u.ctx)).status, 401, "nur mit Zugangscode");
+  assert.equal((await u.H.fetch(new Request("https://angebote.vergleichen.workers.dev/push/schluessel"), u.env, u.ctx)).status, 401, "nur mit Zugangscode");
   const { key } = await (await u.A("/push/schluessel")).json();
   assert.equal(vonB64u(key).length, 65);
   assert.equal((await (await u.A("/push/schluessel")).json()).key, key, "der Schlüssel bleibt gleich");
@@ -85,20 +85,20 @@ test("Verschlüsselung entspricht dem Beispiel aus RFC 8291 (Anhang A)", async (
 
 test("Hintergrunddienst (sw.js): Mitteilung zeigen, Tipp darauf öffnet die App am richtigen Ort", async () => {
   const h = {}, gezeigt = [], nachrichten = [], geoeffnet = [];
-  const self = { addEventListener: (t, f) => { h[t] = f; }, skipWaiting() {}, registration: { scope: "https://preise.angebote-vergleichen.workers.dev/", showNotification: async (t, o) => { gezeigt.push([t, o]); } },
+  const self = { addEventListener: (t, f) => { h[t] = f; }, skipWaiting() {}, registration: { scope: "https://angebote.vergleichen.workers.dev/", showNotification: async (t, o) => { gezeigt.push([t, o]); } },
     clients: { fenster: [], matchAll: async () => self.clients.fenster, openWindow: async u => { geoeffnet.push(u); } } };
-  new Function("self", "caches", "location", fs.readFileSync(path.join(wurzel, "sw.js"), "utf8"))(self, {}, { origin: "https://preise.angebote-vergleichen.workers.dev" });
+  new Function("self", "caches", "location", fs.readFileSync(path.join(wurzel, "sw.js"), "utf8"))(self, {}, { origin: "https://angebote.vergleichen.workers.dev" });
   let warte;
   h.push({ data: { json: () => ({ titel: "Preisalarm Milch: 0,89 €/l", text: "Lidl: …", tag: "alarm:Milch", url: "./#produkt/Milch" }) }, waitUntil: p => { warte = p; } });
   await warte;
   assert.equal(gezeigt[0][0], "Preisalarm Milch: 0,89 €/l"); assert.equal(gezeigt[0][1].tag, "alarm:Milch"); assert.equal(gezeigt[0][1].data.url, "./#produkt/Milch");
   // App geschlossen: neues Fenster am Ziel
   h.notificationclick({ notification: { data: gezeigt[0][1].data, close() {} }, waitUntil: p => { warte = p; } }); await warte;
-  assert.deepEqual(geoeffnet, ["https://preise.angebote-vergleichen.workers.dev/#produkt/Milch"]);
+  assert.deepEqual(geoeffnet, ["https://angebote.vergleichen.workers.dev/#produkt/Milch"]);
   // App offen: nach vorne holen und hinwechseln
-  self.clients.fenster = [{ url: "https://preise.angebote-vergleichen.workers.dev/#angebote", focus: async () => {}, postMessage: m => nachrichten.push(m) }];
+  self.clients.fenster = [{ url: "https://angebote.vergleichen.workers.dev/#angebote", focus: async () => {}, postMessage: m => nachrichten.push(m) }];
   h.notificationclick({ notification: { data: gezeigt[0][1].data, close() {} }, waitUntil: p => { warte = p; } }); await warte;
-  assert.deepEqual(nachrichten, [{ typ: "oeffnen", url: "https://preise.angebote-vergleichen.workers.dev/#produkt/Milch" }]);
+  assert.deepEqual(nachrichten, [{ typ: "oeffnen", url: "https://angebote.vergleichen.workers.dev/#produkt/Milch" }]);
   // ohne lesbaren Inhalt trotzdem eine Mitteilung (iOS verlangt bei jedem Push eine)
   h.push({ data: null, waitUntil: p => { warte = p; } }); await warte;
   assert.equal(gezeigt[1][0], "Preisvergleich");
@@ -106,7 +106,7 @@ test("Hintergrunddienst (sw.js): Mitteilung zeigen, Tipp darauf öffnet die App 
 
 test("„Passwort vergessen“ meldet sich beim Betreiber, nur nicht beim automatischen Test nach dem Hochladen", async () => {
   const u = await umgebung({ geraet: true }); u.env.WARTUNG = "testschluessel";
-  const R = (pfad, body, kopf = {}) => u.H.fetch(new Request("https://preise.angebote-vergleichen.workers.dev" + pfad, { method: "POST", headers: { "Content-Type": "application/json", ...kopf }, body: JSON.stringify(body) }), u.env, u.ctx);
+  const R = (pfad, body, kopf = {}) => u.H.fetch(new Request("https://angebote.vergleichen.workers.dev" + pfad, { method: "POST", headers: { "Content-Type": "application/json", ...kopf }, body: JSON.stringify(body) }), u.env, u.ctx);
   for (const n of ["test1", "anna"]) assert.equal((await R("/konto/neu", { name: n, dk: "a".repeat(64) })).status, 200);
   await R("/konto/vergessen", { name: "test1" }, { "X-Wartung": "testschluessel" });
   assert.equal((await u.mitteilungen()).length, 0, "Test: keine Mitteilung");

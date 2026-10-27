@@ -28,7 +28,7 @@ test("Server: nur mit Code, ohne Schlüssel 501, Bild geprüft, Schlüssel bleib
   assert.equal((await (await ohne.A("/status")).json()).vision, false);
   const u = await umgebung({ vision: visionAntwort(["KERRYGOLD BUTTER|1,99 A"]) });
   assert.equal((await (await u.A("/status")).json()).vision, true);
-  const fremd = await u.H.fetch(new Request("https://preise.angebote-vergleichen.workers.dev/bon/text", { method: "POST", body: bild }), u.env, u.ctx);
+  const fremd = await u.H.fetch(new Request("https://angebote.vergleichen.workers.dev/bon/text", { method: "POST", body: bild }), u.env, u.ctx);
   assert.equal(fremd.status, 401);
   assert.equal((await u.A("/bon/text", "POST", "kein-bild")).status, 400);
   assert.equal(u.vision.length, 0, "ungültige Bilder gehen nicht an Google");

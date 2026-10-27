@@ -1,5 +1,5 @@
 # Cloudflare Worker für den Preisvergleich (wird von .github/workflows/worker.yml hochgeladen)
-name = "preise"
+name = "angebote"   # Teil der Adresse: https://angebote.<Subdomain>.workers.dev
 main = "src/index.js"
 compatibility_date = "2026-10-01"
 compatibility_flags = ["enable_ctx_exports"]
