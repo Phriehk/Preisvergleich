@@ -172,10 +172,11 @@ export async function umgebung(opts = {}) {
 }
 
 /** Browser mit der echten Seite; alle Anfragen an die Worker-Adresse gehen an den echten Worker-Code */
-export async function browserStarten(u, { breite = 390, hoehe = 844, code = "betreiber" } = {}) {
+export async function browserStarten(u, { breite = 390, hoehe = 844, code = "betreiber", finger = false } = {}) {
   const pw = playwright();
   const b = await pw.chromium.launch();
-  const c = await b.newContext({ viewport: { width: breite, height: hoehe }, serviceWorkers: "block" });   // ein Service Worker würde an page.route vorbei ins echte Netz gehen
+  // finger: wie ein Handy mit Touchscreen (CSS „pointer: coarse“)
+  const c = await b.newContext({ viewport: { width: breite, height: hoehe }, serviceWorkers: "block", ...(finger ? { hasTouch: true, isMobile: true } : {}) });   // ein Service Worker würde an page.route vorbei ins echte Netz gehen
   await c.addInitScript(([cd]) => { localStorage.setItem("pv-ort", JSON.stringify({ lat: 51.40, lon: 6.70, name: "Test 1, Duisburg", plz: "47178", angebote: true })); if (cd) localStorage.setItem("pv-code", cd); }, [code]);
   await c.route("**/*", r => r.abort());   // alles, was nicht nachgebaut ist, scheitert (kein Zugriff aufs echte Netz)
   if (PDFJS_DIR) await c.route("https://cdn.jsdelivr.net/npm/pdfjs-dist@*/build/*", r => {   // pdf.js aus node_modules (auch für den Hintergrund-Worker)

@@ -447,6 +447,44 @@ button.z-kopf:hover .z-name{text-decoration:underline dotted;text-underline-offs
 .mk-fav{border-color:var(--gruen)}
 .mk-fav>summary b{color:var(--gruen)}
 
+/* Liste am PC: links die Artikel, rechts die beste Wahl mit der Rechnung (bleibt beim Scrollen stehen) */
+.l-spalten,.l-haupt{display:flex;flex-direction:column;gap:14px;min-width:0}
+@media (min-width:1100px){
+  .l-spalten{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+  .l-haupt{grid-column:1;grid-row:1}
+  .l-spalten>.empf{grid-column:2;grid-row:1;position:sticky;top:calc(env(safe-area-inset-top,0px) + 78px);max-height:calc(100vh - 96px);overflow:auto}
+}
+/* PC: Formulare und Abhaken nicht über die ganze Breite ziehen */
+@media (min-width:900px){
+  #ansicht[data-v="einst"],#ansicht[data-v="einkaufen"]{max-width:780px}
+  #ansicht[data-v="markt"]{max-width:960px}
+}
+/* Mit dem Finger (Handy, Tablet): Knöpfe groß genug zum Treffen, etwa 44 Punkte wie von Apple empfohlen */
+@media (pointer:coarse){
+  .knopf{min-height:44px}
+  .knopf.klein{min-height:40px;padding:0 12px}
+  .segment button{min-height:40px}
+  .feld,select.feld{min-height:44px}
+  .rw input,.kachel select{min-height:40px}
+  .chip{min-height:40px}
+  .rund{width:44px;height:44px}
+  .mk-k{gap:8px}
+  .mk-k .rund{width:40px;height:40px}
+  .p-plus{width:40px;height:40px}
+  .p-plus::after{content:"";position:absolute;inset:-4px}
+  .p-text{padding-right:44px}
+  .stepper button{width:40px;height:44px}
+  .stepper input{height:44px}
+  .zeile.kompakt .stepper button{width:40px;height:40px}
+  .zeile.kompakt .stepper input{width:44px;height:40px}
+  .zeile .x,.haken .x{width:44px;height:44px}
+  .schalter{min-height:40px}
+  .karte-box details>summary,.pause-box>summary{padding-block:10px}
+  .mk-gruppe>summary{padding:10px 0}
+  .pruefen{padding:6px 12px}
+  .mk-m{min-height:48px}
+}
+
 /* ---------- Dialog (Preis korrigieren) ---------- */
 .meintest{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.9rem;color:var(--grau);padding:2px 0 6px}
 .offline-hinweis{background:var(--warn-weich);color:var(--warn);border-radius:8px;padding:6px 10px;font-size:.85rem}
@@ -1632,6 +1670,7 @@ function render(){
   const tab=tabVon(S.v);document.querySelectorAll("#leiste button").forEach(b=>b.classList.toggle("an",b.dataset.v===tab));
   const n=zettelNamen().length+extra.length,z=$("listeZahl");z.hidden=!n;z.textContent=n;
   document.title=titel+" · Preisvergleich";
+  $("ansicht").dataset.v=S.v;   // für die Breite am PC
   $("ansicht").innerHTML=(ANSICHT[S.v]||ANSICHT.angebote)();
   if(gleich)window.scrollTo(0,y);
   render.letzte=schluessel;
@@ -1671,6 +1710,7 @@ function preisKlein(o){
   if(a!=="st")t.push(eur(gp(o))+"/"+unitK(a));
   return t;
 }
+const rabatt=o=>{const r=o&&o.alt>0?Math.round((1-pr(o)/o.alt)*100):0;return r>=1&&r<100?r:0};   // Nachlass in Prozent zum früheren Preis bzw. zur UVP
 function karte(x){
   const {g,b,n}=x,f=favVon(g),al=f&&f.alarm,an=aufListe(g);
   const bild=(b&&b.bild)||((offers.find(o=>grp(o)===g&&o.bild)||{}).bild)||favBild(g);
@@ -1681,7 +1721,7 @@ function karte(x){
     tags.push(`<span class="tag${d!==null&&d<=1?" gelb":""}">${esc(gueltig(b))}</span>`);
     if(a&&a.tief)tags.push(`<span class="tag gruen" title="${a.tief.haltbar?"Ein guter Moment, um auf Vorrat zu kaufen. ":""}So günstig war es seit ${jahrD(a.tief.seit)} nicht mehr.">${a.tief.haltbar?"📦 ":"⬇ "}${tiefText(a.tief)}</span>`);
     if(a&&a.txt&&a.r!=null)tags.push(`<span class="tag ${a.stufe}" title="Vergleich mit deinem Durchschnitt (${a.n} Messtage)">${a.r<0?"−":"+"}${Math.abs(a.r).toFixed(0)} % zum Ø</span>`);
-    if(b.alt)tags.push(`<span class="tag rot">${stattW(b)} ${eur(b.alt)}</span>`);
+    if(b.alt){const r=rabatt(b);tags.push(`<span class="tag rot">${r?`−${r} % · `:""}${stattW(b)} ${eur(b.alt)}</span>`)}
     if(b.app&&!appPreise)tags.push(`<span class="tag" title="Preis mit der App des Marktes">App ${eur(b.app)}</span>`);
     if(auff(b))tags.push(`<span class="tag warn">Preis prüfen</span>`);
   }
@@ -1836,7 +1876,7 @@ function vProdukt(){
     const a=zeit==="jetzt"?ampelInfo(b):null;
     const ampel=a?(a.txt?`<div><span class="tag ${a.stufe}">${esc(a.txt)}</span> ${Math.abs(a.r).toFixed(0)} % ${a.r<0?"unter":"über"} deinem Durchschnitt (Ø ${eur(a.avg)}/${unitK(b.art)}, ${a.n} Messtage). ${esc(a.so)}</div>`:`<div class="klein-text">Für den Vergleich mit dem Durchschnitt fehlen noch Messtage (${a.n} von 3). ${esc(a.so)}</div>`)+(a.tief?`<div><span class="tag gruen">${a.tief.haltbar?"📦 ":"⬇ "}${tiefText(a.tief)}</span> ${a.tief.haltbar?"Wenn du Platz hast, lohnt es sich, jetzt auf Vorrat zu kaufen.":"So günstig gab es das lange nicht."}</div>`:""):"";
     const fahrt=zeit==="jetzt"?fahrtHtml(b,liste):"";
-    h+=`<div class="bestpreis"><div class="gross">${eur(pr(b))}<small>${esc(mengeText(b))}${b.form?" "+esc(b.form):""}</small></div><div class="rechts"><strong>${mlogo(b.markt)}${esc(b.markt)}${kmText(b.markt)?` <span class="km">${kmText(b.markt)}</span>`:""}</strong><span>${preisKlein(b).join(" · ")||"Packungspreis"}${b.alt?` · statt ${eur(b.alt)}`:""}</span><span>${esc(gueltig(b))}</span></div>${ampel||fahrt?`<div class="unten">${ampel}${fahrt}</div>`:""}</div>`;
+    h+=`<div class="bestpreis"><div class="gross">${eur(pr(b))}<small>${esc(mengeText(b))}${b.form?" "+esc(b.form):""}</small></div><div class="rechts"><strong>${mlogo(b.markt)}${esc(b.markt)}${kmText(b.markt)?` <span class="km">${kmText(b.markt)}</span>`:""}</strong><span>${preisKlein(b).join(" · ")||"Packungspreis"}${b.alt?` · ${stattW(b)} ${eur(b.alt)}${rabatt(b)?` (−${rabatt(b)} %)`:""}`:""}</span><span>${esc(gueltig(b))}</span></div>${ampel||fahrt?`<div class="unten">${ampel}${fahrt}</div>`:""}</div>`;
     {const t=sparTipp(g,b);if(t)h+=`<div class="banner">💡 Dieselbe Sorte gibt es günstiger: <b>${esc(favLabel(t.o))}</b> bei ${esc(mbase(t.o.markt))}, ${eur(pr(t.o))} für ${esc(mengeText(t.o))} (${eur(gp(t.o))}/${unitK(t.o.art)}, ${Math.round(t.r*100)} % günstiger)${t.o.link&&/^https?:\/\//.test(t.o.link)?` · <a href="${esc(t.o.link)}" target="_blank" rel="noopener noreferrer">bei Marktguru</a>`:""}</div>`}
   }
   // Tabelle
@@ -2061,8 +2101,10 @@ function bonHtml(V){
 }
 const lTabs=()=>`<div class="reihe">${segment("lTab",[["liste","Planen"],["einkaufen","Im Laden"]],S.v)}</div>`;
 /* Beste Wahl als schmale Leiste; Antippen zeigt die ganze Rechnung, die Einstellungen und alle Märkte einzeln */
+const breit=()=>!!(window.matchMedia&&matchMedia("(min-width:1100px)").matches);   // am PC steht die Rechnung offen daneben
+const empOffen=()=>S.form.empOffen??breit();
 function empfHtml(V){
-  const b=V.beste,offen=!!S.form.empOffen,zw=S.lzeit==="jetzt";
+  const b=V.beste,offen=empOffen(),zw=S.lzeit==="jetzt";
   let kurz;
   if(!V.mit.length)kurz=`<span class="e-m">Nichts ${zw?"aktuell":"demnächst"} im Angebot</span>${V.ohneR.length?`<b class="nw">ca. ${eur(V.ohneR.reduce((q,g)=>q+rwKosten(g),0))}</b>`:""}`;
   else{
@@ -2081,9 +2123,9 @@ function vListe(){
   if(!namen.length&&!extra.length)return lTabs()+altHtml+leerHtml("Die Einkaufsliste ist leer","Setze Favoriten mit + auf die Liste oder suche nach Artikeln. Dann zeige ich dir, in welchem Markt sich der Einkauf lohnt.",`<button type="button" class="knopf haupt" data-go="suchen">Artikel suchen</button><button type="button" class="knopf" data-go="angebote">Zu den Angeboten</button>`)+`<section class="karte-box">${schnellHtml()}</section>`;
   const V=vergleich();
   if(S.zOffen&&!namen.includes(S.zOffen))S.zOffen=null;
-  let h=lTabs()+altHtml;
+  let h=lTabs()+altHtml+`<div class="l-spalten">`;
   if(namen.length)h+=empfHtml(V);
-  h+=`<section class="karte-box liste-box"><div class="box-kopf"><h2>Auf der Liste</h2><span class="rechts">${namen.length+extra.length} Artikel · Antippen für mehr</span></div>${namen.map(k=>zeileHtml(k,V)).join("")}`
+  h+=`<div class="l-haupt"><section class="karte-box liste-box"><div class="box-kopf"><h2>Auf der Liste</h2><span class="rechts">${namen.length+extra.length} Artikel · Antippen für mehr</span></div>${namen.map(k=>zeileHtml(k,V)).join("")}`
     +(extra.length?`<div class="zeile kompakt"><div class="z-kopf"><b class="z-name">Sonstiges</b><span class="z-info leise">${extra.map(esc).join(", ")} · ohne Preis</span></div><button type="button" class="knopf klein leise" data-aktion="extraLeeren" aria-label="Sonstiges leeren">Leeren</button></div>`:"")
     +schnellHtml(true)+`</section>`;
   const txt=exportText(),zeilen=txt?txt.split("\n").length:0;
@@ -2096,7 +2138,7 @@ function vListe(){
     const n=listeFavNamen(),an=n.filter(x=>(favVon(x)||{}).alarm).length;
     if(n.length)h+=`<div class="reihe leise-text">🔔 Preisalarm für ${an} von ${n.length} Artikeln deiner Liste an. <button type="button" class="knopf klein" data-einst="alarm">Einstellen</button></div>`;
   }
-  return h;
+  return h+`</div></div>`;
 }
 function schnellHtml(innen){
   return `<div class="reihe"${innen?' style="padding-top:8px"':""}><input class="feld wachsen" id="schnell" data-f="schnell" placeholder="Artikel hinzufügen, z. B. Zahnpasta" value="${fv("schnell")}" aria-label="Artikel hinzufügen" autocomplete="off"><button type="button" class="knopf" data-aktion="schnellSuchen">Angebote suchen</button><button type="button" class="knopf leise" data-aktion="schnellNotieren">Nur notieren</button></div>`;
@@ -3094,7 +3136,7 @@ const AKTION={
   },
   favEdit:()=>{S.favEdit=!S.favEdit;S.sfOffen=false;render()},
   sfUm:()=>{S.sfOffen=!S.sfOffen;render()},
-  empUm:()=>{S.form.empOffen=!S.form.empOffen;render()},
+  empUm:()=>{S.form.empOffen=!empOffen();render()},
   zuletztWeg:()=>{try{ls.set("pv-zuletzt",[])}catch(e){}render()},
   gruppenUm:()=>{S.gruppen=!S.gruppen;ls.setRaw("pv-gruppen",S.gruppen?"an":"aus");render()},
   pListe:(b)=>{const k=b.dataset.k;if(aufListe(S.p)){vonListe(S.p)}else aufListeSetzen(k);listeSpeichern();render()},

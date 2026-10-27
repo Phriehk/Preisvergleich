@@ -388,11 +388,46 @@ t("Suchen ohne Eingabe: zuletzt gesucht und Favoriten zum Antippen; Produktseite
   });
 });
 
+t("Mit dem Finger: alle Knöpfe groß genug (mindestens 40 Pixel hoch); Rabatt in Prozent auf der Karte", async () => {
+  await mitSeite({ favs: [{ name: "Milch", aus: "" }, { name: "Butter", aus: "" }], finger: true }, async ({ p, fehler }) => {
+    assert.equal(await p.evaluate(() => matchMedia("(pointer:coarse)").matches), true);
+    assert.match(await p.textContent('.produkt[data-p="Milch"]'), /−18 % · statt 1,09\s€/);
+    const zuKlein = () => p.$$eval("#ansicht button, #ansicht a.knopf, #ansicht label.knopf, #ansicht .stepper input, #ansicht select, #ansicht summary, header button, #ansicht .p-plus", e => e.filter(x => x.offsetParent && getComputedStyle(x).visibility !== "hidden")
+      .map(x => { const r = x.getBoundingClientRect(); return [x.textContent.trim().slice(0, 30) || x.getAttribute("aria-label") || x.tagName, Math.round(r.width), Math.round(r.height)]; }).filter(([, w, h]) => h < 40 || w < 32));
+    const pruefen = async wo => assert.deepEqual(await zuKlein(), [], wo);
+    await pruefen("Angebote");
+    await p.click('.produkt[data-p="Milch"] .p-plus'); await p.click('.produkt[data-p="Butter"] .p-plus');
+    await p.click('[data-aktion="sfUm"]'); await p.waitForTimeout(200); await pruefen("Sortieren");
+    await bereich(p, "liste"); await zeileAuf(p, "Butter"); await empfAuf(p); await pruefen("Liste");
+    await bereich(p, "einkaufen"); await pruefen("Im Laden");
+    await p.click('#leiste [data-v="angebote"]'); await p.click('[data-seg="aTab"][data-wert="markt"]'); await marktWahl(p, "126679");
+    await p.waitForSelector(".mk-fav .mk-z", { timeout: 10000 }); await pruefen("Nach Markt");
+    assert.match(await p.textContent(".mk-fav .mk-z"), /−18 %/);
+    assert.deepEqual(fehler, []);
+  });
+});
+
+t("Am PC: Liste links, beste Wahl mit Rechnung rechts daneben; Formulare nicht über die ganze Breite", async () => {
+  await mitSeite({ favs: [{ name: "Milch", aus: "" }, { name: "Butter", aus: "" }], breite: 1440, hoehe: 900 }, async ({ p, fehler }) => {
+    await p.click('.produkt[data-p="Milch"] .p-plus'); await p.click('.produkt[data-p="Butter"] .p-plus');
+    await p.click('#leiste [data-v="liste"]'); await p.waitForTimeout(300);
+    assert.equal(await p.locator(".empf.offen .bon").count(), 1, "am PC von Anfang an offen");
+    const [l, e] = await Promise.all([p.locator(".l-haupt").boundingBox(), p.locator(".empf").boundingBox()]);
+    assert.ok(e.x > l.x + l.width && Math.abs(e.y - l.y) < 5, JSON.stringify([l, e]));
+    await p.click(".empf .e-kopf"); await p.waitForTimeout(200);
+    assert.equal(await p.locator(".empf.offen").count(), 0, "lässt sich zuklappen");
+    await p.click('#leiste [data-v="mehr"]'); await p.click('[data-einst="standort"]'); await p.waitForTimeout(300);
+    assert.ok((await p.locator("#ansicht").boundingBox()).width <= 780);
+    assert.deepEqual(fehler, []);
+  });
+});
+
 t("Alter Preis (oldPrice) wird als „statt …“ angezeigt", async () => {
   await mitSeite({ favs: [{ name: "Milch", aus: "" }] }, async ({ p }) => {
     assert.match(await p.textContent('.produkt[data-p="Milch"]'), /statt 1,09/);
     await p.click('.produkt[data-p="Milch"]'); await p.waitForTimeout(300);
     assert.match(await p.textContent("tbody"), /statt\s+1,09/);
+    assert.match(await p.textContent(".bestpreis"), /statt 1,09\s€ \(−18 %\)/);
   });
 });
 
