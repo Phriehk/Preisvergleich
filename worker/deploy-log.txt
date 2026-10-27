@@ -1,15 +1,102 @@
 workers.dev-Subdomain: vergleichen
+Total Upload: 84.72 KiB / gzip: 24.77 KiB
+Worker Startup Time: 2 ms
+Your Worker has access to the following bindings:
+Binding                                            Resource          
+env.PV (612e7d031a774977a2dbf2aea3f07c20)          KV Namespace      
+env.ASSETS                                         Assets            
 
+Uploaded angebote (5.77 sec)
+Deployed angebote triggers (1.08 sec)
+  https://angebote.vergleichen.workers.dev
+  schedule: 0 5 * * *
+Current Version ID: 0a1d0e29-7b83-4df6-9f92-2da26ebf8586
 
 Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
-
-[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mReceived a malformed response from the API[0m
-
-  Unauthorized
-  POST /accounts/256edfc58f2e54885a1a7696eef569e0/workers/assets/upload?base64=true -> 401 Unauthorized
-  Cloudflare Ray ID: a5118b54784e5060-DFW
-  
-  If you think this is a bug, please open an issue at: [4mhttps://github.com/cloudflare/workers-sdk/issues/new/choose[0m
-
-
-🪵  Logs were written to "/home/runner/.config/.wrangler/logs/wrangler-2026-10-27_12-00-17_811.log"
+✨ Success! Uploaded secret GOOGLE_VISION_KEY
+Google Vision: Schlüssel gesetzt
+Zugangscode: eigenes Passwort (Secret ZUGANGSCODE)
+✨ Success! Uploaded secret ZUGANG
+✨ Success! Uploaded secret WARTUNG
+Alten Server entfernt: {"success":false}
+Neue Adresse: https://angebote.angebote-vergleichen.workers.dev → https://angebote.vergleichen.workers.dev
+Alte Anmeldungen für Mitteilungen entfernt (ein Tipp darauf führte ins Leere): Deleting the key "push:abos" on namespace binding: "PV" (id: "612e7d031a774977a2dbf2aea3f07c20").
+Status: {"ok":true,"dienst":"preisvergleich","stand":{"zeit":"2026-10-27T12:53","anzahl":33,"fehler":0,"penny":{"angebote":277,"ergaenzt":1},"normal":{"prospekte":0,"ergaenzt":0,"normalpreise":2}},"vision":true}
+Alten Server „preise“ entfernt: {"success":false}
+Kassenbon-Texterkennung (ungültiges Bild, erwartet 400 mit Schlüssel, 501 ohne): HTTP 400
+Spar-Tipp: {"alternativen":3,"favoriten":2}
+Push ohne Code (erwartet 401): HTTP 401
+Push: Schlüssel 87 Zeichen, {"geraete":0,"wocheAn":true}
+Hintergrunddienst mit Push: 1
+Seite: <title>Preisvergleich</title>
+Ohne Code schreiben: HTTP 401
+Mit Code, leere Suche (erwartet 400): HTTP 400
+Suche Fanta: 1 s, {"anzahl":0}
+Aktualisieren: 7 s, {"zeit":"2026-10-27T13:02","anzahl":33,"fehler":0,"penny":{"angebote":277,"ergaenzt":1},"normal":{"prospekte":0,"ergaenzt":0,"normalpreise":2},"alarm":[]}
+Angebote: {"anzahl":33,"gruppen":["Ferrero Nutella Brotaufstrich","Heinz Ketchup","Knorr Spaghetteria","Lenor Unstoppables Wäscheparfüm","Lenor Wäscheparfüm","Lenor Wäscheparfüm XL","Monster Energy","Rama Cremefine","Red Bull","Zewa Toilettenpapier Ultra Soft","coca cola"],"frueher":2,"penny":[{"p":"Cola","preis":1.19,"alt":1.69,"uvp":1,"app":0.99},{"p":"Cremefine","preis":1.99,"alt":null,"uvp":null,"app":null},{"p":"Toilettenpapier Ultra Soft XXL","preis":6.99,"alt":null,"uvp":null,"app":null}]}
+Verlauf: 483 Zeilen
+Korrekturen lesen: {}
+Korrekturen ohne Code schreiben (erwartet 401): HTTP 401
+Korrektur gespeichert und gelesen: true
+Test-Korrektur gelöscht: true
+Entfernungen: 0 s, {"Lidl":{"km":3.7,"fil":39},"ALDI SÜD":{"km":1.3,"fil":37},"Kaufland":{"km":3.2,"fil":12},"REWE":{"km":6.8,"fil":34},"PENNY":{"km":3.1,"fil":24},"Netto Marken-Discount":{"km":2,"fil":38},"trinkgut":{"km":0.7,"fil":21},"Thomas Philipps":{"km":3.9,"fil":4},"Handelshof":{"km":null,"fil":0},"ROSSMANN":{"km":1.2,"fil":34},"EDEKA":{"km":1.3,"fil":39}}
+Region 40210 ohne Code: 0 s, {"anzahl":4,"maerkte":["ALDI SÜD","Kaufland","Lidl","Thomas Philipps"]}
+Region ungültige PLZ (erwartet 400): HTTP 400
+Lebensmittel-Probe: 1 s, {"Butter":11,"Eier":3,"Joghurt":21,"Kartoffeln":9,"Mehl":4,"Nudeln":5}
+  Probe: Butter | Netto Marken-Discount | Beste Butter | art=kg liter=0.25 stueck=1 ml=250 preis=0.88 | gekühlt 250 g
+  Probe: Butter | Thomas Philipps | Butter Beans | art=kg liter=0.24 stueck=1 ml=240 preis=0.89 | weiße Riesenbohnen 400 g, 240 g Abtropfgewicht
+  Probe: Butter | Kaufland | Butter | art=kg liter=0.25 stueck=1 ml=250 preis=1.11 | oder Die Streichzarte mildgesäuert, Die Streichzarte auch gesalzen, ge
+  Probe: Butter | Lidl | mit Butter XXL | art=kg liter=0.4 stueck=1 ml=400 preis=1.99 | Versch. Sorten. Gekühlt. Je 400 g
+  Probe: Butter | PENNY | Feine Butter | art=kg liter=0.25 stueck=1 ml=250 preis=1.39 | 250 g
+  Probe: Butter | Lidl | Kaergarden Butter | art=kg liter=0.25 stueck=1 ml=250 preis=1.39 | 250g
+  Probe: Butter | Lidl | Beste Butter | art=kg liter=0.25 stueck=1 ml=250 preis=1.49 | Gekuhit. Je 250 g
+  Probe: Butter | Lidl | Süßrahmbutter | art=kg liter=0.25 stueck=1 ml=250 preis=2.42 | Bioalnd. Gekühlt. Je 250 g. Normalpreis: 2.69
+  Probe: Butter | ALDI SÜD | Meersalz Butter | art=kg liter=0.25 stueck=1 ml=250 preis=2.49 | 250-g-Packung
+  Probe: Butter | Lidl | Meersalz Butter | art=kg liter=0.25 stueck=1 ml=250 preis=2.49 | 250 g
+  Probe: Butter | ALDI SÜD | Butter | art=kg liter=0.25 stueck=1 ml=250 preis=2.69 | 250-g-Packung
+  Probe: Eier | Netto Marken-Discount | Eier aus Bodenhaltung | art=st liter=15 stueck=15 ml=1000 preis=3.49 | 15 Stück
+  Probe: Eier | PENNY | Bunte gekochte Halloween-Eie | art=st liter=10 stueck=10 ml=1000 preis=2.99 | Aus Bodenhaltung, je 10 Stück
+  Probe: Eier | Kaufland | Eier | art=st liter=10 stueck=10 ml=1000 preis=3.59 | aus Freilandhaltung, HKL A, Größe M/L je 10-St.-Packg.
+  Probe: Joghurt | Lidl | Joghurt | art=kg liter=0.5 stueck=1 ml=500 preis=0.59 | HINWEIS: MIT LIDL PLUS APP 3,5% Fett. Gekühlt. Je 500 g Normalpreis: 0
+  Probe: Joghurt | Lidl | Joghurt Mild | art=kg liter=0.6 stueck=4 ml=150 preis=0.75 | HINWEIS: MIT LIDL PLUS APP 4x150 g
+  Probe: Joghurt | ALDI SÜD | Joghurt | art=kg liter=0.5 stueck=1 ml=500 preis=0.79 | 0,1 % bzw. 1,5 % Fett; je 500-g-Becher
+  Probe: Joghurt | Netto Marken-Discount | Naturjoghurt | art=kg liter=0.5 stueck=1 ml=500 preis=0.79 | 500 g gekühlt, 3.5% Fett
+  Probe: Joghurt | PENNY | Naturjoghurt | art=kg liter=0.5 stueck=1 ml=500 preis=0.79 | 500 g
+  Probe: Joghurt | Lidl | Vegane Soja Joghurt­ alterna | art=kg liter=0.5 stueck=1 ml=500 preis=0.79 | HINWEIS: MIT LIDL PLUS APP 500 g Gekühlt.  Normalpreis: 0.99
+  Probe: Joghurt | ALDI SÜD | Joghurt | art=kg liter=0.5 stueck=1 ml=500 preis=0.89 | 3,5 % Fett; 500-g-Becher
+  Probe: Joghurt | ALDI SÜD | Joghurt | art=kg liter=1 stueck=1 ml=1000 preis=1.79 | 1,5 % bzw. 3,5 % Fett; je 1-kg-Eimer
+  Probe: Joghurt | PENNY | Fettarmer Joghurt | art=kg liter=0.25 stueck=1 ml=250 preis=0.45 | Versch. Sorten, je 250 g ohne Penny App 0.59
+  Probe: Joghurt | Lidl | Joghurt nach griechischer Ar | art=kg liter=1.1 stueck=1 ml=1100 preis=2.15 | Versch. Sorten. Gekühlt. Je 1,1 kg, Standardpackung: 1 kg
+  Probe: Joghurt | Netto Marken-Discount | Fruchtjoghurt | art=kg liter=0.225 stueck=1 ml=225 preis=0.44 | 225 g - 250 g gekühlt, versch. Sorten
+  Probe: Joghurt | Lidl | Sahnejoghurt | art=kg liter=0.15 stueck=1 ml=150 preis=0.33 | HINWEIS: MIT LIDL PLUS APP mild Gekühlt. Je 150 g. Normalpreis: 0.39
+  Probe: Joghurt | ALDI SÜD | Joghurt | art=kg liter=0.5 stueck=1 ml=500 preis=1.11 | Versch. Sorten; je 500-g-Becher
+  Probe: Joghurt | Kaufland | Joghurt | art=kg liter=0.5 stueck=1 ml=500 preis=1.11 | Fruchtjoghurt 3,8 %, versch. Sorten, oder Rahmjoghurt 10 % Fett im Mil
+  Probe: Joghurt | ALDI SÜD | Bio-Joghurt | art=kg liter=0.5 stueck=1 ml=500 preis=1.15 | 3,8 % bzw. 1,8 % Fett; je 500-g-Becher Naturland
+  Probe: Joghurt | Kaufland | Almighurt Fruchtjoghurt | art=kg liter=0.15 stueck=1 ml=150 preis=0.35 | Fruchtjoghurt, versch. Sorten, 3,5 - 3,8 % Fett im Milchanteil, gekühl
+  Probe: Joghurt | ALDI SÜD | Premium-Joghurt | art=kg liter=0.2 stueck=1 ml=200 preis=0.49 | Versch. Sorten; je 200-g-Becher;
+  Probe: Joghurt | PENNY | Bio Naturjoghurt | art=kg liter=0.15 stueck=1 ml=150 preis=0.45 | Versch. Sorten, je 150 g
+  Probe: Joghurt | Netto Marken-Discount | Joghurt auf Frucht | art=kg liter=0.15 stueck=1 ml=150 preis=0.49 | 150 g gekühlt, versch. Sorten
+  Probe: Joghurt | PENNY | Feinjoghurt | art=kg liter=0.15 stueck=1 ml=150 preis=0.69 | Versch. Sorten, je 150 g
+  Probe: Joghurt | Lidl | Feinjoghurt | art=kg liter=0.15 stueck=1 ml=150 preis=0.69 | Versch. Sorten. Gekühlt. Je 150 g
+  Probe: Kartoffeln | Thomas Philipps | Einkellerungskartoffeln XXL | art=kg liter=20 stueck=2 ml=10000 preis=9 | XXL, 2 x 10 kg. Einzelpreis 4,99
+  Probe: Kartoffeln | Kaufland | Speisekartoffeln | art=kg liter=5 stueck=1 ml=5000 preis=2.99 | vorwiegend festkochend, Sorte laut Auszeichnung, Qualität l je 5-kg-Sa
+  Probe: Kartoffeln | Netto Marken-Discount | Speisekartoffeln XXL | art=kg liter=4 stueck=1 ml=4000 preis=2.99 | 4 kg Netz Deutschland, versch. Kocheigenschaften
+  Probe: Kartoffeln | Kaufland | Speisekartoffeln | art=kg liter=1 stueck=1 ml=1000 preis=0.79 | Dtsch. lose Qualität II je kg
+  Probe: Kartoffeln | Lidl | Bio-Speisekartoffeln | art=kg liter=2 stueck=1 ml=2000 preis=2.79 | Bioland Deutsche Qualität I Je 2 kg
+Märkte 47178: 0 s, ["Kaufland=623","Lidl=885","PENNY=284","ALDI SÜD=468","Thomas Philipps=185","ROSSMANN=7","Handelshof=270","trinkgut=79","Netto Marken-Discount=357","REWE=234 (47053)","dm-drogerie markt=25 (47137)"]
+PENNY mit penny.de: {"geladen":292,"frueher":109,"uvp":70,"app":22,"beispiel":["Naturgut Bio Cherry-Romatomaten 1.29 statt 1.99","Marktliebe Rosenkohl 1.11 statt 1.39","Marktliebe Rosenkohl 1.11 statt 1.39"]}
+Markt 126679: 1 s, {"name":"Lidl","total":885,"seiten":"885/885/885","geladen":885,"ohneMenge":0,"kategorien":65,"ohneKat":0,"kp":"3=21 5=56 6=7 10=6 11=3 12=3 14=10 15=3 16=50 17=1 20=69 23=9 35=6 50=23 53=9 69=15 70=4 83=5 85=14 91=6 94=24 95=8 97=21 101=1 102=17 103=31 104=20 106=6 107=64 108=8 110=24 112=11 113=6 116=2 119=3 120=31 122=3 126=1 129=2 137=6 142=2 143=33 144=26 147=7 149=13 187=2 191=8 193=8 218=1 363=32 364=29 382=3 383=3 384=1 385=4 386=4 398=34 402=3 415=6 427=26 428=7 454=6 473=7 497=8 630=3","beispiel":"Lidl Backshop Kakao Donuts XXL 2.69 kg Kuchen & Feinbackwaren"}
+Markt 126735: 0 s, {"name":"Netto Marken-Discount","total":357,"seiten":"357/357/357","geladen":357,"ohneMenge":0,"kategorien":56,"ohneKat":0,"kp":"3=6 5=7 6=1 10=1 11=1 12=1 14=1 16=3 17=1 20=36 23=5 26=2 50=8 53=7 69=16 70=5 83=2 85=5 97=3 101=1 102=8 103=20 104=18 106=2 107=28 108=4 110=12 112=11 113=4 116=1 119=1 120=15 136=1 142=3 143=18 144=5 147=14 149=14 174=11 187=1 191=8 193=4 363=4 364=4 382=3 383=2 384=2 398=6 402=3 415=3 427=1 428=1 454=1 473=7 497=1 630=4","beispiel":"Netto Eigenmarken Adventskalender 49.9 st Xmas"}
+Entfernungen 40210, erste Antwort: {"Lidl":{"km":0.3,"adresse":"Lidl, 1, Konrad-Adenauer-Platz","filialen":[[51.22188,6.79342,"Lidl, 1, Konrad-Adenauer-Platz"],[51.22292,6.77362,"Lidl, 7b, Benrather Straße"],[51.20989,6.79074,"Lidl, 6
+Entfernungen 40210, nach 40 s: {"Lidl":{"km":0.3,"fil":35},"REWE":{"km":0.4,"fil":37},"ALDI SÜD":{"km":0.8,"fil":39}}
+Konto anlegen: {"name":"test1793102595","token":true}
+Konto doppelt (erwartet 409): HTTP 409
+Konto falsches Passwort (erwartet 401): HTTP 401
+Konto Daten: {"name":"test1793102595","daten":{}}
+Konto Anfragen ohne Code (erwartet 401): HTTP 401
+Konto Anfragen mit Code: ["test1793102595"]
+Wiederherstellcode erzeugt: 8 Zeichen
+Neues Passwort mit Code: {"name":"test1793102595","token":true}
+Alte Sitzung nach Passwortwechsel (erwartet 401): HTTP 401
+Code ein zweites Mal (erwartet Fehler): HTTP 401
+Konto löschen: HTTP 200
