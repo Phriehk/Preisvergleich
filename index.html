@@ -597,7 +597,7 @@ let kurzName=ls.raw("pv-kurz")||"Einkaufsliste in Erinnerungen";
 function listeSpeichern(ohneSync){ls.set("pv-kaeufe",kaeufe);Object.keys(wahl).forEach(k=>{if(!(zettel[k]>0))delete wahl[k]});ls.set("pv-wahl",wahl);ls.set("pv-zettel",zettel);ls.set("pv-frei",frei);ls.set("pv-richt",richt);ls.set("pv-richtq",richtQ);ls.set("pv-extra",extra);ls.set("pv-haken",haken);if(!ohneSync)kontoSync()}
 
 /* ---------- Server ---------- */
-const SERVER="https://preise.phriehk.workers.dev";
+const SERVER=/\.workers\.dev$/.test(location.hostname)?location.origin:"https://preise.angebote-vergleichen.workers.dev";   // Adresse der App (beim eigenen Server immer die, unter der sie gerade läuft)
 const cf=/\.workers\.dev$/.test(location.hostname);   // die Seite läuft beim eigenen Server
 if(/\.github\.io$/.test(location.hostname))location.replace(SERVER+"/"+(zugang?"#code="+zugang:""));   // alte Adresse
 const wUrl=cf?location.origin:SERVER;
@@ -1657,7 +1657,7 @@ function badgeSetzen(){
 /* ---------------- Angebote: eine Karte je Favorit ---------------- */
 function statusHtml(){
   let h="";
-  if(demo)h+=`<div class="banner warn">Das ist eine Vorschau mit Beispieldaten. Die App mit echten Angeboten läuft unter <a href="${SERVER}/" target="_blank" rel="noopener">preise.phriehk.workers.dev</a>.</div>`;
+  if(demo)h+=`<div class="banner warn">Das ist eine Vorschau mit Beispieldaten. Die App mit echten Angeboten läuft unter <a href="${SERVER}/" target="_blank" rel="noopener">${esc(SERVER.replace(/^https:\/\//,""))}</a>.</div>`;
   else if(!online&&!offers.length)h+=`<div class="banner warn">Der Server ist gerade nicht erreichbar. Sobald die Verbindung steht, erscheinen hier die Angebote.</div>`;
   const ref=lokalModus()?cacheZeit:(stand&&stand.zeit?Date.parse(stand.zeit):0),alter=ref?(Date.now()-ref)/36e5:0;
   if(!demo&&!lokalModus()&&alter>48)h+=`<div class="banner rot">Die Preise sind ${Math.floor(alter/24)} Tage alt. Der tägliche Lauf hat wohl nicht geklappt. Tippe oben auf ↻, um sie jetzt zu holen.</div>`;

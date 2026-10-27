@@ -53,7 +53,7 @@ test("Server: Prospekt speichern, Normalpreise je Favorit, Angebote ergänzen, e
     { t: "Weihenstephan Butter", q: "gesalzen, gekühlt 250 g (7.16 / kg)", p: 1.79, alt: 2.49 },
     { t: "Milka Schokolade", q: "versch. Sorten 100 g (9.50 / kg)", p: 0.95, alt: 1.99, uvp: 1 },
     { t: "Zewa Toilettenpapier", q: "16 x 150 Blatt", p: 6.99 }, { t: "x", p: 1 }, { t: "Ohne Preis", p: 0 }] };
-  const ohne = await u.H.fetch(new Request("https://preise.phriehk.workers.dev/prospekt", { method: "POST", body: JSON.stringify(body) }), u.env, u.ctx);
+  const ohne = await u.H.fetch(new Request("https://preise.angebote-vergleichen.workers.dev/prospekt", { method: "POST", body: JSON.stringify(body) }), u.env, u.ctx);
   assert.equal(ohne.status, 401);
   const r = await (await u.A("/prospekt", "POST", JSON.stringify(body))).json();
   assert.equal(r.markt, "PENNY"); assert.equal(r.angebote, 3); assert.equal(r.statt, 2);
@@ -75,7 +75,7 @@ test("Server: Prospekt speichern, Normalpreise je Favorit, Angebote ergänzen, e
   // einen gelernten Normalpreis löschen (nur mit Code)
   const k = JSON.parse(u.store.get("normalpreise")).find(x => x.gruppe === "Schokolade").k;
   assert.ok(k);
-  assert.equal((await u.H.fetch(new Request("https://preise.phriehk.workers.dev/normal?k=" + encodeURIComponent(k), { method: "DELETE" }), u.env, u.ctx)).status, 401);
+  assert.equal((await u.H.fetch(new Request("https://preise.angebote-vergleichen.workers.dev/normal?k=" + encodeURIComponent(k), { method: "DELETE" }), u.env, u.ctx)).status, 401);
   const nach = await (await u.A("/normal?k=" + encodeURIComponent(k), "DELETE")).json();
   assert.ok(!nach.some(x => x.gruppe === "Schokolade") && nach.some(x => x.gruppe === "Butter"));
   assert.equal((await u.A("/normal?k=gibtsnicht", "DELETE")).status, 404);

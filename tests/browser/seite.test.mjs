@@ -79,7 +79,7 @@ t("Konto anlegen: Passwortprüfung, Anmeldung, Abgleich ohne Datenverlust (auch 
     assert.deepEqual(d.extra, ["Zahnpasta"]);
     // ... und bleibt, wenn eine ältere Fassung der Seite nur ihre Felder schickt
     const tok = await p.evaluate(() => konto.token);
-    await u.H.fetch(new Request("https://preise.phriehk.workers.dev/konto/daten", { method: "PUT", headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" }, body: JSON.stringify({ daten: { ort: null, km: 0.3, zettel: { Eier: 6 }, richt: {}, frei: {} } }) }), u.env, u.ctx);
+    await u.H.fetch(new Request("https://preise.angebote-vergleichen.workers.dev/konto/daten", { method: "PUT", headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" }, body: JSON.stringify({ daten: { ort: null, km: 0.3, zettel: { Eier: 6 }, richt: {}, frei: {} } }) }), u.env, u.ctx);
     d = JSON.parse(u.store.get("u:anna")).daten;
     assert.deepEqual(d.extra, ["Zahnpasta"]); assert.deepEqual(d.zettel, { Eier: 6 });
     assert.deepEqual(fehler, []);
@@ -506,11 +506,11 @@ t("Einkaufen ohne Netz: Haken bleiben auf dem Gerät und gehen später ins Konto
     await p.waitForSelector("#kWer", { timeout: 15000 });
     await bereich(p, "einkaufen");
     await p.fill("#extraName", "Zahnpasta"); await p.press("#extraName", "Enter"); await p.waitForTimeout(2200);
-    await p.route("https://preise.phriehk.workers.dev/konto/**", r => r.abort());   // Funkloch
+    await p.route("https://preise.angebote-vergleichen.workers.dev/konto/**", r => r.abort());   // Funkloch
     await p.check('#ansicht input[data-hk]'); await p.waitForTimeout(2200);
     assert.match(await p.textContent("#ansicht"), /auf diesem Gerät gespeichert/);
     assert.deepEqual(JSON.parse(u.store.get("u:ben")).daten.haken || {}, {});
-    await p.unroute("https://preise.phriehk.workers.dev/konto/**");
+    await p.unroute("https://preise.angebote-vergleichen.workers.dev/konto/**");
     await p.reload(); await p.waitForTimeout(2500);   // beim nächsten Öffnen gewinnt dieses Gerät, nicht der alte Stand im Konto
     assert.equal(Object.keys(JSON.parse(u.store.get("u:ben")).daten.haken || {}).length, 1);
     await bereich(p, "einkaufen");
