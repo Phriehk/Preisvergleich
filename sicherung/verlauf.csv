@@ -393,14 +393,12 @@ datum;markt;produkt;liter;preis;preis_pro_liter;gueltig_bis;gueltig_von;gruppe
 2026-10-25;Netto Marken-Discount;Cola;1.5;1.29;0.86;2026-10-30;2026-10-26;coca cola
 2026-10-25;ALDI SÜD;Cola;1.25;1.19;0.95;2026-11-07;2026-11-02;coca cola
 2026-10-25;PENNY;Cola;1.25;1.19;0.95;2026-10-31;2026-10-26;coca cola
-2026-10-25;PENNY (46535);Cola;1.25;1.19;0.95;2026-10-31;2026-10-26;coca cola
 2026-10-25;REWE (47053);Cola;12;11.99;1;2026-10-31;2026-10-26;coca cola
 2026-10-25;Netto Marken-Discount;Cola;10;13.99;1.4;2026-10-30;2026-10-26;coca cola
 2026-10-25;Lidl;Cola;3.96;6.66;1.68;2026-11-07;2026-11-05;coca cola
 2026-10-25;ALDI SÜD;Cola;0.33;0.62;1.88;2026-10-31;2026-10-26;coca cola
 2026-10-25;REWE (47053);Cola;0.33;0.75;2.27;2026-10-31;2026-10-26;coca cola
 2026-10-25;Thomas Philipps;Mischgetränk;0.25;1.49;5.96;2026-10-31;2026-10-26;coca cola
-2026-10-25;Thomas Philipps (46535);Mischgetränk;0.25;1.49;5.96;2026-10-31;2026-10-26;coca cola
 2026-10-25;REWE (47053);Mischgetränk;0.33;1.99;6.03;2026-10-31;2026-10-26;coca cola
 2026-10-25;Lidl;Nutella;1;7.49;7.49;2026-11-07;2026-11-05;Ferrero Nutella Brotaufstrich
 2026-10-25;Lidl;Nutella Brotaufstrich;0.5;3.99;7.98;2026-10-31;2026-10-26;Ferrero Nutella Brotaufstrich
@@ -408,12 +406,233 @@ datum;markt;produkt;liter;preis;preis_pro_liter;gueltig_bis;gueltig_von;gruppe
 2026-10-25;Lidl;Tomaten Ketchup;1.17;3.49;2.98;2026-10-31;2026-10-26;Heinz Ketchup
 2026-10-25;REWE (47053);Spaghetteria Pasta Spinaci Käse;0.178;1.49;8.37;2026-10-31;2026-10-26;Knorr Spaghetteria
 2026-10-25;Lidl;Unstoppables Wäscheparfüm;0.495;8.49;17.15;2026-10-31;2026-10-29;Lenor Wäscheparfüm XL
+2026-10-25;Kaufland;Wäscheparfüm;0.56;10;17.86;2026-10-31;2026-10-26;Lenor Wäscheparfüm XL
 2026-10-25;Netto Marken-Discount;Energy Drink;0.5;0.88;1.76;2026-10-30;2026-10-28;Monster Energy
 2026-10-25;REWE (47053);Energy Drink;0.5;0.99;1.98;2026-10-31;2026-10-26;Monster Energy
 2026-10-25;Lidl;Energy Drink;1.5;4.99;3.33;2026-11-07;2026-11-06;Red Bull
+2026-10-25;Kaufland;Energy Drink;0.25;0.88;3.52;2026-10-31;2026-10-26;Red Bull
 2026-10-25;ALDI SÜD;Energy Drink;0.25;0.89;3.56;2026-10-31;2026-10-26;Red Bull
 2026-10-25;Thomas Philipps;Energy Drink;0.25;0.92;3.68;2026-10-31;2026-10-26;Red Bull
-2026-10-25;Thomas Philipps (46535);Energy Drink;0.25;0.92;3.68;2026-10-31;2026-10-26;Red Bull
 2026-10-25;Netto Marken-Discount;Toilettenpapier;16;6.99;0.44;2026-10-30;2026-10-26;Zewa Toilettenpapier Ultra Soft
 2026-10-25;PENNY;Toilettenpapier Ultra Soft XXL;16;6.99;0.44;2026-10-31;2026-10-29;Zewa Toilettenpapier Ultra Soft
-2026-10-25;PENNY (46535);Toilettenpapier Ultra Soft XXL;16;6.99;0.44;2026-10-31;2026-10-29;Zewa Toilettenpapier Ultra Soft
+2026-10-26;Lidl;Cola;1.25;0.99;0.79;2026-10-31;2026-10-26;coca cola
+2026-10-26;Netto Marken-Discount;Cola;1.5;1.29;0.86;2026-10-31;2026-10-26;coca cola
+2026-10-26;ALDI SÜD;Cola;1.25;1.19;0.95;2026-11-07;2026-11-02;coca cola
+2026-10-26;trinkgut;Cola;1.25;1.19;0.95;2026-10-31;2026-10-26;coca cola
+2026-10-26;PENNY;Cola;1.25;1.19;0.95;2026-10-31;2026-10-26;coca cola
+2026-10-26;REWE (47053);Cola;12;11.99;1;2026-10-31;2026-10-26;coca cola
+2026-10-26;Netto Marken-Discount;Cola;10;13.99;1.4;2026-10-31;2026-10-26;coca cola
+2026-10-26;Lidl;Cola;3.96;6.66;1.68;2026-11-07;2026-11-05;coca cola
+2026-10-26;ALDI SÜD;Cola;0.33;0.62;1.88;2026-10-31;2026-10-26;coca cola
+2026-10-26;REWE (47053);Cola;0.33;0.75;2.27;2026-10-31;2026-10-26;coca cola
+2026-10-26;Kaufland;Herren Retroshorts Coca Cola 3 Stück;3;6.99;2.33;2026-10-31;2026-10-29;coca cola
+2026-10-26;Thomas Philipps;Mischgetränk;0.25;1.49;5.96;2026-10-31;2026-10-26;coca cola
+2026-10-26;REWE (47053);Mischgetränk;0.33;1.99;6.03;2026-10-31;2026-10-26;coca cola
+2026-10-26;Lidl;Nutella;1;7.49;7.49;2026-11-07;2026-11-05;Ferrero Nutella Brotaufstrich
+2026-10-26;Lidl;Nutella Brotaufstrich;0.5;3.99;7.98;2026-10-31;2026-10-26;Ferrero Nutella Brotaufstrich
+2026-10-26;ALDI SÜD;Tomatenketchup XXL;1.17;2.99;2.56;2026-10-31;2026-10-30;Heinz Ketchup
+2026-10-26;Lidl;Tomaten Ketchup;1.17;3.49;2.98;2026-10-31;2026-10-26;Heinz Ketchup
+2026-10-26;REWE (47053);Spaghetteria Pasta Spinaci Käse;0.178;1.49;8.37;2026-10-31;2026-10-26;Knorr Spaghetteria
+2026-10-26;Lidl;Unstoppables Wäscheparfüm;0.495;8.49;17.15;2026-10-31;2026-10-29;Lenor Unstoppables Wäscheparfüm
+2026-10-26;Kaufland;Wäscheparfüm;0.56;10;17.86;2026-10-31;2026-10-26;Lenor Wäscheparfüm
+2026-10-26;Lidl;Unstoppables Wäscheparfüm;0.495;8.49;17.15;2026-10-31;2026-10-29;Lenor Wäscheparfüm XL
+2026-10-26;Kaufland;Wäscheparfüm;0.56;10;17.86;2026-10-31;2026-10-26;Lenor Wäscheparfüm XL
+2026-10-26;Netto Marken-Discount;Energy Drink;0.5;0.88;1.76;2026-10-30;2026-10-28;Monster Energy
+2026-10-26;REWE (47053);Energy Drink;0.5;0.99;1.98;2026-10-31;2026-10-26;Monster Energy
+2026-10-26;Lidl;Cremefine;0.25;0.79;3.16;2026-10-31;2026-10-29;Rama Cremefine
+2026-10-26;PENNY;Cremefine;0.5;1.99;3.98;2026-10-31;2026-10-26;Rama Cremefine
+2026-10-26;Lidl;Energy Drink;1.5;4.99;3.33;2026-11-07;2026-11-06;Red Bull
+2026-10-26;Kaufland;Energy Drink;0.25;0.88;3.52;2026-10-31;2026-10-26;Red Bull
+2026-10-26;ALDI SÜD;Energy Drink;0.25;0.89;3.56;2026-10-31;2026-10-26;Red Bull
+2026-10-26;Thomas Philipps;Energy Drink;0.25;0.92;3.68;2026-10-31;2026-10-26;Red Bull
+2026-10-26;trinkgut;Toilettenpapier;16;6.66;0.42;2026-10-31;2026-10-26;Zewa Toilettenpapier Ultra Soft
+2026-10-26;Netto Marken-Discount;Toilettenpapier;16;6.99;0.44;2026-10-31;2026-10-26;Zewa Toilettenpapier Ultra Soft
+2026-10-26;PENNY;Toilettenpapier Ultra Soft XXL;16;6.99;0.44;2026-10-31;2026-10-29;Zewa Toilettenpapier Ultra Soft
+2026-10-27;Lidl;Cola;1.25;0.99;0.79;2026-10-31;2026-10-26;coca cola
+2026-10-27;Netto Marken-Discount;Cola;1.5;1.29;0.86;2026-10-31;2026-10-26;coca cola
+2026-10-27;ALDI SÜD;Cola;1.25;1.19;0.95;2026-11-07;2026-11-02;coca cola
+2026-10-27;trinkgut;Cola;1.25;1.19;0.95;2026-10-31;2026-10-26;coca cola
+2026-10-27;PENNY;Cola;1.25;1.19;0.95;2026-10-31;2026-10-26;coca cola
+2026-10-27;REWE (47053);Cola;12;11.99;1;2026-10-31;2026-10-26;coca cola
+2026-10-27;Netto Marken-Discount;Cola;10;13.99;1.4;2026-10-31;2026-10-26;coca cola
+2026-10-27;Lidl;Cola;3.96;6.66;1.68;2026-11-07;2026-11-05;coca cola
+2026-10-27;ALDI SÜD;Cola;0.33;0.62;1.88;2026-10-31;2026-10-26;coca cola
+2026-10-27;REWE (47053);Cola;0.33;0.75;2.27;2026-10-31;2026-10-26;coca cola
+2026-10-27;Kaufland;Herren Retroshorts Coca Cola 3 Stück;3;6.99;2.33;2026-10-31;2026-10-29;coca cola
+2026-10-27;Thomas Philipps;Mischgetränk;0.25;1.49;5.96;2026-10-31;2026-10-26;coca cola
+2026-10-27;REWE (47053);Mischgetränk;0.33;1.99;6.03;2026-10-31;2026-10-26;coca cola
+2026-10-27;Lidl;Nutella;1;7.49;7.49;2026-11-07;2026-11-05;Ferrero Nutella Brotaufstrich
+2026-10-27;Lidl;Nutella Brotaufstrich;0.5;3.99;7.98;2026-10-31;2026-10-26;Ferrero Nutella Brotaufstrich
+2026-10-27;ALDI SÜD;Tomatenketchup XXL;1.17;2.99;2.56;2026-10-31;2026-10-30;Heinz Ketchup
+2026-10-27;Lidl;Tomaten Ketchup;1.17;3.49;2.98;2026-10-31;2026-10-26;Heinz Ketchup
+2026-10-27;REWE (47053);Spaghetteria Pasta Spinaci Käse;0.178;1.49;8.37;2026-10-31;2026-10-26;Knorr Spaghetteria
+2026-10-27;Lidl;Unstoppables Wäscheparfüm;0.495;8.49;17.15;2026-10-31;2026-10-29;Lenor Unstoppables Wäscheparfüm
+2026-10-27;Kaufland;Wäscheparfüm;0.56;10;17.86;2026-10-31;2026-10-26;Lenor Wäscheparfüm
+2026-10-27;Lidl;Unstoppables Wäscheparfüm;0.495;8.49;17.15;2026-10-31;2026-10-29;Lenor Wäscheparfüm XL
+2026-10-27;Kaufland;Wäscheparfüm;0.56;10;17.86;2026-10-31;2026-10-26;Lenor Wäscheparfüm XL
+2026-10-27;Netto Marken-Discount;Energy Drink;0.5;0.88;1.76;2026-10-30;2026-10-28;Monster Energy
+2026-10-27;REWE (47053);Energy Drink;0.5;0.99;1.98;2026-10-31;2026-10-26;Monster Energy
+2026-10-27;Lidl;Cremefine;0.25;0.79;3.16;2026-10-31;2026-10-29;Rama Cremefine
+2026-10-27;PENNY;Cremefine;0.5;1.99;3.98;2026-10-31;2026-10-26;Rama Cremefine
+2026-10-27;Lidl;Energy Drink;1.5;4.99;3.33;2026-11-07;2026-11-06;Red Bull
+2026-10-27;Kaufland;Energy Drink;0.25;0.88;3.52;2026-10-31;2026-10-26;Red Bull
+2026-10-27;ALDI SÜD;Energy Drink;0.25;0.89;3.56;2026-10-31;2026-10-26;Red Bull
+2026-10-27;Thomas Philipps;Energy Drink;0.25;0.92;3.68;2026-10-31;2026-10-26;Red Bull
+2026-10-27;trinkgut;Toilettenpapier;16;6.66;0.42;2026-10-31;2026-10-26;Zewa Toilettenpapier Ultra Soft
+2026-10-27;Netto Marken-Discount;Toilettenpapier;16;6.99;0.44;2026-10-31;2026-10-26;Zewa Toilettenpapier Ultra Soft
+2026-10-27;PENNY;Toilettenpapier Ultra Soft XXL;16;6.99;0.44;2026-10-31;2026-10-29;Zewa Toilettenpapier Ultra Soft
+2026-10-28;Lidl;Cola;1.25;0.99;0.79;2026-10-31;2026-10-26;coca cola
+2026-10-28;Netto Marken-Discount;Cola;1.5;1.29;0.86;2026-10-31;2026-10-26;coca cola
+2026-10-28;ALDI SÜD;Cola;1.25;1.19;0.95;2026-11-07;2026-11-02;coca cola
+2026-10-28;trinkgut;Cola;1.25;1.19;0.95;2026-10-31;2026-10-26;coca cola
+2026-10-28;PENNY;Cola;1.25;1.19;0.95;2026-10-31;2026-10-26;coca cola
+2026-10-28;REWE (47053);Cola;12;11.99;1;2026-10-31;2026-10-26;coca cola
+2026-10-28;Netto Marken-Discount;Cola;10;13.99;1.4;2026-10-31;2026-10-26;coca cola
+2026-10-28;Lidl;Cola;3.96;6.66;1.68;2026-11-07;2026-11-05;coca cola
+2026-10-28;ALDI SÜD;Cola;0.33;0.62;1.88;2026-10-31;2026-10-26;coca cola
+2026-10-28;REWE (47053);Cola;0.33;0.75;2.27;2026-10-31;2026-10-26;coca cola
+2026-10-28;Kaufland;Herren Retroshorts Coca Cola 3 Stück;3;6.99;2.33;2026-10-31;2026-10-29;coca cola
+2026-10-28;Thomas Philipps;Mischgetränk;0.25;1.49;5.96;2026-10-31;2026-10-26;coca cola
+2026-10-28;REWE (47053);Mischgetränk;0.33;1.99;6.03;2026-10-31;2026-10-26;coca cola
+2026-10-28;Lidl;Nutella;1;7.49;7.49;2026-11-07;2026-11-05;Ferrero Nutella Brotaufstrich
+2026-10-28;Lidl;Nutella Brotaufstrich;0.5;3.99;7.98;2026-10-31;2026-10-26;Ferrero Nutella Brotaufstrich
+2026-10-28;ALDI SÜD;Tomatenketchup XXL;1.17;2.99;2.56;2026-10-31;2026-10-30;Heinz Ketchup
+2026-10-28;Lidl;Tomaten Ketchup;1.17;3.49;2.98;2026-10-31;2026-10-26;Heinz Ketchup
+2026-10-28;REWE (47053);Spaghetteria Pasta Spinaci Käse;0.178;1.49;8.37;2026-10-31;2026-10-26;Knorr Spaghetteria
+2026-10-28;Lidl;Unstoppables Wäscheparfüm;0.495;8.49;17.15;2026-10-31;2026-10-29;Lenor Unstoppables Wäscheparfüm
+2026-10-28;Kaufland;Wäscheparfüm;0.56;10;17.86;2026-10-31;2026-10-26;Lenor Wäscheparfüm
+2026-10-28;Lidl;Unstoppables Wäscheparfüm;0.495;8.49;17.15;2026-10-31;2026-10-29;Lenor Wäscheparfüm XL
+2026-10-28;Kaufland;Wäscheparfüm;0.56;10;17.86;2026-10-31;2026-10-26;Lenor Wäscheparfüm XL
+2026-10-28;Netto Marken-Discount;Energy Drink;0.5;0.88;1.76;2026-10-31;2026-10-29;Monster Energy
+2026-10-28;REWE (47053);Energy Drink;0.5;0.99;1.98;2026-10-31;2026-10-26;Monster Energy
+2026-10-28;Lidl;Cremefine;0.25;0.79;3.16;2026-10-31;2026-10-29;Rama Cremefine
+2026-10-28;PENNY;Cremefine;0.5;1.99;3.98;2026-10-31;2026-10-26;Rama Cremefine
+2026-10-28;Lidl;Energy Drink;1.5;4.99;3.33;2026-11-07;2026-11-06;Red Bull
+2026-10-28;Kaufland;Energy Drink;0.25;0.88;3.52;2026-10-31;2026-10-26;Red Bull
+2026-10-28;ALDI SÜD;Energy Drink;0.25;0.89;3.56;2026-10-31;2026-10-26;Red Bull
+2026-10-28;Thomas Philipps;Energy Drink;0.25;0.92;3.68;2026-10-31;2026-10-26;Red Bull
+2026-10-28;trinkgut;Toilettenpapier;16;6.66;0.42;2026-10-31;2026-10-26;Zewa Toilettenpapier Ultra Soft
+2026-10-28;Netto Marken-Discount;Toilettenpapier;16;6.99;0.44;2026-10-31;2026-10-26;Zewa Toilettenpapier Ultra Soft
+2026-10-28;PENNY;Toilettenpapier Ultra Soft XXL;16;6.99;0.44;2026-10-31;2026-10-29;Zewa Toilettenpapier Ultra Soft
+2026-10-29;Lidl;Cola;1.25;0.99;0.79;2026-10-31;2026-10-26;coca cola
+2026-10-29;Netto Marken-Discount;Cola;1.5;1.29;0.86;2026-10-31;2026-10-26;coca cola
+2026-10-29;ALDI SÜD;Cola;1.25;1.19;0.95;2026-11-07;2026-11-02;coca cola
+2026-10-29;trinkgut;Cola;1.25;1.19;0.95;2026-10-31;2026-10-26;coca cola
+2026-10-29;PENNY;Cola;1.25;1.19;0.95;2026-10-31;2026-10-26;coca cola
+2026-10-29;REWE (47053);Cola;12;11.99;1;2026-10-31;2026-10-26;coca cola
+2026-10-29;Netto Marken-Discount;Cola;10;13.99;1.4;2026-10-31;2026-10-26;coca cola
+2026-10-29;Lidl;Cola;3.96;6.66;1.68;2026-11-07;2026-11-05;coca cola
+2026-10-29;ALDI SÜD;Cola;0.33;0.62;1.88;2026-10-31;2026-10-26;coca cola
+2026-10-29;REWE (47053);Cola;0.33;0.75;2.27;2026-10-31;2026-10-26;coca cola
+2026-10-29;Kaufland;Herren Retroshorts Coca Cola 3 Stück;3;6.99;2.33;2026-10-31;2026-10-29;coca cola
+2026-10-29;Thomas Philipps;Mischgetränk;0.25;1.49;5.96;2026-10-31;2026-10-26;coca cola
+2026-10-29;REWE (47053);Mischgetränk;0.33;1.99;6.03;2026-10-31;2026-10-26;coca cola
+2026-10-29;Lidl;Nutella;1;7.49;7.49;2026-11-07;2026-11-05;Ferrero Nutella Brotaufstrich
+2026-10-29;Lidl;Nutella Brotaufstrich;0.5;3.99;7.98;2026-10-31;2026-10-26;Ferrero Nutella Brotaufstrich
+2026-10-29;ALDI SÜD;Tomatenketchup XXL;1.17;2.99;2.56;2026-10-31;2026-10-30;Heinz Ketchup
+2026-10-29;Lidl;Tomaten Ketchup;1.17;3.49;2.98;2026-10-31;2026-10-26;Heinz Ketchup
+2026-10-29;REWE (47053);Spaghetteria Pasta Spinaci Käse;0.178;1.49;8.37;2026-10-31;2026-10-26;Knorr Spaghetteria
+2026-10-29;Lidl;Unstoppables Wäscheparfüm;0.495;8.49;17.15;2026-10-31;2026-10-29;Lenor Unstoppables Wäscheparfüm
+2026-10-29;Kaufland;Wäscheparfüm;0.56;10;17.86;2026-10-31;2026-10-26;Lenor Wäscheparfüm
+2026-10-29;Lidl;Unstoppables Wäscheparfüm;0.495;8.49;17.15;2026-10-31;2026-10-29;Lenor Wäscheparfüm XL
+2026-10-29;Kaufland;Wäscheparfüm;0.56;10;17.86;2026-10-31;2026-10-26;Lenor Wäscheparfüm XL
+2026-10-29;Netto Marken-Discount;Energy Drink;0.5;0.88;1.76;2026-10-31;2026-10-29;Monster Energy
+2026-10-29;REWE (47053);Energy Drink;0.5;0.99;1.98;2026-10-31;2026-10-26;Monster Energy
+2026-10-29;Lidl;Cremefine;0.25;0.79;3.16;2026-10-31;2026-10-29;Rama Cremefine
+2026-10-29;PENNY;Cremefine;0.5;1.99;3.98;2026-10-31;2026-10-26;Rama Cremefine
+2026-10-29;Lidl;Energy Drink;1.5;4.99;3.33;2026-11-07;2026-11-06;Red Bull
+2026-10-29;Kaufland;Energy Drink;0.25;0.88;3.52;2026-10-31;2026-10-26;Red Bull
+2026-10-29;ALDI SÜD;Energy Drink;0.25;0.89;3.56;2026-10-31;2026-10-26;Red Bull
+2026-10-29;Thomas Philipps;Energy Drink;0.25;0.92;3.68;2026-10-31;2026-10-26;Red Bull
+2026-10-29;trinkgut;Toilettenpapier;16;6.66;0.42;2026-10-31;2026-10-26;Zewa Toilettenpapier Ultra Soft
+2026-10-29;Netto Marken-Discount;Toilettenpapier;16;6.99;0.44;2026-10-31;2026-10-26;Zewa Toilettenpapier Ultra Soft
+2026-10-29;PENNY;Toilettenpapier Ultra Soft XXL;16;6.99;0.44;2026-10-31;2026-10-29;Zewa Toilettenpapier Ultra Soft
+2026-10-30;Lidl;Cola;1.25;0.99;0.79;2026-10-31;2026-10-26;coca cola
+2026-10-30;Netto Marken-Discount;Cola;1.5;1.29;0.86;2026-10-31;2026-10-26;coca cola
+2026-10-30;ALDI SÜD;Cola;1.25;1.19;0.95;2026-11-07;2026-11-02;coca cola
+2026-10-30;trinkgut;Cola;1.25;1.19;0.95;2026-10-31;2026-10-26;coca cola
+2026-10-30;PENNY;Cola;1.25;1.19;0.95;2026-10-31;2026-10-26;coca cola
+2026-10-30;REWE (47053);Cola;12;11.99;1;2026-10-31;2026-10-26;coca cola
+2026-10-30;Netto Marken-Discount;Cola;10;13.99;1.4;2026-10-31;2026-10-26;coca cola
+2026-10-30;Lidl;Cola;3.96;6.66;1.68;2026-11-07;2026-11-05;coca cola
+2026-10-30;ALDI SÜD;Cola;0.33;0.62;1.88;2026-10-31;2026-10-26;coca cola
+2026-10-30;REWE (47053);Cola;0.33;0.75;2.27;2026-10-31;2026-10-26;coca cola
+2026-10-30;Kaufland;Herren Retroshorts Coca Cola 3 Stück;3;6.99;2.33;2026-10-31;2026-10-29;coca cola
+2026-10-30;Thomas Philipps;Mischgetränk;0.25;1.49;5.96;2026-10-31;2026-10-26;coca cola
+2026-10-30;REWE (47053);Mischgetränk;0.33;1.99;6.03;2026-10-31;2026-10-26;coca cola
+2026-10-30;Lidl;Nutella;1;7.49;7.49;2026-11-07;2026-11-05;Ferrero Nutella Brotaufstrich
+2026-10-30;Lidl;Nutella Brotaufstrich;0.5;3.99;7.98;2026-10-31;2026-10-26;Ferrero Nutella Brotaufstrich
+2026-10-30;ALDI SÜD;Tomatenketchup XXL;1.17;2.99;2.56;2026-10-31;2026-10-30;Heinz Ketchup
+2026-10-30;Lidl;Tomaten Ketchup;1.17;3.49;2.98;2026-10-31;2026-10-26;Heinz Ketchup
+2026-10-30;REWE (47053);Spaghetteria Pasta Spinaci Käse;0.178;1.49;8.37;2026-10-31;2026-10-26;Knorr Spaghetteria
+2026-10-30;Lidl;Unstoppables Wäscheparfüm;0.495;8.49;17.15;2026-10-31;2026-10-29;Lenor Unstoppables Wäscheparfüm
+2026-10-30;Kaufland;Wäscheparfüm;0.56;10;17.86;2026-10-31;2026-10-26;Lenor Wäscheparfüm
+2026-10-30;Lidl;Unstoppables Wäscheparfüm;0.495;8.49;17.15;2026-10-31;2026-10-29;Lenor Wäscheparfüm XL
+2026-10-30;Kaufland;Wäscheparfüm;0.56;10;17.86;2026-10-31;2026-10-26;Lenor Wäscheparfüm XL
+2026-10-30;Netto Marken-Discount;Energy Drink;0.5;0.88;1.76;2026-10-31;2026-10-29;Monster Energy
+2026-10-30;REWE (47053);Energy Drink;0.5;0.99;1.98;2026-10-31;2026-10-26;Monster Energy
+2026-10-30;Lidl;Cremefine;0.25;0.79;3.16;2026-10-31;2026-10-29;Rama Cremefine
+2026-10-30;PENNY;Cremefine;0.5;1.99;3.98;2026-10-31;2026-10-26;Rama Cremefine
+2026-10-30;Lidl;Energy Drink;1.5;4.99;3.33;2026-11-07;2026-11-06;Red Bull
+2026-10-30;Kaufland;Energy Drink;0.25;0.88;3.52;2026-10-31;2026-10-26;Red Bull
+2026-10-30;ALDI SÜD;Energy Drink;0.25;0.89;3.56;2026-10-31;2026-10-26;Red Bull
+2026-10-30;Thomas Philipps;Energy Drink;0.25;0.92;3.68;2026-10-31;2026-10-26;Red Bull
+2026-10-30;trinkgut;Toilettenpapier;16;6.66;0.42;2026-10-31;2026-10-26;Zewa Toilettenpapier Ultra Soft
+2026-10-30;Netto Marken-Discount;Toilettenpapier;16;6.99;0.44;2026-10-31;2026-10-26;Zewa Toilettenpapier Ultra Soft
+2026-10-30;PENNY;Toilettenpapier Ultra Soft XXL;16;6.99;0.44;2026-10-31;2026-10-29;Zewa Toilettenpapier Ultra Soft
+2026-10-31;Lidl;Cola;1.25;0.99;0.79;2026-10-31;2026-10-26;coca cola
+2026-10-31;Netto Marken-Discount;Cola;1.5;1.29;0.86;2026-10-31;2026-10-26;coca cola
+2026-10-31;ALDI SÜD;Cola;1.25;1.19;0.95;2026-11-07;2026-11-02;coca cola
+2026-10-31;trinkgut;Cola;1.25;1.19;0.95;2026-10-31;2026-10-26;coca cola
+2026-10-31;PENNY;Cola;1.25;1.19;0.95;2026-10-31;2026-10-26;coca cola
+2026-10-31;REWE (47053);Cola;12;11.99;1;2026-10-31;2026-10-26;coca cola
+2026-10-31;Netto Marken-Discount;Cola;10;13.99;1.4;2026-10-31;2026-10-26;coca cola
+2026-10-31;ALDI SÜD;Cola XXL;3.96;5.99;1.51;2026-11-14;2026-11-09;coca cola
+2026-10-31;Lidl;Cola;3.96;6.66;1.68;2026-11-07;2026-11-05;coca cola
+2026-10-31;ALDI SÜD;Cola;0.33;0.62;1.88;2026-10-31;2026-10-26;coca cola
+2026-10-31;REWE (47053);Cola;0.33;0.75;2.27;2026-10-31;2026-10-26;coca cola
+2026-10-31;Kaufland;Herren Retroshorts Coca Cola 3 Stück;3;6.99;2.33;2026-10-31;2026-10-29;coca cola
+2026-10-31;Thomas Philipps;Mischgetränk;0.25;1.49;5.96;2026-10-31;2026-10-26;coca cola
+2026-10-31;REWE (47053);Mischgetränk;0.33;1.99;6.03;2026-10-31;2026-10-26;coca cola
+2026-10-31;ALDI SÜD;Nutella Nuss-Nugat Creme;1;6.49;6.49;2026-11-14;2026-11-09;Ferrero Nutella Brotaufstrich
+2026-10-31;Lidl;Nutella;1;7.49;7.49;2026-11-07;2026-11-05;Ferrero Nutella Brotaufstrich
+2026-10-31;Lidl;Nutella Brotaufstrich;0.5;3.99;7.98;2026-10-31;2026-10-26;Ferrero Nutella Brotaufstrich
+2026-10-31;ALDI SÜD;Tomatenketchup XXL;1.17;2.99;2.56;2026-10-31;2026-10-30;Heinz Ketchup
+2026-10-31;Lidl;Tomaten Ketchup;1.17;3.49;2.98;2026-10-31;2026-10-26;Heinz Ketchup
+2026-10-31;REWE (47053);Spaghetteria Pasta Spinaci Käse;0.178;1.49;8.37;2026-10-31;2026-10-26;Knorr Spaghetteria
+2026-10-31;Lidl;Unstoppables Wäscheparfüm;0.495;8.49;17.15;2026-10-31;2026-10-29;Lenor Unstoppables Wäscheparfüm
+2026-10-31;Kaufland;Wäscheparfüm;0.56;10;17.86;2026-10-31;2026-10-26;Lenor Wäscheparfüm
+2026-10-31;Lidl;Unstoppables Wäscheparfüm;0.495;8.49;17.15;2026-10-31;2026-10-29;Lenor Wäscheparfüm XL
+2026-10-31;Kaufland;Wäscheparfüm;0.56;10;17.86;2026-10-31;2026-10-26;Lenor Wäscheparfüm XL
+2026-10-31;Netto Marken-Discount;Energy Drink;0.5;0.88;1.76;2026-10-31;2026-10-29;Monster Energy
+2026-10-31;REWE (47053);Energy Drink;0.5;0.99;1.98;2026-10-31;2026-10-26;Monster Energy
+2026-10-31;Lidl;Cremefine;0.25;0.79;3.16;2026-10-31;2026-10-29;Rama Cremefine
+2026-10-31;PENNY;Cremefine;0.5;1.99;3.98;2026-10-31;2026-10-26;Rama Cremefine
+2026-10-31;Lidl;Energy Drink;1.5;4.99;3.33;2026-11-07;2026-11-06;Red Bull
+2026-10-31;Kaufland;Energy Drink;0.25;0.88;3.52;2026-10-31;2026-10-26;Red Bull
+2026-10-31;ALDI SÜD;Energy Drink;1.5;5.29;3.53;2026-11-14;2026-11-09;Red Bull
+2026-10-31;ALDI SÜD;Energy Drink;0.25;0.89;3.56;2026-10-31;2026-10-26;Red Bull
+2026-10-31;Thomas Philipps;Energy Drink;0.25;0.92;3.68;2026-10-31;2026-10-26;Red Bull
+2026-10-31;ROSSMANN;Toilettenpapier Bewährt;8;2.99;0.37;2026-11-06;2026-11-02;Zewa Toilettenpapier Ultra Soft
+2026-10-31;trinkgut;Toilettenpapier;16;6.66;0.42;2026-10-31;2026-10-26;Zewa Toilettenpapier Ultra Soft
+2026-10-31;Netto Marken-Discount;Toilettenpapier;16;6.99;0.44;2026-10-31;2026-10-26;Zewa Toilettenpapier Ultra Soft
+2026-10-31;PENNY;Toilettenpapier Ultra Soft XXL;16;6.99;0.44;2026-10-31;2026-10-29;Zewa Toilettenpapier Ultra Soft
+2026-11-01;REWE (47053);Cola;2;1.49;0.75;2026-11-07;2026-11-02;coca cola
+2026-11-01;ALDI SÜD;Cola;1.25;1.19;0.95;2026-11-07;2026-11-02;coca cola
+2026-11-01;Lidl;Cola;5.94;7.99;1.35;2026-11-14;2026-11-12;coca cola
+2026-11-01;Thomas Philipps;Cola;0.33;0.47;1.42;2026-11-07;2026-11-02;coca cola
+2026-11-01;ALDI SÜD;Cola XXL;3.96;5.99;1.51;2026-11-14;2026-11-09;coca cola
+2026-11-01;Lidl;Cola;3.96;6.66;1.68;2026-11-07;2026-11-05;coca cola
+2026-11-01;Netto Marken-Discount;Nutella Nuss-Nugat Creme;0.45;2.79;6.2;2026-11-07;2026-11-07;Ferrero Nutella Brotaufstrich
+2026-11-01;ALDI SÜD;Nutella Nuss-Nugat Creme;1;6.49;6.49;2026-11-14;2026-11-09;Ferrero Nutella Brotaufstrich
+2026-11-01;Lidl;Nutella Nuss-Nugat Creme;0.825;5.79;7.02;2026-11-14;2026-11-09;Ferrero Nutella Brotaufstrich
+2026-11-01;Lidl;Nutella;1;7.49;7.49;2026-11-07;2026-11-05;Ferrero Nutella Brotaufstrich
+2026-11-01;Netto Marken-Discount;Gemischt-Hackfleisch;0.8;5.49;6.86;2026-11-07;2026-11-02;Gut Ponholz Gemischt-Hackfleisch
+2026-11-01;Thomas Philipps;Tomaten Ketchup;1.17;3.99;3.41;2026-11-07;2026-11-02;Heinz Ketchup
+2026-11-01;REWE (47053);Tomato-Ketchup;0.4;1.79;4.47;2026-11-07;2026-11-02;Heinz Ketchup
+2026-11-01;Netto Marken-Discount;Cremefine;0.25;1;4;2026-11-07;2026-11-02;Rama Cremefine
+2026-11-01;Lidl;Energy Drink;1.5;4.99;3.33;2026-11-07;2026-11-06;Red Bull
+2026-11-01;ALDI SÜD;Energy Drink;1.5;5.29;3.53;2026-11-14;2026-11-09;Red Bull
+2026-11-01;Lidl;Energy Drink;0.25;0.99;3.96;2026-11-14;2026-11-09;Red Bull
+2026-11-01;Netto Marken-Discount;Energy Drink;0.355;1.49;4.2;2026-11-07;2026-11-05;Red Bull
+2026-11-01;ROSSMANN;Toilettenpapier Bewährt;8;2.99;0.37;2026-11-06;2026-11-02;Zewa Toilettenpapier Ultra Soft
